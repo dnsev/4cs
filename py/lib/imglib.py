@@ -3,7 +3,7 @@ import os, png, random;
 
 
 class Image:
-	def __init__(self, file):
+	def __init__(self, file, color_depth=None):
 		# Read source
 		f = open(file, "rb");
 		image = png.Reader(file = f);
@@ -20,8 +20,25 @@ class Image:
 		self.total_pixels = self.width * self.height * self.color_depth;
 		self.pixels = list();
 
-		for row in src[2]:
-			self.pixels.append(row);
+		self.alpha_override = False;
+
+		if (color_depth == None or color_depth == self.color_depth):
+			for row in src[2]:
+				self.pixels.append(row);
+		elif (color_depth == 3):
+			self.alpha_override = True;
+			self.color_depth = 3;
+			for row in src[2]:
+				self.pixels.append([ val[1] for val in enumerate(row) if (row[0] % 4) < 3 ]);
+		else:
+			self.alpha_override = True;
+			self.color_depth = 4;
+			for row in src[2]:
+				r = list();
+				for i in range(len(row)):
+					r.append(row[i]);
+					if ((i % 3) == 2): r.append(255);
+				self.pixels.append(r);
 		f.close();
 
 	def get_pixel(self, x, y):

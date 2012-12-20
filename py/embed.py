@@ -8,6 +8,7 @@ def main():
 	bitmask = None;
 	output_file = None;
 	randomize_all = True;
+	alpha_channel = None;
 
 	# Read params
 	errors = list();
@@ -65,6 +66,15 @@ def main():
 					randomize_all = False;
 				else:
 					errors.append("Invalid randomizer setting \"" + sys.argv[i] + "\"");
+			elif (sys.argv[i] in ( "-a" , "-alpha" )):
+				i += 1;
+				if (i >= len(sys.argv)): break;
+				if (sys.argv[i].lower() in ( "on" , "all" , "yes" , "true" , "1" , "enable" , "enabled" )):
+					alpha_channel = 4;
+				elif (sys.argv[i].lower() in ( "off" , "no" , "none" , "false" , "0" , "disable" , "disabled" )):
+					alpha_channel = 3;
+				else:
+					errors.append("Invalid alpha setting \"" + sys.argv[i] + "\"");
 
 		# Non-flags
 		else:
@@ -80,7 +90,7 @@ def main():
 	# Usage
 	if (len(file_list) == 0):
 		print "Usage:";
-		print "    " + os.path.basename(sys.argv[0]) + " [-b ...] [-s ...] [-o ...] [-r ...] image.png embed_file1.txt embed_file2.txt ...";
+		print "    " + os.path.basename(sys.argv[0]) + " [-b ...] [-s ...] [-o ...] [-r ...] [-a ...] image.png file1.txt file2.txt ...";
 		print "";
 		print "    -b bitmask : set the amount of bits per color component to be used to store data";
 		print "               : valid values are 1, 2, 3, 4, 5, 6, 7, and 8";
@@ -98,6 +108,10 @@ def main():
 		print "                 : when enabled, it maintains the \"fuzzy\" look of the image";
 		print "                 : (i.e. no band of clean pixels as the end)";
 		print "                 : values are \"1\", \"0\", \"on\", \"off\", \"yes\", \"no\", etc.";
+		print "";
+		print "    -a alpha : force alpha channel to be on or off";
+		print "             : potentially adds or removes the alpha layer";
+		print "             : values are \"1\", \"0\", \"on\", \"off\", \"yes\", \"no\", etc.";
 		print "";
 		print "    image.png : the file to embed data in";
 		print "";
@@ -134,7 +148,9 @@ def main():
 		# Load image
 		print "Loading image...";
 		try:
-			image = imglib.Image(file_list[0]);
+			image = imglib.Image(file_list[0], alpha_channel);
+			if (image.alpha_override):
+				print "Image alpha channel settings changed to \"" + ("on" if alpha_channel == 4 else "off") + "\"";
 		except:
 			print "Error loading image file \"" + file_list[0] + "\"";
 			return -1;
