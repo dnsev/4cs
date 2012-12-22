@@ -847,7 +847,7 @@ function addLoadAllLink(post) {
 ///////////////////////////////////////////////////////////////////////////////
 // Additional content
 ///////////////////////////////////////////////////////////////////////////////
-// I do not take credit for any of the other (sloppiy) code
+// I do not take credit for any of the other (sloppy) code
 
 function findOggInPng(raw, tag) {
 	var ret = null;
@@ -922,7 +922,7 @@ function loadAllInPng(raw, link, cb, local_name) {
 		}
 	});
 	if (loadcount > 0) {
-		cb();
+		if (typeof(cb) == "function") cb();
 		return true;
 	}
 	return false;
@@ -988,7 +988,12 @@ function DataImageReader (image) {
 	this.bit_value = 0;
 	this.bit_count = 0;
 	this.pixel = null;
-	this.pixel_skip = 1;
+	this.pixel_pos = 0;
+	this.scatter_pos = 0;
+	this.scatter_range = 0;
+	this.scatter_full_range = 0;
+	this.scatter = false;
+	this.channels = 0;
 }
 DataImageReader.prototype.unpack = function () {
 	try {
@@ -999,8 +1004,6 @@ DataImageReader.prototype.unpack = function () {
 	}
 }
 DataImageReader.prototype.__unpack = function () {
-	//Uint8Array
-
 	// Init
 	this.x = 0;
 	this.y = 0;
@@ -1008,16 +1011,42 @@ DataImageReader.prototype.__unpack = function () {
 	this.bit_value = 0;
 	this.bit_count = 0;
 	this.pixel = this.image.get_pixel(this.x, this.y);
+	this.pixel_pos = 0;
+	this.scatter_pos = 0;
+	this.scatter_range = 0;
+	this.scatter_full_range = 0;
+	this.scatter = false;
+	this.channels = 3;
 
 	// Read bitmask
-	this.bitmask = 1 + (this.pixel[this.c] & 0x07);
+	this.bitmask = 1 + this.__read_pixel(0x07);
 	this.value_mask = (1 << this.bitmask) - 1;
 	this.pixel_mask = 0xFF - this.value_mask;
-	this.next_pixel_component(1);
 
-	// Metadata length
-	var meta_length = this.__data_to_int(this.__extract_data(2));
-	var meta = this.__extract_data(meta_length);
+	// Flags
+	var flags = this.__read_pixel(0x07);
+	// Bit depth
+	if ((flags & 4) != 0) this.channels = 4;
+
+	// Scatter
+	if ((flags & 2) != 0) {
+		// Read
+		this.scatter_range = this.__data_to_int(this.__extract_data(4));
+		this.__complete_pixel();
+
+		// Enable scatter
+		if (this.scatter_range > 0) {
+			this.scatter_pos = 0;
+			this.scatter_full_range = ((this.image.width * this.image.height * this.channels) - this.pixel_pos - 1);
+			this.scatter = true;
+		}
+	}
+
+	// Metadata
+	if ((flags & 1) != 0) {
+		var meta_length = this.__data_to_int(this.__extract_data(2));
+		var meta = this.__extract_data(meta_length);
+	}
 
 	// File count
 	var file_count = this.__data_to_int(this.__extract_data(2));
@@ -1050,7 +1079,6 @@ DataImageReader.prototype.__unpack = function () {
 		sources.push(src);
 	}
 
-	
 	// Done
 	return [ filenames , sources ];
 }
@@ -1058,7 +1086,7 @@ DataImageReader.prototype.next_pixel_component = function (count) {
 	while (count > 0) {
 		count -= 1;
 
-		this.c = (this.c + 1) % this.image.color_depth;
+		this.c = (this.c + 1) % this.channels;
 		if (this.c == 0) {
 			this.x = (this.x + 1) % this.image.width;
 			if (this.x == 0) {
@@ -1075,8 +1103,7 @@ DataImageReader.prototype.__extract_data = function (byte_length) {
 	var src = new Uint8Array(byte_length);
 	var j = 0;
 	for (var i = this.bit_count; i < byte_length * 8; i += this.bitmask) {
-		this.bit_value = this.bit_value | ((this.pixel[this.c] & this.value_mask) << this.bit_count);
-		this.next_pixel_component(this.pixel_skip);
+		this.bit_value = this.bit_value | (this.__read_pixel(this.value_mask) << this.bit_count);
 		this.bit_count += this.bitmask;
 		while (this.bit_count >= 8) {
 			src[j] = (this.bit_value & 0xFF);
@@ -1103,6 +1130,29 @@ DataImageReader.prototype.__data_to_string = function (data) {
 		val += String.fromCharCode(data[i]);
 	}
 	return val;
+}
+DataImageReader.prototype.__read_pixel = function (value_mask) {
+	var value = (this.pixel[this.c] & value_mask);
+
+	if (this.scatter) {
+		this.scatter_pos += 1;
+		// integer division sure is fun
+		var v = ((Math.floor(this.scatter_pos * this.scatter_full_range / this.scatter_range) - Math.floor((this.scatter_pos - 1) * this.scatter_full_range / this.scatter_range)));
+		this.pixel_pos += v;
+		this.next_pixel_component(v);
+	}
+	else {
+		this.pixel_pos += 1;
+		this.next_pixel_component(1);
+	}
+
+	return value;
+}
+DataImageReader.prototype.__complete_pixel = function () {
+	if (this.bit_count > 0) {
+		this.bit_count = 0;
+		this.bit_value = 0;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////

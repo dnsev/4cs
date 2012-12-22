@@ -9,6 +9,8 @@ def main():
 	output_file = None;
 	randomize_all = True;
 	alpha_channel = None;
+	compression = None;
+	scatter = False;
 
 	# Read params
 	errors = list();
@@ -57,7 +59,7 @@ def main():
 				output_file = sys.argv[i];
 				if (output_file[-4:].lower() != ".png"):
 					output_file += ".png";
-			elif (sys.argv[i] in ( "-r" , "-rand" , "-randomize" )):
+			elif (sys.argv[i] in ( "-r" , "-rand" , "-random" , "-randomize" )):
 				i += 1;
 				if (i >= len(sys.argv)): break;
 				if (sys.argv[i].lower() in ( "on" , "all" , "yes" , "true" , "1" , "enable" , "enabled" )):
@@ -69,12 +71,37 @@ def main():
 			elif (sys.argv[i] in ( "-a" , "-alpha" )):
 				i += 1;
 				if (i >= len(sys.argv)): break;
-				if (sys.argv[i].lower() in ( "on" , "all" , "yes" , "true" , "1" , "enable" , "enabled" )):
+				if (sys.argv[i].lower() == "auto"):
+					alpha_channel = None;
+				elif (sys.argv[i].lower() in ( "on" , "all" , "yes" , "true" , "1" , "enable" , "enabled" )):
 					alpha_channel = 4;
 				elif (sys.argv[i].lower() in ( "off" , "no" , "none" , "false" , "0" , "disable" , "disabled" )):
 					alpha_channel = 3;
 				else:
 					errors.append("Invalid alpha setting \"" + sys.argv[i] + "\"");
+			elif (sys.argv[i] in ( "-c" , "-comp" , "-compression" )):
+				i += 1;
+				if (i >= len(sys.argv)): break;
+				if (sys.argv[i].lower() == "auto"):
+					compression = None;
+				else:
+					try:
+						compression = int(sys.argv[i]);
+					except:
+						errors.append("Invalid compression \"" + sys.argv[i] + "\"");
+						compression = None;
+					if (compression < 0 or compression > 9):
+						errors.append("Invalid compression value \"" + sys.argv[i] + "\"");
+						compression = None;
+			elif (sys.argv[i] in ( "-S" , "-sc"  , "scatter" )):
+				i += 1;
+				if (i >= len(sys.argv)): break;
+				elif (sys.argv[i].lower() in ( "on" , "all" , "yes" , "true" , "1" , "enable" , "enabled" )):
+					scatter = True;
+				elif (sys.argv[i].lower() in ( "off" , "no" , "none" , "false" , "0" , "disable" , "disabled" )):
+					scatter = False;
+				else:
+					errors.append("Invalid scatter setting \"" + sys.argv[i] + "\"");
 
 		# Non-flags
 		else:
@@ -90,10 +117,10 @@ def main():
 	# Usage
 	if (len(file_list) == 0):
 		print "Usage:";
-		print "    " + os.path.basename(sys.argv[0]) + " [-b ...] [-s ...] [-o ...] [-r ...] [-a ...] image.png file1.txt file2.txt ...";
+		print "    " + os.path.basename(sys.argv[0]) + " [-b ...] [-s ...] [-o ...] [-r ...] [-a ...] [-c ...] [-S ...] image.png file1.txt file2.txt ...";
 		print "";
 		print "    -b bitmask : set the amount of bits per color component to be used to store data";
-		print "               : valid values are 1, 2, 3, 4, 5, 6, 7, and 8";
+		print "               : valid values are 1, 2, 3, 4, 5, 6, 7, 8, and auto";
 		print "               : smaller values cause a smaller impact on the image, but need more space";
 		print "";
 		print "    -s size : set the amount of bits per color component to be used to store data";
@@ -112,6 +139,14 @@ def main():
 		print "    -a alpha : force alpha channel to be on or off";
 		print "             : potentially adds or removes the alpha layer";
 		print "             : values are \"1\", \"0\", \"on\", \"off\", \"yes\", \"no\", etc.";
+		print "";
+		print "    -c compression : set the png compression setting";
+		print "                   : valid values are 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, and auto";
+		print "                   : 9 = maximum compression";
+		print "";
+		print "    -S scatter : disperses data through the image more evenly";
+		print "               : cancels out randomizer if enabled";
+		print "               : values are \"1\", \"0\", \"on\", \"off\", \"yes\", \"no\", etc.";
 		print "";
 		print "    image.png : the file to embed data in";
 		print "";
@@ -176,7 +211,7 @@ def main():
 			bitmask = 1;
 		bitmask_changed = False;
 		while (bitmask < 8):
-			if (iw.get_bit_requirement(sources)[0] > iw.get_bit_availability(bitmask)):
+			if (iw.get_bit_requirement(sources)[0] > iw.get_bit_availability(bitmask, 0, scatter)):
 				bitmask += 1;
 				bitmask_changed = True;
 			else:
@@ -189,11 +224,11 @@ def main():
 
 		# Embed files
 		print "Embedding...";
-		iw.pack(sources, bitmask);
+		iw.pack(sources, bitmask, scatter);
 
 		# Write
 		print "Writing...";
-		image.write(output_file);
+		image.write(output_file, compression);
 
 
 		# Filesize check
@@ -210,18 +245,18 @@ def main():
 				randomize_all = False;
 				print "Warning: Changed randomization setting to \"off\" to attempt satisfy the filesize";
 				print " limit of {0:,} bytes. (filesize achieved = {1:,} bytes)".format(filesize_limit, fs);
-				print " (to bypass the filesize limit checker, use \"-s 0\")";
+				print " (to bypass the filesize limit checker, use \"-s 0\"; also consider using \"-c ...\")";
 			elif (bitmask < 8):
 				filesize_loop = True;
 				bitmask += 1;
 				print "Warning: Changed bitmask to " + str(bitmask) + " to attempt to satisfy the filesize";
 				print " limit of {0:,} bytes. (filesize achieved = {1:,} bytes)".format(filesize_limit, fs);
-				print " (to bypass the filesize limit checker, use \"-s 0\")";
+				print " (to bypass the filesize limit checker, use \"-s 0\"; also consider using \"-c ...\")";
 			else:
 				print "Error: Data could not be stored in {0:,} bytes.".format(filesize_limit);
 				print " Filesize achieved was {0:,} bytes.".format(fs);
 				print " Minimum filesize achieved was {0:,} bytes.".format(min_filesize);
-				print " (to bypass the filesize limit checker, use \"-s 0\")";
+				print " (to bypass the filesize limit checker, use \"-s 0\"; also consider using \"-c ...\")";
 				return -1;
 
 	# Done

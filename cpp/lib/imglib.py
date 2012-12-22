@@ -96,13 +96,8 @@ class ImageWriter:
 		self.bit_value = 0;
 		self.bit_count = 0;
 		self.pixel = None;
+		self.pixel_skip = 1;
 		self.randomize_all = True;
-		self.channels = self.image.color_depth;
-		self.pixel_pos = 0;
-		self.scatter_pos = 0;
-		self.scatter_range = 0;
-		self.scatter_full_range = 0;
-		self.scatter = False;
 
 	def get_bit_requirement(self, sources):
 		# Filesize bounds
@@ -118,21 +113,18 @@ class ImageWriter:
 
 		return ( total_bits , file_sizes );
 
-	def get_bit_availability(self, bitmask, metadata_length, scatter):
+	def get_bit_availability(self, bitmask, metadata_length=0, scatter=False):
 		metadata_bits = 16;
 		if (metadata_length > 0): metadata_bits += 16 + metadata_length * 8;
-		if (scatter): metadata_bits += (32 - 1) / bitmask * bitmask + bitmask;
-		return (self.image.width * self.image.height * self.channels - 1 - 1 - 1) * bitmask - metadata_bits;
+		if (scatter): metadata_bits += 32;
+		return (self.image.width * self.image.height * self.image.color_depth - 1 - 1 - 1) * bitmask - metadata_bits;
 
 	def pack(self, sources, bitmask, scatter):
 		if (bitmask < 1 or bitmask > 8): bitmask = 1;
 
-		# Metadata
-		metadata = "";
-
 		# Filesize bounds
 		total_bits, file_sizes = self.get_bit_requirement(sources);
-		if (total_bits > self.get_bit_availability(bitmask, len(metadata), scatter)):
+		if (total_bits > self.get_bit_availability(bitmask)):
 			raise ImageWriter.Exception("Data overflow; needed " + str(total_bits) + "; has " + str(self.get_bit_availability(bitmask)));
 
 		# Init
@@ -145,39 +137,25 @@ class ImageWriter:
 		self.bit_value = 0;
 		self.bit_count = 0;
 		self.pixel = self.image.get_pixel(self.x, self.y);
-		self.channels = self.image.color_depth;
-		self.pixelPos = 0;
-		self.scatter = False;
-		self.scatterPos = 0;
-		self.scatterRange = 0;
-		self.scatterFullRange = 0;
+
+		# Metadata
+		metadata = "";
 
 		# Super-meta
-		self.__write_pixel(self.bitmask - 1, 0xF8, 0x07);
+		self.pixel[self.c] = (self.pixel[self.c] & 0xF8) | ((self.bitmask - 1) & 0x07);
+		self.next_pixel_component(1);
 		flags = 0;
 		if (len(metadata) > 0): flags = flags | 1;
 		if (scatter): flags = flags | 2;
-		if (self.channels == 4): flags = flags | 4;
-		self.__write_pixel(flags, 0xF8, 0x07);
+		self.pixel[self.c] = (self.pixel[self.c] & 0xF8) | (flags & 0x07);
+		self.next_pixel_component(1);
 
 		# Scatter
 		if (scatter):
-			# Calculate
-			self.scatter_range = self.get_bit_requirement(sources)[0];
-			self.scatter_range += 2 * 8; # meta
-			if (len(metadata) > 0): self.scatter_range += (2 + len(metadata)) * 8; # extra metadata length
-			self.scatter_range += (self.bitmask - 1);v=self.scatter_range;
-			self.scatter_range /= self.bitmask;
-
-			# Write
-			self.__embed_str(self.__int32_to_str(self.scatter_range));
+			# Not implemented
+			self.__embed_str(self.__int32_to_str(0));
 			self.__complete_pixel();
-
-			# Enable scatter
-			self.scatter_pos = 0;
-			self.scatter_full_range = ((self.image.width * self.image.height * self.channels) - self.pixel_pos - 1); # Total amount of pixel components used
-			self.scatter = True;
-
+	
 		# Metadata
 		if (len(metadata) > 0):
 			self.__embed_str(self.__int16_to_str(len(metadata)));
@@ -215,7 +193,7 @@ class ImageWriter:
 		while (count > 0):
 			count -= 1;
 
-			self.c = (self.c + 1) % self.channels;
+			self.c = (self.c + 1) % self.image.color_depth;
 			if (self.c == 0):
 				self.image.set_pixel(self.x, self.y, self.pixel);
 
@@ -232,6 +210,10 @@ class ImageWriter:
 	def __int32_to_str(self, value):
 		return chr((value & 0xFF000000) >> 24) + chr((value & 0xFF0000) >> 16) + chr((value & 0xFF00) >> 8) + chr((value & 0xFF));
 
+	def __range_transform(self, x):
+		#return int(x / 256.0 * (1 << (8 - self.bitmask))) << self.bitmask;
+		return (x & self.pixel_mask);
+
 	def __embed_str(self, str):
 		i = 0;
 		while (i < len(str)):
@@ -239,7 +221,8 @@ class ImageWriter:
 			self.bit_count += 8;
 			while (self.bit_count >= self.bitmask):
 				# Embed
-				self.__write_pixel(self.bit_value, self.pixel_mask, self.value_mask);
+				self.pixel[self.c] = self.__range_transform(self.pixel[self.c]) | (self.bit_value & self.value_mask);
+				self.next_pixel_component(self.pixel_skip);
 				# Update
 				self.bit_value = self.bit_value >> self.bitmask;
 				self.bit_count -= self.bitmask;
@@ -247,33 +230,30 @@ class ImageWriter:
 
 	def __complete_pixel(self):
 		if (self.bit_count > 0):
-			self.__write_pixel(self.bit_value, self.pixel_mask, self.value_mask);
+			self.image.set_pixel(self.x, self.y, self.pixel);
 			self.bit_count = 0;
 			self.bit_value = 0;
 
 	def __complete(self):
-		self.__complete_pixel();
+		if (self.bit_count > 0):
+			# Embed
+			self.pixel[self.c] = self.__range_transform(self.pixel[self.c]) | (self.bit_value & self.value_mask);
+			self.next_pixel_component(self.pixel_skip);
+			# Update
+			self.bit_value = 0;
+			self.bit_count = 0;
 
-		if (self.randomize_all and not self.scatter):
+		if (self.randomize_all):
 			random.seed(None);
 			while (True):
 				try:
-					val = random.randint(0, self.value_mask * 2);
-					self.__write_pixel(val, self.pixel_mask, self.value_mask)
+					val = random.randint(0, self.value_mask);
+					self.pixel[self.c] = self.__range_transform(self.pixel[self.c]) | val;
+					self.next_pixel_component(self.pixel_skip);
 				except:
 					break;
 
-	def __write_pixel(self, value, pixel_mask, value_mask):
-		self.pixel[self.c] = (self.pixel[self.c] & pixel_mask) | (value & value_mask);
-
-		if (self.scatter):
-			self.scatter_pos += 1;
-			v = (((self.scatter_pos * self.scatter_full_range / self.scatter_range) - ((self.scatter_pos - 1) * self.scatter_full_range / self.scatter_range)));
-			self.pixel_pos += v;
-			self.next_pixel_component(v);
-		else:
-			self.pixel_pos += 1;
-			self.next_pixel_component(1);
+		self.__complete_pixel();
 
 
 class ImageReader:
@@ -296,19 +276,15 @@ class ImageReader:
 		self.bit_value = 0;
 		self.bit_count = 0;
 		self.pixel = None;
-		self.channels = 0;
-		self.pixel_pos = 0;
-		self.scatter_pos = 0;
+		self.pixel_skip = 1;
 		self.scatter_range = 0;
-		self.scatter_full_range = 0;
-		self.scatter = False;
 
 	def unpack(self, prefix, suffix):
 		try:
 			return self.__unpack(prefix, suffix);
 		except ImageReader.Exception as e:
 			return "Error extracting data; image file likely doesn't contain data";
-		except Exception as e:
+		except:
 			return "Error extracting data; image file likely doesn't contain data, or file error";
 
 	def __unpack(self, prefix, suffix):
@@ -319,35 +295,24 @@ class ImageReader:
 		self.bit_value = 0;
 		self.bit_count = 0;
 		self.pixel = self.image.get_pixel(self.x, self.y);
-		self.pixel_pos = 0;
-		self.scatter_pos = 0;
 		self.scatter_range = 0;
-		self.scatter_full_range = 0;
-		self.scatter = False;
-		self.channels = 3;
 
 		# Read bitmask
-		self.bitmask = 1 + self.__read_pixel(0x07);
+		self.bitmask = 1 + (self.pixel[self.c] & 0x07);
 		self.value_mask = (1 << self.bitmask) - 1;
 		self.pixel_mask = 0xFF - self.value_mask;
+		self.next_pixel_component(1);
 
-		# Flags
-		flags = self.__read_pixel(0x07);
-
-		# Bit depth
-		if ((flags & 4) != 0): self.channels = 4;
+		# Read transparency setting
+		flags = (self.pixel[self.c] & 0x01);
+		self.next_pixel_component(1);
 
 		# Scatter
 		if ((flags & 2) != 0):
-			# Read
+			# TODO
+			raise ImageReader.Exception("Scatter not yet implemented");
 			self.scatter_range = self.__str_to_int(self.__extract_str(4));
 			self.__complete_pixel();
-
-			# Enable scatter
-			if (self.scatter_range > 0):
-				self.scatter_pos = 0;
-				self.scatter_full_range = ((self.image.width * self.image.height * self.channels) - self.pixel_pos - 1);
-				self.scatter = True;
 
 		# Metadata
 		if ((flags & 1) != 0):
@@ -360,22 +325,11 @@ class ImageReader:
 		# Filename lengths and file lengths
 		filename_lengths = list();
 		file_sizes = list();
-		full_len = 0;
 		for i in range(file_count):
 			# Filename length
-			val = self.__str_to_int(self.__extract_str(2))
-			filename_lengths.append(val);
-			full_len += val;
+			filename_lengths.append(self.__str_to_int(self.__extract_str(2)));
 			# File length
-			val = self.__str_to_int(self.__extract_str(4));
-			file_sizes.append(val);
-			full_len += val;
-
-
-		# Error checking
-		if (full_len * 8 > (((self.image.width * (self.image.height - self.y) - self.x) * self.channels) - self.c) * self.bitmask):
-			# Data overflow
-			raise ImageReader.Exception("Data overflow; image likely doesn't contain data");
+			file_sizes.append(self.__str_to_int(self.__extract_str(4)));
 
 		# Filenames
 		filenames = list();
@@ -408,7 +362,7 @@ class ImageReader:
 		while (count > 0):
 			count -= 1;
 
-			self.c = (self.c + 1) % self.channels;
+			self.c = (self.c + 1) % self.image.color_depth;
 			if (self.c == 0):
 				self.x = (self.x + 1) % self.image.width;
 				if (self.x == 0):
@@ -422,7 +376,8 @@ class ImageReader:
 		src = "";
 		i = self.bit_count;
 		while (i < byte_length * 8):
-			self.bit_value = self.bit_value | (self.__read_pixel(self.value_mask) << self.bit_count);
+			self.bit_value = self.bit_value | ((self.pixel[self.c] & self.value_mask) << self.bit_count);
+			self.next_pixel_component(self.pixel_skip);
 			self.bit_count += self.bitmask;
 			while (self.bit_count >= 8):
 				src += chr(self.bit_value & 0xFF);
@@ -443,18 +398,4 @@ class ImageReader:
 		if (self.bit_count > 0):
 			self.bit_count = 0;
 			self.bit_value = 0;
-
-	def __read_pixel(self, value_mask):
-		value = (self.pixel[self.c] & value_mask);
-
-		if (self.scatter):
-			self.scatter_pos += 1;
-			v = (((self.scatter_pos * self.scatter_full_range / self.scatter_range) - ((self.scatter_pos - 1) * self.scatter_full_range / self.scatter_range)));
-			self.pixel_pos += v;
-			self.next_pixel_component(v);
-		else:
-			self.pixel_pos += 1;
-			self.next_pixel_component(1);
-		return value;
-
 

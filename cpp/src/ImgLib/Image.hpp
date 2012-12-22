@@ -1,0 +1,49 @@
+#ifndef IMGLIB_IMAGE_H
+#define IMGLIB_IMAGE_H 1
+
+#include "../Include.hpp"
+#include <vector>
+#include <iostream>
+
+
+
+namespace lodepng {
+	class State;
+};
+namespace ImgLib {
+	class Image {
+	private:
+		bool hasAlpha;
+		bool hasAlphaDefault;
+		unsigned int width;
+		unsigned int height;
+		std::vector<unsigned char> pixels;
+
+	public:
+		Image();
+		Image(const Image& other);
+		~Image();
+
+		void copy(const Image* other);
+
+		bool loadFromSource(const std::vector<unsigned char>* source, int color_depth_override, std::ostream* errorStream);
+
+		unsigned char getPixel(unsigned int x, unsigned int y, unsigned int component) const;
+		void setPixel(unsigned int x, unsigned int y, unsigned int component, unsigned char value);
+
+		bool saveToVector(std::vector<unsigned char>* source, lodepng::State* state, std::ostream* errorStream) const;
+
+		unsigned int getChannelCount() const;
+		unsigned int getDefaultChannelCount() const;
+		unsigned int getWidth() const;
+		unsigned int getHeight() const;
+
+		const std::vector<unsigned char>* getPixels() const;
+
+	};
+};
+
+
+
+#endif
+
