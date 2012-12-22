@@ -4,8 +4,8 @@ BIN = ./
 CC = g++
 CC_FLAGS = -Wall -O3 -DNDEBUG
 CC_CFLAGS = -Wall -O3 -DNDEBUG -c
-CC_FLAGS = -Wall -g
-CC_CFLAGS = -Wall -g -c
+#CC_FLAGS = -Wall -g
+#CC_CFLAGS = -Wall -g -c
 CC = g++
 
 
