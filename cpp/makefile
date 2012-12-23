@@ -2,8 +2,8 @@ SRC = src/
 OBJ = obj/
 BIN = ./
 CC = g++
-CC_FLAGS = -Wall -O3 -DNDEBUG
-CC_CFLAGS = -Wall -O3 -DNDEBUG -c
+CC_FLAGS = -Wall -O3 -DNDEBUG -static
+CC_CFLAGS = -Wall -O3 -DNDEBUG -static -c
 #CC_FLAGS = -Wall -g
 #CC_CFLAGS = -Wall -g -c
 CC = g++
@@ -41,7 +41,7 @@ $(OBJ)Embed.o : $(SRC)Embed.cpp $(SRC)Include.hpp $(SRC)LodePNG/lodepng.h
 $(OBJ)Extract.o : $(SRC)Extract.cpp $(SRC)Include.hpp $(SRC)LodePNG/lodepng.h
 	@$(CC) $(CC_CFLAGS) -o $@ $<
 
-$(OBJ)ImgLib/Image.o : $(SRC)ImgLib/Image.cpp $(SRC)ImgLib/Image.hpp $(SRC)Include.hpp $(SRC)LodePNG/lodepng.h
+$(OBJ)ImgLib/Image.o : $(SRC)ImgLib/Image.cpp $(SRC)ImgLib/Image.hpp $(SRC)Include.hpp $(SRC)LodePNG/lodepng.h $(SRC)NanoJPEG/jpeg_decoder.h
 	@$(CC) $(CC_CFLAGS) -o $@ $<
 
 $(OBJ)ImgLib/ImageReader.o : $(SRC)ImgLib/ImageReader.cpp $(SRC)ImgLib/ImageReader.hpp $(SRC)Include.hpp

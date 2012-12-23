@@ -174,6 +174,9 @@ def main():
 			except: pass;
 
 
+	# Metadata
+	metadata = "";
+
 	# Filesize loop
 	min_filesize = None;
 	filesize_loop = True;
@@ -211,7 +214,7 @@ def main():
 			bitmask = 1;
 		bitmask_changed = False;
 		while (bitmask < 8):
-			if (iw.get_bit_requirement(sources)[0] > iw.get_bit_availability(bitmask, 0, scatter)):
+			if (iw.get_bit_requirement(sources)[0] > iw.get_bit_availability(bitmask, len(metadata), scatter)):
 				bitmask += 1;
 				bitmask_changed = True;
 			else:

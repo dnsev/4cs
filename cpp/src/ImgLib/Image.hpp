@@ -26,7 +26,7 @@ namespace ImgLib {
 
 		void copy(const Image* other);
 
-		bool loadFromSource(const std::vector<unsigned char>* source, int color_depth_override, std::ostream* errorStream);
+		bool loadFromSource(const std::vector<unsigned char>* source, bool isPng, int colorDepthOverride, std::ostream* errorStream);
 
 		unsigned char getPixel(unsigned int x, unsigned int y, unsigned int component) const;
 		void setPixel(unsigned int x, unsigned int y, unsigned int component, unsigned char value);
@@ -39,6 +39,8 @@ namespace ImgLib {
 		unsigned int getHeight() const;
 
 		const std::vector<unsigned char>* getPixels() const;
+
+		void downscale(unsigned int width, unsigned int height);
 
 	};
 };

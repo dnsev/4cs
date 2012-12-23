@@ -36,7 +36,7 @@ namespace ImgLib {
 	int ImageWriter :: pack(const std::vector<std::string>& sources, unsigned int bitmask, bool randomizeAll, bool scatter) {
 		assert(bitmask >= 1);
 		assert(bitmask <= 8);
-		assert(this->getBitRequirement(sources) <= this->getBitAvailability(bitmask, this->image->getChannelCount(), 0, scatter));
+		assert(this->getBitRequirement(sources) <= this->getBitAvailability(bitmask, this->image->getChannelCount(), 0, scatter, this->image->getWidth(), this->image->getHeight()));
 
 		// Vars
 		char buffer[BUFFER_SIZE];
@@ -147,7 +147,7 @@ namespace ImgLib {
 
 		return totalBits;
 	}
-	unsigned int ImageWriter :: getBitAvailability(unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter) {
+	unsigned int ImageWriter :: getBitAvailability(unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter, unsigned int width, unsigned int height) {
 		assert(bitmask >= 1);
 		assert(bitmask <= 8);
 
@@ -158,7 +158,7 @@ namespace ImgLib {
 		// first "-1" : for the bitmask
 		// second "-1" : for the flags
 		// last "-1" : last byte is reserved
-		return (this->image->getWidth() * this->image->getHeight() * channelCount - 1 - 1 - 1) * bitmask - metadataBits;
+		return (width * height * channelCount - 1 - 1 - 1) * bitmask - metadataBits;
 	}
 
 	bool ImageWriter :: toNext(int skipCount) {

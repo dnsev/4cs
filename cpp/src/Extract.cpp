@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
 	cout << "Decoding image..." << endl;
 	Image image;
 	stringstream errorStream;
-	if (!image.loadFromSource(&pngFile, 0, &errorStream)) {
+	if (!image.loadFromSource(&pngFile, true, 0, &errorStream)) {
 		cout << "Error decoding image file \"" << file << "\":" << endl;
 		cout << "  " << errorStream.str() << endl;
 		return -1;

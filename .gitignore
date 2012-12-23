@@ -170,3 +170,4 @@ pip-log.txt
 *.ogg
 *.lnk
 
+tests/

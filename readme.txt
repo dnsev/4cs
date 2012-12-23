@@ -25,7 +25,7 @@ Examples: (using the python variants)
 	extract.py -p ex/ output.png
 	extract.py -s -ex output.png
 
-There are very few differences between the python/executable versions.
-The executable runs faster and compresses better.
-
+The python versions perform the same thing, but with a few less features/optimizations.
+The executable versions can decode .jpegs and reconvert to .pngs, downscale images,
+and optimize better.
 
