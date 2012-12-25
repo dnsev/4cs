@@ -22,12 +22,12 @@ bool fullOptimizeEncode(Image* image, lodepng::State* state, std::vector<unsigne
 
 int main(int argc, char** argv) {
 	// Settings
-	int filesizeLimit = 1024 * 1024 * 3;
+	int filesizeLimit = 0;
 	int bitmask = 0;
 	std::string outputFile = "";
 	int channelCount = 0;
 	bool randomizeAll = false;
-	bool scatter = true;
+	bool scatter = false;
 	bool fullOptimize = false;
 	bool downscale = false;
 	std::string imageFile = "";

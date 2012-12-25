@@ -64,7 +64,38 @@ namespace ImgLib {
 			// Error
 			if (d.GetResult() != Jpeg::Decoder::OK) {
 				if (errorStream != NULL) {
-					*errorStream << "Jpeg load error " << d.GetResult();
+					switch (d.GetResult()) {
+						case Jpeg::Decoder::NotAJpeg:
+						{
+							*errorStream << "Jpeg load error: not a jpeg";
+						}
+						break;
+						case Jpeg::Decoder::Unsupported:
+						{
+							*errorStream << "Jpeg load error: unsupported";
+						}
+						break;
+						case Jpeg::Decoder::OutOfMemory:
+						{
+							*errorStream << "Jpeg load error: out of memory";
+						}
+						break;
+						case Jpeg::Decoder::InternalError:
+						{
+							*errorStream << "Jpeg load error: internal error";
+						}
+						break;
+						case Jpeg::Decoder::SyntaxError:
+						{
+							*errorStream << "Jpeg load error: syntax error";
+						}
+						break;
+						default:
+						{
+							*errorStream << "Jpeg load error " << d.GetResult();
+						}
+						break;
+					}
 				}
 
 				return false;
