@@ -55,8 +55,15 @@ namespace ImgLib {
 			}
 
 			// Settings
-			// TODO : make this work properly (sometimes detects 3 channels as 4; see LCT_PALETTE)
-			this->hasAlphaDefault = (state.info_png.color.colortype == LCT_RGBA || state.info_png.color.colortype == LCT_GREY_ALPHA || state.info_png.color.colortype == LCT_PALETTE);
+			this->hasAlphaDefault = (state.info_png.color.colortype == LCT_RGBA || state.info_png.color.colortype == LCT_GREY_ALPHA);
+			if (state.info_png.color.colortype == LCT_PALETTE) {
+				for (unsigned int i = 0; i < state.info_png.color.palettesize; ++i) {
+					if (state.info_png.color.palette[i * 4 + 3] < 255) {
+						this->hasAlphaDefault = true;
+						break;
+					}
+				}
+			}
 		}
 		else {
 			Jpeg::Decoder d(&((*source)[0]), source->size(), malloc, free);

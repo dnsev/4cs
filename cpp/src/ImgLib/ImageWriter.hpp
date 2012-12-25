@@ -36,8 +36,8 @@ namespace ImgLib {
 
 		int pack(const std::vector<std::string>& sources, unsigned int bitmask, bool randomizeAll, bool scatter);
 
-		unsigned int getBitRequirement(const std::vector<std::string>& sources);
-		unsigned int getBitAvailability(unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter, unsigned int width, unsigned int height);
+		unsigned int getBitRequirement(const std::vector<std::string>& sources) const;
+		unsigned int getBitAvailability(unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter, unsigned int width, unsigned int height) const;
 
 		static unsigned int getFileSize(cstring filename);
 

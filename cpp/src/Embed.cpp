@@ -15,8 +15,8 @@ using namespace ImgLib;
 
 
 
-bool arg2bool(cstring arg);
 bool fullOptimizeEncode(Image* image, lodepng::State* state, std::vector<unsigned char>* pngOutput, ostream* immediateStream, ostream* statusStream, ostream* errorStream);
+void getImageOptimalSize(const Image* image, const ImageWriter* iw, unsigned int bitRequirement, unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, unsigned int scatter, unsigned int* dimensionsBest);
 
 
 
@@ -30,6 +30,8 @@ int main(int argc, char** argv) {
 	bool scatter = false;
 	bool fullOptimize = false;
 	bool downscale = false;
+	bool info = false;
+	bool embed = true;
 	std::string imageFile = "";
 	std::vector<std::string> sources;
 
@@ -40,22 +42,22 @@ int main(int argc, char** argv) {
 			if (strcmp(argv[i], "--") == 0) {
 				canFlag = false;
 			}
-			else if (strcmp(argv[i], "-b") == 0 || strcmp(argv[i], "-bitmask") == 0) {
-				if (++i >= argc) break;
-				if (stricmp(argv[i], "auto") == 0) {
+			else if (argv[i][1] == 'b') {
+				bool next;
+				if ((next = (argv[i][2] == '\0')) && ++i >= argc) break;
+				bitmask = atoi(&argv[i][next ? 0 : 2]);
+				if (bitmask <= 0 || bitmask > 8) {
+					cout << "Warning: invalid bitmask value \"" << argv[i] << "\"" << endl;
 					bitmask = 0;
 				}
-				else {
-					bitmask = atoi(argv[i]);
-					if (bitmask <= 0 || bitmask > 8) {
-						cout << "Warning: invalid bitmask value \"" << argv[i] << "\"" << endl;
-						bitmask = 0;
-					}
-				}
 			}
-			else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "-size") == 0 || strcmp(argv[i], "-size_limit") == 0) {
-				if (++i >= argc) break;
-				int pos = 0;
+			else if (argv[i][1] == 'B' && argv[i][2] == '\0') {
+				bitmask = 0;
+			}
+			else if (argv[i][1] == 'l') {
+				bool next;
+				if ((next = (argv[i][2] == '\0')) && ++i >= argc) break;
+				int pos = next ? 0 : 2;
 				while (argv[i][pos] != '\0') ++pos;
 
 				int scale = 1;
@@ -64,53 +66,76 @@ int main(int argc, char** argv) {
 
 				int value;
 				if (scale == 1) {
-					value = atoi(argv[i]);
+					value = atoi(&argv[i][next ? 0 : 2]);
 				}
 				else {
 					char c = argv[i][pos];
 					argv[i][pos] = '\0';
-					value = atoi(argv[i]) * scale;
+					value = atoi(&argv[i][next ? 0 : 2]) * scale;
 					argv[i][pos] = c;
 				}
 
 				if (value < 0) {
-					cout << "Warning: file size limit cannot be negative: \"" << argv[i] << "\"" << endl;
+					cout << "Warning: file size limit cannot be negative: \"" << (&argv[i][next ? 0 : 2]) << "\"" << endl;
 				}
 				else {
 					filesizeLimit = value;
 				}
 			}
-			else if (strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "-out") == 0 || strcmp(argv[i], "-output") == 0) {
-				if (++i >= argc) break;
-				outputFile = argv[i];
+			else if (argv[i][1] == 'L' && argv[i][2] == '\0') {
+				filesizeLimit = 0;
+			}
+			else if (argv[i][1] == 'x') {
+				bool next;
+				if ((next = (argv[i][2] == '\0')) && ++i >= argc) break;
+				outputFile = &argv[i][next ? 0 : 2];
 				// .png extension
 				int pos = outputFile.length();
 				if (pos < 4 || (outputFile[pos - 4] != '.' || (outputFile[pos - 3] & 0xDF) != 'P' || (outputFile[pos - 2] & 0xDF) != 'N' || (outputFile[pos - 1] & 0xDF) != 'G')) {
 					outputFile += ".png";
 				}
 			}
-			else if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "-rand") == 0 || strcmp(argv[i], "-random") == 0 || strcmp(argv[i], "-randomize") == 0) {
-				if (++i >= argc) break;
-				randomizeAll = arg2bool(argv[i]);
+			else if (argv[i][1] == 'X' && argv[i][2] == '\0') {
+				outputFile = "";
 			}
-			else if (strcmp(argv[i], "-a") == 0 || strcmp(argv[i], "-alpha") == 0) {
-				if (++i >= argc) break;
-				if (stricmp(argv[i], "auto") == 0) {
-					channelCount = 0;
-				}
-				channelCount = (arg2bool(argv[i]) ? 4 : 3);
+			else if (argv[i][1] == 'r' && argv[i][2] == '\0') {
+				randomizeAll = true;
 			}
-			else if (strcmp(argv[i], "-O") == 0 || strcmp(argv[i], "-opt") == 0 || strcmp(argv[i], "-optimize") == 0) {
-				if (++i >= argc) break;
-				fullOptimize = arg2bool(argv[i]);
+			else if (argv[i][1] == 'R' && argv[i][2] == '\0') {
+				randomizeAll = false;
 			}
-			else if (strcmp(argv[i], "-S") == 0 || strcmp(argv[i], "-sc") == 0 || strcmp(argv[i], "-scatter") == 0) {
-				if (++i >= argc) break;
-				scatter = arg2bool(argv[i]);
+			else if (argv[i][1] == 'a' && (argv[i][2] == '\0' || ((argv[i][2] & 0xDF) == 'A' && argv[i][3] == '\0'))) {
+				channelCount = (argv[i][2] == '\0' ? 4 : 0);
 			}
-			else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-down") == 0 || strcmp(argv[i], "-downscale") == 0 || strcmp(argv[i], "-scale") == 0) {
-				if (++i >= argc) break;
-				downscale = arg2bool(argv[i]);
+			else if (argv[i][1] == 'A' && (argv[i][2] == '\0' || ((argv[i][2] & 0xDF) == 'A' && argv[i][3] == '\0'))) {
+				channelCount = (argv[i][2] == '\0' ? 3 : 0);
+			}
+			else if (argv[i][1] == 'o' && argv[i][2] == '\0') {
+				fullOptimize = true;
+			}
+			else if (argv[i][1] == 'O' && argv[i][2] == '\0') {
+				fullOptimize = false;
+			}
+			else if (argv[i][1] == 's' && argv[i][2] == '\0') {
+				scatter = true;
+			}
+			else if (argv[i][1] == 'S' && argv[i][2] == '\0') {
+				scatter = false;
+			}
+			else if (argv[i][1] == 'd' && argv[i][2] == '\0') {
+				downscale = true;
+			}
+			else if (argv[i][1] == 'D' && argv[i][2] == '\0') {
+				downscale = false;
+			}
+			else if (argv[i][1] == 'i' && argv[i][2] == '\0') {
+				info = true;
+			}
+			else if (argv[i][1] == 'e' && argv[i][2] == '\0') {
+				embed = true;
+			}
+			else if (argv[i][1] == 'E' && argv[i][2] == '\0') {
+				embed = false;
 			}
 			else {
 				cout << "Warning: unknown flag \"" << argv[i] << "\"" << endl;
@@ -129,40 +154,45 @@ int main(int argc, char** argv) {
 	// Usage
 	if (sources.size() == 0 && imageFile.length() == 0) {
 		cout << "Usage:" << endl;
-		cout << "    " << argv[0] << " [-b ...] [-s ...] [-o ...] [-r ...] [-a ...] [-O ...] [-S ...] [-d ...] image.png file1.txt file2.txt ..." << endl;
+		cout << "    " << argv[0] << " [-b ...] [-l ...] [-x ...] [-a/-A/-aa] [-r] [-o] [-s] [-d] [-i] image.png file1.txt file2.txt ..." << endl;
 		cout << "" << endl;
-		cout << "    -b bitmask : set the amount of bits per color component to be used to store data" << endl;
-		cout << "               : valid values are 1, 2, 3, 4, 5, 6, 7, 8, and auto" << endl;
-		cout << "               : smaller values cause a smaller impact on the image, but need more space" << endl;
+		cout << "       -b bitmask : set the amount of bits per color component to be used to store data" << endl;
+		cout << "                  : valid values are 1, 2, 3, 4, 5, 6, 7, and 8" << endl;
+		cout << "                  : smaller values cause a smaller impact on the image, but need more space" << endl;
+		cout << "               -B : make the bitmask be the minimum required mask as determined from the image" << endl;
 		cout << "" << endl;
-		cout << "    -s size : set the amount of bits per color component to be used to store data" << endl;
-		cout << "            : valid values are positive numbers, with a possible suffix of \"k\" or \"m\"" << endl;
-		cout << "            : value of 0 indicates no size limit" << endl;
-		cout << "            : example:  -s 3m" << endl;
+		cout << "    -l size_limit : set the output file size limit" << endl;
+		cout << "                  : valid values are positive numbers, with a possible suffix of \"k\" or \"m\"" << endl;
+		cout << "                  : value of 0 indicates no size limit" << endl;
+		cout << "               -L : turn off the file size limit" << endl;
 		cout << "" << endl;
-		cout << "    -o output : set the filename to output to" << endl;
-		cout << "              : if the extension is not \".png\", a \".png\" will be appended" << endl;
+		cout << "        -x output : set the filename to output to" << endl;
+		cout << "                  : if the extension is not \".png\", a \".png\" will be appended" << endl;
+		cout << "               -X : set the filename to output to the default file" << endl;
 		cout << "" << endl;
-		cout << "    -r randomize : randomize pixels after data is stored" << endl;
-		cout << "                 : when enabled, it maintains the \"fuzzy\" look of the image" << endl;
-		cout << "                 : (i.e. no band of clean pixels as the end)" << endl;
-		cout << "                 : values are \"1\", \"0\", \"on\", \"off\", \"yes\", \"no\", etc." << endl;
+		cout << "               -a : force an alpha channel to be used" << endl;
+		cout << "                  : can allow for more space to store data without resizing the image" << endl;
+		cout << "               -A : force an alpha channel NOT to be used" << endl;
+		cout << "  -aa/-aA/-Aa/-AA : use the default alpha channel setting of the image" << endl;
 		cout << "" << endl;
-		cout << "    -a alpha : force alpha channel to be on or off" << endl;
-		cout << "             : potentially adds or removes the alpha layer" << endl;
-		cout << "             : values are \"1\", \"0\", \"on\", \"off\", \"yes\", \"no\", etc." << endl;
+		cout << "               -r : enable randomized pixels after data is stored" << endl;
+		cout << "                  : when enabled, it maintains the \"fuzzy\" look of the image" << endl;
+		cout << "                  : (i.e. no band of clean pixels as the end)" << endl;
+		cout << "               -R : disable pixel randomization" << endl;
 		cout << "" << endl;
-		cout << "    -O optimize : set the optimization status (default is off)" << endl;
-		cout << "                : enabling optimization runs an optimization loop which may take longer" << endl;
-		cout << "                : values are \"1\", \"0\", \"on\", \"off\", \"yes\", \"no\", etc." << endl;
+		cout << "               -o : enable output optimization" << endl;
+		cout << "                  : enabling optimization runs an optimization loop which may take longer" << endl;
+		cout << "               -O : disable output optimization" << endl;
 		cout << "" << endl;
-		cout << "    -S scatter : disperses data through the image more evenly" << endl;
-		cout << "               : cancels out randomizer if enabled" << endl;
-		cout << "               : values are \"1\", \"0\", \"on\", \"off\", \"yes\", \"no\", etc." << endl;
+		cout << "               -s : enables scatter; disperses data through the image more evenly" << endl;
+		cout << "                  : cancels out randomizer if enabled" << endl;
+		cout << "               -S : disable scatter" << endl;
 		cout << "" << endl;
-		cout << "    -d downscale : if enabled, downscales the image to the minimum size needed" << endl;
-		cout << "                 : can help out with reducing image size" << endl;
-		cout << "                 : values are \"1\", \"0\", \"on\", \"off\", \"yes\", \"no\", etc." << endl;
+		cout << "               -d : enables downscaling; the image can be resized to the best fit" << endl;
+		cout << "                  : can help with reducing image size" << endl;
+		cout << "               -D : disable downscaling" << endl;
+		cout << "" << endl;
+		cout << "               -i : display image info and exit" << endl;
 		cout << "" << endl;
 		cout << "    image.png : the file to embed data in" << endl;
 		cout << "" << endl;
@@ -179,12 +209,12 @@ int main(int argc, char** argv) {
 	bool isPng = imageFile.length() >= 4 && (imageFile[pos - 4] == '.' && (imageFile[pos - 3] & 0xDF) == 'P' && (imageFile[pos - 2] & 0xDF) == 'N' && (imageFile[pos - 1] & 0xDF) == 'G');
 
 	// Load image
-	cout << "Loading image..." << endl;
+	if (!info) cout << "Loading image..." << endl;
 	std::vector<unsigned char> imageSrc;
 	lodepng::load_file(imageSrc, imageFile.c_str());
 
 	// Decode
-	cout << "Decoding image..." << endl;
+	if (!info) cout << "Decoding image..." << endl;
 	Image image;
 	stringstream errorStream;
 	if (!image.loadFromSource(&imageSrc, isPng, channelCount, &errorStream)) {
@@ -198,7 +228,7 @@ int main(int argc, char** argv) {
 	ImageWriter iw(&image);
 
 	// Image info
-	if (sources.size() == 0) {
+	if (!info && sources.size() == 0) {
 		// Image stats
 		cstring pad = "    ";
 		cout << "Image stats for \"" << imageFile << "\":" << endl;
@@ -252,6 +282,28 @@ int main(int argc, char** argv) {
 	// Size requirement
 	unsigned int bitRequirement = iw.getBitRequirement(sources);
 
+	// Compressed info, for easy parsing
+	if (info) {
+		cstring sep = ",";
+		cstring sepl = "\n";
+		cout << image.getWidth() << sep << image.getHeight() << sep << image.getDefaultChannelCount() << sepl;
+
+		unsigned int dimensionsBest[2];
+		for (int cc = 3; cc <= 4; ++cc) {
+			for (int b = 1; b <= 8; ++b) {
+				for (int s = 0; s <= 1; ++s) {
+					if (bitRequirement > iw.getBitAvailability(b, cc, 0, s, image.getWidth(), image.getHeight())) continue;
+
+					getImageOptimalSize(&image, &iw, bitRequirement, b, cc, 0, s, dimensionsBest);
+					cout << cc << sep << b << sep << s << sep << dimensionsBest[0] << sep << dimensionsBest[1] << sepl;
+				}
+			}
+		}
+
+		// Done
+		return 0;
+	}
+
 	// Filesize loop
 	std::vector<unsigned char> pngOutput;
 	int outputSize;
@@ -290,31 +342,9 @@ int main(int argc, char** argv) {
 		cout << "  Using bitmask of " << bitmask << " with " << channelCount << " channels" << endl;
 
 		// Optimal size checking
-		int dimensionsBest[2];
-		dimensionsBest[0] = image.getWidth();
-		dimensionsBest[1] = image.getHeight();
-		// Crappy brute force method
-		{
-			int dimensions[2];
-			int dimensionsTemp[2];
-			dimensions[0] = image.getWidth();
-			dimensions[1] = image.getHeight();
-			bool i = (dimensions[1] > dimensions[0]);
-			double scale = static_cast<double>(dimensions[!i]) / dimensions[i];
-
-			for (int offset = 0; dimensions[i] - offset > 0; ++offset) {
-				dimensionsTemp[i] = dimensions[i] - offset;
-				dimensionsTemp[!i] = static_cast<int>(dimensions[!i] - offset * scale + 0.5); // 0.5 used for rounding
-
-				if (bitRequirement > iw.getBitAvailability(bitmask, channelCount, 0, scatter, dimensionsTemp[0], dimensionsTemp[1])) {
-					break;
-				}
-
-				dimensionsBest[0] = dimensionsTemp[0];
-				dimensionsBest[1] = dimensionsTemp[1];
-			}
-		}
-		if (static_cast<unsigned int>(dimensionsBest[0]) != image.getWidth() && static_cast<unsigned int>(dimensionsBest[1]) != image.getHeight()) {
+		unsigned int dimensionsBest[2];
+		getImageOptimalSize(&image, &iw, bitRequirement, bitmask, channelCount, 0, scatter, dimensionsBest);
+		if (dimensionsBest[0] != image.getWidth() && dimensionsBest[1] != image.getHeight()) {
 			if (downscale) {
 				cout << "  Downscaling..." << endl;
 				image.downscale(dimensionsBest[0], dimensionsBest[1]);
@@ -326,10 +356,12 @@ int main(int argc, char** argv) {
 		}
 
 		// Packing
-		cout << "  Packing..." << endl;
-		int packCount = iw.pack(sources, bitmask, randomizeAll, scatter);
-		if (packCount < 0) {
-			cout << "  Error packing data into image" << endl;
+		if (embed) {
+			cout << "  Packing..." << endl;
+			int packCount = iw.pack(sources, bitmask, randomizeAll, scatter);
+			if (packCount < 0) {
+				cout << "  Error packing data into image" << endl;
+			}
 		}
 
 		// Writing
@@ -423,20 +455,6 @@ int main(int argc, char** argv) {
 
 
 
-bool arg2bool(cstring arg) {
-	return (
-		stricmp(arg, "on") == 0 ||
-		stricmp(arg, "all") == 0 ||
-		stricmp(arg, "yes") == 0 ||
-		stricmp(arg, "true") == 0 ||
-		stricmp(arg, "1") == 0 ||
-		stricmp(arg, "enable") == 0 ||
-		stricmp(arg, "enabled") == 0
-	);
-}
-
-
-
 LodePNGFilterStrategy fullOptimizeEncodeStrategies[4] = { LFS_ZERO, LFS_MINSUM, LFS_ENTROPY, LFS_BRUTE_FORCE };
 std::string fullOptimizeEncodeStrategynames[4] = { "LFS_ZERO", "LFS_MINSUM", "LFS_ENTROPY", "LFS_BRUTE_FORCE" };
 int fullOptimizeEncodeMinmatches[2] = { 3, 6 };
@@ -463,6 +481,7 @@ bool fullOptimizeEncode(Image* image, lodepng::State* state, std::vector<unsigne
 
 	for (int i = 0; i < 4; i++) { // filter strategy
 		for (int j = 0; j < 2; j++) { // min match
+			if (immediateStream != NULL) *immediateStream << "    " << (i * 2 + j + 1) << " / 8" << endl;
 			std::vector<unsigned char> temp;
 			state->encoder.filter_strategy = fullOptimizeEncodeStrategies[i];
 			state->encoder.zlibsettings.minmatch = fullOptimizeEncodeMinmatches[j];
@@ -495,4 +514,36 @@ bool fullOptimizeEncode(Image* image, lodepng::State* state, std::vector<unsigne
 	// Done
 	return true;
 }
+
+
+
+void getImageOptimalSize(const Image* image, const ImageWriter* iw, unsigned int bitRequirement, unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, unsigned int scatter, unsigned int* dimensionsBest) {
+	assert(dimensionsBest != NULL);
+	assert(iw != NULL);
+
+	dimensionsBest[0] = image->getWidth();
+	dimensionsBest[1] = image->getHeight();
+	// Crappy brute force method
+	{
+		int dimensions[2];
+		int dimensionsTemp[2];
+		dimensions[0] = image->getWidth();
+		dimensions[1] = image->getHeight();
+		bool i = (dimensions[1] > dimensions[0]);
+		double scale = static_cast<double>(dimensions[!i]) / dimensions[i];
+
+		for (int offset = 0; dimensions[i] - offset > 0; ++offset) {
+			dimensionsTemp[i] = dimensions[i] - offset;
+			dimensionsTemp[!i] = static_cast<int>(dimensions[!i] - offset * scale + 0.5); // 0.5 used for rounding
+
+			if (bitRequirement > iw->getBitAvailability(bitmask, channelCount, metadataLength, scatter, dimensionsTemp[0], dimensionsTemp[1])) {
+				break;
+			}
+
+			dimensionsBest[0] = dimensionsTemp[0];
+			dimensionsBest[1] = dimensionsTemp[1];
+		}
+	}
+}
+
 

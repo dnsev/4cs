@@ -135,7 +135,7 @@ namespace ImgLib {
 		return embedCount;
 	}
 
-	unsigned int ImageWriter :: getBitRequirement(const std::vector<std::string>& sources) {
+	unsigned int ImageWriter :: getBitRequirement(const std::vector<std::string>& sources) const {
 		unsigned int totalBits = 0;
 		for (unsigned int i = 0; i < sources.size(); ++i) {
 			// 16 bits for filename length
@@ -147,7 +147,7 @@ namespace ImgLib {
 
 		return totalBits;
 	}
-	unsigned int ImageWriter :: getBitAvailability(unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter, unsigned int width, unsigned int height) {
+	unsigned int ImageWriter :: getBitAvailability(unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter, unsigned int width, unsigned int height) const {
 		assert(bitmask >= 1);
 		assert(bitmask <= 8);
 
