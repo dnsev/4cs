@@ -330,14 +330,13 @@ int main(int argc, char** argv) {
 		}
 
 		// Bitmask
-		if (bitmask == 0) {
-			for (bitmask = 1; bitmask <= 8 && (bitRequirement > iw.getBitAvailability(bitmask, channelCount, 0, scatter, image.getWidth(), image.getHeight())); ++bitmask);
-			if (bitmask > 8) {
-				cout << "  Error: cannot embed files in the image given." << endl;
-				cout << "    Max Available: " << iw.getBitAvailability(8, channelCount, 0, scatter, image.getWidth(), image.getHeight()) << " bytes" << endl;
-				cout << "    Requires     : " << bitRequirement << " bytes" << endl;
-				return -1;
-			}
+		if (bitmask == 0) bitmask = 1;
+		for (; bitmask <= 8 && (bitRequirement > iw.getBitAvailability(bitmask, channelCount, 0, scatter, image.getWidth(), image.getHeight())); ++bitmask);
+		if (bitmask > 8) {
+			cout << "  Error: cannot embed files in the image given." << endl;
+			cout << "    Max Available: " << iw.getBitAvailability(8, channelCount, 0, scatter, image.getWidth(), image.getHeight()) << " bytes" << endl;
+			cout << "    Requires     : " << bitRequirement << " bytes" << endl;
+			return -1;
 		}
 		cout << "  Using bitmask of " << bitmask << " with " << channelCount << " channels" << endl;
 
@@ -519,30 +518,30 @@ bool fullOptimizeEncode(Image* image, lodepng::State* state, std::vector<unsigne
 
 void getImageOptimalSize(const Image* image, const ImageWriter* iw, unsigned int bitRequirement, unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, unsigned int scatter, unsigned int* dimensionsBest) {
 	assert(dimensionsBest != NULL);
+	assert(image != NULL);
 	assert(iw != NULL);
 
 	dimensionsBest[0] = image->getWidth();
 	dimensionsBest[1] = image->getHeight();
+
 	// Crappy brute force method
-	{
-		int dimensions[2];
-		int dimensionsTemp[2];
-		dimensions[0] = image->getWidth();
-		dimensions[1] = image->getHeight();
-		bool i = (dimensions[1] > dimensions[0]);
-		double scale = static_cast<double>(dimensions[!i]) / dimensions[i];
+	int dimensions[2];
+	int dimensionsTemp[2];
+	dimensions[0] = image->getWidth();
+	dimensions[1] = image->getHeight();
+	bool i = (dimensions[1] > dimensions[0]);
+	double scale = static_cast<double>(dimensions[!i]) / dimensions[i];
 
-		for (int offset = 0; dimensions[i] - offset > 0; ++offset) {
-			dimensionsTemp[i] = dimensions[i] - offset;
-			dimensionsTemp[!i] = static_cast<int>(dimensions[!i] - offset * scale + 0.5); // 0.5 used for rounding
+	for (int offset = 0; dimensions[i] - offset > 0; ++offset) {
+		dimensionsTemp[i] = dimensions[i] - offset;
+		dimensionsTemp[!i] = static_cast<int>(dimensions[!i] - offset * scale + 0.5); // 0.5 used for rounding
 
-			if (bitRequirement > iw->getBitAvailability(bitmask, channelCount, metadataLength, scatter, dimensionsTemp[0], dimensionsTemp[1])) {
-				break;
-			}
-
-			dimensionsBest[0] = dimensionsTemp[0];
-			dimensionsBest[1] = dimensionsTemp[1];
+		if (bitRequirement > iw->getBitAvailability(bitmask, channelCount, metadataLength, scatter, dimensionsTemp[0], dimensionsTemp[1])) {
+			break;
 		}
+
+		dimensionsBest[0] = dimensionsTemp[0];
+		dimensionsBest[1] = dimensionsTemp[1];
 	}
 }
 
