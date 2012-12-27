@@ -13,6 +13,7 @@
 namespace ImgLib {
 
 	ImageReader :: ImageReader(const Image* image) :
+		ImageHashmasker(),
 		image(image),
 		x(0),
 		y(0),
@@ -50,6 +51,7 @@ namespace ImgLib {
 		this->scatterRange = 0;
 		this->scatterFullRange = 0;
 		this->channels = 3;
+		this->resetHashmask();
 
 		// Read bitmask
 		this->bitmask = this->readPixel(0x07);
@@ -63,6 +65,20 @@ namespace ImgLib {
 
 		// Bit read depth
 		this->channels = ((flags & 4) != 0 ? 4 : 3);
+
+		// Ext-flags
+		bool metadata = false;
+		if ((flags & 1) != 0) {
+			// Flags
+			if (!this->extractData(buffer, 1)) return -1;
+			unsigned int flags2 = ImageReader::dataToInt(buffer, 1);
+			// Evaluate
+			if ((flags2 & 2) != 0) metadata = true;
+			if ((flags2 & 4) != 0) {
+				this->completePixel();
+				this->initHashmask(this->image, this->image->getWidth(), this->image->getHeight(), this->channels, this->bitmask);
+			}
+		}
 
 		// Scatter
 		if ((flags & 2) != 0) {
@@ -81,7 +97,7 @@ namespace ImgLib {
 		}
 
 		// Metadata
-		if ((flags & 1) != 0) {
+		if (metadata) {
 			if (!this->extractData(buffer, 2)) return -1;
 			unsigned int metadataLength = ImageReader::dataToInt(buffer, 2);
 			// Read and discard
@@ -100,6 +116,7 @@ namespace ImgLib {
 		std::vector<unsigned int> fileSizes;
 		unsigned int value;
 		unsigned long long totalValue = 0;
+		unsigned long long limit;
 		for (unsigned int i = 0; i < fileCount; ++i) {
 			// Filename length
 			if (!this->extractData(buffer, 2)) return -1;
@@ -111,12 +128,13 @@ namespace ImgLib {
 			value = ImageReader::dataToInt(buffer, 4);
 			fileSizes.push_back(value);
 			totalValue += value;
-		}
 
-		// Error checking
-		if (totalValue * 8 > (((this->image->getWidth() * (this->image->getHeight() - this->y) - this->x) * this->channels) - this->c) * this->bitmask) {
-			// Data overflow
-			return -1;
+			// Error checking
+			limit = ((((this->image->getWidth() * (this->image->getHeight() - this->y) - this->x) * this->channels) - this->c) * this->bitmask + 8 - 1) / 8;
+			if (totalValue > limit) {
+				// Data overflow
+				return -1;
+			}
 		}
 
 		// Filenames
@@ -177,6 +195,7 @@ namespace ImgLib {
 		}
 
 		// Done
+		this->freeHashmask();
 		return countWritten;
 	}
 
@@ -248,6 +267,10 @@ namespace ImgLib {
 
 	int ImageReader :: readPixel(unsigned int valueMask) {
 		int value = (this->image->getPixel(this->x, this->y, this->c) & valueMask);
+		if (this->isHashmasking()) {
+			// Decode
+			value = this->decodeHashmask(value, this->bitmask);
+		}
 
 		if (this->scatter) {
 			++this->scatterPos;

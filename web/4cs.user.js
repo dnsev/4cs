@@ -8,7 +8,7 @@
 // @include        https://archive.foolz.us/*
 // @require        https://raw.github.com/dnsev/4cs/master/web/zlib.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/png.js
-// @version        0.80a
+// @version        0.80b
 // @updateURL      https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
 // ==/UserScript==
 
@@ -967,14 +967,8 @@ function DataImage (source_location, load_callback) {
 		self.load_callback(self);
 	}
 }
-DataImage.prototype.get_pixel = function (x, y) {
-	x = (x + y * this.image.width) * this.color_depth;
-	if (this.color_depth == 4) {
-		return [ this.pixels[x] , this.pixels[x + 1] , this.pixels[x + 2] , this.pixels[x + 3] ];
-	}
-	else {
-		return [ this.pixels[x] , this.pixels[x + 1] , this.pixels[x + 2] ];
-	}
+DataImage.prototype.get_pixel = function (x, y, c) {
+	return this.pixels[(x + y * this.image.width) * this.color_depth + c];
 }
 
 function DataImageReader (image) {
@@ -987,13 +981,16 @@ function DataImageReader (image) {
 	this.c = 0;
 	this.bit_value = 0;
 	this.bit_count = 0;
-	this.pixel = null;
 	this.pixel_pos = 0;
 	this.scatter_pos = 0;
 	this.scatter_range = 0;
 	this.scatter_full_range = 0;
 	this.scatter = false;
 	this.channels = 0;
+	this.hashmasking = false;
+	this.hashmask_length = 0;
+	this.hashmask_index = 0;
+	this.hashmask_value = null;
 }
 DataImageReader.prototype.unpack = function () {
 	try {
@@ -1010,13 +1007,16 @@ DataImageReader.prototype.__unpack = function () {
 	this.c = 0;
 	this.bit_value = 0;
 	this.bit_count = 0;
-	this.pixel = this.image.get_pixel(this.x, this.y);
 	this.pixel_pos = 0;
 	this.scatter_pos = 0;
 	this.scatter_range = 0;
 	this.scatter_full_range = 0;
 	this.scatter = false;
 	this.channels = 3;
+	this.hashmasking = false;
+	this.hashmask_length = 0;
+	this.hashmask_index = 0;
+	this.hashmask_value = null;
 
 	// Read bitmask
 	this.bitmask = 1 + this.__read_pixel(0x07);
@@ -1027,6 +1027,19 @@ DataImageReader.prototype.__unpack = function () {
 	var flags = this.__read_pixel(0x07);
 	// Bit depth
 	if ((flags & 4) != 0) this.channels = 4;
+
+	// Exflags
+	var metadata = false;
+	if ((flags & 1) != 0) {
+		// Flags
+		var flags2 = this.__data_to_int(this.__extract_data(1));
+		// Evaluate
+		if ((flags2 & 2) != 0) metadata = true;
+		if ((flags2 & 4) != 0) {
+			this.__complete_pixel();
+			this.__init_hashmask();
+		}
+	}
 
 	// Scatter
 	if ((flags & 2) != 0) {
@@ -1043,7 +1056,7 @@ DataImageReader.prototype.__unpack = function () {
 	}
 
 	// Metadata
-	if ((flags & 1) != 0) {
+	if (metadata) {
 		var meta_length = this.__data_to_int(this.__extract_data(2));
 		var meta = this.__extract_data(meta_length);
 	}
@@ -1054,11 +1067,24 @@ DataImageReader.prototype.__unpack = function () {
 	// Filename lengths and file lengths
 	var filename_lengths = new Array();
 	var file_sizes = new Array();
+	var v;
+	var total_size = 0;
+	var size_limit;
 	for (var i = 0; i < file_count; ++i) {
 		// Filename length
-		filename_lengths.push(this.__data_to_int(this.__extract_data(2)));
+		v = this.__data_to_int(this.__extract_data(2));
+		filename_lengths.push(v);
+		total_size += v;
 		// File length
-		file_sizes.push(this.__data_to_int(this.__extract_data(4)));
+		v = this.__data_to_int(this.__extract_data(4));
+		file_sizes.push(v);
+		total_size += v;
+
+		// Error checking
+		size_limit = Math.ceil(((((this.image.width * (this.image.height - this.y) - this.x) * this.channels) - this.c) * this.bitmask) / 8);
+		if (total_size > size_limit) {
+			throw "Data overflow";
+		}
 	}
 
 	// Filenames
@@ -1080,6 +1106,8 @@ DataImageReader.prototype.__unpack = function () {
 	}
 
 	// Done
+	this.hashmasking = false;
+	this.hashmask_value = null;
 	return [ filenames , sources ];
 }
 DataImageReader.prototype.next_pixel_component = function (count) {
@@ -1095,7 +1123,6 @@ DataImageReader.prototype.next_pixel_component = function (count) {
 					throw "Pixel overflow";
 				}
 			}
-			this.pixel = this.image.get_pixel(this.x, this.y);
 		}
 	}
 }
@@ -1132,7 +1159,10 @@ DataImageReader.prototype.__data_to_string = function (data) {
 	return val;
 }
 DataImageReader.prototype.__read_pixel = function (value_mask) {
-	var value = (this.pixel[this.c] & value_mask);
+	var value = (this.image.get_pixel(this.x, this.y, this.c) & value_mask);
+	if (this.hashmasking) {
+		value = this.__decode_hashmask(value, this.bitmask);
+	}
 
 	if (this.scatter) {
 		this.scatter_pos += 1;
@@ -1152,6 +1182,87 @@ DataImageReader.prototype.__complete_pixel = function () {
 	if (this.bit_count > 0) {
 		this.bit_count = 0;
 		this.bit_value = 0;
+	}
+}
+DataImageReader.prototype.__init_hashmask = function () {
+	this.hashmasking = true;
+	this.hashmask_length = 32 * 8;
+	this.hashmask_index = 0;
+	this.hashmask_value = new Uint8Array(this.hashmask_length / 8);
+	for (var i = 0; i < this.hashmask_length / 8; ++i) {
+		this.hashmask_value[i] = (1 << ((i % 8) + 1)) - 1;
+	}
+	this.__calculate_hashmask();
+	this.hashmask_index = 0;
+}
+DataImageReader.prototype.__calculate_hashmask = function () {
+	// Vars
+	var x = 0;
+	var y = 0;
+	var c = 0;
+	var w = this.image.width;
+	var h = this.image.height;
+	var cc = this.channels;
+
+	// First 2 flag pixels
+	this.__update_hashmask(this.image.get_pixel(x, y, c) >> 3, 5);
+	if ((c = (c + 1) % cc) == 0 && (x = (x + 1) % w) == 0 && (y = (y + 1) % h) == 0) return;
+	this.__update_hashmask(this.image.get_pixel(x, y, c) >> 3, 5);
+	if ((c = (c + 1) % cc) == 0 && (x = (x + 1) % w) == 0 && (y = (y + 1) % h) == 0) return;
+
+	// All other pixels
+	if (this.bitmask != 8) {
+		while (true) {
+			// Update
+			this.__update_hashmask(this.image.get_pixel(x, y, c) >> this.bitmask, 8 - this.bitmask);
+			// Next
+			if ((c = (c + 1) % cc) == 0 && (x = (x + 1) % w) == 0 && (y = (y + 1) % h) == 0) return;
+		}
+	}
+}
+DataImageReader.prototype.__update_hashmask = function (value, bits) {
+	// First 2 flag pixels
+	var b;
+	while (true) {
+		// Number of bits that can be used on this index
+		b = 8 - (this.hashmask_index % 8);
+		if (bits <= b) {
+			// Apply
+			this.hashmask_value[Math.floor(this.hashmask_index / 8)] ^= (value) << (this.hashmask_index % 8);
+			// Done
+			this.hashmask_index = (this.hashmask_index + bits) % (this.hashmask_length);
+			return;
+		}
+		else {
+			// Partial apply
+			this.hashmask_value[Math.floor(this.hashmask_index / 8)] ^= (value & ((1 << b) - 1)) << (this.hashmask_index % 8);
+			// Done
+			this.hashmask_index = (this.hashmask_index + b) % (this.hashmask_length);
+			bits -= b;
+			value >>= b;
+		}
+	}
+}
+DataImageReader.prototype.__decode_hashmask = function (value, bits) {
+	var b;
+	var off = 0;
+	while (true) {
+		b = 8 - (this.hashmask_index % 8);
+		if (bits <= b) {
+			// Apply
+			value ^= (this.hashmask_value[Math.floor(this.hashmask_index / 8)] & ((1 << bits) - 1)) << off;
+			// Done
+			this.hashmask_index = (this.hashmask_index + bits) % (this.hashmask_length);
+			return value;
+		}
+		else {
+			// Partial apply
+			value ^= (this.hashmask_value[Math.floor(this.hashmask_index / 8)] & ((1 << b) - 1)) << off;
+			// Done
+			this.hashmask_index = (this.hashmask_index + b) % (this.hashmask_length);
+			bits -= b;
+			off += b;
+		}
 	}
 }
 

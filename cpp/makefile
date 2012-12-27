@@ -26,11 +26,11 @@ rebuild: clean compile
 
 
 
-$(BIN)embed : $(OBJ)Embed.o $(OBJ)ImgLib/Image.o $(OBJ)ImgLib/ImageWriter.o $(OBJ)LodePNG/lodepng.o $(OBJ)Random/Random.o
+$(BIN)embed : $(OBJ)Embed.o $(OBJ)ImgLib/Image.o $(OBJ)ImgLib/ImageWriter.o $(OBJ)LodePNG/lodepng.o $(SRC)JPEG/jpgd.o $(OBJ)ImgLib/ImageHashmasker.o $(OBJ)Random/Random.o
 	@$(CC) $(CC_FLAGS) -o $@ $^
 	@echo $(BIN)embed compiled
 
-$(BIN)extract : $(OBJ)Extract.o $(OBJ)ImgLib/Image.o $(OBJ)ImgLib/ImageReader.o $(OBJ)LodePNG/lodepng.o
+$(BIN)extract : $(OBJ)Extract.o $(OBJ)ImgLib/Image.o $(OBJ)ImgLib/ImageReader.o $(OBJ)LodePNG/lodepng.o $(SRC)JPEG/jpgd.o $(OBJ)ImgLib/ImageHashmasker.o
 	@$(CC) $(CC_FLAGS) -o $@ $^
 	@echo $(BIN)extract compiled
 
@@ -41,7 +41,7 @@ $(OBJ)Embed.o : $(SRC)Embed.cpp $(SRC)Include.hpp $(SRC)LodePNG/lodepng.h
 $(OBJ)Extract.o : $(SRC)Extract.cpp $(SRC)Include.hpp $(SRC)LodePNG/lodepng.h
 	@$(CC) $(CC_CFLAGS) -o $@ $<
 
-$(OBJ)ImgLib/Image.o : $(SRC)ImgLib/Image.cpp $(SRC)ImgLib/Image.hpp $(SRC)Include.hpp $(SRC)LodePNG/lodepng.h $(SRC)NanoJPEG/jpeg_decoder.h
+$(OBJ)ImgLib/Image.o : $(SRC)ImgLib/Image.cpp $(SRC)ImgLib/Image.hpp $(SRC)Include.hpp $(SRC)LodePNG/lodepng.h $(SRC)JPEG/jpgd.h
 	@$(CC) $(CC_CFLAGS) -o $@ $<
 
 $(OBJ)ImgLib/ImageReader.o : $(SRC)ImgLib/ImageReader.cpp $(SRC)ImgLib/ImageReader.hpp $(SRC)Include.hpp
@@ -50,8 +50,18 @@ $(OBJ)ImgLib/ImageReader.o : $(SRC)ImgLib/ImageReader.cpp $(SRC)ImgLib/ImageRead
 $(OBJ)ImgLib/ImageWriter.o : $(SRC)ImgLib/ImageWriter.cpp $(SRC)ImgLib/ImageWriter.hpp $(SRC)Include.hpp $(SRC)Random/Random.hpp
 	@$(CC) $(CC_CFLAGS) -o $@ $<
 
+$(OBJ)ImgLib/ImageHashmasker.o : $(SRC)ImgLib/ImageHashmasker.cpp $(SRC)ImgLib/ImageHashmasker.hpp $(SRC)Include.hpp
+	@$(CC) $(CC_CFLAGS) -o $@ $<
+
 
 $(OBJ)LodePNG/lodepng.o : $(SRC)LodePNG/lodepng.cpp $(SRC)LodePNG/lodepng.h
+	@$(CC) $(CC_CFLAGS) -o $@ $<
+
+
+$(OBJ)JPEG/jpgd.o : $(SRC)JPEG/jpgd.cpp $(SRC)JPEG/jpgd.h
+	@$(CC) $(CC_CFLAGS) -o $@ $<
+
+$(OBJ)JPEG/jpge.o : $(SRC)JPEG/jpge.cpp $(SRC)JPEG/jpge.h
 	@$(CC) $(CC_CFLAGS) -o $@ $<
 
 

@@ -11,6 +11,7 @@
 namespace ImgLib {
 
 	ImageWriter :: ImageWriter(Image* image) :
+		ImageHashmasker(),
 		image(image),
 		x(0),
 		y(0),
@@ -33,10 +34,12 @@ namespace ImgLib {
 	ImageWriter :: ~ImageWriter() {
 	}
 
-	int ImageWriter :: pack(const std::vector<std::string>& sources, unsigned int bitmask, bool randomizeAll, bool scatter) {
+	int ImageWriter :: pack(const std::vector<std::string>& sources, unsigned int bitmask, bool randomizeAll, bool scatter, bool hashmask) {
+		unsigned int metadataLength = 0;
+
 		assert(bitmask >= 1);
 		assert(bitmask <= 8);
-		assert(this->getBitRequirement(sources) <= this->getBitAvailability(bitmask, this->image->getChannelCount(), 0, scatter, this->image->getWidth(), this->image->getHeight()));
+		assert(ImageWriter::getBitRequirement(sources) <= ImageWriter::getBitAvailability(this->image->getWidth(), this->image->getHeight(), this->image->getChannelCount(), bitmask, metadataLength, scatter, hashmask));
 
 		// Vars
 		char buffer[BUFFER_SIZE];
@@ -57,20 +60,39 @@ namespace ImgLib {
 		this->scatterPos = 0;
 		this->scatterRange = 0;
 		this->scatterFullRange = 0;
+		this->resetHashmask();
 
 		// Metadata settings
-		unsigned int metadataLength = 0;
+		bool hasExt = (metadataLength > 0) || hashmask;
 
 		// Super-meta
 		this->writePixel((this->bitmask - 1), 0xF8, 0x07);
-		unsigned int flags = (metadataLength > 0 ? 1 : 0) | (scatter ? 2 : 0) | (this->channels == 4 ? 4 : 0);
+		unsigned int flags = (hasExt ? 1 : 0) | (scatter ? 2 : 0) | (this->channels == 4 ? 4 : 0);
 		this->writePixel(flags, 0xF8, 0x07);
+
+		// Extflags
+		if ((flags & 1) != 0) {
+			// Ext flags 1
+			unsigned int flags2 = 0;
+			// bit 1 is reserved
+			flags2 |= (metadataLength > 0 ? 2 : 0); // has metadata
+			flags2 |= (hashmask ? 4 : 0); // hashmask data
+			// bit 8 is reserved
+			ImageWriter::intToData(flags2, buffer, 1);
+			this->embedData(buffer, 1);
+
+			// Hashmask enabled
+			if (hashmask) {
+				this->completePixel();
+				this->initHashmask(this->image, this->image->getWidth(), this->image->getHeight(), this->channels, this->bitmask);
+			}
+		}
 
 		// Scatter
 		if (scatter) {
 			// Calculate
 			this->scatterRange = (
-				(this->getBitRequirement(sources) + // data length
+				(ImageWriter::getBitRequirement(sources) + // data length
 				(2 + (metadataLength > 0 ? 2 + metadataLength : 0)) * 8 + // extra metadata length
 				this->bitmask - 1 // make this perform ceil rather than floor
 			) / this->bitmask);
@@ -85,14 +107,16 @@ namespace ImgLib {
 			this->scatterFullRange = ((this->image->getWidth() * this->image->getHeight() * this->channels) - this->pixelPos - 1); // Total amount of pixel components used
 		}
 
-		// Metadata
+		// Metadata (only happens if metadata flag is set)
 		if (metadataLength > 0) {
+			// Actual metadata
 			ImageWriter::intToData(metadataLength, buffer, 2);
 			this->embedData(buffer, 2);
 			// Not implemented; dummy buffer
 			buffer[0] = 0;
 			while (--metadataLength >= 0) this->embedData(buffer, 1);
 		}
+
 
 		// File count
 		ImageWriter::intToData(sources.size(), buffer, 2);
@@ -132,10 +156,11 @@ namespace ImgLib {
 
 		// Done
 		this->complete();
+		this->freeHashmask();
 		return embedCount;
 	}
 
-	unsigned int ImageWriter :: getBitRequirement(const std::vector<std::string>& sources) const {
+	unsigned int ImageWriter :: getBitRequirement(const std::vector<std::string>& sources) {
 		unsigned int totalBits = 0;
 		for (unsigned int i = 0; i < sources.size(); ++i) {
 			// 16 bits for filename length
@@ -147,14 +172,15 @@ namespace ImgLib {
 
 		return totalBits;
 	}
-	unsigned int ImageWriter :: getBitAvailability(unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter, unsigned int width, unsigned int height) const {
+	unsigned int ImageWriter :: getBitAvailability(unsigned int width, unsigned int height, unsigned int channelCount, unsigned int bitmask, unsigned int metadataLength, bool scatter, bool hashmask) {
 		assert(bitmask >= 1);
 		assert(bitmask <= 8);
 
+		int extFlagCount = (metadataLength > 0 || hashmask) ;
 		// 16 : file count
 		// metadataLength * 8 + 16 (only if metadataLength > 0)
 		// ((32 - 1) / bitmask * bitmask + bitmask) extra bits if scatter==true (ceil(32 / bitmask) * bitmask)
-		unsigned int metadataBits = 16 + (metadataLength > 0 ? 16 + metadataLength * 8 : 0) + (scatter ? (32 - 1) / bitmask * bitmask + bitmask : 0);
+		unsigned int metadataBits = 16 + extFlagCount * 8 + (metadataLength > 0 ? 16 + metadataLength * 8 : 0) + (scatter ? (32 - 1) / bitmask * bitmask + bitmask : 0);
 		// first "-1" : for the bitmask
 		// second "-1" : for the flags
 		// last "-1" : last byte is reserved
@@ -230,10 +256,14 @@ namespace ImgLib {
 	}
 
 	bool ImageWriter :: writePixel(unsigned int value, unsigned int pixelMask, unsigned int valueMask) {
+		value = (value & valueMask);
+		if (this->isHashmasking()) {
+			// Modify value
+			value = this->encodeHashmask(value, this->bitmask);
+		}
 		this->image->setPixel(
 			this->x, this->y, this->c,
-			(this->image->getPixel(this->x, this->y, this->c) & pixelMask) |
-				(value & valueMask)
+			(this->image->getPixel(this->x, this->y, this->c) & pixelMask) | value
 		);
 		if (this->scatter) {
 			++this->scatterPos;

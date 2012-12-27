@@ -2,13 +2,14 @@
 #define IMGLIB_IMAGEREADER_H 1
 
 #include "../Include.hpp"
+#include "ImageHashmasker.hpp"
 
 
 
 namespace ImgLib {
 	class Image;
 
-	class ImageReader {
+	class ImageReader : public ImageHashmasker {
 	private:
 		const Image* image;
 		unsigned int x;

@@ -5,6 +5,7 @@
 #include "ImgLib/Image.hpp"
 #include "ImgLib/ImageReader.hpp"
 #include "LodePNG/lodepng.h"
+#define EXTRACT_VERSION "1.0b"
 using namespace std;
 using namespace ImgLib;
 
@@ -15,8 +16,9 @@ int main(int argc, char** argv) {
 	// Settings
 	string outputPrefix = "";
 	string outputSuffix = "-extracted";
-	bool setPrefixSuffix = false;
 	cstring file = NULL;
+	bool setPrefixSuffix = false;
+	bool version = false;
 
 	// Read params
 	bool canFlag = true;
@@ -41,6 +43,12 @@ int main(int argc, char** argv) {
 					outputPrefix = "";
 				}
 			}
+			else if (argv[i][1] == 'v' && argv[i][2] == '\0') {
+				version = true;
+			}
+			else if (argv[i][1] == 'V' && argv[i][2] == '\0') {
+				version = false;
+			}
 			else {
 				cout << "Warning: unknown flag \"" << argv[i] << "\"" << endl;
 			}
@@ -50,6 +58,12 @@ int main(int argc, char** argv) {
 				file = argv[i];
 			}
 		}
+	}
+
+	// Version
+	if (version) {
+		cout << EXTRACT_VERSION << endl;
+		return 0;
 	}
 
 	// Usage

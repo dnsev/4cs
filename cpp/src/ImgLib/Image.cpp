@@ -1,6 +1,6 @@
 #include "Image.hpp"
 #include "../LodePNG/lodepng.h"
-#include "../NanoJPEG/jpeg_decoder.h"
+#include "../JPEG/jpgd.h"
 #include <cassert>
 
 
@@ -66,75 +66,34 @@ namespace ImgLib {
 			}
 		}
 		else {
-			Jpeg::Decoder d(&((*source)[0]), source->size(), malloc, free);
+			int actual_comps = 0;;
+			int w, h;
+			unsigned char* image = jpgd::decompress_jpeg_image_from_memory(
+				&((*source)[0]),
+				source->size(),
+				&w,
+				&h,
+				&actual_comps,
+				4
+			);
 
 			// Error
-			if (d.GetResult() != Jpeg::Decoder::OK) {
+			if (image == NULL) {
 				if (errorStream != NULL) {
-					switch (d.GetResult()) {
-						case Jpeg::Decoder::NotAJpeg:
-						{
-							*errorStream << "Jpeg load error: not a jpeg";
-						}
-						break;
-						case Jpeg::Decoder::Unsupported:
-						{
-							*errorStream << "Jpeg load error: unsupported";
-						}
-						break;
-						case Jpeg::Decoder::OutOfMemory:
-						{
-							*errorStream << "Jpeg load error: out of memory";
-						}
-						break;
-						case Jpeg::Decoder::InternalError:
-						{
-							*errorStream << "Jpeg load error: internal error";
-						}
-						break;
-						case Jpeg::Decoder::SyntaxError:
-						{
-							*errorStream << "Jpeg load error: syntax error";
-						}
-						break;
-						default:
-						{
-							*errorStream << "Jpeg load error " << d.GetResult();
-						}
-						break;
-					}
+					// TODO:  better error message
+					*errorStream << "Jpeg load error";
 				}
 
 				return false;
 			}
 
 			// Transfer
-			this->width = d.GetWidth();
-			this->height = d.GetHeight();
+			this->width = w;
+			this->height = h;
 
 			this->pixels.resize(this->width * this->height * 4);
-			if (d.IsColor()) {
-				for (unsigned int y = 0; y < this->height; ++y) {
-					for (unsigned int x = 0; x < this->width; ++x) {
-						this->pixels[(y * this->width + x) * 4 + 0] = d.GetImage()[(y * this->width + x) * 3 + 0];
-						this->pixels[(y * this->width + x) * 4 + 1] = d.GetImage()[(y * this->width + x) * 3 + 1];
-						this->pixels[(y * this->width + x) * 4 + 2] = d.GetImage()[(y * this->width + x) * 3 + 2];
-						this->pixels[(y * this->width + x) * 4 + 3] = 255;
-					}
-				}
-			}
-			else {
-				unsigned char c;
-				for (unsigned int y = 0; y < this->height; ++y) {
-					for (unsigned int x = 0; x < this->width; ++x) {
-						c = d.GetImage()[(y * this->width + x) * 3 + 0];
-						this->pixels[(y * this->width + x) * 4 + 0] = c;
-						this->pixels[(y * this->width + x) * 4 + 1] = c;
-						this->pixels[(y * this->width + x) * 4 + 2] = c;
-						this->pixels[(y * this->width + x) * 4 + 3] = 255;
-					}
-				}
-			}
+			std::copy(image, image + (this->width * this->height * 4), this->pixels.begin());
+			delete [] image;
 
 			// Jpeg, so no alpha
 			this->hasAlphaDefault = false;

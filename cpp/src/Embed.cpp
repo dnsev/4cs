@@ -10,13 +10,14 @@
 #include "ImgLib/Image.hpp"
 #include "ImgLib/ImageWriter.hpp"
 #include "LodePNG/lodepng.h"
+#define EMBED_VERSION "1.0b"
 using namespace std;
 using namespace ImgLib;
 
 
 
 bool fullOptimizeEncode(Image* image, lodepng::State* state, std::vector<unsigned char>* pngOutput, ostream* immediateStream, ostream* statusStream, ostream* errorStream);
-void getImageOptimalSize(const Image* image, const ImageWriter* iw, unsigned int bitRequirement, unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, unsigned int scatter, unsigned int* dimensionsBest);
+void getImageOptimalSize(const Image* image, unsigned int bitRequirement, unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter, bool hashmask, unsigned int* dimensionsBest);
 
 
 
@@ -32,6 +33,8 @@ int main(int argc, char** argv) {
 	bool downscale = false;
 	bool info = false;
 	bool embed = true;
+	bool version = false;
+	bool hashmask = true;
 	std::string imageFile = "";
 	std::vector<std::string> sources;
 
@@ -137,6 +140,18 @@ int main(int argc, char** argv) {
 			else if (argv[i][1] == 'E' && argv[i][2] == '\0') {
 				embed = false;
 			}
+			else if (argv[i][1] == 'v' && argv[i][2] == '\0') {
+				version = true;
+			}
+			else if (argv[i][1] == 'V' && argv[i][2] == '\0') {
+				version = false;
+			}
+			else if (argv[i][1] == 'h' && argv[i][2] == '\0') {
+				hashmask = true;
+			}
+			else if (argv[i][1] == 'H' && argv[i][2] == '\0') {
+				hashmask = false;
+			}
 			else {
 				cout << "Warning: unknown flag \"" << argv[i] << "\"" << endl;
 			}
@@ -149,6 +164,12 @@ int main(int argc, char** argv) {
 				sources.push_back(argv[i]);
 			}
 		}
+	}
+
+	// Version
+	if (version) {
+		cout << EMBED_VERSION << endl;
+		return 0;
 	}
 
 	// Usage
@@ -224,9 +245,6 @@ int main(int argc, char** argv) {
 	}
 	channelCount = image.getChannelCount();
 
-	// Image writer
-	ImageWriter iw(&image);
-
 	// Image info
 	if (!info && sources.size() == 0) {
 		// Image stats
@@ -240,7 +258,7 @@ int main(int argc, char** argv) {
 
 			cstring units;
 			for (int i = 1; i <= 8; ++i) {
-				double byteSpace = (iw.getBitAvailability(i, cc, 0, scatter, image.getWidth(), image.getHeight()) / 8);
+				double byteSpace = (ImageWriter::getBitAvailability(image.getWidth(), image.getHeight(), cc, i, 0, scatter, hashmask) / 8);
 				if (byteSpace >= 1024 * 1024) {
 					byteSpace /= 1024 * 1024;
 					units = "MB";
@@ -280,7 +298,7 @@ int main(int argc, char** argv) {
 	}
 
 	// Size requirement
-	unsigned int bitRequirement = iw.getBitRequirement(sources);
+	unsigned int bitRequirement = ImageWriter::getBitRequirement(sources);
 
 	// Compressed info, for easy parsing
 	if (info) {
@@ -292,10 +310,12 @@ int main(int argc, char** argv) {
 		for (int cc = 3; cc <= 4; ++cc) {
 			for (int b = 1; b <= 8; ++b) {
 				for (int s = 0; s <= 1; ++s) {
-					if (bitRequirement > iw.getBitAvailability(b, cc, 0, s, image.getWidth(), image.getHeight())) continue;
+					for (int hm = 0; hm <= 1; ++hm) {
+						if (bitRequirement > ImageWriter::getBitAvailability(image.getWidth(), image.getHeight(), cc, b, 0, s, hm)) continue;
 
-					getImageOptimalSize(&image, &iw, bitRequirement, b, cc, 0, s, dimensionsBest);
-					cout << cc << sep << b << sep << s << sep << dimensionsBest[0] << sep << dimensionsBest[1] << sepl;
+						getImageOptimalSize(&image, bitRequirement, b, cc, 0, s, hm, dimensionsBest);
+						cout << cc << sep << b << sep << s << sep << hm << sep << dimensionsBest[0] << sep << dimensionsBest[1] << sepl;
+					}
 				}
 			}
 		}
@@ -303,6 +323,9 @@ int main(int argc, char** argv) {
 		// Done
 		return 0;
 	}
+
+	// Image writer
+	ImageWriter iw(&image);
 
 	// Filesize loop
 	std::vector<unsigned char> pngOutput;
@@ -331,10 +354,10 @@ int main(int argc, char** argv) {
 
 		// Bitmask
 		if (bitmask == 0) bitmask = 1;
-		for (; bitmask <= 8 && (bitRequirement > iw.getBitAvailability(bitmask, channelCount, 0, scatter, image.getWidth(), image.getHeight())); ++bitmask);
+		for (; bitmask <= 8 && (bitRequirement > ImageWriter::getBitAvailability(image.getWidth(), image.getHeight(), channelCount, bitmask, 0, scatter, hashmask)); ++bitmask);
 		if (bitmask > 8) {
 			cout << "  Error: cannot embed files in the image given." << endl;
-			cout << "    Max Available: " << iw.getBitAvailability(8, channelCount, 0, scatter, image.getWidth(), image.getHeight()) << " bytes" << endl;
+			cout << "    Max Available: " << ImageWriter::getBitAvailability(image.getWidth(), image.getHeight(), channelCount, bitmask, 0, scatter, hashmask) << " bytes" << endl;
 			cout << "    Requires     : " << bitRequirement << " bytes" << endl;
 			return -1;
 		}
@@ -342,7 +365,7 @@ int main(int argc, char** argv) {
 
 		// Optimal size checking
 		unsigned int dimensionsBest[2];
-		getImageOptimalSize(&image, &iw, bitRequirement, bitmask, channelCount, 0, scatter, dimensionsBest);
+		getImageOptimalSize(&image, bitRequirement, bitmask, channelCount, 0, scatter, hashmask, dimensionsBest);
 		if (dimensionsBest[0] != image.getWidth() && dimensionsBest[1] != image.getHeight()) {
 			if (downscale) {
 				cout << "  Downscaling..." << endl;
@@ -357,7 +380,7 @@ int main(int argc, char** argv) {
 		// Packing
 		if (embed) {
 			cout << "  Packing..." << endl;
-			int packCount = iw.pack(sources, bitmask, randomizeAll, scatter);
+			int packCount = iw.pack(sources, bitmask, randomizeAll, scatter, hashmask);
 			if (packCount < 0) {
 				cout << "  Error packing data into image" << endl;
 			}
@@ -516,10 +539,8 @@ bool fullOptimizeEncode(Image* image, lodepng::State* state, std::vector<unsigne
 
 
 
-void getImageOptimalSize(const Image* image, const ImageWriter* iw, unsigned int bitRequirement, unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, unsigned int scatter, unsigned int* dimensionsBest) {
+void getImageOptimalSize(const Image* image, unsigned int bitRequirement, unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter, bool hashmask, unsigned int* dimensionsBest) {
 	assert(dimensionsBest != NULL);
-	assert(image != NULL);
-	assert(iw != NULL);
 
 	dimensionsBest[0] = image->getWidth();
 	dimensionsBest[1] = image->getHeight();
@@ -536,7 +557,7 @@ void getImageOptimalSize(const Image* image, const ImageWriter* iw, unsigned int
 		dimensionsTemp[i] = dimensions[i] - offset;
 		dimensionsTemp[!i] = static_cast<int>(dimensions[!i] - offset * scale + 0.5); // 0.5 used for rounding
 
-		if (bitRequirement > iw->getBitAvailability(bitmask, channelCount, metadataLength, scatter, dimensionsTemp[0], dimensionsTemp[1])) {
+		if (bitRequirement > ImageWriter::getBitAvailability(dimensionsTemp[0], dimensionsTemp[1], channelCount, bitmask, metadataLength, scatter, hashmask)) {
 			break;
 		}
 

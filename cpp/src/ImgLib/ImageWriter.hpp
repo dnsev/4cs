@@ -2,6 +2,7 @@
 #define IMGLIB_IMAGEWRITER_H 1
 
 #include "../Include.hpp"
+#include "ImageHashmasker.hpp"
 #include <vector>
 #include <string>
 #include <cstring>
@@ -11,7 +12,7 @@
 namespace ImgLib {
 	class Image;
 
-	class ImageWriter {
+	class ImageWriter : public ImageHashmasker {
 	private:
 		Image* image;
 		unsigned int x;
@@ -34,10 +35,10 @@ namespace ImgLib {
 		explicit ImageWriter(Image* image);
 		~ImageWriter();
 
-		int pack(const std::vector<std::string>& sources, unsigned int bitmask, bool randomizeAll, bool scatter);
+		int pack(const std::vector<std::string>& sources, unsigned int bitmask, bool randomizeAll, bool scatter, bool hashmask);
 
-		unsigned int getBitRequirement(const std::vector<std::string>& sources) const;
-		unsigned int getBitAvailability(unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter, unsigned int width, unsigned int height) const;
+		static unsigned int getBitRequirement(const std::vector<std::string>& sources);
+		static unsigned int getBitAvailability(unsigned int width, unsigned int height, unsigned int channelCount, unsigned int bitmask, unsigned int metadataLength, bool scatter, bool hashmask);
 
 		static unsigned int getFileSize(cstring filename);
 
@@ -51,6 +52,9 @@ namespace ImgLib {
 		static void intToData(unsigned int value, char* data, int length);
 
 		bool writePixel(unsigned int value, unsigned int pixelMask, unsigned int valueMask);
+
+		void calculateHashmask();
+		void updateHashmask(unsigned int value, unsigned int bits, unsigned int add);
 
 	};
 };
