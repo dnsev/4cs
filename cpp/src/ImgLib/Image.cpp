@@ -251,6 +251,29 @@ namespace ImgLib {
 		this->height = height;
 		newImage.swap(this->pixels);
 	}
+	void Image :: upscale(unsigned int width, unsigned int height) {
+		// Create with space
+		std::vector<unsigned char> newImage(width * height * 4, 0);
+
+		// 1:n upscaling
+		double xscale = static_cast<double>(this->width) / width;
+		double yscale = static_cast<double>(this->height) / height;
+		for (unsigned int y = 0; y < height; ++y) {
+			for (unsigned int x = 0; x < width; ++x) {
+				for (unsigned int c = 0; c < 4; ++c) {
+					newImage[(x + y * width) * 4 + c] = this->pixels[
+						((static_cast<unsigned int>(x * xscale) + static_cast<unsigned int>(y * yscale) * this->width)
+						) * 4 + c
+					];
+				}
+			}
+		}
+
+		// Replace
+		this->width = width;
+		this->height = height;
+		newImage.swap(this->pixels);
+	}
 
 };
 

@@ -6,11 +6,12 @@
 #include <cstdlib>
 #include <vector>
 #include <sstream>
+#include <fstream>
 #include <cassert>
 #include "ImgLib/Image.hpp"
 #include "ImgLib/ImageWriter.hpp"
 #include "LodePNG/lodepng.h"
-#define EMBED_VERSION "1.0b"
+#define EMBED_VERSION "1.0c"
 using namespace std;
 using namespace ImgLib;
 
@@ -18,23 +19,26 @@ using namespace ImgLib;
 
 bool fullOptimizeEncode(Image* image, lodepng::State* state, std::vector<unsigned char>* pngOutput, ostream* immediateStream, ostream* statusStream, ostream* errorStream);
 void getImageOptimalSize(const Image* image, unsigned int bitRequirement, unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter, bool hashmask, unsigned int* dimensionsBest);
+bool loadSettings(cstring filename, int* filesizeLimit, bool* scatter, bool* randomizeAll, bool* hashmask, bool* upscale);
 
 
 
 int main(int argc, char** argv) {
 	// Settings
 	int filesizeLimit = 0;
-	int bitmask = 0;
+	unsigned int bitmask = 0;
 	std::string outputFile = "";
-	int channelCount = 0;
+	unsigned int channelCount = 0;
 	bool randomizeAll = false;
 	bool scatter = false;
 	bool fullOptimize = false;
 	bool downscale = false;
+	bool upscale = false;
 	bool info = false;
 	bool embed = true;
 	bool version = false;
 	bool hashmask = true;
+	bool infoFileRead = false;
 	std::string imageFile = "";
 	std::vector<std::string> sources;
 
@@ -131,6 +135,12 @@ int main(int argc, char** argv) {
 			else if (argv[i][1] == 'D' && argv[i][2] == '\0') {
 				downscale = false;
 			}
+			else if (argv[i][1] == 'u' && argv[i][2] == '\0') {
+				upscale = true;
+			}
+			else if (argv[i][1] == 'U' && argv[i][2] == '\0') {
+				upscale = false;
+			}
 			else if (argv[i][1] == 'i' && argv[i][2] == '\0') {
 				info = true;
 			}
@@ -157,11 +167,27 @@ int main(int argc, char** argv) {
 			}
 		}
 		else {
-			if (imageFile.length() == 0) {
+			int pos = 0;
+			while (argv[i][pos] != '\0') ++pos;
+			if (
+				imageFile.length() == 0 && (
+					(pos >= 4 && (argv[i][pos - 4] == '.' && (argv[i][pos - 3] & 0xDF) == 'P' && (argv[i][pos - 2] & 0xDF) == 'N' && (argv[i][pos - 1] & 0xDF) == 'G')) ||
+					(pos >= 4 && (argv[i][pos - 4] == '.' && (argv[i][pos - 3] & 0xDF) == 'J' && (argv[i][pos - 2] & 0xDF) == 'P' && (argv[i][pos - 1] & 0xDF) == 'G')) ||
+					(pos >= 5 && (argv[i][pos - 5] == '.' && (argv[i][pos - 4] & 0xDF) == 'J' && (argv[i][pos - 3] & 0xDF) == 'P' && (argv[i][pos - 2] & 0xDF) == 'E' && (argv[i][pos - 1] & 0xDF) == 'G'))
+				)
+			) {
 				imageFile = argv[i];
 			}
 			else {
-				sources.push_back(argv[i]);
+				if (
+					canFlag && pos >= 1 && argv[i][pos - 1] == '_' && (pos == 1 || argv[i][pos - 2] == '/' || argv[i][pos - 2] == '\\') &&
+					loadSettings(argv[i], &filesizeLimit, &scatter, &randomizeAll, &hashmask, &upscale)
+				) {
+					infoFileRead = true;
+				}
+				else {
+					sources.push_back(argv[i]);
+				}
 			}
 		}
 	}
@@ -213,7 +239,20 @@ int main(int argc, char** argv) {
 		cout << "                  : can help with reducing image size" << endl;
 		cout << "               -D : disable downscaling" << endl;
 		cout << "" << endl;
+		cout << "               -u : enables upscaling; the image can be resized to be larger if the data doesn't fit" << endl;
+		cout << "                  : enabling downscaling at the same time will allow the image to be scaled down after" << endl;
+		cout << "               -U : disable upscaling" << endl;
+		cout << "" << endl;
 		cout << "               -i : display image info and exit" << endl;
+		cout << "" << endl;
+		cout << "               -e : embed files in image (default)" << endl;
+		cout << "               -E : don't embed files in image (works as a re-encoder)" << endl;
+		cout << "" << endl;
+		cout << "               -v : display version and exit" << endl;
+		cout << "               -V : don't display version" << endl;
+		cout << "" << endl;
+		cout << "               -h : enable image hash-masking" << endl;
+		cout << "               -H : disable image hash-masking" << endl;
 		cout << "" << endl;
 		cout << "    image.png : the file to embed data in" << endl;
 		cout << "" << endl;
@@ -230,7 +269,7 @@ int main(int argc, char** argv) {
 	bool isPng = imageFile.length() >= 4 && (imageFile[pos - 4] == '.' && (imageFile[pos - 3] & 0xDF) == 'P' && (imageFile[pos - 2] & 0xDF) == 'N' && (imageFile[pos - 1] & 0xDF) == 'G');
 
 	// Load image
-	if (!info) cout << "Loading image..." << endl;
+	if (!info) cout << "Loading image \"" << imageFile << "\"..." << endl;
 	std::vector<unsigned char> imageSrc;
 	lodepng::load_file(imageSrc, imageFile.c_str());
 
@@ -329,6 +368,7 @@ int main(int argc, char** argv) {
 
 	// Filesize loop
 	std::vector<unsigned char> pngOutput;
+	unsigned int dimensionsUpscale[2] = { 0 , 0 };
 	int outputSize;
 	int outputSizeMin = -1;
 	bool filesizeLoop = true;
@@ -341,36 +381,67 @@ int main(int argc, char** argv) {
 		// Pass
 		cout << endl << "Pass " << (filesizeLoopIndex + 1) << ":" << endl;
 
-		// Reload/cache image?
-		// Only performed if this loops
+		// Reload
 		if (filesizeLoopIndex > 0) {
-			errorStream.str("");
-			if (!image.loadFromSource(&imageSrc, isPng, channelCount, &errorStream)) {
-				cout << "  Error: couldn't re-decode image file \"" << imageFile << "\":" << endl;
-				cout << "    " << errorStream.str() << endl;
+			cout << "  Re-decoding image..." << endl;
+			image.loadFromSource(&imageSrc, isPng, channelCount, NULL);
+			if (dimensionsUpscale[0] != 0 && dimensionsUpscale[1] != 0) {
+				cout << "  Upscaling to { " << dimensionsUpscale[0] << " x " << dimensionsUpscale[1] << " }..." << endl;
+				image.upscale(dimensionsUpscale[0], dimensionsUpscale[1]);
+				cout << "  Image upscaled" << endl;
+			}
+		}
+
+		bool upscaleLoop = true;
+		int upscaleLoopIndex = 0;
+		while (upscaleLoop) {
+			upscaleLoop = false;
+
+			// Bitmask
+			bool started = (bitmask == 0);
+			if (started) bitmask = 1;
+			for (; bitmask <= 8 && (bitRequirement > ImageWriter::getBitAvailability(image.getWidth(), image.getHeight(), channelCount, bitmask, 0, scatter, hashmask)); ++bitmask);
+
+			// Optimal size checking
+			if (upscale && started && bitmask >= 5 && upscaleLoopIndex < 10) {
+				// Reset
+				bitmask = 0;
+				upscaleLoop = true;
+				//downscale = true;
+				++upscaleLoopIndex;
+
+				// Upscale
+				if (upscaleLoopIndex > 1) {
+					// Reload image
+					image.loadFromSource(&imageSrc, isPng, channelCount, NULL);
+				}
+				dimensionsUpscale[0] = (image.getWidth() * (upscaleLoopIndex + 1));
+				dimensionsUpscale[1] = (image.getHeight() * (upscaleLoopIndex + 1));
+				cout << "  Upscaling to { " << dimensionsUpscale[0] << " x " << dimensionsUpscale[1] << " }..." << endl;
+				image.upscale(dimensionsUpscale[0], dimensionsUpscale[1]);
+				cout << "  Image upscaled" << endl;
+
+				// Next
+				continue;
+			}
+
+			// Error
+			if (bitmask > 8) {
+				cout << "  Error: cannot embed files in the image given." << endl;
+				cout << "    Max Available: " << ImageWriter::getBitAvailability(image.getWidth(), image.getHeight(), channelCount, 8, 0, scatter, hashmask) << " bytes" << endl;
+				cout << "    Requires     : " << bitRequirement << " bytes" << endl;
 				return -1;
 			}
 		}
 
-		// Bitmask
-		if (bitmask == 0) bitmask = 1;
-		for (; bitmask <= 8 && (bitRequirement > ImageWriter::getBitAvailability(image.getWidth(), image.getHeight(), channelCount, bitmask, 0, scatter, hashmask)); ++bitmask);
-		if (bitmask > 8) {
-			cout << "  Error: cannot embed files in the image given." << endl;
-			cout << "    Max Available: " << ImageWriter::getBitAvailability(image.getWidth(), image.getHeight(), channelCount, bitmask, 0, scatter, hashmask) << " bytes" << endl;
-			cout << "    Requires     : " << bitRequirement << " bytes" << endl;
-			return -1;
-		}
-		cout << "  Using bitmask of " << bitmask << " with " << channelCount << " channels" << endl;
-
-		// Optimal size checking
+		// Downscale
 		unsigned int dimensionsBest[2];
 		getImageOptimalSize(&image, bitRequirement, bitmask, channelCount, 0, scatter, hashmask, dimensionsBest);
 		if (dimensionsBest[0] != image.getWidth() && dimensionsBest[1] != image.getHeight()) {
 			if (downscale) {
-				cout << "  Downscaling..." << endl;
+				cout << "  Downscaling to { " << dimensionsBest[0] << " x " << dimensionsBest[1] << " }..." << endl;
 				image.downscale(dimensionsBest[0], dimensionsBest[1]);
-				cout << "  Image downscaled to { " << dimensionsBest[0] << " x " << dimensionsBest[1] << " }" << endl;
+				cout << "  Image downscaled" << endl;
 			}
 			else {
 				cout << "  Optimal image dimensions for storage are { " << dimensionsBest[0] << " x " << dimensionsBest[1] << " }" << endl;
@@ -379,7 +450,7 @@ int main(int argc, char** argv) {
 
 		// Packing
 		if (embed) {
-			cout << "  Packing..." << endl;
+			cout << "  Embedded using bitmask of " << bitmask << " with " << channelCount << " channels" << endl;
 			int packCount = iw.pack(sources, bitmask, randomizeAll, scatter, hashmask);
 			if (packCount < 0) {
 				cout << "  Error packing data into image" << endl;
@@ -427,25 +498,46 @@ int main(int argc, char** argv) {
 				cout << "    Generated: " << outputSize << " bytes" << endl;
 
 				// Turn off randomization
-				if (randomizeAll) {
-					cout << "  Warning: changing randomization from \"on\" to \"off\"" << endl;
-					randomizeAll = false;
+				if (!downscale) {
+					downscale = true;
+					cout << "  Warning: enabling downscaling" << endl;
 				}
 				else {
-					if (!downscale) {
-						downscale = true;
-						cout << "  Warning: enabling downscaling" << endl;
-					}
-					else {
-						// Turn off scatter
+					/*if (randomizeAll || scatter) {
+						if (randomizeAll) {
+							cout << "  Warning: changing randomization from \"on\" to \"off\"" << endl;
+							randomizeAll = false;
+						}
 						if (scatter) {
 							cout << "  Warning: changing scatter from \"on\" to \"off\"" << endl;
 							scatter = false;
 						}
+					}
+					else {*/
+					// Enable alpha channel
+					if (bitmask >= 3 && channelCount != 4 && image.getDefaultChannelCount() != 4) {
+						channelCount = 4;
+						cout << "  Warning: enabling alpha channel" << endl;
+					}
+					else {
+						// Heuristic check if optimization should be enabled
+						if (!fullOptimize && (outputSize - filesizeLimit) <= 512 * 1024) {
+							cout << "  Warning: enabling optimization" << endl;
+							fullOptimize = true;
+						}
 						else {
+							// Increase bitmask
 							if (bitmask < 8) {
 								cout << "  Warning: increasing bitmask from \"" << (bitmask) << "\" to \"" << (bitmask + 1) << "\"" << endl;
 								bitmask += 1;
+								if (bitmask == 4 && channelCount == 4 && image.getDefaultChannelCount() != channelCount) {
+									channelCount = image.getDefaultChannelCount();
+									cout << "  Warning: disabling alpha" << endl;
+								}
+								if (fullOptimize) {
+									fullOptimize = false;
+									cout << "  Warning: disabling optimization" << endl;
+								}
 							}
 							else {
 								// Error
@@ -458,6 +550,7 @@ int main(int argc, char** argv) {
 							}
 						}
 					}
+					// }
 				}
 
 				// Next
@@ -564,6 +657,30 @@ void getImageOptimalSize(const Image* image, unsigned int bitRequirement, unsign
 		dimensionsBest[0] = dimensionsTemp[0];
 		dimensionsBest[1] = dimensionsTemp[1];
 	}
+}
+
+
+
+bool loadSettings(cstring filename, int* filesizeLimit, bool* scatter, bool* randomizeAll, bool* hashmask, bool* upscale) {
+	assert(filesizeLimit != NULL);
+	assert(scatter != NULL);
+	assert(randomizeAll != NULL);
+	assert(hashmask != NULL);
+	assert(upscale != NULL);
+
+	std::ifstream f(filename, (std::ifstream::in | std::ifstream::binary));
+	if (!f.is_open()) {
+		return false;
+	}
+	f.close();
+
+	*filesizeLimit = 3 * 1024 * 1024;
+	*scatter = false;
+	*randomizeAll = true;
+	*hashmask = true;
+	*upscale = true;
+
+	return true;
 }
 
 

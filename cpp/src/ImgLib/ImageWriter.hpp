@@ -41,6 +41,7 @@ namespace ImgLib {
 		static unsigned int getBitAvailability(unsigned int width, unsigned int height, unsigned int channelCount, unsigned int bitmask, unsigned int metadataLength, bool scatter, bool hashmask);
 
 		static unsigned int getFileSize(cstring filename);
+		static std::string getFilename(const std::string& filename);
 
 	private:
 		bool toNext(int skipCount);

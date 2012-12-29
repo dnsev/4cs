@@ -125,7 +125,7 @@ namespace ImgLib {
 		// Filename lengths and file lengths
 		for (unsigned int i = 0; i < sources.size(); ++i) {
 			// Filename length
-			ImageWriter::intToData(sources[i].length(), buffer, 2);
+			ImageWriter::intToData(ImageWriter::getFilename(sources[i]).length(), buffer, 2);
 			this->embedData(buffer, 2);
 			// File length
 			ImageWriter::intToData(ImageWriter::getFileSize(sources[i].c_str()), buffer, 4);
@@ -133,8 +133,10 @@ namespace ImgLib {
 		}
 
 		// Filenames
+		std::string fname;
 		for (unsigned int i = 0; i < sources.size(); ++i) {
-			this->embedData(sources[i].c_str(), sources[i].length());
+			fname = ImageWriter::getFilename(sources[i]);
+			this->embedData(fname.c_str(), fname.length());
 		}
 
 		// Sources
@@ -167,7 +169,7 @@ namespace ImgLib {
 			// 32 bits for file length
 			// 8 * length of file
 			// 8 * length of filename
-			totalBits += 16 + 32 + ImageWriter::getFileSize(sources[i].c_str()) * 8 + sources[i].length() * 8;
+			totalBits += 16 + 32 + ImageWriter::getFileSize(sources[i].c_str()) * 8 + ImageWriter::getFilename(sources[i]).length() * 8;
 		}
 
 		return totalBits;
@@ -253,6 +255,13 @@ namespace ImgLib {
 		// Close
 		in.close();
 		return len;
+	}
+	std::string ImageWriter :: getFilename(const std::string& filename) {
+		int pos = filename.length();
+		while (--pos >= 0 && filename[pos] != '\\' && filename[pos] != '/');
+		if (pos < 0) return filename;
+		++pos;
+		return filename.substr(pos, filename.length() - pos);
 	}
 
 	bool ImageWriter :: writePixel(unsigned int value, unsigned int pixelMask, unsigned int valueMask) {

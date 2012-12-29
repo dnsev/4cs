@@ -41,6 +41,7 @@ namespace ImgLib {
 		const std::vector<unsigned char>* getPixels() const;
 
 		void downscale(unsigned int width, unsigned int height);
+		void upscale(unsigned int width, unsigned int height);
 
 	};
 };
