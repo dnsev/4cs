@@ -100,16 +100,21 @@ namespace ImgLib {
 		if (metadata) {
 			if (!this->extractData(buffer, 2)) return -1;
 			unsigned int metadataLength = ImageReader::dataToInt(buffer, 2);
+
 			// Read and discard
-			while (metadataLength > 0) {
-				if (!this->extractData(buffer, (metadataLength > BUFFER_SIZE ? BUFFER_SIZE : metadataLength))) return -1;
-				metadataLength -= BUFFER_SIZE;
+			if (metadataLength > 0) {
+				while (true) {
+					if (!this->extractData(buffer, (metadataLength > BUFFER_SIZE ? BUFFER_SIZE : metadataLength))) return -1;
+					if (metadataLength < BUFFER_SIZE) break;
+					metadataLength -= BUFFER_SIZE;
+				}
 			}
 		}
 
 		// File count
 		if (!this->extractData(buffer, 2)) return -1;
 		unsigned int fileCount = ImageReader::dataToInt(buffer, 2);
+		std::cout << "fileCount="<<fileCount<<"\n";
 
 		// Filename lengths and file lengths
 		std::vector<unsigned int> filenameLengths;
