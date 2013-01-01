@@ -529,23 +529,23 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"background": "{rgba:bg_color_lightest}"
 		},
 		".SPHelpColorInput": {
-			"width": "100%",
+			"width": "100% !important",
 			"display": "inline-block !important",
-			"border": "0px hidden !important",
 			"padding": "0px !important",
 			"margin": "0px !important",
-			"font-size": "{exp:font_size,*,font_scale}px",
-			"color": "{hex:color_standard}",
-			"background": "{rgba:bg_color_lightest}",
-			"text-align": "left",
-			"font-family": "{main_font}",
-			"border-style": "hidden !important"
+			"font-size": "{exp:font_size,*,font_scale}px !important",
+			"color": "{hex:color_standard} !important",
+			"background": "{rgba:bg_color_lightest} !important",
+			"text-align": "left !important",
+			"font-family": "{main_font} !important",
+			"border-style": "hidden !important",
+			"border-size": "0px !important"
 		},
 		".SPHelpColorInput:hover .SPHelpColorInput:active": {
-			"border": "0px hidden !important",
 			"padding": "0px !important",
 			"margin": "0px !important",
-			"border-style": "hidden !important"
+			"border-style": "hidden !important",
+			"border-size": "0px !important"
 		},
 
 		".SPFooterBarContainer": {

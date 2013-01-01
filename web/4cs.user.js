@@ -736,26 +736,36 @@ function inline_setup() {
 function inline_post_parse(container, redo) {
 	var image, post;
 	if ((image = container.find(".fileThumb")).length > 0 && (post = container.find(".postMessage")).length > 0) {
-		// Replace tags in post
-		var sounds_found = false;
-		var post_html = post.html().replace(/^\s*\w+/ /* /\[[^\<\>]+?\]/g */, function (match) {
-			sounds_found = true;
-			return "[<a class=\"SPLink\">" + match/*.substr(1, match.length - 2)*/ + "</a>]";
-		});
+		var load_all_text = "sounds";
+		var image_url = image.attr("href");
 
-		// Replacements
-		if (sounds_found) {
-			var image_url = image.attr("href");
-
-			post.html(post_html);
-			
-			post.find(".SPLink").each(function (index) {
-				$(this).attr("href", "#").attr("_sp_link", $(this).html()).on("click", {"image_url": image_url, "tag": $(this).html()}, inline_link_click);
+		if (redo) {
+			post.find(".SPLoadLink").each(function (index) {
+				var tag = $(this).attr("_sp_link");
+				$(this).html(tag).on("click", {"image_url": image_url, "tag": tag}, inline_link_click);
+			});
+			container.find(".SPLoadAllLink").html(load_all_text).on("click", {"image_url": image_url, "text": load_all_text}, inline_load_all);
+		}
+		else {
+			// Replace tags in post
+			var sounds_found = false;
+			var post_html = post.html().replace(/^\s*\w+/ /* /\[[^\<\>]+?\]/g */, function (match) {
+				sounds_found = true;
+				return "[<a class=\"SPLoadLink\">" + match/*.substr(1, match.length - 2)*/ + "</a>]";
 			});
 
-			var file_size_label = container.find(".fileText");
-			file_size_label.after(E("a").attr("href", "#").html("sounds").on("click", {"image_url": image_url, "text": "sounds"}, inline_load_all));
-			file_size_label.after(T(" "));
+			// Replacements
+			if (sounds_found) {
+				post.html(post_html);
+
+				post.find(".SPLoadLink").each(function (index) {
+					$(this).attr("href", "#").attr("_sp_link", $(this).html()).on("click", {"image_url": image_url, "tag": $(this).html()}, inline_link_click);
+				});
+
+				var file_size_label = container.find(".fileText");
+				file_size_label.after(E("a").addClass("SPLoadAllLink").attr("href", "#").html(load_all_text).on("click", {"image_url": image_url, "text": load_all_text}, inline_load_all));
+				file_size_label.after(T(" "));
+			}
 		}
 	}
 }
