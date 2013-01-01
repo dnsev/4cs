@@ -97,17 +97,17 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"cursor": "pointer",
 			"height": "100%",
 			"opacity": "0.0",
-			"color": "{hex:color_disabled}",
+			"color": "{hex:color_disabled} !important",
 			"background": "transparent"
 		},
 		".SPMainButtonInfo:hover": {
 			"opacity": "1.0",
-			"color": "{hex:color_light}",
+			"color": "{hex:color_light} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
 		".SPMainButtonInfo:active": {
 			"opacity": "1.0",
-			"color": "{hex:color_special_2}",
+			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
 		".SPMainButtonClose": {
@@ -118,17 +118,17 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"cursor": "pointer",
 			"height": "100%",
 			"opacity": "0.0",
-			"color": "{hex:color_disabled}",
+			"color": "{hex:color_disabled} !important",
 			"background": "transparent"
 		},
 		".SPMainButtonClose:hover": {
 			"opacity": "1.0",
-			"color": "{hex:color_light}",
+			"color": "{hex:color_light} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
 		".SPMainButtonClose:active": {
 			"opacity": "1.0",
-			"color": "{hex:color_special_2}",
+			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
 		".SPMainButtonMinMax": {
@@ -138,17 +138,17 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"cursor": "pointer",
 			"height": "100%",
 			"opacity": "0.0",
-			"color": "{hex:color_disabled}",
+			"color": "{hex:color_disabled} !important",
 			"background": "transparent"
 		},
 		".SPMainButtonMinMax:hover": {
 			"opacity": "1.0",
-			"color": "{hex:color_light}",
+			"color": "{hex:color_light} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
 		".SPMainButtonMinMax:active": {
 			"opacity": "1.0",
-			"color": "{hex:color_special_2}",
+			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
 
@@ -374,7 +374,7 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"opacity": "0.0",
 			"background": "transparent",
 			"display": "inline-block",
-			"color": "{hex:color_standard}",
+			"color": "{hex:color_standard} !important",
 			"padding": "{exp:1,*,padding_scale}px 0px {exp:1,*,padding_scale}px 0px"
 		},
 		".SPPlaylistItem:hover .SPPlaylistControls": {
@@ -395,14 +395,14 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"background": "transparent"
 		},
 		".SPPlaylistControls:hover .SPPlaylistControlLink, .SPPlaylistControlLink:visited": {
-			"background": "{rgba:bg_color_light}"
+			"background": "{rgba:bg_color_light} !important"
 		},
 		".SPPlaylistControls:hover .SPPlaylistControlLink:hover": {
-			"color": "{hex:color_standard}",
+			"color": "{hex:color_standard} !important",
 			"background": "{rgba:bg_color_dark}"
 		},
 		".SPPlaylistControls:hover .SPPlaylistControlLink:active": {
-			"color": "{hex:color_special_2}",
+			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_dark}"
 		},
 		".SPPlaylistControlLinkSeparator": {
@@ -462,15 +462,15 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"text-align": "center",
 			"cursor": "pointer",
 			"text-decoration": "none",
-			"color": "{hex:color_standard}"
+			"color": "{hex:color_standard} !important"
 		},
 		".SPHelpTextLink:hover": {
 			"text-decoration": "underline",
-			"color": "{hex:color_standard}"
+			"color": "{hex:color_standard} !important"
 		},
-		".SPHelpTextLink:hover": {
+		".SPHelpTextLink:active": {
 			"text-decoration": "underline",
-			"color": "{hex:color_special_2}"
+			"color": "{hex:color_special_2} !important"
 		},
 		".SPHelpModeLink": {
 			"display": "inline-block",
@@ -478,16 +478,16 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"text-align": "left",
 			"cursor": "pointer",
 			"text-decoration": "none",
-			"color": "{hex:color_standard}",
+			"color": "{hex:color_standard} !important",
 			"padding-left": "{exp:4.0,*,padding_scale}px"
 		},
 		".SPHelpModeLink:hover": {
 			"text-decoration": "underline",
-			"color": "{hex:color_standard}"
+			"color": "{hex:color_standard} !important"
 		},
-		".SPHelpModeLink:hover": {
+		".SPHelpModeLink:active": {
 			"text-decoration": "underline",
-			"color": "{hex:color_special_2}"
+			"color": "{hex:color_special_2} !important"
 		},
 		".SPHelpColorInputDiv0": {
 			"width": "28%",
@@ -538,12 +538,14 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_standard}",
 			"background": "{rgba:bg_color_lightest}",
 			"text-align": "left",
-			"font-family": "{main_font}"
+			"font-family": "{main_font}",
+			"border-style": "hidden !important"
 		},
-		".SPHelpColorInput:active": {
+		".SPHelpColorInput:hover .SPHelpColorInput:active": {
 			"border": "0px hidden !important",
 			"padding": "0px !important",
-			"margin": "0px !important"
+			"margin": "0px !important",
+			"border-style": "hidden !important"
 		},
 
 		".SPFooterBarContainer": {
