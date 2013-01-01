@@ -540,6 +540,11 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"text-align": "left",
 			"font-family": "{main_font}"
 		},
+		".SPHelpColorInput:active": {
+			"border": "0px hidden !important",
+			"padding": "0px !important",
+			"margin": "0px !important"
+		},
 
 		".SPFooterBarContainer": {
 			"position": "relative",
