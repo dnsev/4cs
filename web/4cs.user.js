@@ -864,16 +864,6 @@ function inline_load_all(event) {
 	// Done
 	return false;
 }
-function inline_on_dom_mutate(records) {
-	for (var i = 0; i < records.length; ++i) {
-		if (records[i].type == "childList" && records[i].addedNodes){
-			for (var j = 0; j < records[i].addedNodes.length; ++j) {
-				// Check
-				inline_dom_mutation($(records[i].addedNodes[j]));
-			}
-		}
-	}
-}
 function inline_dom_mutation(target) {
 	// Updating
 	if (target.hasClass("inline")) {
