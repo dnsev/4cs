@@ -1332,6 +1332,9 @@ SoundPlayer.prototype.get_audio_duration = function () {
 
 SoundPlayer.prototype.regen_stylesheet = function () {
 	this.head_css.html(this.css.create_stylesheet());
+
+	var vol_col = this.get_volume_color(this.volume);
+	this.volume_bar.css("background", "rgb(" + vol_col[0] + "," + vol_col[1] + "," + vol_col[2] + ")");
 }
 
 SoundPlayer.prototype.get_volume_color = function (percent) {

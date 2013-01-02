@@ -899,6 +899,27 @@ var sound_player_about = "To load sounds in the sound player, either click on li
 var sound_player_instance = null;
 var sound_player_css = null;
 var sound_player_css_color_presets = {
+	"yotsubab": {
+		"@name": "Yotsuba B",
+		"bg_outer_color": [ 0 , 0 , 0 , 0.25 ],
+
+		"bg_color_lightest": [ 255 , 255 , 255 , 1.0 ],
+		"bg_color_light": [ 238 , 242 , 255 , 1.0 ],
+		"bg_color_dark": [ 214 , 218 , 240 , 1.0 ],
+		"bg_color_darker": [ 183 , 197 , 217 , 1.0 ],
+		"bg_color_darkest": [ 0 , 0 , 0 , 1.0 ],
+
+		"color_special_1": [ 52 , 52 , 92 , 1.0 ],
+		"color_special_2": [ 221 , 0 , 0 , 1.0 ],
+
+		"color_standard": [ 0 , 0 , 0 , 1.0 ],
+		"color_disabled": [ 120 , 124 , 128 , 1.0 ],
+		"color_light": [ 120 , 124 , 128 , 1.0 ],
+
+		"color_highlight_light": [ 255 , 255 , 255 , 1.0 ],
+
+		"volume_colors": [ [ 52 , 52 , 92 , 1.0 ] ]
+	},
 	"photon": {
 		"@name": "Photon",
 		"bg_outer_color": [ 51 , 51 , 51 , 0.25 ],
@@ -941,27 +962,6 @@ var sound_player_css_color_presets = {
 
 		"volume_colors": [ [ 129 , 162 , 190 , 1.0 ] ]
 	},
-	"yotsubab": {
-		"@name": "Yotsuba B",
-		"bg_outer_color": [ 0 , 0 , 0 , 0.25 ],
-
-		"bg_color_lightest": [ 255 , 255 , 255 , 1.0 ],
-		"bg_color_light": [ 238 , 242 , 255 , 1.0 ],
-		"bg_color_dark": [ 214 , 218 , 240 , 1.0 ],
-		"bg_color_darker": [ 183 , 197 , 217 , 1.0 ],
-		"bg_color_darkest": [ 0 , 0 , 0 , 1.0 ],
-
-		"color_special_1": [ 221 , 0 , 0 , 1.0 ],
-		"color_special_2": [ 52 , 52 , 92 , 1.0 ],
-
-		"color_standard": [ 0 , 0 , 0 , 1.0 ],
-		"color_disabled": [ 120 , 124 , 128 , 1.0 ],
-		"color_light": [ 120 , 124 , 128 , 1.0 ],
-
-		"color_highlight_light": [ 255 , 255 , 255 , 1.0 ],
-
-		"volume_colors": [ [ 52 , 52 , 92 , 1.0 ] ]
-	},
 	"foolz": {
 		"@name": "Foolz",
 		"bg_outer_color": [ 0 , 0 , 0 , 0.25 ],
@@ -985,6 +985,26 @@ var sound_player_css_color_presets = {
 	}
 };
 var sound_player_css_size_presets = {
+	"yotsubab": {
+		"@name": "Yotsuba B",
+
+		"bg_outer_size": 2,
+		"bg_outer_border_radius": 6,
+		"bg_inner_border_radius": 4,
+		"border_radius_normal": 4,
+		"border_radius_small": 2,
+
+		"main_font": "arial,helvetica,sans-serif",
+		"controls_font": "Verdana",
+
+		"font_size": 12,
+		"font_size_small": 8,
+		"font_size_controls": 12,
+
+		"padding_scale": 1.0,
+		"font_scale": 1.0,
+		"border_scale": 1.0
+	},
 	"photon": {
 		"@name": "Photon",
 
@@ -1007,26 +1027,6 @@ var sound_player_css_size_presets = {
 	},
 	"tomorrow": {
 		"@name": "Tomorrow",
-
-		"bg_outer_size": 2,
-		"bg_outer_border_radius": 6,
-		"bg_inner_border_radius": 4,
-		"border_radius_normal": 4,
-		"border_radius_small": 2,
-
-		"main_font": "arial,helvetica,sans-serif",
-		"controls_font": "Verdana",
-
-		"font_size": 12,
-		"font_size_small": 8,
-		"font_size_controls": 12,
-
-		"padding_scale": 1.0,
-		"font_scale": 1.0,
-		"border_scale": 1.0
-	},
-	"yotsubab": {
-		"@name": "Yotsuba B",
 
 		"bg_outer_size": 2,
 		"bg_outer_border_radius": 6,
@@ -1111,7 +1111,7 @@ function open_player(load_settings) {
 	}
 
 	// CSS
-	sound_player_css = new SoundPlayerCSS("photon", sound_player_css_color_presets, sound_player_css_size_presets);
+	sound_player_css = new SoundPlayerCSS("yotsubab", sound_player_css_color_presets, sound_player_css_size_presets);
 	// Load CSS settings
 	if (load_settings) sound_player_css.load(sound_player_settings["style"]);
 	// Player
