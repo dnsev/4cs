@@ -1759,8 +1759,7 @@ SoundPlayer.prototype.play_sound = function (index) {
 }
 
 SoundPlayer.prototype.ajax_get_chrome = function (url, load_tag, callback_data, progress_callback, done_callback, status_callback) {
-alert("1");
-	var xhr = new XMLHttpRequest();alert("2");
+	var xhr = new XMLHttpRequest();
 	xhr.open("GET", url, true);
 	xhr.overrideMimeType("text/plain; charset=x-user-defined");
 	xhr.responseType = "arraybuffer";
@@ -1771,26 +1770,23 @@ alert("1");
 			try { progress_callback(event, callback_data); }
 			catch (e) {}
 		};
-	}alert("3");
+	}
 	xhr.onload = function (event) {
-		if (this.status == 200) {alert("okay");
+		if (this.status == 200) {
 			try { done_callback(true, callback_data); }
 			catch (e) {}
 
-			alert("test"+this.response);
 			var ui8_data = this.sound_player.arraybuffer_to_uint8array(this.response);
-			alert("test"+ui8_data.length);
 			var status = this.sound_player.attempt_load_raw(false, url, load_tag, ui8_data);
-			alert(ui8_data.length+";"+status+";"+url+";"+load_tag);
 
 			try { status_callback(status, callback_data); }
 			catch (e) {}
 		}
-		else {alert("bad:"+this.status);
+		else {
 			try { done_callback(false, callback_data); }
 			catch (e) {}
 		}
-	};alert("calling");
+	};
 	xhr.send();
 }
 SoundPlayer.prototype.ajax_get_firefox = function (url, load_tag, callback_data, progress_callback, done_callback, status_callback) {
@@ -1830,7 +1826,6 @@ SoundPlayer.prototype.attempt_load = function (url_or_file, load_tag, callback_d
 	if (typeof(url_or_file) == typeof("")) {
 		// URL
 		try {
-			alert(this.is_chrome);
 			if (this.is_chrome) {
 				this.ajax_get_chrome(
 					url_or_file,
@@ -1852,7 +1847,7 @@ SoundPlayer.prototype.attempt_load = function (url_or_file, load_tag, callback_d
 				);
 			}
 		}
-		catch (e) {alert("Err:"+e);}
+		catch (e) {}
 	}
 	else {
 		// Local file
