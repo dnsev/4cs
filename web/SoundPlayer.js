@@ -1756,7 +1756,8 @@ SoundPlayer.prototype.play_sound = function (index) {
 }
 
 SoundPlayer.prototype.ajax_get_chrome = function (url, load_tag, callback_data, progress_callback, done_callback, status_callback) {
-	var xhr = new XMLHttpRequest();
+alert("1");
+	var xhr = new XMLHttpRequest();alert("2");
 	xhr.open("GET", url, true);
 	xhr.overrideMimeType("text/plain; charset=x-user-defined");
 	xhr.responseType = "arraybuffer";
@@ -1767,7 +1768,7 @@ SoundPlayer.prototype.ajax_get_chrome = function (url, load_tag, callback_data, 
 			try { progress_callback(event, callback_data); }
 			catch (e) {}
 		};
-	}
+	}alert("3");
 	xhr.onload = function (event) {
 		if (this.status == 200) {alert("okay");
 			try { done_callback(true, callback_data); }
@@ -1786,7 +1787,7 @@ SoundPlayer.prototype.ajax_get_chrome = function (url, load_tag, callback_data, 
 			try { done_callback(false, callback_data); }
 			catch (e) {}
 		}
-	};
+	};alert("calling");
 	xhr.send();
 }
 SoundPlayer.prototype.ajax_get_firefox = function (url, load_tag, callback_data, progress_callback, done_callback, status_callback) {
