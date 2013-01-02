@@ -4,8 +4,8 @@
 // (url_or_filename, load_tag, raw_ui8_data)
 //
 // url_or_filename: the url or local filename of the source
-//        load_tag: the image tag to search for
-//    raw_ui8_data: the source data to load from
+//		load_tag: the image tag to search for
+//	raw_ui8_data: the source data to load from
 //
 //
 // Callbacks returns are either null on failure, or an array structured like:
@@ -15,7 +15,7 @@
 //   title: a string of the sound title
 // flagged: true or false; true indicates the load_tag didn't match
 //   index: the sound number inside the file (0 = first sound, 1 = second, ...)
-//    data: a Uint8Array of the raw sound data
+//	data: a Uint8Array of the raw sound data
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -1738,10 +1738,11 @@ SoundPlayer.prototype.play_sound = function (index) {
 }
 
 SoundPlayer.prototype.ajax_get_chrome = function (url, load_tag, callback_data, progress_callback, done_callback, status_callback) {
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
-    xhr.overrideMimeType("text/plain; charset=x-user-defined");
-    xhr.responseType = "arraybuffer";
+ 	var sound_player = this;
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", url, true);
+	xhr.overrideMimeType("text/plain; charset=x-user-defined");
+	xhr.responseType = "arraybuffer";
 
 	if (progress_callback) {
 		xhr.onprogress = function (event) {
@@ -1749,7 +1750,7 @@ SoundPlayer.prototype.ajax_get_chrome = function (url, load_tag, callback_data, 
 			catch (e) {}
 		};
 	}
-    xhr.onload = function (event) {
+	xhr.onload = function (event) {
 		if (this.status == 200) {
 			try { done_callback(true, callback_data); }
 			catch (e) {}
@@ -1764,8 +1765,8 @@ SoundPlayer.prototype.ajax_get_chrome = function (url, load_tag, callback_data, 
 			try { done_callback(false, callback_data); }
 			catch (e) {}
 		}
-    };
-    xhr.send();
+	};
+	xhr.send();
 }
 SoundPlayer.prototype.ajax_get_firefox = function (url, load_tag, callback_data, progress_callback, done_callback, status_callback) {
 	var sound_player = this;
