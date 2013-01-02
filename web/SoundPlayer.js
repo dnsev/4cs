@@ -26,10 +26,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 	// Stylesheet settings
+	this.preset = preset;
 	this.css_color_presets = css_color_presets;
 	this.css_size_presets = css_size_presets;
 	this.on_theme_change_callback = null;
 	this.on_theme_change_callback_data = null;
+	this.create_custom();
 
 	// Load
 	this.load_preset(preset);
@@ -794,12 +796,12 @@ SoundPlayerCSS.prototype.create_custom = function () {
 			this.css_size_presets[preset][key] = this.css_size_presets[this.preset][key];
 		}
 	}
-
-	// Load
-	this.load_preset(preset);
 }
 SoundPlayerCSS.prototype.modify_value = function (is_color, name, value, component_index) {
-	if (this.preset != "custom") this.create_custom();
+	if (this.preset != "custom") {
+		this.create_custom();
+		this.load_preset("custom");
+	}
 
 	// Array indices
 	var indices = new Array();
@@ -868,6 +870,7 @@ SoundPlayerCSS.prototype.load = function (data) {
 	if ("key" in data) {
 		this.load_preset(data["key"]);
 	}
+
 }
 
 
@@ -1329,8 +1332,6 @@ SoundPlayer.prototype.get_audio_duration = function () {
 
 SoundPlayer.prototype.regen_stylesheet = function () {
 	this.head_css.html(this.css.create_stylesheet());
-	var vol_col = this.get_volume_color(this.volume);
-	this.volume_bar.css("background", "rgb(" + vol_col[0] + "," + vol_col[1] + "," + vol_col[2] + ")");
 }
 
 SoundPlayer.prototype.get_volume_color = function (percent) {

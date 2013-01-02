@@ -685,67 +685,48 @@ function png_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 ///////////////////////////////////////////////////////////////////////////////
 // Inline text
 ///////////////////////////////////////////////////////////////////////////////
-var is_archive = ((document.location + "").indexOf("boards.4chan.org") < 0);
 function inline_setup() {
 	$ = jQuery;
 
 	// Insert navigation link
-	var reload, reload_span, end;
-	if (!is_archive) {
-		$("#navtopright").prepend(reload = E("span"));
-		$("#navtopright").prepend(E("a").html("Sound Player").attr("href", "#").on("click", function (event) { open_player(true); return false; }));
-		$("#navtopright").prepend(T("["));
-		end = "] ";
-	}
-	else {
-		$(".letters").append(T(" [ "));
-		$(".letters").append(E("a").html("Sound Player").attr("href", "#").on("click", function (event) { open_player(true); return false; }));
-		$(".letters").append(reload = E("span"));
-		end = " ]";
-	}
+	$("#navtopright").prepend(T("] "));
+	$("#navtopright").prepend(E("a").html("Sound Player").attr("href", "#").on("click", function (event) { open_player(); return false; }));
+	$("#navtopright").prepend(T("["));
 
-	reload.append(reload_span = E("span").css("display", "none"));
-	reload_span.append(T(" / "));
-	reload_span.append(E("a").html("Reload").attr("href", "#").on("click", function (event) { sound_player_settings_save(open_player(false)); return false; }));
-	reload.append(T(end));
-	reload.on("mouseover", {"reload_span": reload_span}, function (event) {
-		reload_span.css("display", "");
-	});
-	reload.on("mouseout", {"reload_span": reload_span}, function (event) {
-		reload_span.css("display", "none");
+	$(".settingsWindowLinkBot").on("click", function (event) {
+		var s = '<div class="postContainer replyContainer" id="pc169447496"><div class="sideArrows hide_reply_button" id="sa169447496"><a href="javascript:;"><span>[ - ]</span></a></div><div id="p169447496" class="post reply"><div class="postInfoM mobile" id="pim169447496"><span class="nameBlock"><span class="name">Anonymous</span><br><span class="subject"></span> </span><span class="dateTime postNum" data-utc="1357029146">01/01/13(Tue)03:32<br><em><a href="https://boards.4chan.org/v/res/169446904#p169447496">No.</a><a href="javascript:quote(\'169447496\');">169447496</a></em></span></div><div class="postInfo desktop" id="pi169447496"><input name="169447496" value="delete" type="checkbox"> <span class="subject"></span> <span class="nameBlock"><span class="name">Anonymous</span> </span> <span class="dateTime" data-utc="1357029146">01/01/13(Tue)00:32</span> <span class="postNum desktop"><a href="https://boards.4chan.org/v/res/169446904#p169447496" title="Highlight this post">No.</a><a href="javascript:quote(\'169447496\');" title="Quote this post">169447496</a></span>&nbsp;<a href="javascript:;" class="menu_button">[<span></span>]</a><span id="blc169447496" class="container"> <a class="backlink" href="https://boards.4chan.org/v/res/169446904#p169447597">&gt;&gt;169447597</a> <a class="backlink" href="https://boards.4chan.org/v/res/169446904#p169447613">&gt;&gt;169447613</a> <a class="backlink" href="https://boards.4chan.org/v/res/169446904#p169447621">&gt;&gt;169447621</a></span></div><div class="file" id="f169447496"><div class="fileInfo"><span data-filename="1356226772590.png" class="fileText" id="fT169447496"><a href="https://images.4chan.org/v/src/1357029146484.png" target="_blank">1356226772590.png</a> (51 KB, 457x425)</span>&nbsp;<a href="http://iqdb.org/?url=http://thumbs.4chan.org/v/thumb/1357029146484s.jpg" target="_blank">iqdb</a>&nbsp;<a postContainer href="http://www.google.com/searchbyimage?image_url=http://thumbs.4chan.org/v/thumb/1357029146484s.jpg" target="_blank">google</a> <a data-md5="Zh4M1jwI4f/eNDgVkZfv9g" href="https://images.4chan.org/v/src/1357029146484.png" id="exsauce-m169447496" class="exsauce">exhentai</a></div><a class="fileThumb" href="guile.png" target="_blank"><img src="v_files/1357029146484s.jpg" alt="51 KB" data-md5="Zh4M1jwI4f/eNDgVkZfv9g==" style="height: 116px; width: 124px;"></a></div><blockquote class="postMessage" id="m169447496">I already found haven on another [underpopulated] private tracker with almost nogames, and they\'re accepting towards BG refugees.<br><br>Maybe it won\'t be too bad</blockquote></div></div>';
+		var b = $($(".board")[0]).find(".thread");
+		b = $(b[b.length - 1]);
+		b.append(s);
+		return false;
 	});
 
 	// Update content
-	$(is_archive ? ".post" : ".postContainer").each(function (index) { inline_post_parse($(this), false); });
+	$(".postContainer").each(function (index) { inline_post_parse($(this), false); });
 
 	// Content updating
 	var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
 	if (MutationObserver) {
-		try {
-			var mo = new MutationObserver(function (records) {
-				for (var i = 0; i < records.length; ++i) {
-					if (records[i].type == "childList" && records[i].addedNodes){
-						for (var j = 0; j < records[i].addedNodes.length; ++j) {
-							// Check
-							inline_dom_mutation($(records[i].addedNodes[j]));
-						}
+		new MutationObserver(function (records) {
+			for (var i = 0; i < records.length; ++i) {
+				if (records[i].type == "childList" && records[i].addedNodes){
+					for (var j = 0; j < records[i].addedNodes.length; ++j) {
+						// Check
+						inline_dom_mutation($(records[i].addedNodes[j]));
 					}
 				}
-			});
-			mo.observe(
-				$(".board")[0],
-				{
-					"childList": true,
-					"subtree": true,
-					"characterData": true
-				}
-			);
-		}
-		catch (e) {
-			MutationObserver = null;
-		}
+			}
+		})
+		.observe(
+			$(".board")[0],
+			{
+				childList: true,
+				subtree: true,
+				characterData: true
+			}
+		);
 	}
-	if (!MutationObserver) {
+	else {
 		$($(".board")[0]).on("DOMNodeInserted", function (event) {
 			inline_dom_mutation($(event.target));
 			return true;
@@ -754,44 +735,27 @@ function inline_setup() {
 }
 function inline_post_parse(container, redo) {
 	var image, post;
-	if ((image = container.find(is_archive ? ".thread_image_link" : ".fileThumb")).length > 0 && (post = container.find(is_archive ? ".text" : ".postMessage")).length > 0) {
-		var load_all_text = "sounds";
-		var image_url = image.attr("href");
+	if ((image = container.find(".fileThumb")).length > 0 && (post = container.find(".postMessage")).length > 0) {
+		// Replace tags in post
+		var sounds_found = false;
+		var post_html = post.html().replace(/^\s*\w+/ /* /\[[^\<\>]+?\]/g */, function (match) {
+			sounds_found = true;
+			return "[<a class=\"SPLink\">" + match/*.substr(1, match.length - 2)*/ + "</a>]";
+		});
 
-		if (redo) {
-			post.find(".SPLoadLink").each(function (index) {
-				var tag = $(this).attr("_sp_link");
-				$(this).html(tag).on("click", {"image_url": image_url, "tag": tag}, inline_link_click);
+		// Replacements
+		if (sounds_found) {
+			var image_url = image.attr("href");
+
+			post.html(post_html);
+			
+			post.find(".SPLink").each(function (index) {
+				$(this).attr("href", "#").attr("_sp_link", $(this).html()).on("click", {"image_url": image_url, "tag": $(this).html()}, inline_link_click);
 			});
-			container.find(".SPLoadAllLink").html(load_all_text).on("click", {"image_url": image_url, "text": load_all_text}, inline_load_all);
-		}
-		else {
-			// Replace tags in post
-			var sounds_found = false;
-			var post_html = post.html().replace(/* /^\s*\w+/ */ /\[[^\<\>]+?\]/g, function (match) {
-				sounds_found = true;
-				return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
-			});
 
-			// Replacements
-			if (sounds_found) {
-				post.html(post_html);
-
-				post.find(".SPLoadLink").each(function (index) {
-					$(this).attr("href", "#").attr("_sp_link", $(this).html()).on("click", {"image_url": image_url, "tag": $(this).html()}, inline_link_click);
-				});
-
-				if (is_archive) {
-					var file_size_label = container.find(".post_file_controls").find("a");
-					file_size_label = $(file_size_label[file_size_label.length - 1]);
-					file_size_label.after(E("a").addClass("SPLoadAllLink btnr parent").attr("href", "#").html(load_all_text).on("click", {"image_url": image_url, "text": load_all_text}, inline_load_all));
-				}
-				else {
-					var file_size_label = container.find(".fileText");
-					file_size_label.after(E("a").addClass("SPLoadAllLink").attr("href", "#").html(load_all_text).on("click", {"image_url": image_url, "text": load_all_text}, inline_load_all));
-					file_size_label.after(T(" "));
-				}
-			}
+			var file_size_label = container.find(".fileText");
+			file_size_label.after(E("a").attr("href", "#").html("sounds").on("click", {"image_url": image_url, "text": "sounds"}, inline_load_all));
+			file_size_label.after(T(" "));
 		}
 	}
 }
@@ -801,7 +765,7 @@ function inline_link_click(event) {
 	$(this).html(load_str);
 
 	// Load sound
-	open_player(true);
+	open_player();
 	sound_player_instance.attempt_load(
 		event.data.image_url,
 		event.data.tag,
@@ -831,7 +795,7 @@ function inline_load_all(event) {
 	$(this).html(load_str);
 
 	// Load sound
-	open_player(true);
+	open_player();
 	sound_player_instance.attempt_load(
 		event.data.image_url,
 		SoundPlayer.ALL_SOUNDS,
@@ -951,27 +915,6 @@ var sound_player_css_color_presets = {
 		"color_highlight_light": [ 255 , 255 , 255 , 1.0 ],
 
 		"volume_colors": [ [ 52 , 52 , 92 , 1.0 ] ]
-	},
-	"foolz": {
-		"@name": "Foolz",
-		"bg_outer_color": [ 0 , 0 , 0 , 0.25 ],
-
-		"bg_color_lightest": [ 255 , 255 , 255 , 1.0 ],
-		"bg_color_light": [ 238 , 248 , 240 , 1.0 ],
-		"bg_color_dark": [ 214 , 240 , 218 , 1.0 ],
-		"bg_color_darker": [ 183 , 217 , 197 , 1.0 ],
-		"bg_color_darkest": [ 0 , 0 , 0 , 1.0 ],
-
-		"color_special_1": [ 17 , 119 , 67 , 1.0 ],
-		"color_special_2": [ 0 , 85 , 128 , 1.0 ],
-
-		"color_standard": [ 54 , 64 , 65 , 1.0 ],
-		"color_disabled": [ 120 , 128 , 124 , 1.0 ],
-		"color_light": [ 120 , 128 , 124 , 1.0 ],
-
-		"color_highlight_light": [ 255 , 255 , 255 , 1.0 ],
-
-		"volume_colors": [ [ 17 , 119 , 67 , 1.0 ] ]
 	}
 };
 var sound_player_css_size_presets = {
@@ -1034,90 +977,52 @@ var sound_player_css_size_presets = {
 		"padding_scale": 1.0,
 		"font_scale": 1.0,
 		"border_scale": 1.0
-	},
-	"foolz": {
-		"@name": "Foolz",
-
-		"bg_outer_size": 2,
-		"bg_outer_border_radius": 6,
-		"bg_inner_border_radius": 4,
-		"border_radius_normal": 4,
-		"border_radius_small": 2,
-
-		"main_font": "arial,helvetica,sans-serif",
-		"controls_font": "Verdana",
-
-		"font_size": 12,
-		"font_size_small": 8,
-		"font_size_controls": 12,
-
-		"padding_scale": 1.0,
-		"font_scale": 1.0,
-		"border_scale": 1.0
 	}
 };
 var sound_player_settings = {
 	"player": {},
 	"style": {}
 };
-var sound_player_settings_loaded = false;
 
-
-function sound_player_settings_save(sound_player) {
-	// Get settings
-	sound_player_settings = {
-		"player": sound_player.save(),
-		"style": sound_player.css.save()
-	};
-	// Save
-	try {
-		localStorage.setItem("4cs", JSON.stringify(sound_player_settings));
-	}
-	catch (e) {}
-}
 function sound_player_destruct_callback(sound_player) {
 	// Nullify
 	sound_player_instance = null;
 	sound_player_css = null;
 	// Save settings
-	sound_player_settings_save(sound_player);
+	sound_player_settings = {
+		"player": sound_player.save(),
+		"style": sound_player.css.save()
+	};
+
 }
 
-function open_player(load_settings) {
+function open_player() {
 	if (sound_player_instance != null) {
 		// Focus player
 		sound_player_instance.focus();
-		return sound_player_instance;
-	}
-
-	// Settings
-	if (load_settings && !sound_player_settings_loaded) {
-		sound_player_settings_loaded = true;
-		try {
-			var s = localStorage.getItem("4cs");
-			sound_player_settings = (s ? JSON.parse(s) : sound_player_settings);
-		}
-		catch (e) {}
+		return;
 	}
 
 	// CSS
 	sound_player_css = new SoundPlayerCSS("photon", sound_player_css_color_presets, sound_player_css_size_presets);
 	// Load CSS settings
-	if (load_settings) sound_player_css.load(sound_player_settings["style"]);
+	sound_player_css.load(sound_player_settings["style"]);
 	// Player
 	sound_player_instance = new SoundPlayer(
 		sound_player_css,
 		[ image_load_callback , png_load_callback ],
-		sound_player_settings_save,
 		sound_player_destruct_callback,
 		sound_player_about
 	);
 	// Load settings	
-	if (load_settings) sound_player_instance.load(sound_player_settings["player"]);
+	sound_player_instance.load(sound_player_settings["player"]);
 	// Display
 	sound_player_instance.create();
 
-	return sound_player_instance;
+}
+
+function sound_load(url, tag) {
+
 }
 
 
