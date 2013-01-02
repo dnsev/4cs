@@ -95,7 +95,7 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"display": "inline-block",
 			"padding": "{exp:1,*,padding_scale}px",
 			"border-top-left-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
-			"text-decoration": "none",
+			"text-decoration": "none !important",
 			"cursor": "pointer",
 			"height": "100%",
 			"opacity": "0.0",
@@ -104,11 +104,13 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 		},
 		".SPMainButtonInfo:hover": {
 			"opacity": "1.0",
+			"text-decoration": "none !important",
 			"color": "{hex:color_light} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
 		".SPMainButtonInfo:active": {
 			"opacity": "1.0",
+			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
@@ -116,7 +118,7 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"display": "inline-block",
 			"padding": "{exp:1,*,padding_scale}px",
 			"border-top-right-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
-			"text-decoration": "none",
+			"text-decoration": "none !important",
 			"cursor": "pointer",
 			"height": "100%",
 			"opacity": "0.0",
@@ -125,18 +127,20 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 		},
 		".SPMainButtonClose:hover": {
 			"opacity": "1.0",
+			"text-decoration": "none !important",
 			"color": "{hex:color_light} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
 		".SPMainButtonClose:active": {
 			"opacity": "1.0",
+			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
 		".SPMainButtonMinMax": {
 			"display": "inline-block",
 			"padding": "{exp:1,*,padding_scale}px",
-			"text-decoration": "none",
+			"text-decoration": "none !important",
 			"cursor": "pointer",
 			"height": "100%",
 			"opacity": "0.0",
@@ -145,11 +149,13 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 		},
 		".SPMainButtonMinMax:hover": {
 			"opacity": "1.0",
+			"text-decoration": "none !important",
 			"color": "{hex:color_light} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
 		".SPMainButtonMinMax:active": {
 			"opacity": "1.0",
+			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
@@ -243,7 +249,7 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"font-family": "{controls_font}",
 			"font-size": "{exp:font_size_controls,*,font_scale}px",
 			"font-weight": "bold",
-			"text-decoration": "none",
+			"text-decoration": "none !important",
 			"display": "inline-block",
 			"border-radius": "{exp:border_radius_small,*,border_scale}px",
 			"cursor": "pointer",
@@ -251,10 +257,12 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"background": "transparent"
 		},
 		".SPControlLink:hover": {
+			"text-decoration": "none !important",
 			"color": "{hex:color_standard}",
 			"background": "{rgba:bg_color_light}"
 		},
 		".SPControlLink:active": {
+			"text-decoration": "none !important",
 			"color": "{hex:color_special_2}",
 			"background": "{rgba:bg_color_dark}"
 		},
@@ -374,15 +382,18 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 		},
 		".SPPlaylistControls": {
 			"opacity": "0.0",
+			"text-decoration": "none !important",
 			"background": "transparent",
 			"display": "inline-block",
 			"color": "{hex:color_standard} !important",
 			"padding": "{exp:1,*,padding_scale}px 0px {exp:1,*,padding_scale}px 0px"
 		},
 		".SPPlaylistItem:hover .SPPlaylistControls": {
+			"text-decoration": "none !important",
 			"opacity": "0.25"
 		},
 		".SPPlaylistItem:hover .SPPlaylistControls:hover, .SPPlaylistControls:active": {
+			"text-decoration": "none !important",
 			"opacity": "1.0"
 		},
 		".SPPlaylistControlLink": {
@@ -397,13 +408,16 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"background": "transparent"
 		},
 		".SPPlaylistControls:hover .SPPlaylistControlLink, .SPPlaylistControlLink:visited": {
+			"text-decoration": "none !important",
 			"background": "{rgba:bg_color_light} !important"
 		},
 		".SPPlaylistControls:hover .SPPlaylistControlLink:hover": {
+			"text-decoration": "none !important",
 			"color": "{hex:color_standard} !important",
 			"background": "{rgba:bg_color_dark}"
 		},
 		".SPPlaylistControls:hover .SPPlaylistControlLink:active": {
+			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_dark}"
 		},

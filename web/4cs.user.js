@@ -728,7 +728,7 @@ function inline_setup() {
 	});
 
 	// Update content
-	$(is_archive ? ".post" : ".postContainer").each(function (index) { inline_post_parse($(this), false); });
+	$(is_archive ? ".post,.thread" : ".postContainer").each(function (index) { inline_post_parse($(this), false); });
 
 	// Content updating
 	var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
