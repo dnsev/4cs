@@ -12,6 +12,7 @@
 // @require        https://raw.github.com/dnsev/4cs/master/web/png.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/SoundPlayer.js
 // @updateURL      https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
+// @downloadURL    https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
 // ==/UserScript==
 
 function dummy(){};
