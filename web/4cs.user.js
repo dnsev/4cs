@@ -778,15 +778,11 @@ function inline_post_parse(container, redo) {
 		}
 		else {
 			// Replace tags in post
-			var sounds_found = false;
-			var post_html = post.html().replace(/* /^\s*\w+/ */ /\[[^\<\>]+?\]/g, function (match) {
-				sounds_found = true;
-				return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
-			});
+			var sounds_found = inline_replace_in_tag(post);
 
 			// Replacements
 			if (sounds_found) {
-				post.html(post_html);
+				//post.html(post_html);
 
 				post.find(".SPLoadLink").each(function (index) {
 					$(this).attr("href", "#").attr("_sp_link", $(this).html()).on("click", {"image_url": image_url, "tag": $(this).html()}, inline_link_click);
@@ -887,6 +883,36 @@ function inline_dom_mutation(target) {
 	else if (target.hasClass("backlinkHr")) {
 		inline_post_parse(target.parent().parent(), true);
 	}
+}
+function inline_replace_in_tag(tag) {
+	var found = false;
+	var c = tag.contents();
+	for (var j = 0; j < c.length; ++j) {
+		var tag_name = $(c[j]).prop("tagName");
+		if (tag_name == undefined) {
+			found = (inline_replace_tags($(c[j])) || found);
+		}
+		else {
+			tag_name = tag_name.toLowerCase();
+			if ((tag_name == "span" && $(c[j]).hasClass("quote")) || tag_name == "s") {
+				// quote or spoiler
+				found = (inline_replace_in_tag($(c[j])) || found);
+			}
+		}
+	}
+	return found;
+}
+function inline_replace_tags(container) {
+	var sounds_found = false;
+	var new_text = container.text().replace(/\[.+?\]/g, function (match) {
+		sounds_found = true;
+		return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
+	});
+	if (sounds_found) {
+		container.after(new_text).remove();
+		return true;
+	}
+	return false;
 }
 
 
