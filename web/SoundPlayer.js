@@ -1614,6 +1614,13 @@ SoundPlayer.prototype.remove_from_playlist = function (index) {
 	// Stop
 	if (this.current_sound != null && this.current_sound.index == index) this.deselect_sound();
 
+	// Remove temp audio
+	if (this.playlist[index].temp_audio) {
+		this.playlist[index].temp_audio[0].pause();
+		this.playlist[index].temp_audio.removeAttr("src").remove();
+		this.playlist[index].temp_audio = null;
+	}
+
 	// Revoke url
 	(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].audio_blob_url);
 	if (this.playlist[index].image_url_blob != null) {
@@ -2110,7 +2117,7 @@ SoundPlayer.prototype.on_temp_audio_durationchange = function (event) {
 
 	// Stop, remove, and nullify
 	event.data.playlist_item.temp_audio[0].pause();
-	event.data.playlist_item.temp_audio.attr("src", "").remove();
+	event.data.playlist_item.temp_audio.removeAttr("src").remove();
 	event.data.playlist_item.temp_audio = null;
 
 	var length_str = event.data.sound_player.duration_to_string(duration);
