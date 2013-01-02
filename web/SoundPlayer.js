@@ -1769,18 +1769,20 @@ SoundPlayer.prototype.ajax_get_chrome = function (url, load_tag, callback_data, 
 		};
 	}
 	xhr.onload = function (event) {
-		if (this.status == 200) {
+		if (this.status == 200) {alert("okay");
 			try { done_callback(true, callback_data); }
 			catch (e) {}
 
+			alert("test");
 			var ui8_data = this.sound_player.string_to_uint8array(this.response);
+			alert("test");
 			var status = this.sound_player.attempt_load_raw(false, url, load_tag, ui8_data);
 			alert(ui8_data.length+";"+status+";"+url+";"+load_tag);
 
 			try { status_callback(status, callback_data); }
 			catch (e) {}
 		}
-		else {
+		else {alert("bad:"+this.status);
 			try { done_callback(false, callback_data); }
 			catch (e) {}
 		}
