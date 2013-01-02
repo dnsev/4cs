@@ -1107,7 +1107,6 @@ SoundPlayer.prototype.create = function () {
 
 	// Audio
 	this.top_container.append((this.audio = this.E("audio").css("display", "none")));
-	this.audio.attr("playing", false);
 	this.audio.on("play." + this.namespace, {sound_player: this}, this.on_audio_play);
 	this.audio.on("pause." + this.namespace, {sound_player: this}, this.on_audio_pause);
 	this.audio.on("ended." + this.namespace, {sound_player: this}, this.on_audio_ended);
@@ -1345,12 +1344,9 @@ SoundPlayer.prototype.focus = function () {
 }
 
 
-SoundPlayer.prototype.get_audio_duration = function () {
+SoundPlayer.prototype.get_audio_duration = function (audio) {
 	try {
-		if (this.is_chrome) {
-			return (this.audio[0].duration == this.audio[0].duration ? this.audio[0].duration : 0);
-		}
-		return this.audio[0].buffered.end(0);
+		return (audio.duration == audio.duration ? audio.duration : (audio.buffered.end(0) || 0));
 	}
 	catch (e) {
 		return 0;
@@ -1458,16 +1454,18 @@ SoundPlayer.prototype.seek = function (position, seek_in_sound) {
 	// Seek bar
 	this.seek_bar_mover.width(position * (this.seek_bar_container.outerWidth() - this.seek_bar.outerWidth()));
 
-	// Current
-	this.seek_time_current_label.html(this.duration_to_string(position * this.current_sound.duration));
+	if (this.current_sound != null) {
+		// Current
+		this.seek_time_current_label.html(this.duration_to_string(position * this.current_sound.duration));
 
-	// Seek in song
-	if (seek_in_sound) {
-		this.current_sound.position = this.current_sound.duration * position;
-		try {
-			this.audio[0].currentTime = this.current_sound.position;
+		// Seek in song
+		if (seek_in_sound) {
+			this.current_sound.position = this.current_sound.duration * position;
+			try {
+				this.audio[0].currentTime = this.current_sound.position;
+			}
+			catch (e) {}
 		}
-		catch (e) {}
 	}
 }
 SoundPlayer.prototype.update_playing_status = function () {
@@ -1673,7 +1671,6 @@ SoundPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, soun
 
 	// Index
 	playlist_item.index = this.playlist.length;
-	playlist_item.info_set = false;
 	playlist_item.duration = 0.0;
 	playlist_item.position = 0.0;
 
@@ -1704,6 +1701,18 @@ SoundPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, soun
 		playlist_item.controls[i].on("click." + this.namespace, {control_id: i, sound_player: this, playlist_item: playlist_item}, this.on_playlist_control_click);
 		playlist_item.controls[i].on("mousedown", this.cancel_event);
 	}
+
+	// Automatic length detection
+	playlist_item.temp_audio = this.E("audio")
+		.css("display", "none")
+		.attr("src", playlist_item.audio_blob_url)
+		.on(
+			"durationchange." + this.namespace,
+			{"sound_player": this, "playlist_item": playlist_item},
+			this.on_temp_audio_durationchange
+		);
+	playlist_item.temp_audio[0].volume = 0.0;
+	playlist_item.temp_audio[0].play();
 
 	// Add
 	this.playlist.push(playlist_item);
@@ -2083,7 +2092,7 @@ SoundPlayer.prototype.on_audio_timeupdate = function (event) {
 }
 SoundPlayer.prototype.on_audio_durationchange = function (event) {
 	// Update item
-	var duration = event.data.sound_player.get_audio_duration();
+	var duration = event.data.sound_player.get_audio_duration(event.data.sound_player.audio[0]);
 	var length_str = event.data.sound_player.duration_to_string(duration);
 	var seek_pos = 0.0;
 	if (event.data.sound_player.current_sound != null) {
@@ -2100,6 +2109,19 @@ SoundPlayer.prototype.on_audio_durationchange = function (event) {
 	// Seek
 	event.data.sound_player.seek_time_end_label.html(length_str);
 	event.data.sound_player.seek(seek_pos, false);
+}
+SoundPlayer.prototype.on_temp_audio_durationchange = function (event) {
+	// Get duration
+	var duration = event.data.sound_player.get_audio_duration(event.data.playlist_item.temp_audio[0]);
+	event.data.playlist_item.duration = duration;
+
+	// Stop, remove, and nullify
+	event.data.playlist_item.temp_audio[0].pause();
+	event.data.playlist_item.temp_audio.attr("src", "").remove();
+	event.data.playlist_item.temp_audio = null;
+
+	var length_str = event.data.sound_player.duration_to_string(duration);
+	event.data.playlist_item.info_container.html(length_str);
 }
 
 SoundPlayer.prototype.on_image_load = function (event) {
