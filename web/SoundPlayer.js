@@ -556,7 +556,7 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"padding": "{exp:2,*,padding_scale}px",
 			"background": "{rgba:bg_color_lightest}"
 		},
-		".SPHelpColorInput": {
+		".SPHelpColorInput, .SPHelpColorInput:hover, .SPHelpColorInput:active, .SPHelpColorInput:focus, input.SPHelpColorInput[type=\"text\"], input.SPHelpColorInput[type=\"text\"]:focus": {
 			"width": "100% !important",
 			"display": "inline-block !important",
 			"padding": "0px !important",
@@ -566,14 +566,7 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"background": "{rgba:bg_color_lightest} !important",
 			"text-align": "left !important",
 			"font-family": "{main_font} !important",
-			"border-style": "hidden !important",
-			"border-width": "0px !important"
-		},
-		".SPHelpColorInput:hover .SPHelpColorInput:active": {
-			"padding": "0px !important",
-			"margin": "0px !important",
-			"border-style": "hidden !important",
-			"border-width": "0px !important"
+			"border": "0px hidden !important"
 		},
 
 		".SPFooterBarContainer": {
