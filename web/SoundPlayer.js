@@ -1251,6 +1251,10 @@ SoundPlayer.prototype.create = function () {
 	this.alert_container.css("display", "none");
 
 
+	// Positioning
+	this.reposition();
+
+
 	// Done
 	this.created = true;
 }
