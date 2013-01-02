@@ -15,7 +15,7 @@
 // @downloadURL    https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
 // ==/UserScript==
 
-function dummy(){};
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Any images
