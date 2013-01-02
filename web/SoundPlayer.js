@@ -1826,8 +1826,8 @@ SoundPlayer.prototype.attempt_load = function (url_or_file, load_tag, callback_d
 	// Attempt to load from remote URL or local file
 	if (typeof(url_or_file) == typeof("")) {
 		// URL
-		var sound_player = this;
 		try {
+			alert(this.is_chrome);
 			if (this.is_chrome) {
 				this.ajax_get_chrome(
 					url_or_file,
@@ -1849,7 +1849,7 @@ SoundPlayer.prototype.attempt_load = function (url_or_file, load_tag, callback_d
 				);
 			}
 		}
-		catch (e) {}
+		catch (e) {alert("Err:"+e);}
 	}
 	else {
 		// Local file
