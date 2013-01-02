@@ -1738,11 +1738,11 @@ SoundPlayer.prototype.play_sound = function (index) {
 }
 
 SoundPlayer.prototype.ajax_get_chrome = function (url, load_tag, callback_data, progress_callback, done_callback, status_callback) {
- 	var sound_player = this;
 	var xhr = new XMLHttpRequest();
 	xhr.open("GET", url, true);
 	xhr.overrideMimeType("text/plain; charset=x-user-defined");
 	xhr.responseType = "arraybuffer";
+	xhr.sound_player = this;
 
 	if (progress_callback) {
 		xhr.onprogress = function (event) {
@@ -1755,8 +1755,8 @@ SoundPlayer.prototype.ajax_get_chrome = function (url, load_tag, callback_data, 
 			try { done_callback(true, callback_data); }
 			catch (e) {}
 
-			var ui8_data = sound_player.string_to_uint8array(this.response);
-			var status = sound_player.attempt_load_raw(false, url, load_tag, ui8_data);
+			var ui8_data = this.sound_player.string_to_uint8array(this.response);
+			var status = this.sound_player.attempt_load_raw(false, url, load_tag, ui8_data);
 
 			try { status_callback(status, callback_data); }
 			catch (e) {}
