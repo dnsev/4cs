@@ -380,6 +380,16 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"display": "block",
 			"cursor": "default"
 		},
+		".SPPlaylistItemInfo": {
+			"position": "absolute",
+			"right": "0",
+			"top": "0",
+			"white-space": "nowrap",
+			"color": "{hex:color_light}",
+			"display": "block",
+			"cursor": "default",
+			"padding": "{exp:1,*,padding_scale}px {exp:2,*,padding_scale}px {exp:1,*,padding_scale}px 0px"
+		},
 		".SPPlaylistControls": {
 			"opacity": "0.0",
 			"text-decoration": "none !important",
@@ -389,10 +399,12 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"padding": "{exp:1,*,padding_scale}px 0px {exp:1,*,padding_scale}px 0px"
 		},
 		".SPPlaylistItem:hover .SPPlaylistControls": {
+			"background": "{rgba:bg_color_lightest}",
 			"text-decoration": "none !important",
 			"opacity": "0.25"
 		},
 		".SPPlaylistItem:hover .SPPlaylistControls:hover, .SPPlaylistControls:active": {
+			"background": "{rgba:bg_color_lightest}",
 			"text-decoration": "none !important",
 			"opacity": "1.0"
 		},
@@ -428,7 +440,7 @@ function SoundPlayerCSS (preset, css_color_presets, css_size_presets) {
 		},
 		".SPPlaylistSoundName": {
 			"color": "{hex:color_standard}",
-			"padding": "{exp:1,*,padding_scale}px 0px {exp:1,*,padding_scale}px 0px"
+			"padding": "{exp:1,*,padding_scale}px 0px {exp:1,*,padding_scale}px {exp:2,*,padding_scale}px"
 		},
 		".SPPlaylistItemActive .SPPlaylistSoundName": {
 			"color": "{hex:color_special_2} !important",
@@ -978,9 +990,6 @@ function SoundPlayer (css, load_callbacks, settings_callback, destruct_callback,
 	this.current_image_width = 0;
 	this.current_image_height = 0;
 	this.current_sound = null;
-	this.current_sound_length = 0;
-	this.current_sound_duration = 0.0;
-	this.current_sound_position = 0.0;
 
 	// CSS
 	this.css = css;
@@ -1450,13 +1459,13 @@ SoundPlayer.prototype.seek = function (position, seek_in_sound) {
 	this.seek_bar_mover.width(position * (this.seek_bar_container.outerWidth() - this.seek_bar.outerWidth()));
 
 	// Current
-	this.seek_time_current_label.html(this.duration_to_string(position * this.current_sound_length));
+	this.seek_time_current_label.html(this.duration_to_string(position * this.current_sound.duration));
 
 	// Seek in song
 	if (seek_in_sound) {
-		this.current_sound_position = this.current_sound_duration * position;
+		this.current_sound.position = this.current_sound.duration * position;
 		try {
-			this.audio[0].currentTime = this.current_sound_position;
+			this.audio[0].currentTime = this.current_sound.position;
 		}
 		catch (e) {}
 	}
@@ -1511,7 +1520,7 @@ SoundPlayer.prototype.unC = function (elem, cls) {
 }
 
 SoundPlayer.prototype.duration_to_string = function (position) {
-	var seconds_in = position;
+	var seconds_in = Math.round(position);
 	var minutes_in = Math.floor(seconds_in / 60);
 	seconds_in = Math.floor(seconds_in - minutes_in * 60);
 	var s = minutes_in + ":" + (seconds_in >= 10 ? seconds_in : "0" + seconds_in);
@@ -1664,11 +1673,15 @@ SoundPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, soun
 
 	// Index
 	playlist_item.index = this.playlist.length;
+	playlist_item.info_set = false;
+	playlist_item.duration = 0.0;
+	playlist_item.position = 0.0;
 
 	// html setup
 	var control_container, controls;
 	this.playlist_container.append((playlist_item.playlist_item = this.D("SPPlaylistItem")));
-	playlist_item.playlist_item.append((this.D("SPPlaylistSoundName").html(title)));
+	playlist_item.playlist_item.append((this.D("SPPlaylistSoundName").text(title)));
+	playlist_item.playlist_item.append((playlist_item.info_container = this.D("SPPlaylistItemInfo")));
 	playlist_item.playlist_item.append((control_container = this.D("SPPlaylistControlsContainer")));
 	control_container.append((controls = this.D("SPPlaylistControls")));
 	controls.on("click", this.cancel_event);
@@ -1706,9 +1719,6 @@ SoundPlayer.prototype.deselect_sound = function () {
 		this.unC(this.current_sound.playlist_item, "SPPlaylistItemActive");
 		this.current_sound = null;
 
-		this.current_sound_length = 0;
-		this.current_sound_duration = 0.0;
-
 		// Controls
 		for (var i = 0; i < this.playback_controls.length; ++i) {
 			this.C(this.playback_controls[i], "SPControlLinkDisabled");
@@ -1722,7 +1732,8 @@ SoundPlayer.prototype.deselect_sound = function () {
 
 		this.title.html(this.title_default);
 
-		this.seek_time_end_label.html(this.duration_to_string(this.current_sound_length));
+		this.seek_time_current_label.html(this.duration_to_string(0.0));
+		this.seek_time_end_label.html(this.duration_to_string(0.0));
 	}
 }
 SoundPlayer.prototype.stop_sound = function () {
@@ -1751,6 +1762,10 @@ SoundPlayer.prototype.play_sound = function (index) {
 	// Current sound
 	this.current_sound = this.playlist[index];
 	this.C(this.current_sound.playlist_item, "SPPlaylistItemActive");
+	this.current_sound.position = 0.0;
+	this.seek_time_current_label.html(this.duration_to_string(this.current_sound.position));
+	this.seek_time_end_label.html(this.duration_to_string(this.current_sound.duration));
+	this.seek(0.0, false);
 
 	// Image
 	this.no_image.css("display", "none");
@@ -2056,29 +2071,35 @@ SoundPlayer.prototype.on_audio_ended = function (event) {
 }
 SoundPlayer.prototype.on_audio_timeupdate = function (event) {
 	// Update seek bar
-	event.data.sound_player.current_sound_position = this.currentTime;
+	event.data.sound_player.current_sound.position = this.currentTime;
 
 	// Update seek bar
-	if (event.data.sound_player.current_sound_duration > 0 && event.data.sound_player.current_sound_duration == event.data.sound_player.current_sound_duration) {
-		event.data.sound_player.seek(event.data.sound_player.current_sound_position / event.data.sound_player.current_sound_duration, false);
+	if (event.data.sound_player.current_sound.duration > 0) {
+		event.data.sound_player.seek(event.data.sound_player.current_sound.position / event.data.sound_player.current_sound.duration, false);
 	}
 	else {
 		event.data.sound_player.seek(0.0, false);
 	}
 }
 SoundPlayer.prototype.on_audio_durationchange = function (event) {
-	// Update durations
-	event.data.sound_player.current_sound_duration = event.data.sound_player.get_audio_duration();
-	event.data.sound_player.current_sound_length = Math.round(event.data.sound_player.current_sound_duration);
+	// Update item
+	var duration = event.data.sound_player.get_audio_duration();
+	var length_str = event.data.sound_player.duration_to_string(duration);
+	var seek_pos = 0.0;
+	if (event.data.sound_player.current_sound != null) {
+		// Update duration
+		event.data.sound_player.current_sound.duration = (duration == duration ? duration : 0.0);
+		event.data.sound_player.current_sound.info_container.html(length_str);
 
-	// Update seek bar
-	event.data.sound_player.seek_time_end_label.html(event.data.sound_player.duration_to_string(event.data.sound_player.current_sound_length));
-	if (event.data.sound_player.current_sound_duration > 0 && event.data.sound_player.current_sound_duration == event.data.sound_player.current_sound_duration) {
-		event.data.sound_player.seek(event.data.sound_player.current_sound_position / event.data.sound_player.current_sound_duration, false);
+		// Seek bar
+		if (duration > 0.0) {
+			seek_pos = event.data.sound_player.current_sound.position / event.data.sound_player.current_sound.duration;
+		}
 	}
-	else {
-		event.data.sound_player.seek(0.0, false);
-	}
+
+	// Seek
+	event.data.sound_player.seek_time_end_label.html(length_str);
+	event.data.sound_player.seek(seek_pos, false);
 }
 
 SoundPlayer.prototype.on_image_load = function (event) {
@@ -2167,7 +2188,7 @@ SoundPlayer.prototype.on_playback_control_click = function (event) {
 			break;
 			case 1:
 			{
-				event.data.sound_player.seek((event.data.sound_player.current_sound_position - 5.0) / event.data.sound_player.current_sound_duration, true);
+				event.data.sound_player.seek((event.data.sound_player.current_sound.position - 5.0) / event.data.sound_player.current_sound.duration, true);
 			}
 			break;
 			case 2:
@@ -2183,7 +2204,7 @@ SoundPlayer.prototype.on_playback_control_click = function (event) {
 			break;
 			case 3:
 			{
-				event.data.sound_player.seek((event.data.sound_player.current_sound_position + 5.0) / event.data.sound_player.current_sound_duration, true);
+				event.data.sound_player.seek((event.data.sound_player.current_sound.position + 5.0) / event.data.sound_player.current_sound.duration, true);
 			}
 			break;
 			case 4:
