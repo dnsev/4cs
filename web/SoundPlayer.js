@@ -1737,41 +1737,94 @@ SoundPlayer.prototype.play_sound = function (index) {
 	this.image.attr("src", this.playlist[index].image_url);
 }
 
+SoundPlayer.prototype.ajax_get_chrome = function (url, load_tag, callback_data, progress_callback, done_callback, status_callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.overrideMimeType("text/plain; charset=x-user-defined");
+    xhr.responseType = "arraybuffer";
+
+	if (progress_callback) {
+		xhr.onprogress = function (event) {
+			try { progress_callback(event, callback_data); }
+			catch (e) {}
+		};
+	}
+    xhr.onload = function (event) {
+		if (this.status == 200) {
+			try { done_callback(true, callback_data); }
+			catch (e) {}
+
+			var ui8_data = sound_player.string_to_uint8array(this.response);
+			var status = sound_player.attempt_load_raw(false, url, load_tag, ui8_data);
+
+			try { status_callback(status, callback_data); }
+			catch (e) {}
+		}
+		else {
+			try { done_callback(false, callback_data); }
+			catch (e) {}
+		}
+    };
+    xhr.send();
+}
+SoundPlayer.prototype.ajax_get_firefox = function (url, load_tag, callback_data, progress_callback, done_callback, status_callback) {
+	var sound_player = this;
+	var arg = {
+		method: "GET",
+		url: url,
+		overrideMimeType: "text/plain; charset=x-user-defined",
+		onload: function (event) {
+			if (event.status == 200) {
+				try { done_callback(true, callback_data); }
+				catch (e) {}
+
+				var ui8_data = sound_player.string_to_uint8array(event.responseText);
+				var status = sound_player.attempt_load_raw(false, url, load_tag, ui8_data);
+
+				try { status_callback(status, callback_data); }
+				catch (e) {}
+			}
+			else {
+				try { done_callback(false, callback_data); }
+				catch (e) {}
+			}
+		}
+	};
+	if (progress_callback) {
+		arg.onprogress = function (event) {
+			try { progress_callback(event, callback_data); }
+			catch (e) {}
+		};
+	}
+	GM_xmlhttpRequest(arg);
+}
+
 SoundPlayer.prototype.attempt_load = function (url_or_file, load_tag, callback_data, progress_callback, done_callback, status_callback) {
 	// Attempt to load from remote URL or local file
 	if (typeof(url_or_file) == typeof("")) {
 		// URL
 		var sound_player = this;
 		try {
-			$.ajax({
-				url: url_or_file,
-				method: "get",
-				dataType: "text",
-				beforeSend: function (jqXHR, settings) {
-					jqXHR.overrideMimeType("text/plain; charset=x-user-defined");
-					jqXHR.responseType = "arraybuffer";
-					jqXHR.progress = function (event) { progress_callback(event, callback_data); };
-					this.url = url_or_file;
-					this.load_tag = load_tag;
-					this.sound_player = sound_player;
-				},
-				success: function (data, success_code, jqXHR) {
-					try { done_callback(true, callback_data); }
-					catch (e) {};
-
-					// Convert and call load function
-					var ui8_data = this.sound_player.string_to_uint8array(data);
-					var status = this.sound_player.attempt_load_raw(false, this.url, this.load_tag, ui8_data);
-
-					try { status_callback(status, callback_data); }
-					catch (e) {};
-				},
-				error: function (jqXHR, error_type) {
-					// Errors
-					try { done_callback(false, callback_data); }
-					catch (e) {};
-				}
-			});
+			if (this.is_chrome) {
+				this.ajax_get_chrome(
+					url_or_file,
+					load_tag,
+					callback_data,
+					progress_callback,
+					done_callback,
+					status_callback
+				);
+			}
+			else {
+				this.ajax_get_firefox(
+					url_or_file,
+					load_tag,
+					callback_data,
+					progress_callback,
+					done_callback,
+					status_callback
+				);
+			}
 		}
 		catch (e) {}
 	}

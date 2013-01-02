@@ -3,6 +3,7 @@
 // @version        1.0
 // @namespace      dnsev
 // @description    4chan Sound Player
+// @grant          GM_xmlhttpRequest
 // @include        http://boards.4chan.org/*
 // @include        https://boards.4chan.org/*
 // @include        http://archive.foolz.us/*
@@ -768,6 +769,7 @@ function inline_post_parse(container, redo) {
 	if ((image = container.find(is_archive ? ".thread_image_link" : ".fileThumb")).length > 0 && (post = container.find(is_archive ? ".text" : ".postMessage")).length > 0) {
 		var load_all_text = "sounds";
 		var image_url = image.attr("href");
+		if (!(/http\:/.test(image_url))) image_url = "http:" + image_url;
 
 		if (redo) {
 			post.find(".SPLoadLink").each(function (index) {
@@ -823,7 +825,7 @@ function inline_link_click(event) {
 			data.object.html(data.load_str + " (" + progress + ")");
 		},
 		function (okay, data) {
-			data.object.html(data.tag);
+			data.object.html(data.tag + (okay ? "" : " (ajax&nbsp;error)"));
 		},
 		function (status, data) {
 		}
@@ -853,7 +855,7 @@ function inline_load_all(event) {
 			data.object.html(data.load_str + " (" + progress + ")");
 		},
 		function (okay, data) {
-			data.object.html(data.text);
+			data.object.html(data.text + (okay ? "" : " (ajax&nbsp;error)"));
 		},
 		function (status, data) {
 		}
