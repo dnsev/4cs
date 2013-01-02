@@ -910,7 +910,7 @@ var sound_player_css_color_presets = {
 		"bg_color_darker": [ 183 , 197 , 217 , 1.0 ],
 		"bg_color_darkest": [ 0 , 0 , 0 , 1.0 ],
 
-		"color_special_1": [ 52 , 52 , 92 , 1.0 ],
+		"color_special_1": [ 17 , 119 , 67 , 1.0 ],
 		"color_special_2": [ 221 , 0 , 0 , 1.0 ],
 
 		"color_standard": [ 0 , 0 , 0 , 1.0 ],
