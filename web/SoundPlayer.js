@@ -1050,223 +1050,374 @@ SoundPlayer.prototype.create = function () {
 
 
 	// Events
-	$(window).on("resize." + this.namespace, {sound_player: this}, this.on_window_resize);
-	$(document).on("mouseup." + this.namespace, {sound_player: this}, this.on_document_mouseup);
-	$(document).on("mousemove." + this.namespace, {sound_player: this}, this.on_document_mousemove);
+	$(window)
+	.on("resize." + this.namespace, {sound_player: this}, this.on_window_resize);
+	$(document)
+	.on("mouseup." + this.namespace, {sound_player: this}, this.on_document_mouseup)
+	.on("mousemove." + this.namespace, {sound_player: this}, this.on_document_mousemove);
 
+	// Vars
+	var title_buttons = [ null , null , null ];
+	this.playback_controls = [ null , null , null , null , null ];
+	this.help_container = [ null , null , null ];
+	this.player_theme_value_updaters = new Array();
 
 	// Container
-	$("body").append((this.sp_container_main = this.D("SPContainerMain")));
-	this.sp_container_main.width(this.player_width * this.scale_factor);
-	this.sp_container_main.css({"right": this.position_offset[0], "bottom": this.position_offset[1]});
-	this.sp_container_main.on("dragover." + this.namespace, {sound_player: this}, this.on_container_dragover);
-	this.sp_container_main.on("dragenter." + this.namespace, {sound_player: this}, this.on_container_dragenter);
-	this.sp_container_main.on("dragexit." + this.namespace, {sound_player: this}, this.on_container_dragexit);
-	this.sp_container_main.on("drop." + this.namespace, {sound_player: this}, this.on_container_drop);
-	this.sp_container_main.append((this.sp_container = this.D("SPContainer")));
+	$("body").append( //{ DOM Source
+		(this.sp_container_main = this.D("SPContainerMain"))
+		.width(this.player_width * this.scale_factor)
+		.css({"right": this.position_offset[0], "bottom": this.position_offset[1]})
+		.on("dragover." + this.namespace, {sound_player: this}, this.on_container_dragover)
+		.on("dragenter." + this.namespace, {sound_player: this}, this.on_container_dragenter)
+		.on("dragexit." + this.namespace, {sound_player: this}, this.on_container_dragexit)
+		.on("drop." + this.namespace, {sound_player: this}, this.on_container_drop)
+		.append(
+			(this.sp_container = this.D("SPContainer"))
+			.append( //{ Title bar
+				this.D("SPTitleBarContainer")
+				.on("mousedown." + this.namespace, {sound_player: this}, this.on_titlebar_mousedown)
+				.append(
+					this.D("SPTitleContainer")
+					.append(
+						(this.title = this.D("SPTitle"))
+						.html(this.title_default)
+					)
+				)
+				.append(
+					this.D("SPMainButtonsLeft")
+					.append(
+						(title_buttons[0] = this.E("a", "SPMainButtonInfo"))
+						.html("[?]")
+					)
+				)
+				.append(
+					this.D("SPMainButtonsRight")
+					.append(
+						(title_buttons[1] = this.E("a", "SPMainButtonMinMax"))
+						.html("[&#x2012;]")
+					)
+					.append(
+						(title_buttons[2] = this.E("a", "SPMainButtonClose"))
+						.html("[&times;]")
+					)
+				)
+			) //}
+			.append( //{ Content
+				(this.content_container = this.D("SPContentContainer"))
+				.append( //{ Top
+					(this.top_container = this.D("SPTopContainer"))
+					.append( //{ Image
+						this.D("SPImageContainerMain")
+						.append(
+							(this.image_container = this.D("SPImageContainer"))
+							.height(this.image_height_max * this.scale_factor)
+							.append(
+								(this.no_image = this.D("SPNoImage"))
+								.append(
+									this.D("SPNoImageText")
+									.html("[no sound]")
+								)
+							)
+							.append(
+								(this.image = this.E("img", "SPImage"))
+								.attr("title", "")
+								.attr("alt", "")
+								.css("display", "none")
+								.on("load." + this.namespace, {sound_player: this}, this.on_image_load)
+								.on("mousedown", this.cancel_event)
+							)
+						)
+						.append( //{ Playback controls
+							this.D("SPControlContainer")
+							.append(
+								(this.playback_control_container = this.D("SPControlContainerInner"))
+								.append(
+									(this.playback_controls[0] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
+									.html("|&lt;")
+								)
+								.append(
+									this.D("SPControlLinkSeparator")
+								)
+								.append(
+									(this.playback_controls[1] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
+									.html("&lt;&lt;")
+								)
+								.append(
+									this.D("SPControlLinkSeparator")
+								)
+								.append(
+									(this.playback_controls[2] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
+									.html("&gt;")
+								)
+								.append(
+									this.D("SPControlLinkSeparator")
+								)
+								.append(
+									(this.playback_controls[3] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
+									.html("&gt;&gt;")
+								)
+								.append(
+									this.D("SPControlLinkSeparator")
+								)
+								.append(
+									(this.playback_controls[4] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
+									.html("&gt;|")
+								)
+							)
+						) //}
+					) //}
+					.append( //{ Audio
+						(this.audio = this.E("audio"))
+						.css("display", "none")
+						.on("play." + this.namespace, {sound_player: this}, this.on_audio_play)
+						.on("pause." + this.namespace, {sound_player: this}, this.on_audio_pause)
+						.on("ended." + this.namespace, {sound_player: this}, this.on_audio_ended)
+						.on("timeupdate." + this.namespace, {sound_player: this}, this.on_audio_timeupdate)
+						.on("durationchange." + this.namespace, {sound_player: this}, this.on_audio_durationchange)
+					) //}
+					.append( //{ Volume
+						(this.volume_container = this.D("SPVolumeContainer"))
+						.append(
+							(this.volume_bar_container = this.D("SPVolumeBarContainer"))
+							.on("mousedown." + this.namespace, {sound_player: this}, this.on_volumebar_mousedown)
+							.append(
+								(this.volume_bar = this.D("SPVolumeBar"))
+							)
+						)
+						.append(
+							this.D("SPVolumeLabelContainer")
+							.append(
+								(this.D("SPVolumeLabel").html("Vol"))
+							)
+							.append(
+								(this.volume_label = this.D("SPVolumeValue").html("100%"))
+							)
+						)
+					) //}
+				) //}
+				.append( //{ Seek bar
+					this.D("SPSeekContainer")
+					.append(
+						this.D("SPSeekTimeContainer")
+						.append(
+							(this.seek_time_start_label = this.D("SPSeekTimeLeft"))
+							.html("0:00")
+						)
+						.append(
+							(this.seek_time_end_label = this.D("SPSeekTimeRight"))
+							.html("0:00")
+						)
+						.append(
+							(this.seek_time_current_label = this.D("SPSeekTime"))
+							.html("0:00")
+						)
+					)
+					.append(
+						(this.seek_bar_container = this.D("SPSeekBarContainer"))
+						.on("mousedown." + this.namespace, {sound_player: this}, this.on_seekbar_container_mousedown)
+						.append(
+							(this.seek_bar_mover = this.D("SPSeekBarMover"))
+						)
+						.append(
+							(this.seek_bar = this.D("SPSeekBar"))
+							.on("mousedown." + this.namespace, {sound_player: this}, this.on_seekbar_mousedown)
+						)
+					)
+				) //}
+				.append( //{ Playlist
+					(this.playlist_container = this.D("SPPlaylistContainer"))
+					.height(this.playlist_height * this.scale_factor)
+					.on("mousedown", this.cancel_event)
+				) //}
+
+				.append( //{ Help 0
+					(this.help_container[0] = this.D("SPHelpContainer"))
+					.css("display", "none")
+					.append( //{ About
+						this.D("SPHelpLabelDiv")
+						.html(this.help_text.length > 0 ? "About" : "")
+					)
+					.append(
+						this.D("SPHelpTextDiv")
+						.html(this.help_text)
+					) //}
+					.append(
+						(help_div0 = this.D("SPHelpLinkDiv"))
+						.append( //{ Playlist Settings
+							this.D("SPHelpLabelDiv")
+							.html("Playlist Settings")
+						)
+						.append(
+							this.D("SPHelpSectionDiv")
+							.append(
+								this.D("SPHelpColorInputDiv0")
+								.append(
+									this.D("SPHelpColorInputDiv2b")
+									.append(
+										this.D("SPHelpColorLabelText")
+										.html("Mode")
+									)
+								)
+							)
+							.append(
+								this.D("SPHelpColorInputDiv1Full")
+								.append(
+									this.D("SPHelpColorInputDiv2")
+									.append(
+										this.E("a", "SPHelpModeLink")
+										.html(this.playlist_randomize ? "Randomize" : (this.playlist_loop ? "Loop" : "Play Once"))
+										.on("click." + this.namespace, {sound_player: this}, this.on_playlist_mode_change)
+										.on("mousedown", this.cancel_event)
+									)
+								)
+							)
+						)
+						.append(
+							this.D("SPHelpSectionDiv")
+							.append(
+								this.D("SPHelpColorInputDiv0")
+								.append(
+									this.D("SPHelpColorInputDiv2b")
+									.append(
+										this.D("SPHelpColorLabelText")
+										.html("On Load")
+									)
+								)
+							)
+							.append(
+								this.D("SPHelpColorInputDiv1Full")
+								.append(
+									this.D("SPHelpColorInputDiv2")
+									.append(
+										this.E("a", "SPHelpModeLink")
+										.html(this.playlist_play_on_load == 0 ? "Don't play" : (this.playlist_play_on_load == 1 ? "Play if paused" : "Always play"))
+										.on("click." + this.namespace, {sound_player: this}, this.on_playlist_onload_change)
+										.on("mousedown", this.cancel_event)
+									)
+								)
+							)
+						) //}
+						.append( //{ Player Settings
+							this.D("SPHelpLabelDiv")
+							.html("Player Settings")
+						)
+						.append(
+							this.D("SPHelpSectionDiv")
+							.append(
+								this.D("SPHelpColorInputDiv0")
+								.append(
+									this.D("SPHelpColorInputDiv2b")
+									.append(
+										this.D("SPHelpColorLabelText")
+										.html("Theme")
+									)
+								)
+							)
+							.append(
+								this.D("SPHelpColorInputDiv1Full")
+								.append(
+									this.D("SPHelpColorInputDiv2")
+									.append(
+										(this.player_theme_name = this.E("a", "SPHelpModeLink"))
+										.on("click." + this.namespace, {sound_player: this}, this.on_player_theme_change)
+										.on("mousedown", this.cancel_event)
+									)
+								)
+							)
+						) //}
+						.append( //{ Scaling Settings
+							this.D("SPHelpLabelDiv")
+							.html("Scaling Settings")
+						)
+						.append(this.generate_value_editor("Padding", "padding_scale", this.css.css_size_presets[this.css.preset].padding_scale, false))
+						.append(this.generate_value_editor("Text", "font_scale", this.css.css_size_presets[this.css.preset].font_scale, false))
+						.append(this.generate_value_editor("Borders", "border_scale", this.css.css_size_presets[this.css.preset].border_scale, false))
+						.append(this.generate_value_editor("Window", "@scale_factor", this.scale_factor, false))
+						.append(
+							this.D("SPHelpLabelDiv")
+							.html("More Settings")
+						)
+						.append(
+							this.D("SPHelpSectionDiv")
+							.append(
+								this.E("A", "SPHelpTextLink")
+								.html("Color Settings")
+								.on("click." + this.namespace, {sound_player: this, help_page: 1}, this.on_helppage_goto)
+							)
+							.append(
+								this.E("A", "SPHelpTextLink")
+								.html("Other Settings")
+								.on("click." + this.namespace, {sound_player: this, help_page: 2}, this.on_helppage_goto)
+							)
+						) //}
+					)
+				) //}
+				.append( //{ Help 1
+					(this.help_container[1] = this.D("SPHelpContainer"))
+					.css("display", "none")
+					.append(this.D("SPHelpLabelDiv").html("Background Colors"))
+					.append(this.generate_color_editor("Outline", "bg_outer_color", this.css.css_color_presets[this.css.preset].bg_outer_color))
+					.append(this.generate_color_editor("Lightest", "bg_color_lightest", this.css.css_color_presets[this.css.preset].bg_color_lightest))
+					.append(this.generate_color_editor("Light", "bg_color_light", this.css.css_color_presets[this.css.preset].bg_color_light))
+					.append(this.generate_color_editor("Medium", "bg_color_dark", this.css.css_color_presets[this.css.preset].bg_color_dark))
+					.append(this.generate_color_editor("Dark", "bg_color_darker", this.css.css_color_presets[this.css.preset].bg_color_darker))
+					.append(this.generate_color_editor("Darkest", "bg_color_darkest", this.css.css_color_presets[this.css.preset].bg_color_darkest))
+					.append(this.D("SPHelpLabelDiv").html("Text Colors"))
+					.append(this.generate_color_editor("Default", "color_standard", this.css.css_color_presets[this.css.preset].color_standard))
+					.append(this.generate_color_editor("Disabled", "color_disabled", this.css.css_color_presets[this.css.preset].color_disabled))
+					.append(this.generate_color_editor("Light", "color_light", this.css.css_color_presets[this.css.preset].color_light))
+					.append(this.generate_color_editor("Special 1", "color_special_1", this.css.css_color_presets[this.css.preset].color_special_1))
+					.append(this.generate_color_editor("Special 2", "color_special_2", this.css.css_color_presets[this.css.preset].color_special_2))
+					.append(this.generate_color_editor("Highlight", "color_highlight_light", this.css.css_color_presets[this.css.preset].color_highlight_light))
+					.append(this.D("SPHelpLabelDiv").html("Other Colors"))
+					.append(this.generate_color_editor("Volume", "volume_colors[0]", this.css.css_color_presets[this.css.preset].volume_colors[0]))
+				) //}
+				.append( //{ Help 2
+					(this.help_container[2] = this.D("SPHelpContainer"))
+					.css("display", "none")
+					.append(this.D("SPHelpLabelDiv").html("Borders"))
+					.append(this.generate_value_editor("Outer", "bg_outer_size", this.css.css_size_presets[this.css.preset].bg_outer_size, false))
+					.append(this.D("SPHelpLabelDiv").html("Border Radii"))
+					.append(this.generate_value_editor("Outer", "bg_outer_border_radius", this.css.css_size_presets[this.css.preset].bg_outer_border_radius, false))
+					.append(this.generate_value_editor("Inner", "bg_inner_border_radius", this.css.css_size_presets[this.css.preset].bg_inner_border_radius, false))
+					.append(this.generate_value_editor("Major", "border_radius_normal", this.css.css_size_presets[this.css.preset].border_radius_normal, false))
+					.append(this.generate_value_editor("Minor", "border_radius_small", this.css.css_size_presets[this.css.preset].border_radius_small, false))
+					.append(this.D("SPHelpLabelDiv").html("Fonts"))
+					.append(this.generate_value_editor("Font", "main_font", this.css.css_size_presets[this.css.preset].main_font, true))
+					.append(this.generate_value_editor("Controls", "controls_font", this.css.css_size_presets[this.css.preset].controls_font, true))
+					.append(this.D("SPHelpLabelDiv").html("Font Sizes"))
+					.append(this.generate_value_editor("Default", "font_size", this.css.css_size_presets[this.css.preset].font_size, false))
+					.append(this.generate_value_editor("Small", "font_size_small", this.css.css_size_presets[this.css.preset].font_size_small, false))
+					.append(this.generate_value_editor("Controls", "font_size_controls", this.css.css_size_presets[this.css.preset].font_size_controls, false))
+				) //}
+			) //}
+			.append( //{ Footer
+				(this.footer_container = this.D("SPFooterBarContainer"))
+				.on("mousedown." + this.namespace, {sound_player: this}, this.on_footerbar_mousedown)
+			) //}
+			.append( //{ Alert page
+				(this.alert_container = this.D("SPAlertContainer"))
+				.css("display", "none")
+				.append(
+					(this.D("SPAlertContentContainer")
+					.html("Drop Files<br />Here"))
+				)
+			) //}
+		)
+	); //}
 
 
-	// Title bar
-	var title_bar_container, title_container, title_buttons_left, title_buttons_right, title_buttons;
-	this.sp_container.append((title_bar_container = this.D("SPTitleBarContainer")));
-	title_buttons = [ null , null , null ];
-	title_bar_container.append((title_container = this.D("SPTitleContainer")));
-	title_container.append((this.title = this.D("SPTitle").html(this.title_default)));
-	title_bar_container.append((title_buttons_left = this.D("SPMainButtonsLeft")));
-	title_bar_container.append((title_buttons_right = this.D("SPMainButtonsRight")));
-	title_buttons_left.append((title_buttons[0] = this.E("a", "SPMainButtonInfo").html("[?]")));
-	title_buttons_right.append((title_buttons[1] = this.E("a", "SPMainButtonMinMax").html("[&#x2012;]")));
-	title_buttons_right.append((title_buttons[2] = this.E("a", "SPMainButtonClose").html("[&times;]")));
-	title_bar_container.on("mousedown." + this.namespace, {sound_player: this}, this.on_titlebar_mousedown);
+	// Final settings
 	for (var i = 0; i < title_buttons.length; ++i) {
 		title_buttons[i].on("mousedown", this.cancel_event);
 		title_buttons[i].on("click." + this.namespace, {sound_player: this, control_id: i}, this.on_main_control_click);
 	}
-
-	// Content
-	this.sp_container.append((this.content_container = this.D("SPContentContainer")));
-	this.content_container.append((this.top_container = this.D("SPTopContainer")));
-
-	// Image
-	var image_container_main;
-	this.top_container.append((image_container_main = this.D("SPImageContainerMain")));
-	image_container_main.append((this.image_container = this.D("SPImageContainer")));
-	this.image_container.append((this.no_image = this.D("SPNoImage")));
-	this.image_container.append((this.image = this.E("img", "SPImage").attr("title", "").attr("alt", "").css("display", "none")));
-	this.no_image.append((this.D("SPNoImageText").html("[no sound]")));
-	this.image_container.height(this.image_height_max * this.scale_factor);
-	this.image.on("load." + this.namespace, {sound_player: this}, this.on_image_load);
-	this.image.on("mousedown", this.cancel_event);
-
-	// Audio
-	this.top_container.append((this.audio = this.E("audio").css("display", "none")));
-	this.audio.on("play." + this.namespace, {sound_player: this}, this.on_audio_play);
-	this.audio.on("pause." + this.namespace, {sound_player: this}, this.on_audio_pause);
-	this.audio.on("ended." + this.namespace, {sound_player: this}, this.on_audio_ended);
-	this.audio.on("timeupdate." + this.namespace, {sound_player: this}, this.on_audio_timeupdate);
-	this.audio.on("durationchange." + this.namespace, {sound_player: this}, this.on_audio_durationchange);
-
-	// Controls
-	var control_container;
-	this.playback_controls = [ null , null , null , null , null ];
-	image_container_main.append((control_container = this.D("SPControlContainer")));
-	control_container.append((this.playback_control_container = this.D("SPControlContainerInner")));
-	this.playback_control_container.append((this.playback_controls[0] = this.E("a", "SPControlLink", "SPControlLinkDisabled").html("|&lt;")));
-	this.playback_control_container.append((this.D("SPControlLinkSeparator")));
-	this.playback_control_container.append((this.playback_controls[1] = this.E("a", "SPControlLink", "SPControlLinkDisabled").html("&lt;&lt;")));
-	this.playback_control_container.append((this.D("SPControlLinkSeparator")));
-	this.playback_control_container.append((this.playback_controls[2] = this.E("a", "SPControlLink", "SPControlLinkDisabled").html("&gt;")));
-	this.playback_control_container.append((this.D("SPControlLinkSeparator")));
-	this.playback_control_container.append((this.playback_controls[3] = this.E("a", "SPControlLink", "SPControlLinkDisabled").html("&gt;&gt;")));
-	this.playback_control_container.append((this.D("SPControlLinkSeparator")));
-	this.playback_control_container.append((this.playback_controls[4] = this.E("a", "SPControlLink", "SPControlLinkDisabled").html("&gt;|")));
 	for (var i = 0; i < this.playback_controls.length; ++i) {
 		this.playback_controls[i].on("click." + this.namespace, {control_id: i, sound_player: this}, this.on_playback_control_click);
 		this.playback_controls[i].on("mousedown", this.cancel_event);
 	}
-
-	// Volume bar
-	var volume_label_container;
-	this.top_container.append((this.volume_container = this.D("SPVolumeContainer")));
-	this.volume_container.append((this.volume_bar_container = this.D("SPVolumeBarContainer")));
-	this.volume_bar_container.append((this.volume_bar = this.D("SPVolumeBar")));
-	this.volume_container.append((volume_label_container = this.D("SPVolumeLabelContainer")));
-	volume_label_container.append((this.D("SPVolumeLabel").html("Vol")));
-	volume_label_container.append((this.volume_label = this.D("SPVolumeValue").html("100%")));
-	this.set_volume(this.volume);
-	this.volume_bar_container.on("mousedown." + this.namespace, {sound_player: this}, this.on_volumebar_mousedown);
-
-	// Seek bar
-	var seek_container, time_container;
-	this.content_container.append((seek_container = this.D("SPSeekContainer")));
-	seek_container.append((time_container = this.D("SPSeekTimeContainer")));
-	time_container.append((this.seek_time_start_label = this.D("SPSeekTimeLeft").html("0:00")));
-	time_container.append((this.seek_time_end_label = this.D("SPSeekTimeRight").html("0:00")));
-	time_container.append((this.seek_time_current_label = this.D("SPSeekTime").html("0:00")));
-	seek_container.append((this.seek_bar_container = this.D("SPSeekBarContainer")));
-	this.seek_bar_container.append((this.seek_bar_mover = this.D("SPSeekBarMover")));
-	this.seek_bar_container.append((this.seek_bar = this.D("SPSeekBar")));
-	this.seek_bar.on("mousedown." + this.namespace, {sound_player: this}, this.on_seekbar_mousedown);
-	this.seek_bar_container.on("mousedown." + this.namespace, {sound_player: this}, this.on_seekbar_container_mousedown);
-
-	// Playlist
-	this.content_container.append((this.playlist_container = this.D("SPPlaylistContainer")));
-	this.playlist_container.height(this.playlist_height * this.scale_factor);
-	this.playlist_container.on("mousedown", this.cancel_event);
-
-
-	// Help
-	var help_div0, help_div1, help_div2, help_div3, help_div4;
-	this.help_container = [ null , null , null ];
-
-
-	// Help 0
-	this.player_theme_value_updaters = new Array();
-
-	this.content_container.append((this.help_container[0] = this.D("SPHelpContainer")));
-	this.help_container[0].css("display", "none");
-	if (this.help_text.length > 0) {
-		this.help_container[0].append((this.D("SPHelpLabelDiv").html("About")));
-		this.help_container[0].append((this.D("SPHelpTextDiv").html(this.help_text)));
-	}
-	this.help_container[0].append((help_div0 = this.D("SPHelpLinkDiv")));
-
-	help_div0.append((help_div1 = this.D("SPHelpLabelDiv").html("Playlist Settings")));
-	help_div0.append((help_div1 = this.D("SPHelpSectionDiv")));
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv0")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2b")));
-	help_div3.append((this.D("SPHelpColorLabelText").html("Mode")));
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv1Full")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2")));
-	help_div3.append((help_div4 = this.E("a", "SPHelpModeLink").html(this.playlist_randomize ? "Randomize" : (this.playlist_loop ? "Loop" : "Play Once"))));
-	help_div4.on("click." + this.namespace, {sound_player: this}, this.on_playlist_mode_change);
-	help_div4.on("mousedown", this.cancel_event);
-
-	help_div0.append((help_div1 = this.D("SPHelpSectionDiv")));
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv0")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2b")));
-	help_div3.append((this.D("SPHelpColorLabelText").html("On Load")));
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv1Full")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2")));
-	help_div3.append((help_div4 = this.E("a", "SPHelpModeLink").html(this.playlist_play_on_load == 0 ? "Don't play" : (this.playlist_play_on_load == 1 ? "Play if paused" : "Always play"))));
-	help_div4.on("click." + this.namespace, {sound_player: this}, this.on_playlist_onload_change);
-	help_div4.on("mousedown", this.cancel_event);
-
-	help_div0.append((help_div1 = this.D("SPHelpLabelDiv").html("Player Settings")));
-	help_div0.append((help_div1 = this.D("SPHelpSectionDiv")));
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv0")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2b")));
-	help_div3.append((this.D("SPHelpColorLabelText").html("Theme")));
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv1Full")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2")));
-	help_div3.append((this.player_theme_name = this.E("a", "SPHelpModeLink")));
-	this.player_theme_name.on("click." + this.namespace, {sound_player: this}, this.on_player_theme_change);
-	this.player_theme_name.on("mousedown", this.cancel_event);
 	this.update_player_theme_name({sound_player: this});
-
-	help_div0.append((help_div1 = this.D("SPHelpLabelDiv").html("Scaling Settings")));
-	this.generate_value_editor(help_div0, "Padding", "padding_scale", this.css.css_size_presets[this.css.preset].padding_scale, false);
-	this.generate_value_editor(help_div0, "Text", "font_scale", this.css.css_size_presets[this.css.preset].font_scale, false);
-	this.generate_value_editor(help_div0, "Borders", "border_scale", this.css.css_size_presets[this.css.preset].border_scale, false);
-	this.generate_value_editor(help_div0, "Window", "@scale_factor", this.scale_factor, false);
-	help_div0.append((help_div1 = this.D("SPHelpLabelDiv").html("More Settings")));
-	help_div0.append((help_div1 = this.D("SPHelpSectionDiv")));
-	help_div1.append((help_div2 = this.E("A", "SPHelpTextLink").html("Color Settings")));
-	help_div2.on("click." + this.namespace, {sound_player: this, help_page: 1}, this.on_helppage_goto);
-	help_div1.append((help_div2 = this.E("A", "SPHelpTextLink").html("Other Settings")));
-	help_div2.on("click." + this.namespace, {sound_player: this, help_page: 2}, this.on_helppage_goto);
-
-	// Help 1
-	this.content_container.append((this.help_container[1] = this.D("SPHelpContainer")));
-	this.help_container[1].css("display", "none");
-	this.help_container[1].append((help_div1 = this.D("SPHelpLabelDiv").html("Background Colors")));
-	this.generate_color_editor(this.help_container[1], "Outline", "bg_outer_color", this.css.css_color_presets[this.css.preset].bg_outer_color);
-	this.generate_color_editor(this.help_container[1], "Lightest", "bg_color_lightest", this.css.css_color_presets[this.css.preset].bg_color_lightest);
-	this.generate_color_editor(this.help_container[1], "Light", "bg_color_light", this.css.css_color_presets[this.css.preset].bg_color_light);
-	this.generate_color_editor(this.help_container[1], "Medium", "bg_color_dark", this.css.css_color_presets[this.css.preset].bg_color_dark);
-	this.generate_color_editor(this.help_container[1], "Dark", "bg_color_darker", this.css.css_color_presets[this.css.preset].bg_color_darker);
-	this.generate_color_editor(this.help_container[1], "Darkest", "bg_color_darkest", this.css.css_color_presets[this.css.preset].bg_color_darkest);
-	this.help_container[1].append((help_div1 = this.D("SPHelpLabelDiv").html("Text Colors")));
-	this.generate_color_editor(this.help_container[1], "Default", "color_standard", this.css.css_color_presets[this.css.preset].color_standard);
-	this.generate_color_editor(this.help_container[1], "Disabled", "color_disabled", this.css.css_color_presets[this.css.preset].color_disabled);
-	this.generate_color_editor(this.help_container[1], "Light", "color_light", this.css.css_color_presets[this.css.preset].color_light);
-	this.generate_color_editor(this.help_container[1], "Special 1", "color_special_1", this.css.css_color_presets[this.css.preset].color_special_1);
-	this.generate_color_editor(this.help_container[1], "Special 2", "color_special_2", this.css.css_color_presets[this.css.preset].color_special_2);
-	this.generate_color_editor(this.help_container[1], "Highlight", "color_highlight_light", this.css.css_color_presets[this.css.preset].color_highlight_light);
-	this.help_container[1].append((help_div1 = this.D("SPHelpLabelDiv").html("Other Colors")));
-	this.generate_color_editor(this.help_container[1], "Volume", "volume_colors[0]", this.css.css_color_presets[this.css.preset].volume_colors[0]);
-
-	// Help 2
-	this.content_container.append((this.help_container[2] = this.D("SPHelpContainer")));
-	this.help_container[2].css("display", "none");
-	this.help_container[2].append((help_div1 = this.D("SPHelpLabelDiv").html("Borders")));
-	this.generate_value_editor(this.help_container[2], "Outer", "bg_outer_size", this.css.css_size_presets[this.css.preset].bg_outer_size, false);
-	this.help_container[2].append((help_div1 = this.D("SPHelpLabelDiv").html("Border Radii")));
-	this.generate_value_editor(this.help_container[2], "Outer", "bg_outer_border_radius", this.css.css_size_presets[this.css.preset].bg_outer_border_radius, false);
-	this.generate_value_editor(this.help_container[2], "Inner", "bg_inner_border_radius", this.css.css_size_presets[this.css.preset].bg_inner_border_radius, false);
-	this.generate_value_editor(this.help_container[2], "Major", "border_radius_normal", this.css.css_size_presets[this.css.preset].border_radius_normal, false);
-	this.generate_value_editor(this.help_container[2], "Minor", "border_radius_small", this.css.css_size_presets[this.css.preset].border_radius_small, false);
-	this.help_container[2].append((help_div1 = this.D("SPHelpLabelDiv").html("Fonts")));
-	this.generate_value_editor(this.help_container[2], "Font", "main_font", this.css.css_size_presets[this.css.preset].main_font, true);
-	this.generate_value_editor(this.help_container[2], "Controls", "controls_font", this.css.css_size_presets[this.css.preset].controls_font, true);
-	this.help_container[2].append((help_div1 = this.D("SPHelpLabelDiv").html("Font Sizes")));
-	this.generate_value_editor(this.help_container[2], "Default", "font_size", this.css.css_size_presets[this.css.preset].font_size, false);
-	this.generate_value_editor(this.help_container[2], "Small", "font_size_small", this.css.css_size_presets[this.css.preset].font_size_small, false);
-	this.generate_value_editor(this.help_container[2], "Controls", "font_size_controls", this.css.css_size_presets[this.css.preset].font_size_controls, false);
-
-
-	// Footer bar
-	this.sp_container.append((this.footer_container = this.D("SPFooterBarContainer")));
-	this.footer_container.on("mousedown." + this.namespace, {sound_player: this}, this.on_footerbar_mousedown);
-
-
-	// Alert screen
-	this.sp_container.append((this.alert_container = this.D("SPAlertContainer")));
-	this.alert_container.append((this.D("SPAlertContentContainer").html("Drop Files<br />Here")));
-	this.alert_container.css("display", "none");
-
-
-	// Positioning
+	this.set_volume(this.volume);
 	this.reposition();
 
 
@@ -1527,34 +1678,82 @@ SoundPlayer.prototype.string_to_uint8array = function (str) {
 SoundPlayer.prototype.arraybuffer_to_uint8array = function (buffer) {
 	return new Uint8Array(buffer);
 }
-SoundPlayer.prototype.generate_color_editor = function (container, label, identifier, value) {
-	var help_div1, help_div2, help_div3, help_div4;
+SoundPlayer.prototype.generate_color_editor = function (label, identifier, value) {
 	var color_edit;
 	var help_input = [ null , null , null , null ];
 
-	container.append((help_div1 = this.D("SPHelpSectionDiv")));
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv0")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2b")));
-	help_div3.append((color_edit = this.D("SPHelpColorLabelDisplay")));
-	help_div3.append((this.D("SPHelpColorLabelText").html(label)));
+	var e = this.D("SPHelpSectionDiv") //{ DOM Generation
+		.append(
+			this.D("SPHelpColorInputDiv0")
+			.append(
+				this.D("SPHelpColorInputDiv2b")
+				.append(
+					(color_edit = this.D("SPHelpColorLabelDisplay"))
+				)
+				.append(
+					this.D("SPHelpColorLabelText")
+					.html(label)
+				)
+			)
+		)
+		.append(
+			this.D("SPHelpColorInputDiv1")
+			.append(
+				this.D("SPHelpColorInputDiv2")
+				.attr("title", "Red : [0,255]")
+				.append(
+					this.D("SPHelpColorInputDiv3")
+					.append(
+						(help_input[0] = this.E("input", "SPHelpColorInput"))
+						.attr("type", "text")
+					)
+				)
+			)
+		)
+		.append(
+			this.D("SPHelpColorInputDiv1")
+			.append(
+				this.D("SPHelpColorInputDiv2")
+				.attr("title", "Green : [0,255]")
+				.append(
+					this.D("SPHelpColorInputDiv3")
+					.append(
+						(help_input[1] = this.E("input", "SPHelpColorInput"))
+						.attr("type", "text")
+					)
+				)
+			)
+		)
+		.append(
+			this.D("SPHelpColorInputDiv1")
+			.append(
+				this.D("SPHelpColorInputDiv2")
+				.attr("title", "Blue : [0,255]")
+				.append(
+					this.D("SPHelpColorInputDiv3")
+					.append(
+						(help_input[2] = this.E("input", "SPHelpColorInput"))
+						.attr("type", "text")
+					)
+				)
+			)
+		)
+		.append(
+			this.D("SPHelpColorInputDiv1")
+			.append(
+				this.D("SPHelpColorInputDiv2")
+				.attr("title", "Alpha : [0.0,1.0]")
+				.append(
+					this.D("SPHelpColorInputDiv3")
+					.append(
+						(help_input[3] = this.E("input", "SPHelpColorInput"))
+						.attr("type", "text")
+					)
+				)
+			)
+		) //}
 
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv1")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2").attr("title", "Red : [0,255]")));
-	help_div3.append((help_div4 = this.D("SPHelpColorInputDiv3")));
-	help_div4.append((help_input[0] = this.E("input", "SPHelpColorInput").attr("type", "text")));
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv1")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2").attr("title", "Green : [0,255]")));
-	help_div3.append((help_div4 = this.D("SPHelpColorInputDiv3")));
-	help_div4.append((help_input[1] = this.E("input", "SPHelpColorInput").attr("type", "text")));
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv1")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2").attr("title", "Blue : [0,255]")));
-	help_div3.append((help_div4 = this.D("SPHelpColorInputDiv3")));
-	help_div4.append((help_input[2] = this.E("input", "SPHelpColorInput").attr("type", "text")));
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv1")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2").attr("title", "Alpha : [0.0,1.0]")));
-	help_div3.append((help_div4 = this.D("SPHelpColorInputDiv3")));
-	help_div4.append((help_input[3] = this.E("input", "SPHelpColorInput").attr("type", "text")));
-
+	// Settings
 	for (var i = 0; i < help_input.length; ++i) {
 		help_input[i].val(value[i]);
 		help_input[i].on("change." + this.namespace, {sound_player: this, color_id: identifier, component: i, color_display: color_edit}, this.on_settings_color_change);
@@ -1570,29 +1769,48 @@ SoundPlayer.prototype.generate_color_editor = function (container, label, identi
 	this.player_theme_value_updaters.push([
 		true, identifier, help_input[0], help_input[1], help_input[2], help_input[3], color_edit
 	]);
+
+	// Done
+	return e;
 }
-SoundPlayer.prototype.generate_value_editor = function (container, label, identifier, value, is_string) {
-	var help_div1, help_div2, help_div3, help_div4;
+SoundPlayer.prototype.generate_value_editor = function (label, identifier, value, is_string) {
 	var help_input;
 
-	container.append((help_div1 = this.D("SPHelpSectionDiv")));
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv0")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2b")));
-	help_div3.append((this.D("SPHelpColorLabelText").html(label)));
+	var  e = this.D("SPHelpSectionDiv") //{ DOM Generation
+		.append(
+			this.D("SPHelpColorInputDiv0")
+			.append(
+				this.D("SPHelpColorInputDiv2b")
+				.append(
+					this.D("SPHelpColorLabelText")
+					.html(label)
+				)
+			)
+		)
+		.append(
+			this.D("SPHelpColorInputDiv1Full")
+			.append(
+				this.D("SPHelpColorInputDiv2")
+				.append(
+					this.D("SPHelpColorInputDiv3")
+					.append(
+						(help_input = this.E("input", "SPHelpColorInput"))
+						.attr("type", "text")
+						.val(value)
+						.on("change." + this.namespace, {sound_player: this, value_id: identifier, "is_string": is_string}, this.on_settings_value_change)
+					)
+				)
+			)
+		) //}
 
-	help_div1.append((help_div2 = this.D("SPHelpColorInputDiv1Full")));
-	help_div2.append((help_div3 = this.D("SPHelpColorInputDiv2")));
-	help_div3.append((help_div4 = this.D("SPHelpColorInputDiv3")));
-	help_div4.append((help_input = this.E("input", "SPHelpColorInput").attr("type", "text")));
-
-	help_input.val(value);
-	help_input.on("change." + this.namespace, {sound_player: this, value_id: identifier, "is_string": is_string}, this.on_settings_value_change);
-
+	// Add to auto-update list
 	if (identifier[0] != "@") {
 		this.player_theme_value_updaters.push([
 			false, identifier, help_input
 		]);
 	}
+
+	return e;
 }
 SoundPlayer.prototype.update_value_fields = function () {
 	// Update all
@@ -1675,28 +1893,61 @@ SoundPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, soun
 	playlist_item.position = 0.0;
 
 	// html setup
-	var control_container, controls;
-	this.playlist_container.append((playlist_item.playlist_item = this.D("SPPlaylistItem")));
-	playlist_item.playlist_item.append((this.D("SPPlaylistSoundName").text(title)));
-	playlist_item.playlist_item.append((playlist_item.info_container = this.D("SPPlaylistItemInfo")));
-	playlist_item.playlist_item.append((control_container = this.D("SPPlaylistControlsContainer")));
-	control_container.append((controls = this.D("SPPlaylistControls")));
-	controls.on("click", this.cancel_event);
-	playlist_item.playlist_item.on("click." + this.namespace, {sound_player: this, playlist_item: playlist_item}, this.on_playlist_item_click);
-	if (tag != SoundPlayer.ALL_SOUNDS) playlist_item.playlist_item.attr("title", tag);
-	playlist_item.playlist_item.on("mousedown", this.cancel_event);
-	control_container.on("mousedown", this.cancel_event);
-
-	// Controls
 	playlist_item.controls = [ null , null , null , null ];
-	controls.append((playlist_item.controls[0] = this.E("a", "SPPlaylistControlLink").html("&times;").attr("title", "Delete")));
-	controls.append((this.D("SPPlaylistControlLinkSeparator")));
-	controls.append((playlist_item.controls[1] = this.E("a", "SPPlaylistControlLink").html("&uarr;").attr("title", "Move up")));
-	controls.append((this.D("SPPlaylistControlLinkSeparator")));
-	controls.append((playlist_item.controls[2] = this.E("a", "SPPlaylistControlLink").html("&darr;").attr("title", "Move down")));
-	controls.append((this.D("SPPlaylistControlLinkSeparator")));
-	controls.append((playlist_item.controls[3] = this.E("a", "SPPlaylistControlLink").html("S").attr("title", "Save...")));
-	playlist_item.controls[3].attr("href", playlist_item.audio_blob_url);
+	var control_container, controls;
+	this.playlist_container.append( //{ DOM creation
+		(playlist_item.playlist_item = this.D("SPPlaylistItem"))
+		.on("click." + this.namespace, {sound_player: this, playlist_item: playlist_item}, this.on_playlist_item_click)
+		.on("mousedown", this.cancel_event)
+		.attr("title", tag != SoundPlayer.ALL_SOUNDS ? tag : "")
+		.append(
+			this.D("SPPlaylistSoundName")
+			.text(title)
+		)
+		.append(
+			(playlist_item.info_container = this.D("SPPlaylistItemInfo"))
+		)
+		.append(
+			this.D("SPPlaylistControlsContainer")
+			.on("mousedown", this.cancel_event)
+			.append(
+				this.D("SPPlaylistControls")
+				.on("click", this.cancel_event)
+				.append(
+					(playlist_item.controls[0] = this.E("a", "SPPlaylistControlLink"))
+					.html("&times;")
+					.attr("title", "Delete")
+				)
+				.append(
+					this.D("SPPlaylistControlLinkSeparator")
+				)
+				.append(
+					(playlist_item.controls[1] = this.E("a", "SPPlaylistControlLink"))
+					.html("&uarr;")
+					.attr("title", "Move up")
+				)
+				.append(
+					this.D("SPPlaylistControlLinkSeparator")
+				)
+				.append(
+					(playlist_item.controls[2] = this.E("a", "SPPlaylistControlLink"))
+					.html("&darr;")
+					.attr("title", "Move down")
+				)
+				.append(
+					this.D("SPPlaylistControlLinkSeparator")
+				)
+				.append(
+					(playlist_item.controls[3] = this.E("a", "SPPlaylistControlLink"))
+					.html("S")
+					.attr("title", "Save...")
+					.attr("href", playlist_item.audio_blob_url)
+				)
+			)
+		)
+	); //}
+
+	// Custom
 	for (var i = 0; i < playlist_item.controls.length; ++i) {
 		playlist_item.controls[i].on("click." + this.namespace, {control_id: i, sound_player: this, playlist_item: playlist_item}, this.on_playlist_control_click);
 		playlist_item.controls[i].on("mousedown", this.cancel_event);
@@ -2079,12 +2330,17 @@ SoundPlayer.prototype.on_audio_ended = function (event) {
 	}
 }
 SoundPlayer.prototype.on_audio_timeupdate = function (event) {
-	// Update seek bar
-	event.data.sound_player.current_sound.position = this.currentTime;
+	if (event.data.sound_player.current_sound != null) {
+		// Update seek bar
+		event.data.sound_player.current_sound.position = this.currentTime;
 
-	// Update seek bar
-	if (event.data.sound_player.current_sound.duration > 0) {
-		event.data.sound_player.seek(event.data.sound_player.current_sound.position / event.data.sound_player.current_sound.duration, false);
+		// Update seek bar
+		if (event.data.sound_player.current_sound.duration > 0) {
+			event.data.sound_player.seek(event.data.sound_player.current_sound.position / event.data.sound_player.current_sound.duration, false);
+		}
+		else {
+			event.data.sound_player.seek(0.0, false);
+		}
 	}
 	else {
 		event.data.sound_player.seek(0.0, false);
