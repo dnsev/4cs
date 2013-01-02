@@ -23,3 +23,29 @@ Examples:
 
 
 (Python version is now deprecated)
+
+
+Web Plugin / User End:
+
+	Designed to be a bit better looking, and have some selectable stylesheets to choose
+	from. It's also more clear about draging and dropping files into the player, and
+	properly displays the image when doing so.
+
+	The player is also a bit more customizable.
+
+
+Web Plugin / Dev End:
+
+	On the developer side, the plugin is designed to be much more modular than its
+	counterpart. The sound player is designed to be stand-alone and non-site-specific.
+	Additionally, it's designed such that it is able to have multiple instances,
+	possibly even using different stylesheets. While this is ultimately useless in
+	most applications, it's better designed without global variables anyway.
+
+	Adding a new extraction format is as simple as adding a function
+	callback and adding it to a list in one place. Descriptions of parameters
+	passed into and out of the callbacks are located in SoundPlayer.js. Everything
+	else is taken care of automatically.
+
+	The inline post code and site-specific sound_player code are all sectioned off
+	a bit better too.
