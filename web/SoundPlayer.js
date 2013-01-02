@@ -2241,13 +2241,15 @@ SoundPlayer.prototype.on_settings_color_change = function (event) {
 		if (event.data.component < 3) {
 			value = parseInt($(this).val());
 
-			if (value < 0) value = 0;
+			if (value != value) value = 0;
+			else if (value < 0) value = 0;
 			else if (value > 255) value = 255;
 		}
 		else {
 			value = parseFloat($(this).val());
 
-			if (value < 0.0) value = 0.0;
+			if (value != value) value = 0;
+			else if (value < 0.0) value = 0.0;
 			else if (value > 1.0) value = 1.0;
 		}
 	}
@@ -2284,6 +2286,7 @@ SoundPlayer.prototype.on_settings_value_change = function (event) {
 	var value = $(this).val();
 	if (!event.data.is_string) {
 		value = parseFloat(value);
+		if (value != value) value = 0.0;
 		$(this).val(value);
 	}
 
