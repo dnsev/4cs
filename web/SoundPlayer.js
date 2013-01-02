@@ -1775,6 +1775,7 @@ SoundPlayer.prototype.ajax_get_chrome = function (url, load_tag, callback_data, 
 
 			var ui8_data = this.sound_player.string_to_uint8array(this.response);
 			var status = this.sound_player.attempt_load_raw(false, url, load_tag, ui8_data);
+			alert(ui8_data.length+";"+status+";"+url+";"+load_tag);
 
 			try { status_callback(status, callback_data); }
 			catch (e) {}
