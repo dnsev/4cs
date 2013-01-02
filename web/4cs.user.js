@@ -14,11 +14,19 @@
 // @updateURL      https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
 // ==/UserScript==
 
-
+function dummy(){};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Any images
 ///////////////////////////////////////////////////////////////////////////////
+function string_to_uint8array(str) {
+	var array = new Uint8Array(new ArrayBuffer(str.length));
+	for (var i = 0; i < str.length; ++i) {
+		array[i] = str.charCodeAt(i);
+	}
+	return array;
+}
+
 function image_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 	// Not an image
 	var ext = url_or_filename.split(".").pop().toLowerCase();
@@ -42,6 +50,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 	else {
 		// No footer
 		var magic_strings = [ "OggS\x00\x02" , "moot\x00\x02" , "Krni\x00\x02" ];
+		var magic_strings_ui8 = [ string_to_uint8array(magic_strings[0]) , string_to_uint8array(magic_strings[1]) , string_to_uint8array(magic_strings[2]) ];
 		var magic_strings_fix_size = 4;
 		var len, s, i, j, k, found, tag, temp_tag, data, id;
 		var sound_index = 0;
@@ -52,14 +61,16 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 		var unmask_state = 0, mask, unmask_state_temp, mask_temp, masked;
 		var tag_start = 0, tag_start2 = 0, tag_state, tag_mask, tag_pos, tag_indicators = [ "[".charCodeAt(0) , "]".charCodeAt(0) ];
 		var tag_max_length = 100;
-		for (i = 0; i < raw_ui8_data.length; ++i) {
+		var imax = raw_ui8_data.length - magic_strings_ui8[0].length;
+		var ms, t1;
+		for (i = 0; i < imax; ++i) {
 			// Unmasking
 			unmask_state = (1664525 * unmask_state + 1013904223) & 0xFFFFFFFF;
 			mask = unmask_state >>> 24;
-			unmask_state += (raw_ui8_data[i] ^ mask);
+			unmask_state += (t1 = (raw_ui8_data[i] ^ mask));
 
 			// Tag check
-			if ((raw_ui8_data[i] ^ mask) == tag_indicators[0]) {
+			if (t1 == tag_indicators[0]) {
 				tag_start = i;
 				tag_state = unmask_state;
 				tag_mask = mask;
@@ -69,35 +80,34 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 			// Match headers
 			found = false;
 			masked = false;
-			for (s = 0; s < magic_strings.length; ++s) {
-				if (i + magic_strings[s].length < raw_ui8_data.length) {
-					for (j = 0; j < magic_strings[s].length; ++j) {
-						if (raw_ui8_data[i + j] != magic_strings[s].charCodeAt(j)) break;
-					}
-					if (j == magic_strings[s].length) {
-						found = true;
-						break;
-					}
+			for (s = 0; s < magic_strings_ui8.length; ++s) {
+				ms = magic_strings_ui8[s];
+				for (j = 0; j < ms.length; ++j) {
+					if (raw_ui8_data[i + j] != ms[j]) break;
 				}
+				if (j == ms.length) {
+					found = true;
+					break;
+				}
+
 				if (found) break;
 			}
 			if (!found) {
 				s = 0;
-				if (i + magic_strings[s].length < raw_ui8_data.length) {
-					unmask_state_temp = unmask_state;
-					mask_temp = mask;
-					for (j = 0; true; ) {
-						if ((raw_ui8_data[i + j] ^ mask_temp) != magic_strings[s].charCodeAt(j)) break;
+				ms = magic_strings_ui8[s];
+				unmask_state_temp = unmask_state;
+				mask_temp = mask;
+				for (j = 0; true; ) {
+					if ((raw_ui8_data[i + j] ^ mask_temp) != ms[j]) break;
 
-						if (++j >= magic_strings[s].length) break;
-						unmask_state_temp = (1664525 * unmask_state_temp + 1013904223) & 0xFFFFFFFF;
-						mask_temp = unmask_state_temp >>> 24;
-						unmask_state_temp += (raw_ui8_data[i + j] ^ mask_temp);
-					}
-					if (j == magic_strings[s].length) {
-						found = true;
-						masked = true;
-					}
+					if (++j >= ms.length) break;
+					unmask_state_temp = (1664525 * unmask_state_temp + 1013904223) & 0xFFFFFFFF;
+					mask_temp = unmask_state_temp >>> 24;
+					unmask_state_temp += (raw_ui8_data[i + j] ^ mask_temp);
+				}
+				if (j == ms.length) {
+					found = true;
+					masked = true;
 				}
 			}
 			if (found) {
@@ -149,7 +159,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 						sound_masked_mask,
 						sound_magic_string_index,
 						magic_strings_fix_size,
-						magic_strings
+						magic_strings_ui8
 					);
 				}
 				// New sound
@@ -164,7 +174,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 				sound_magic_string_index = s;
 				sound_masked_state = (masked ? unmask_state : null);
 				sound_masked_mask = (masked ? mask : null);
-				i += magic_strings[s].length;
+				i += magic_strings_ui8[s].length;
 			}
 		}
 		// Complete any sounds
@@ -173,20 +183,20 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 				sounds,
 				raw_ui8_data,
 				sound_start_offset,
-				i,
+				raw_ui8_data.length,
 				sound_masked_state,
 				sound_masked_mask,
 				sound_magic_string_index,
 				magic_strings_fix_size,
-				magic_strings
+				magic_strings_ui8
 			);
 		}
 		// Fix sound headers
 		s = 0;
 		for (i = 0; i < sounds.length; ++i) {
-			if (sounds[i].data.length > magic_strings[s].length) {
-				for (j = 0; j < magic_strings[s].length; ++j) {
-					sounds[i].data[j] = magic_strings[s].charCodeAt(j);
+			if (sounds[i].data.length > magic_strings_ui8[s].length) {
+				for (j = 0; j < magic_strings_ui8[s].length; ++j) {
+					sounds[i].data[j] = magic_strings_ui8[s][j];
 				}
 			}
 		}
@@ -221,7 +231,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 	// Done
 	return sounds;
 }
-function image_load_callback_complete_sound(sounds, raw_ui8_data, sound_start_offset, sound_end_offset, sound_masked_state, sound_masked_mask, sound_magic_string_index, magic_strings_fix_size, magic_strings) {
+function image_load_callback_complete_sound(sounds, raw_ui8_data, sound_start_offset, sound_end_offset, sound_masked_state, sound_masked_mask, sound_magic_string_index, magic_strings_fix_size, magic_strings_ui8) {
 	// Set data
 	var id = sounds.length - 1;
 	sounds[id].data = raw_ui8_data.subarray(sound_start_offset, sound_end_offset);
@@ -242,12 +252,12 @@ function image_load_callback_complete_sound(sounds, raw_ui8_data, sound_start_of
 		var len = sounds[id].data.length - magic_strings_fix_size;
 		for (j = 0; j < len; ++j) {
 			for (k = 0; k < magic_strings_fix_size; ++k) {
-				if (sounds[id].data[j + k] != magic_strings[sound_magic_string_index].charCodeAt(k)) break;
+				if (sounds[id].data[j + k] != magic_strings_ui8[sound_magic_string_index][k]) break;
 			}
 			if (k == magic_strings_fix_size) {
 				// Fix it
 				for (k = 0; k < magic_strings_fix_size; ++k) {
-					sounds[id].data[j + k] = magic_strings[0].charCodeAt(k);
+					sounds[id].data[j + k] = magic_strings_ui8[0][k];
 				}
 				j += magic_strings_fix_size - 1;
 			}
@@ -1107,7 +1117,7 @@ function open_player(load_settings) {
 	// Player
 	sound_player_instance = new SoundPlayer(
 		sound_player_css,
-		[ image_load_callback , png_load_callback ],
+		[ png_load_callback , image_load_callback ],
 		sound_player_settings_save,
 		sound_player_destruct_callback,
 		sound_player_about
