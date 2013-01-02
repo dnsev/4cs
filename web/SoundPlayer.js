@@ -1524,6 +1524,9 @@ SoundPlayer.prototype.string_to_uint8array = function (str) {
 	}
 	return array;
 }
+SoundPlayer.prototype.arraybuffer_to_uint8array = function (buffer) {
+	return new Uint8Array(buffer);
+}
 SoundPlayer.prototype.generate_color_editor = function (container, label, identifier, value) {
 	var help_div1, help_div2, help_div3, help_div4;
 	var color_edit;
@@ -1774,9 +1777,9 @@ alert("1");
 			try { done_callback(true, callback_data); }
 			catch (e) {}
 
-			alert("test");
-			var ui8_data = this.sound_player.string_to_uint8array(this.response);
-			alert("test");
+			alert("test"+this.response);
+			var ui8_data = this.sound_player.arraybuffer_to_uint8array(this.response);
+			alert("test"+ui8_data.length);
 			var status = this.sound_player.attempt_load_raw(false, url, load_tag, ui8_data);
 			alert(ui8_data.length+";"+status+";"+url+";"+load_tag);
 
