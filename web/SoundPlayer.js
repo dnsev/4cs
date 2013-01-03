@@ -1490,11 +1490,11 @@ SoundPlayer.prototype.focus = function () {
 
 SoundPlayer.prototype.get_audio_duration = function (audio) {
 	try {
-		return (audio.duration == audio.duration ? audio.duration : (audio.buffered.end(0) || 0));
+		var d = (isFinite(audio.duration) ? audio.duration : audio.buffered.end(0));
+		return isFinite(d) ? d : 0;
 	}
-	catch (e) {
-		return 0;
-	}
+	catch (e) {}
+	return 0;
 }
 
 SoundPlayer.prototype.regen_stylesheet = function () {
@@ -2349,7 +2349,7 @@ SoundPlayer.prototype.on_audio_timeupdate = function (event) {
 SoundPlayer.prototype.on_audio_durationchange = function (event) {
 	// Update item
 	var duration = event.data.sound_player.get_audio_duration(event.data.sound_player.audio[0]);
-	var length_str = event.data.sound_player.duration_to_string(duration);
+	var length_str = (duration == 0.0 ? "?" : event.data.sound_player.duration_to_string(duration));
 	var seek_pos = 0.0;
 	if (event.data.sound_player.current_sound != null) {
 		// Update duration
@@ -2376,7 +2376,7 @@ SoundPlayer.prototype.on_temp_audio_durationchange = function (event) {
 	event.data.playlist_item.temp_audio.removeAttr("src").remove();
 	event.data.playlist_item.temp_audio = null;
 
-	var length_str = event.data.sound_player.duration_to_string(duration);
+	var length_str = (duration == 0.0 ? "?" : event.data.sound_player.duration_to_string(duration));
 	event.data.playlist_item.info_container.html(length_str);
 }
 
