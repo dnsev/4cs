@@ -728,7 +728,12 @@ function inline_setup() {
 	});
 
 	// Update content
-	$(is_archive ? ".post,.thread" : ".postContainer").each(function (index) { inline_post_parse($(this), false); });
+	if (is_archive) {
+		$(is_archive ? ".thread" : ".postContainer")
+		.each(function (index) { if (index == 0) inline_post_parse($(this), false); });
+	}
+	$(is_archive ? ".post_wrapper" : ".postContainer")
+	.each(function (index) { inline_post_parse($(this), false); });
 
 	// Content updating
 	var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
@@ -767,6 +772,8 @@ function inline_setup() {
 function inline_post_parse(container, redo) {
 	var image, post;
 	if ((image = container.find(is_archive ? ".thread_image_link" : ".fileThumb")).length > 0 && (post = container.find(is_archive ? ".text" : ".postMessage")).length > 0) {
+		image = $(image[0]);
+		post = $(post[0]);
 		var load_all_text = "sounds";
 		var image_url = image.attr("href");
 		if (!(/http\:/.test(image_url))) image_url = "http:" + image_url;
