@@ -6,6 +6,7 @@ function Loop() {
 	this.timer = null;
 	this.timeout = 100;
 	this.steps = 100;
+	this.special = 0;
 }
 Loop.prototype.for_lt = function (i, limiter, incr, data, body, done) {
 	// Loop
@@ -75,6 +76,33 @@ Loop.prototype.for_ge = function (i, limiter, incr, data, body, done) {
 	);
 	this.loop();
 }
+Loop.prototype.forever = function (data, body, done) {
+	// Loop
+	this.loops.push(
+		{
+			"compare": function (i, limit) { return true; },
+			"step_limiter": function (i, limit) { return 0; },
+			"i": 0,
+			"i_incr": 0,
+			"limiter": 0,
+			"data": data,
+			"body": body,
+			"done": done,
+			"decrement": false
+		}
+	);
+	this.loop();
+}
+
+Loop.prototype.Break = function () {
+	this.special = 1;
+	return undefined;
+}
+Loop.prototype.Continue = function () {
+	this.special = 2;
+	return undefined;
+}
+
 Loop.prototype.loop = function () {
 	this.timer = null;
 
@@ -83,26 +111,36 @@ Loop.prototype.loop = function () {
 
 	// Limit
 	var i_max = loop.step_limiter(loop.i + this.steps, loop.limiter);
+	var j;
+	var typeof_number = typeof(1.0);
 
 	// Loop
 	while (loop.compare(loop.i, i_max)) {
 		// Body
-		loop.body(loop.i, loop.data, this);
-		loop.i += loop.i_incr;
+		j = loop.body(loop.i, loop.data, this);
+		loop.i = (typeof(j) === typeof_number ? j : loop.i) + loop.i_incr;
 		// New loop was added
 		if (this.loops.length > ll) {
 			this.loops[this.loops.length - 1].decrement = true;
 			return;
 		}
+		if (this.special == 1) {
+			// Set to 0 later
+			break;
+		}
+		if (this.special == 2) {
+			this.special = 0;
+		}
 	}
 
 	// Next
-	if (loop.i < loop.limiter) {
+	if (loop.i < loop.limiter && this.special != 1) {
 		var self = this;
 		this.timer = setTimeout(function () { self.loop(); }, this.timeout);
 	}
 	else {
 		// Done
+		this.special = 0;
 		loop.done(loop.i, loop.data, this);
 
 		// Chain into any other loops

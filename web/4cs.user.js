@@ -21,7 +21,7 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Any images
+// Multi-use
 ///////////////////////////////////////////////////////////////////////////////
 function string_to_uint8array(str) {
 	var array = new Uint8Array(new ArrayBuffer(str.length));
@@ -30,11 +30,77 @@ function string_to_uint8array(str) {
 	}
 	return array;
 }
+function arraybuffer_to_uint8array(buffer) {
+	return new Uint8Array(buffer);
+}
 
-function image_load_callback(url_or_filename, load_tag, raw_ui8_data) {
+function ajax_get_chrome(url, callback_data, progress_callback, done_callback) {
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", url, true);
+	xhr.overrideMimeType("text/plain; charset=x-user-defined");
+	xhr.responseType = "arraybuffer";
+
+	xhr.onload = function (event) {
+		if (this.status == 200) {
+			var ui8_data = arraybuffer_to_uint8array(this.response);
+
+			if (typeof(done_callback) == "function") done_callback(true, callback_data, ui8_data);
+		}
+		else {
+			if (typeof(done_callback) == "function") done_callback(false, callback_data, null);
+		}
+	};
+	if (typeof(progress_callback) == "function") {
+		xhr.onprogress = function (event) {
+			progress_callback(event, callback_data);
+		};
+	}
+	xhr.send();
+}
+function ajax_get_firefox(url, callback_data, progress_callback, done_callback) {
+	var arg = {
+		method: "GET",
+		url: url,
+		overrideMimeType: "text/plain; charset=x-user-defined",
+		onload: function (event) {
+			if (event.status == 200) {
+				var ui8_data = string_to_uint8array(event.responseText);
+
+				if (typeof(done_callback) == "function") done_callback(true, callback_data, ui8_data);
+			}
+			else {
+				if (typeof(done_callback) == "function") done_callback(false, callback_data, null);
+			}
+		}
+	};
+	if (typeof(progress_callback) == "function") {
+		arg.onprogress = function (event) {
+			progress_callback(event, callback_data);
+		};
+	}
+	GM_xmlhttpRequest(arg);
+}
+var ajax_get = (((navigator.userAgent + "").indexOf(" Chrome/") >= 0) ? ajax_get_chrome : ajax_get_firefox);
+
+function E(elem) {
+	return jQuery(document.createElement(elem));
+}
+function T(text) {
+	return jQuery(document.createTextNode(text));
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Any images
+///////////////////////////////////////////////////////////////////////////////
+function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callback) {
 	// Not an image
 	var ext = url_or_filename.split(".").pop().toLowerCase();
-	if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg") return null;
+	if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg") {
+		done_callback(null);
+		return;
+	}
 
 	// Footer
 	var has_footer = true;
@@ -49,6 +115,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 	// Search image
 	var sounds = [];
 	if (has_footer) {
+		// TODO
 		alert("Footer sound");
 	}
 	else {
@@ -207,7 +274,15 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 	}
 
 	// Search
-	if (sounds.length == 0) return null;
+	if (sounds.length == 0) {
+		done_callback(null);
+		return;
+	}
+
+	// List names
+	var sound_names = [];
+	for (var i = 0; i < sounds.length; ++i) sound_names.push(sounds[i]["title"]);
+
 	// Single sound?
 	if (load_tag != SoundPlayer.ALL_SOUNDS) {
 		// Find the correct tag to use
@@ -232,9 +307,407 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 		// Modify sounds
 		sounds = [ sounds[found] ];
 	}
+
 	// Done
-	return sounds;
+	done_callback([ sound_names , sounds ]);
 }
+function image_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_callback) {
+	try {
+		var loop = new Loop();
+		loop.steps = 1024 * 64;
+	}
+	catch (e) {
+		console.log(e);
+		return image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callback);
+	}
+
+	// Not an image
+	var ext = url_or_filename.split(".").pop().toLowerCase();
+	if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg") {
+		done_callback(null);
+		return;
+	}
+
+	// Footer
+	var has_footer = true;
+	var footer = "4SPF";
+	for (var i = 0; i < footer.length; ++i) {
+		if (raw_ui8_data[raw_ui8_data.length - footer.length + i] != footer.charCodeAt(i)) {
+			has_footer = false;
+			break;
+		}
+	}
+
+	// Search image
+	var sounds = [];
+
+	var on_complete = function () {
+		// Search
+		if (sounds.length == 0) {
+			done_callback(null);
+			return;
+		}
+
+		// List names
+		var sound_names = [];
+		for (var i = 0; i < sounds.length; ++i) sound_names.push(sounds[i]["title"]);
+
+		// Single sound?
+		if (load_tag != SoundPlayer.ALL_SOUNDS) {
+			// Find the correct tag to use
+			var found = null;
+			for (var i = 0; i < sounds.length; ++i) {
+				if (sounds[i]["title"] == load_tag) {
+					found = i;
+					break;
+				}
+			}
+			if (found === null) {
+				for (var i = 0; i < sounds.length; ++i) {
+					if (sounds[i]["title"].toLowerCase() == load_tag.toLowerCase()) {
+						found = i;
+						break;
+					}
+				}
+				if (found === null) {
+					found = 0;
+				}
+			}
+			// Modify sounds
+			sounds = [ sounds[found] ];
+		}
+
+		// Done
+		done_callback([ sound_names , sounds ]);
+	};
+
+	if (has_footer) {
+		// TODO
+		alert("Footer sound");
+	}
+	else {
+		// No footer
+		var magic_strings = [ "OggS\x00\x02" , "moot\x00\x02" , "Krni\x00\x02" ];
+		var magic_strings_ui8 = [ string_to_uint8array(magic_strings[0]) , string_to_uint8array(magic_strings[1]) , string_to_uint8array(magic_strings[2]) ];
+		var magic_strings_fix_size = 4;
+		var len, s, i, j, k, found, tag, temp_tag, data, id;
+		var sound_index = 0;
+		var sound_start_offset = -1;
+		var sound_magic_string_index = -1;
+		var sound_masked_state = null;
+		var sound_masked_mask = null;
+		var unmask_state = 0, mask, unmask_state_temp, mask_temp, masked;
+		var tag_start = 0, tag_start2 = 0, tag_state, tag_mask, tag_pos, tag_indicators = [ "[".charCodeAt(0) , "]".charCodeAt(0) ];
+		var tag_max_length = 100;
+		var imax = raw_ui8_data.length - magic_strings_ui8[0].length;
+		var ms, t1;
+
+		loop.for_lt(
+			0, imax, 1,
+			{},
+			function (i, data, loop) {
+				// Unmasking
+				unmask_state = (1664525 * unmask_state + 1013904223) & 0xFFFFFFFF;
+				mask = unmask_state >>> 24;
+				unmask_state += (t1 = (raw_ui8_data[i] ^ mask));
+
+				// Tag check
+				if (t1 == tag_indicators[0]) {
+					tag_start = i;
+					tag_state = unmask_state;
+					tag_mask = mask;
+				}
+				if (raw_ui8_data[i] == tag_indicators[0]) tag_start2 = i;
+
+				// Match headers
+				found = false;
+				masked = false;
+				for (s = 0; s < magic_strings_ui8.length; ++s) {
+					ms = magic_strings_ui8[s];
+					for (j = 0; j < ms.length; ++j) {
+						if (raw_ui8_data[i + j] != ms[j]) break;
+					}
+					if (j == ms.length) {
+						found = true;
+						break;
+					}
+
+					if (found) break;
+				}
+				if (!found) {
+					s = 0;
+					ms = magic_strings_ui8[s];
+					unmask_state_temp = unmask_state;
+					mask_temp = mask;
+					for (j = 0; true; ) {
+						if ((raw_ui8_data[i + j] ^ mask_temp) != ms[j]) break;
+
+						if (++j >= ms.length) break;
+						unmask_state_temp = (1664525 * unmask_state_temp + 1013904223) & 0xFFFFFFFF;
+						mask_temp = unmask_state_temp >>> 24;
+						unmask_state_temp += (raw_ui8_data[i + j] ^ mask_temp);
+					}
+					if (j == ms.length) {
+						found = true;
+						masked = true;
+					}
+				}
+				if (found) {
+					// Find the key location
+					tag_pos = i;
+					k = 1;
+					tag = "[Name Unknown]";
+					if (masked) {
+						// Get the tag
+						if (i - tag_start < tag_max_length) {
+							temp_tag = "";
+							for (j = tag_start + 1; j < i; ++j) {
+								tag_state = (1664525 * tag_state + 1013904223) & 0xFFFFFFFF;
+								tag_mask = tag_state >>> 24;
+								tag_state += (raw_ui8_data[j] ^ tag_mask);
+								
+								if ((raw_ui8_data[j] ^ tag_mask) == tag_indicators[1]) break;
+								temp_tag += String.fromCharCode(raw_ui8_data[j] ^ tag_mask);
+							}
+							if (j < i) {
+								tag = temp_tag;
+								tag_pos = tag_start;
+							}
+						}
+					}
+					else {
+						if (i - tag_start2 < tag_max_length) {
+							temp_tag = "";
+							for (j = tag_start2 + 1; j < i; ++j) {
+								if (raw_ui8_data[j] == tag_indicators[1]) break;
+								temp_tag += String.fromCharCode(raw_ui8_data[j]);
+							}
+							if (j < i) {
+								tag = temp_tag;
+								tag_pos = tag_start;
+							}
+						}
+					}
+					tag = tag || "?";
+
+					// If there was an old sound, complete it
+					if (sounds.length > 0) {
+						image_load_callback_complete_sound(
+							sounds,
+							raw_ui8_data,
+							sound_start_offset,
+							tag_pos,
+							sound_masked_state,
+							sound_masked_mask,
+							sound_magic_string_index,
+							magic_strings_fix_size,
+							magic_strings_ui8
+						);
+					}
+					// New sound
+					sounds.push({
+						"title": tag,
+						"flagged": (load_tag != SoundPlayer.ALL_SOUNDS && load_tag.toLowerCase() != tag.toLowerCase()),
+						"index": sound_index,
+						"data": null
+					});
+					// Next
+					sound_start_offset = i;
+					sound_magic_string_index = s;
+					sound_masked_state = (masked ? unmask_state : null);
+					sound_masked_mask = (masked ? mask : null);
+					i += magic_strings_ui8[s].length;
+				}
+				return i;
+			},
+			function (i, data, loop) {
+				// Complete any sounds
+				if (sounds.length > 0) {
+					image_load_callback_complete_sound(
+						sounds,
+						raw_ui8_data,
+						sound_start_offset,
+						raw_ui8_data.length,
+						sound_masked_state,
+						sound_masked_mask,
+						sound_magic_string_index,
+						magic_strings_fix_size,
+						magic_strings_ui8
+					);
+				}
+				// Fix sound headers
+				s = 0;
+				for (i = 0; i < sounds.length; ++i) {
+					if (sounds[i].data.length > magic_strings_ui8[s].length) {
+						for (j = 0; j < magic_strings_ui8[s].length; ++j) {
+							sounds[i].data[j] = magic_strings_ui8[s][j];
+						}
+					}
+				}
+
+				on_complete();
+			}
+		);
+
+	}
+}
+
+function image_check_callback(url_or_filename, raw_ui8_data, callback_data, done_callback) {
+	// Not an image
+	var ext = url_or_filename.split(".").pop().toLowerCase();
+	if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg") {
+		done_callback(null);
+		return;
+	}
+
+	// Footer
+	var has_footer = true;
+	var footer = "4SPF";
+	for (var i = 0; i < footer.length; ++i) {
+		if (raw_ui8_data[raw_ui8_data.length - footer.length + i] != footer.charCodeAt(i)) {
+			has_footer = false;
+			break;
+		}
+	}
+
+	// Search image
+	if (has_footer) {
+		// TODO
+		done_callback(null, done_callback);
+	}
+	else {
+		var sounds = [0, [], []];
+
+		var magic_strings = [ "OggS\x00\x02" , "moot\x00\x02" , "Krni\x00\x02" ];
+		var magic_strings_ui8 = [ string_to_uint8array(magic_strings[0]) , string_to_uint8array(magic_strings[1]) , string_to_uint8array(magic_strings[2]) ];
+		var magic_strings_fix_size = 4;
+		var len, s, i, j, k, found, tag, temp_tag, data, id;
+		var unmask_state = 0, mask, unmask_state_temp, mask_temp, masked;
+		var tag_start = 0, tag_start2 = 0, tag_state, tag_mask, tag_pos, tag_indicators = [ "[".charCodeAt(0) , "]".charCodeAt(0) ];
+		var tag_max_length = 100;
+		var imax = raw_ui8_data.length - magic_strings_ui8[0].length;
+		var ms, t1;
+
+		var loop = new Loop();
+		loop.steps = 1024 * 64;
+		loop.for_lt(
+			0, imax, 1,
+			{},
+			function (i, data, loop) {
+				// Unmasking
+				unmask_state = (1664525 * unmask_state + 1013904223) & 0xFFFFFFFF;
+				mask = unmask_state >>> 24;
+				unmask_state += (t1 = (raw_ui8_data[i] ^ mask));
+
+				// Tag check
+				if (t1 == tag_indicators[0]) {
+					tag_start = i;
+					tag_state = unmask_state;
+					tag_mask = mask;
+				}
+				if (raw_ui8_data[i] == tag_indicators[0]) tag_start2 = i;
+
+				// Match headers
+				found = false;
+				masked = false;
+				for (s = 0; s < magic_strings_ui8.length; ++s) {
+					ms = magic_strings_ui8[s];
+					for (j = 0; j < ms.length; ++j) {
+						if (raw_ui8_data[i + j] != ms[j]) break;
+					}
+					if (j == ms.length) {
+						found = true;
+						break;
+					}
+
+					if (found) break;
+				}
+				if (!found) {
+					s = 0;
+					ms = magic_strings_ui8[s];
+					unmask_state_temp = unmask_state;
+					mask_temp = mask;
+					for (j = 0; true; ) {
+						if ((raw_ui8_data[i + j] ^ mask_temp) != ms[j]) break;
+
+						if (++j >= ms.length) break;
+						unmask_state_temp = (1664525 * unmask_state_temp + 1013904223) & 0xFFFFFFFF;
+						mask_temp = unmask_state_temp >>> 24;
+						unmask_state_temp += (raw_ui8_data[i + j] ^ mask_temp);
+					}
+					if (j == ms.length) {
+						found = true;
+						masked = true;
+					}
+				}
+				if (found) {
+					// Find the key location
+					tag_pos = i;
+					k = 1;
+					tag = "[Name Unknown]";
+					if (masked) {
+						// Get the tag
+						if (i - tag_start < tag_max_length) {
+							temp_tag = "";
+							for (j = tag_start + 1; j < i; ++j) {
+								tag_state = (1664525 * tag_state + 1013904223) & 0xFFFFFFFF;
+								tag_mask = tag_state >>> 24;
+								tag_state += (raw_ui8_data[j] ^ tag_mask);
+								
+								if ((raw_ui8_data[j] ^ tag_mask) == tag_indicators[1]) break;
+								temp_tag += String.fromCharCode(raw_ui8_data[j] ^ tag_mask);
+							}
+							if (j < i) {
+								tag = temp_tag;
+								tag_pos = tag_start;
+							}
+						}
+					}
+					else {
+						if (i - tag_start2 < tag_max_length) {
+							temp_tag = "";
+							for (j = tag_start2 + 1; j < i; ++j) {
+								if (raw_ui8_data[j] == tag_indicators[1]) break;
+								temp_tag += String.fromCharCode(raw_ui8_data[j]);
+							}
+							if (j < i) {
+								tag = temp_tag;
+								tag_pos = tag_start;
+							}
+						}
+					}
+					tag = tag || "?";
+
+					// Old sound
+					if (sounds[0] > 0) {
+						sounds[2][sounds[2].length - 1] += i;
+					}
+					// New sound
+					++sounds[0];
+					sounds[1].push(tag);
+					sounds[2].push(-i);
+					// Next
+					i += magic_strings_ui8[s].length;
+				}
+
+				// Done
+				return i;
+			},
+			function (i, data, loop) {
+				// Old sound
+				if (sounds[0] > 0) {
+					sounds[2][sounds[2].length - 1] += raw_ui8_data.length;
+				}
+				else {
+					sounds = null;
+				}
+
+				done_callback(sounds, callback_data);
+			}
+		);
+	}
+}
+
 function image_load_callback_complete_sound(sounds, raw_ui8_data, sound_start_offset, sound_end_offset, sound_masked_state, sound_masked_mask, sound_magic_string_index, magic_strings_fix_size, magic_strings_ui8) {
 	// Set data
 	var id = sounds.length - 1;
@@ -274,9 +747,12 @@ function image_load_callback_complete_sound(sounds, raw_ui8_data, sound_start_of
 ///////////////////////////////////////////////////////////////////////////////
 // PNG images
 ///////////////////////////////////////////////////////////////////////////////
-function png_load_callback(url_or_filename, load_tag, raw_ui8_data) {
+function png_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callback) {
 	// Not a PNG
-	if (url_or_filename.split(".").pop().toLowerCase() != "png") return null;
+	if (url_or_filename.split(".").pop().toLowerCase() != "png") {
+		done_callback(null);
+		return;
+	}
 
 	// Load image from data
 	var img = new DataImage(raw_ui8_data);
@@ -286,8 +762,78 @@ function png_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 	var r = reader.unpack();
 	if (typeof(r) == typeof("")) {
 		// Error
-		return null;
+		done_callback(null);
+		return;
 	}
+
+	// Done
+	done_callback(png_load_callback_find_correct(r, load_tag));
+}
+function png_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_callback) {
+	// Not a PNG
+	if (url_or_filename.split(".").pop().toLowerCase() != "png") {
+		done_callback(null);
+		return;
+	}
+
+	// Load image from data
+	var img = new DataImage(
+		raw_ui8_data,
+		{},
+		function (img, data) {
+			// Unpack files
+			var reader = new DataImageReader(img);
+			reader.unpack_slow(function (r) {
+				if (typeof(r) == typeof("")) {
+					// Error
+					done_callback(null);
+				}
+				else {
+					// Loaded
+					done_callback(png_load_callback_find_correct(r, load_tag));
+				}
+			});
+		},
+		true
+	);
+}
+
+function png_check_callback(url_or_filename, raw_ui8_data, callback_data, done_callback) {
+	// Not a PNG
+	if (url_or_filename.split(".").pop().toLowerCase() != "png") {
+		done_callback(null, callback_data);
+		return;
+	}
+
+	try {
+		var img = new DataImage(
+			raw_ui8_data,
+			{},
+			function (img, data) {
+				// Unpack files
+				var reader = new DataImageReader(img);
+				var about = reader.unpack_names();
+				if (typeof(about) !== typeof("") && about[0] > 0) {
+					// Has images
+					done_callback(about, callback_data);
+				}
+				else {
+					done_callback(null, callback_data);
+				}
+			},
+			true
+		);
+	}
+	catch (e) {
+		console.log(e);
+		done_callback(null, callback_data);
+	}
+}
+
+function png_load_callback_find_correct(r, load_tag) {
+	// List names
+	var sound_names = [];
+	for (var i = 0; i < r[0].length; ++i) sound_names.push(r[0][i]);
 
 	// Loaded
 	var ret = [];
@@ -340,12 +886,109 @@ function png_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 			});
 		}
 		else {
-			return null;
+			return [ sound_names , null ];
 		}
 	}
 
-	// Done
-	return ret;
+	return [ sound_names , ret ];
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Thread Manager
+///////////////////////////////////////////////////////////////////////////////
+var is_archive = ((document.location + "").indexOf("boards.4chan.org") < 0);
+function ThreadManager () {
+	// Manager
+	this.posts = {};
+	var self = this;
+
+	// Update content
+	if (is_archive) {
+		$(".thread")
+		.each(function (index) {
+			if (index == 0) {
+				self.parse_post($(this));
+			}
+		});
+	}
+	$(is_archive ? ".post" : ".postContainer")
+	.each(function (index) {
+		self.parse_post($(this));
+	});
+
+	// Mutation manager
+	var MutationObserver = (window.MutationObserver || window.WebKitMutationObserver);
+	if (MutationObserver) {
+		try {
+			var mo = new MutationObserver(function (records) {
+				for (var i = 0; i < records.length; ++i) {
+					if (records[i].type == "childList" && records[i].addedNodes){
+						for (var j = 0; j < records[i].addedNodes.length; ++j) {
+							// Check
+							self.on_dom_mutation($(records[i].addedNodes[j]));
+						}
+					}
+				}
+			});
+			mo.observe(
+				$(is_archive ? "#main" : ".board")[0],
+				{
+					"childList": true,
+					"subtree": true,
+					"characterData": true
+				}
+			);
+		}
+		catch (e) {
+			console.log(e);
+			MutationObserver = null;
+		}
+	}
+	if (!MutationObserver) {
+		$($(is_archive ? "#main" : ".board")[0]).on("DOMNodeInserted", function (event) {
+			self.on_dom_mutation($(event.target));
+			return true;
+		});
+	}
+}
+ThreadManager.prototype.on_dom_mutation = function (target) {
+	// Updating
+	if (target.hasClass("inline")) {
+		this.parse_post(target);
+	}
+	else if (target.hasClass("postContainer")) {
+		this.parse_post(target);
+	}
+	else if (target.hasClass("backlinkHr")) {
+		// Not tested
+		this.parse_post(target.parent().parent());
+	}
+}
+ThreadManager.prototype.parse_post = function (container) {
+	// Get id
+	var post_id = container.attr("id").replace(/[^0-9]/, "");
+	var redo = true;
+	if (!(post_id in this.posts)) {
+		redo = false;
+
+		var image = container.find(is_archive ? ".thread_image_link" : ".fileThumb");
+		var post = container.find(is_archive ? ".text" : ".postMessage");
+
+		this.posts[post_id] = {
+			"container": container,
+			"image_url": (image.length > 0 ? image.attr("href") : null),
+			"post": (post.length > 0 ? $(post[0]) : null)
+		};
+	}
+
+	// Auto checking images
+	inline_post_parse(this.posts[post_id], redo);
+}
+ThreadManager.prototype.post = function (index) {
+	index += "";
+	return (index in this.posts ? this.posts[index] : null);
 }
 
 
@@ -353,7 +996,6 @@ function png_load_callback(url_or_filename, load_tag, raw_ui8_data) {
 ///////////////////////////////////////////////////////////////////////////////
 // Inline text
 ///////////////////////////////////////////////////////////////////////////////
-var is_archive = ((document.location + "").indexOf("boards.4chan.org") < 0);
 function inline_setup() {
 	$ = jQuery;
 
@@ -383,87 +1025,123 @@ function inline_setup() {
 		reload_span.css("display", "none");
 	});
 
-	// Update content
-	if (is_archive) {
-		$(is_archive ? ".thread" : ".postContainer")
-		.each(function (index) { if (index == 0) inline_post_parse($(this), false); });
-	}
-	$(is_archive ? ".post_wrapper" : ".postContainer")
-	.each(function (index) { inline_post_parse($(this), false); });
-
-	// Content updating
-	var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-	if (MutationObserver) {
-		try {
-			var mo = new MutationObserver(function (records) {
-				for (var i = 0; i < records.length; ++i) {
-					if (records[i].type == "childList" && records[i].addedNodes){
-						for (var j = 0; j < records[i].addedNodes.length; ++j) {
-							// Check
-							inline_dom_mutation($(records[i].addedNodes[j]));
-						}
-					}
-				}
-			});
-			mo.observe(
-				$(".board")[0],
-				{
-					"childList": true,
-					"subtree": true,
-					"characterData": true
-				}
-			);
-		}
-		catch (e) {
-			MutationObserver = null;
-		}
-	}
-	if (!MutationObserver) {
-		$($(".board")[0]).on("DOMNodeInserted", function (event) {
-			inline_dom_mutation($(event.target));
-			return true;
-		});
+	// Load all
+	var threads = $(".thread");
+	if (threads.length > 0) {
+		$(threads[0]).before(
+			E("div")
+			.append(T("[ "))
+			.append(
+				(auto_check_thread_detect_link = E("a"))
+				.attr("href", "#")
+				.html("Detect Sounds")
+				.on("click", {}, inline_detect_all_in_thread)
+			)
+			.append(T(" / "))
+			.append(
+				(auto_check_thread_load_all_link = E("a"))
+				.attr("href", "#")
+				.html("Load All Sounds")
+				.on("click", {}, inline_load_all_in_thread)
+			)
+			.append(T(" ]"))
+		);
 	}
 }
-function inline_post_parse(container, redo) {
-	var image, post;
-	if ((image = container.find(is_archive ? ".thread_image_link" : ".fileThumb")).length > 0 && (post = container.find(is_archive ? ".text" : ".postMessage")).length > 0) {
-		image = $(image[0]);
-		post = $(post[0]);
-		var load_all_text = "sounds";
-		var image_url = image.attr("href");
-		if (!(/http\:/.test(image_url))) image_url = "http:" + image_url;
-
+function inline_post_parse(post_data, redo) {
+	if (post_data.image_url != null) {
 		if (redo) {
-			post.find(".SPLoadLink").each(function (index) {
-				var tag = $(this).attr("_sp_link");
-				$(this).html(tag).on("click", {"image_url": image_url, "tag": tag}, inline_link_click);
+			// Re-replace
+			post_data.post.find(".SPLoadLink").each(function (index) {
+				var tag_id = parseInt($(this).attr("_sp_tag_id"));
+
+				$(this)
+				.html(post_data.sounds[tag_id])
+				.on("click", {"post_data": post_data, "tag_id": tag_id}, inline_link_click);
 			});
-			container.find(".SPLoadAllLink").html(load_all_text).on("click", {"image_url": image_url, "text": load_all_text}, inline_load_all);
+
+			post_data.sounds.load_all_link
+			.html(post_data.sounds.load_all_text)
+			.on("click", {"post_data": post_data}, inline_load_all);
 		}
 		else {
+			// Sound data
+			post_data.sounds = {
+				"post_tags": [],
+				"load_all_link": null,
+				"load_all_text": "sounds",
+				"sound_names": [],
+				"loaded": false,
+				"about_container": null,
+				"about_count_label": null,
+				"about_list_container": null,
+				"auto_check": {
+					"search_span": null,
+					"search_status": null
+				}
+			};
+
 			// Replace tags in post
-			var sounds_found = inline_replace_in_tag(post);
+			var sounds_found = inline_replace_in_tag(post_data.post);
 
-			// Replacements
-			if (sounds_found) {
-				//post.html(post_html);
+			// Sounds links
+			post_data.post.find(".SPLoadLink").each(function (index) {
+				var tag_id = post_data.sounds.post_tags.length;
+				post_data.sounds.post_tags.push($(this).html());
 
-				post.find(".SPLoadLink").each(function (index) {
-					$(this).attr("href", "#").attr("_sp_link", $(this).html()).on("click", {"image_url": image_url, "tag": $(this).html()}, inline_link_click);
-				});
+				$(this)
+				.attr("href", "#")
+				.attr("_sp_tag_id", tag_id)
+				.on("click", {"post_data": post_data, "tag_id": tag_id}, inline_link_click);
+			});
 
-				if (is_archive) {
-					var file_size_label = container.find(".post_file_controls").find("a");
-					file_size_label = $(file_size_label[file_size_label.length - 1]);
-					file_size_label.after(E("a").addClass("SPLoadAllLink btnr parent").attr("href", "#").html(load_all_text).on("click", {"image_url": image_url, "text": load_all_text}, inline_load_all));
-				}
-				else {
-					var file_size_label = container.find(".fileText");
-					file_size_label.after(E("a").addClass("SPLoadAllLink").attr("href", "#").html(load_all_text).on("click", {"image_url": image_url, "text": load_all_text}, inline_load_all));
-					file_size_label.after(T(" "));
-				}
+			// Load all
+			if (is_archive) {
+				var file_size_label = post_data.container.find(".post_file_controls").find("a");
+				file_size_label = $(file_size_label[0]);
+				file_size_label.before((post_data.sounds.load_all_link = E("a")).addClass("SPLoadAllLink btnr parent"));
 			}
+			else {
+				var file_size_label = post_data.container.find(".fileText");
+				file_size_label.after((post_data.sounds.load_all_link = E("a")).addClass("SPLoadAllLink"));
+				file_size_label.after(T(" "));
+			}
+			post_data.sounds.load_all_link
+			.attr("href", "#")
+			.html(post_data.sounds.load_all_text)
+			.on("click", {"post_data": post_data}, inline_load_all);
+
+			// Status
+			post_data.post
+			.before(
+				(post_data.sounds.about_container = E("div"))
+				.css("font-size", "10px")
+				.css("padding-top", "10px")
+				.css("display", "none")
+				.append(
+					(post_data.sounds.about_count_label = E("div"))
+				)
+				.append(
+					(post_data.sounds.about_list_container = E("div"))
+				)
+			);
+
+			// DOM update
+			post_data.sounds.load_all_link
+			.after(
+				(post_data.sounds.auto_check.search_span = E("span"))
+				.addClass("SPImageSearchingTextContainer")
+				.css("display", (sound_auto_checker.enabled ? "" :"none"))
+				.html("...")
+				.append(
+					(post_data.sounds.auto_check.search_status = E("span"))
+					.addClass("SPImageSearchingText")
+				)
+			);
+			auto_check_thread_load_all_link.attr("href", "#");
+
+			// Queue
+			sound_auto_checker.add_to_queue(post_data);
 		}
 	}
 }
@@ -473,14 +1151,15 @@ function inline_link_click(event) {
 	$(this).html(load_str);
 
 	// Load sound
+	event.data.post_data.sounds.loaded = true;
 	open_player(true);
 	sound_player_instance.attempt_load(
-		event.data.image_url,
-		event.data.tag,
+		event.data.post_data.image_url,
+		event.data.post_data.sounds.post_tags[event.data.tag_id],
 		{
 			"object": $(this),
-			"image_url": event.data.image_url,
-			"tag": event.data.tag,
+			"post_data": event.data.post_data,
+			"tag_id": event.data.tag_id,
 			"load_str": load_str
 		},
 		function (event, data) {
@@ -488,9 +1167,48 @@ function inline_link_click(event) {
 			data.object.html(data.load_str + " (" + progress + ")");
 		},
 		function (okay, data) {
-			data.object.html(data.tag + (okay ? "" : " (ajax&nbsp;error)"));
+			data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
 		},
-		function (status, data) {
+		function (status, data, all_files) {
+			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
+				data.post_data.sounds.sound_names = all_files;
+				inline_update_about_image(data.post_data);
+			}
+		}
+	);
+
+	// Done
+	return false;
+}
+function inline_link_top_click(event) {
+	// Change status
+	var load_str = "loading...";
+	$(this).html(load_str);
+
+	// Load sound
+	event.data.post_data.sounds.loaded = true;
+	open_player(true);
+	sound_player_instance.attempt_load(
+		event.data.post_data.image_url,
+		event.data.post_data.sounds.sound_names[event.data.sound_id],
+		{
+			"object": $(this),
+			"post_data": event.data.post_data,
+			"sound_id": event.data.sound_id,
+			"load_str": load_str
+		},
+		function (event, data) {
+			var progress = Math.floor((event.loaded / event.total) * 100);
+			data.object.html(data.load_str + " (" + progress + ")");
+		},
+		function (okay, data) {
+			data.object.html(data.post_data.sounds.sound_names[data.sound_id] + (okay ? "" : " (ajax&nbsp;error)"));
+		},
+		function (status, data, all_files) {
+			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
+				data.post_data.sounds.sound_names = all_files;
+				inline_update_about_image(data.post_data);
+			}
 		}
 	);
 
@@ -498,46 +1216,35 @@ function inline_link_click(event) {
 	return false;
 }
 function inline_load_all(event) {
-	// Change status
-	var load_str = "loading...";
-	$(this).html(load_str);
-
-	// Load sound
-	open_player(true);
-	sound_player_instance.attempt_load(
-		event.data.image_url,
-		SoundPlayer.ALL_SOUNDS,
-		{
-			"object": $(this),
-			"image_url": event.data.image_url,
-			"text": event.data.text,
-			"load_str": load_str
-		},
-		function (event, data) {
-			var progress = Math.floor((event.loaded / event.total) * 100);
-			data.object.html(data.load_str + " (" + progress + ")");
-		},
-		function (okay, data) {
-			data.object.html(data.text + (okay ? "" : " (ajax&nbsp;error)"));
-		},
-		function (status, data) {
-		}
-	);
+	inline_activate_load_all_link(event.data.post_data);
 
 	// Done
 	return false;
 }
-function inline_dom_mutation(target) {
-	// Updating
-	if (target.hasClass("inline")) {
-		inline_post_parse(target, true);
+function inline_detect_all_in_thread(event) {
+	if (sound_auto_checker.enabled) {
+		sound_auto_checker.disable();
+		$(this).attr("href", "#");
+		$(this).html("Detect Sounds");
 	}
-	else if (target.hasClass("postContainer")) {
-		inline_post_parse(target, false);
+	else {
+		sound_auto_checker.enable();
+		$(this).removeAttr("href");
+		$(this).html("Detecting Sounds");
 	}
-	else if (target.hasClass("backlinkHr")) {
-		inline_post_parse(target.parent().parent(), true);
+
+	return false;
+}
+function inline_load_all_in_thread(event) {
+	for (var post_id in thread_manager.posts) {
+		if (thread_manager.posts[post_id].image_url != null && !thread_manager.posts[post_id].sounds.loaded) {
+			sound_auto_loader.add_to_queue(thread_manager.posts[post_id]);
+		}
 	}
+
+	$(this).removeAttr("href");
+
+	return false;
 }
 function inline_replace_in_tag(tag) {
 	var found = false;
@@ -549,7 +1256,11 @@ function inline_replace_in_tag(tag) {
 		}
 		else {
 			tag_name = tag_name.toLowerCase();
-			if ((tag_name == "span" && $(c[j]).hasClass("quote")) || tag_name == "s") {
+			if (
+				is_archive ?
+				((tag_name == "span" && $(c[j]).hasClass("greentext")) || (tag_name == "span" && $(c[j]).hasClass("spoiler"))) :
+				((tag_name == "span" && $(c[j]).hasClass("quote")) || tag_name == "s")
+			) {
 				// quote or spoiler
 				found = (inline_replace_in_tag($(c[j])) || found);
 			}
@@ -559,7 +1270,7 @@ function inline_replace_in_tag(tag) {
 }
 function inline_replace_tags(container) {
 	var sounds_found = false;
-	var new_text = container.text().replace(/\[.+?\]/g, function (match) {
+	var new_text = (container.text() + "[tag]").replace(/\[.+?\]/g, function (match) {
 		sounds_found = true;
 		return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
 	});
@@ -569,6 +1280,285 @@ function inline_replace_tags(container) {
 	}
 	return false;
 }
+function inline_update_about_image(post_data) {
+	post_data.sounds.about_container.css("display", "");
+	var sound_count = 0;
+	var file_count = post_data.sounds.sound_names.length;
+	for (var sound = true; ; sound = false) {
+		for (var i = 0; i < post_data.sounds.sound_names.length; ++i) {
+			var is_sound = (post_data.sounds.sound_names[i].split(".").pop().toLowerCase() == "ogg");
+			if (sound == is_sound) {
+				if (sound) {
+					if (is_sound) ++sound_count;
+
+					post_data.sounds.about_list_container
+					.append(
+						E("div")
+						.append(T("- "))
+						.append(
+							E("a")
+							.attr("href", "#")
+							.addClass("SPLoadLinkTop")
+							.html(post_data.sounds.sound_names[i].substr(0, post_data.sounds.sound_names[i].length - 4)) // remove extension
+							.on("click", {"post_data": post_data, "sound_id": i}, inline_link_top_click)
+						)
+					);
+				}
+				else {
+					post_data.sounds.about_list_container
+					.append(
+						E("div")
+						.append(T("- "))
+						.append(
+							E("span")
+							.addClass("SPLoadLinkTopFile")
+							.html(post_data.sounds.sound_names[i])
+						)
+					);
+				}
+			}
+		}
+
+		// Done
+		if (!sound) break;
+	}
+
+	var str = "";
+	if (sound_count > 0) {
+		str += sound_count + " Sound" + (sound_count == 1 ? "" : "s") + " Found";
+	}
+	if (file_count > sound_count) {
+		str += (str.length == 0 ? "" : " / ") + file_count + " File" + (file_count == 1 ? "" : "s") + " Found";
+	}
+
+	post_data.sounds.about_count_label.html(str);
+}
+
+function inline_activate_load_all_link(post_data, done_callback) {
+	// Change status
+	var load_str = "loading";
+	post_data.sounds.load_all_link.html(load_str);
+
+	// Load sound
+	post_data.sounds.loaded = true;
+	open_player(true);
+	sound_player_instance.attempt_load(
+		post_data.image_url,
+		SoundPlayer.ALL_SOUNDS,
+		{
+			"object": post_data.sounds.load_all_link,
+			"post_data": post_data,
+			"load_str": load_str
+		},
+		function (event, data) {
+			var progress = Math.floor((event.loaded / event.total) * 100);
+			data.object.html(data.load_str + " (" + progress + ")");
+		},
+		function (okay, data) {
+			data.object.html(
+				data.post_data.sounds.load_all_text + (okay ? "" : " (ajax&nbsp;error)")
+			);
+			if (!okay) {
+				if (typeof(done_callback) == "function") done_callback(false, data.post_data);
+			}
+		},
+		function (status, data, all_files) {
+			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
+				data.post_data.sounds.sound_names = all_files;
+				inline_update_about_image(data.post_data);
+			}
+			if (typeof(done_callback) == "function") done_callback(false, data.post_data);
+		}
+	);
+
+	// Done
+	return false;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Auto-loading images
+///////////////////////////////////////////////////////////////////////////////
+function SoundAutoLoader() {
+	this.looping = false;
+	this.timer = null;
+	this.delay = 500;
+	this.queue = new Array();
+	this.serial = true;
+	this.enabled = true;
+}
+SoundAutoLoader.prototype.add_to_queue = function (post_data) {
+	// Set to loaded
+	post_data.loaded = true;
+
+	// Add to queue
+	this.queue.push(post_data);
+	this.loop();
+}
+SoundAutoLoader.prototype.enable = function () {
+	if (!this.enabled) {
+		this.enabled = true;
+		this.loop();
+	}
+}
+SoundAutoLoader.prototype.disable = function () {
+	if (this.enabled) {
+		this.enabled = false;
+		if (this.timer != null) {
+			clearTimeout(this.timer);
+			this.timer = null;
+			this.looping = false;
+		}
+	}
+}
+SoundAutoLoader.prototype.loop = function () {
+	if (!this.enabled || this.looping) return;
+
+	this.looping = true;
+	this.loop_next();
+}
+SoundAutoLoader.prototype.loop_next = function () {
+	if (!this.enabled) return;
+
+	this.looping = (this.queue.length > 0);
+
+	while (this.queue.length > 0) {
+		this.load_single(this.queue.shift());
+		if (this.serial) break;
+	}	
+}
+SoundAutoLoader.prototype.load_single = function (post_data) {
+	var self = this;
+	inline_activate_load_all_link(post_data, function (okay, post_data) {
+		self.load_single_done();
+	});
+}
+SoundAutoLoader.prototype.load_single_done = function () {
+	var self = this;
+	this.timer = setTimeout(function () {
+		self.timer = null;
+		self.loop_next();
+	}, this.delay);
+}
+var sound_auto_loader = new SoundAutoLoader();
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Auto-checking images
+///////////////////////////////////////////////////////////////////////////////
+function SoundAutoChecker() {
+	this.looping = false;
+	this.timer = null;
+	this.delay = 500;
+	this.queue = new Array();
+	this.serial = true;
+	this.enabled = false;
+
+	this.callbacks = [ image_check_callback , png_check_callback ];
+}
+SoundAutoChecker.prototype.add_to_queue = function (post_data) {
+	// Set to loaded
+	post_data.loaded = true;
+
+	// Add to queue
+	this.queue.push(post_data);
+	this.loop();
+}
+SoundAutoChecker.prototype.enable = function () {
+	if (!this.enabled) {
+		for (var i = 0; i < this.queue.length; ++i) {
+			this.queue[i].sounds.auto_check.search_span.css("display", "");
+		}
+
+		this.enabled = true;
+		this.loop();
+	}
+}
+SoundAutoChecker.prototype.disable = function () {
+	if (this.enabled) {
+		for (var i = 0; i < this.queue.length; ++i) {
+			this.queue[i].sounds.auto_check.search_span.css("display", "none");
+		}
+
+		this.enabled = false;
+		if (this.timer != null) {
+			clearTimeout(this.timer);
+			this.timer = null;
+			this.looping = false;
+		}
+	}
+}
+SoundAutoChecker.prototype.loop = function () {
+	if (!this.enabled || this.looping) return;
+
+	this.looping = true;
+	this.loop_next();
+}
+SoundAutoChecker.prototype.loop_next = function () {
+	if (!this.enabled) return;
+
+	this.looping = (this.queue.length > 0);
+
+	while (this.queue.length > 0) {
+		this.load_single(this.queue.shift());
+		if (this.serial) break;
+	}	
+}
+SoundAutoChecker.prototype.load_single = function (post_data) {
+	var self = this;
+	ajax_get(
+		post_data.image_url,
+		post_data,
+		function (event, post_data) {},
+		function (okay, post_data, response) {
+			var callback_id = (okay ? 0 : self.callbacks.length); // this kills the loop (on error)
+			self.load_single_callbacks(post_data, callback_id, response);
+		}
+	);
+}
+SoundAutoChecker.prototype.load_single_callbacks = function (post_data, callback_id, response) {
+	if (callback_id >= this.callbacks.length) {
+		// Not found
+		post_data.sounds.auto_check.search_span.css("display", "none");
+		this.load_single_done();
+	}
+	else {
+		// Run a callback
+		var self = this;
+		this.callbacks[callback_id](
+			post_data.image_url,
+			response,
+			post_data,
+			function (image_data, post_data) {
+				if (image_data == null || image_data[1].length <= 0) {
+					// Check further
+					self.load_single_callbacks(post_data, callback_id + 1, response);
+				}
+				else {
+					// Found
+					post_data.sounds.sound_names = image_data[1];
+
+					// html update
+					inline_update_about_image(post_data);
+
+					// Done
+					post_data.sounds.auto_check.search_span.css("display", "none");
+					self.load_single_done();
+				}
+			}
+		);
+	}
+}
+SoundAutoChecker.prototype.load_single_done = function () {
+	var self = this;
+	this.timer = setTimeout(function () {
+		self.timer = null;
+		self.loop_next();
+	}, this.delay);
+}
+var sound_auto_checker = new SoundAutoChecker();
 
 
 
@@ -754,7 +1744,6 @@ var sound_player_settings = {
 };
 var sound_player_settings_loaded = false;
 
-
 function sound_player_settings_save(sound_player) {
 	// Get settings
 	sound_player_settings = {
@@ -765,7 +1754,9 @@ function sound_player_settings_save(sound_player) {
 	try {
 		localStorage.setItem("4cs", JSON.stringify(sound_player_settings));
 	}
-	catch (e) {}
+	catch (e) {
+		console.log(e);
+	}
 }
 function sound_player_destruct_callback(sound_player) {
 	// Nullify
@@ -789,7 +1780,9 @@ function open_player(load_settings) {
 			var s = localStorage.getItem("4cs");
 			sound_player_settings = (s ? JSON.parse(s) : sound_player_settings);
 		}
-		catch (e) {}
+		catch (e) {
+			console.log(e);
+		}
 	}
 
 	// CSS
@@ -814,27 +1807,15 @@ function open_player(load_settings) {
 
 
 
-///////////////////////////////////////////////////////////////////////////////
-// Helpers
-///////////////////////////////////////////////////////////////////////////////
-function j2s(j,t){var s="{",i=!!0,k,t2=t=(t||"");t+="\t";for(k in j){s+=(i?",\n":"\n")+t+k+": ";if(typeof(j[k])===typeof({})){s+=j2s(j[k],t);}else{s+="\""+j[k]+"\"";}i=true;}return s+(i?"\n"+t2:"")+"}";}
-function E(elem) {
-	return jQuery(document.createElement(elem));
-}
-function T(text) {
-	return jQuery(document.createTextNode(text));
-}
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Entry
 ///////////////////////////////////////////////////////////////////////////////
+var thread_manager = null;
 jQuery(document).ready(function () {
 	inline_setup();
+	thread_manager = new ThreadManager();
 });
-
-
 
 
 

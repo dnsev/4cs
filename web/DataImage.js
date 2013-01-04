@@ -1,9 +1,7 @@
 
 
 
-function DataImage (source_location, load_callback) {
-	if (load_callback === undefined) load_callback = function () {};
-
+function DataImage (source_location, callback_data, load_callback, slow) {
 	this.load_callback = load_callback;
 
 	this.width = 0;
@@ -16,40 +14,56 @@ function DataImage (source_location, load_callback) {
 	this.error = false;
 
 	var self = this;
-
 	try {
 		if (typeof(source_location) == typeof("")) {
 			PNG.load(source_location, null, function (png) {
 				self.image = png;
-				self.pixels = png.decodePixels();111
+				self.pixels = png.decodePixels();
 
 				self.width = self.image.width;
 				self.height = self.image.height;
 
 				self.color_depth = (png.hasAlphaChannel ? 4 : 3);
 
-				self.load_callback(self);
-			});1
+				if (typeof(self.load_callback) == "function") self.load_callback(self, callback_data);
+			});
 		}
 		else {
-			png = new PNG(source_location);
-			self.image = png;
-			self.pixels = png.decodePixels();
+			if (slow) {
+				png = new PNG(source_location, true, function (png) {
+					png.decodePixelsSlow(null, function (png, pixels) {
+						self.image = png;
+						self.pixels = pixels;
+						self.width = self.image.width;
+						self.height = self.image.height;
 
-			self.width = self.image.width;
-			self.height = self.image.height;
+						self.color_depth = (png.hasAlphaChannel ? 4 : 3);
 
-			self.color_depth = (png.hasAlphaChannel ? 4 : 3);
+						if (typeof(self.load_callback) == "function") self.load_callback(self, callback_data);
+					});
+				});
+			}
+			else {
+				var png = new PNG(source_location);
+				self.image = png;
+				self.pixels = png.decodePixels();
 
-			self.load_callback(self);
+				self.width = self.image.width;
+				self.height = self.image.height;
+
+				self.color_depth = (png.hasAlphaChannel ? 4 : 3);
+
+				if (typeof(self.load_callback) == "function") self.load_callback(self, callback_data);
+			}
 		}
 	}
 	catch (e) {
 		this.error = true;
+		console.log(e);
 	}
 }
 DataImage.prototype.get_pixel = function (x, y, c) {
-	return this.pixels[(x + y * this.image.width) * this.color_depth + c];
+	return this.pixels[(x + y * this.width) * this.color_depth + c];
 }
 
 function DataImageReader (image) {
@@ -81,7 +95,26 @@ DataImageReader.prototype.unpack = function () {
 		return "Error extracting data; image file likely doesn't contain data";
 	}
 }
-DataImageReader.prototype.__unpack = function () {
+DataImageReader.prototype.unpack_slow = function (callback) {
+	try {
+		this.__unpack_slow(callback);
+	}
+	catch (e) {
+		callback("Error extracting data; image file likely doesn't contain data");
+	}
+}
+DataImageReader.prototype.unpack_names = function () {
+	try {
+		var r = this.__unpack_start();
+		this.hashmasking = false;
+		this.hashmask_value = null;
+		return r;
+	}
+	catch (e) {
+		return "Error extracting data; image file likely doesn't contain data";
+	}
+}
+DataImageReader.prototype.__unpack_start = function () {
 	// Init
 	this.x = 0;
 	this.y = 0;
@@ -137,8 +170,16 @@ DataImageReader.prototype.__unpack = function () {
 	}
 
 	// Metadata
+	var size_limit;
 	if (metadata) {
 		var meta_length = this.__data_to_int(this.__extract_data(2));
+
+		// Error checking
+		size_limit = Math.ceil(((((this.image.width * (this.image.height - this.y) - this.x) * this.channels) - this.c) * this.bitmask) / 8);
+		if (meta_length < 0 || meta_length > size_limit) {
+			throw "Data overflow";
+		}
+
 		var meta = this.__extract_data(meta_length);
 	}
 
@@ -150,22 +191,21 @@ DataImageReader.prototype.__unpack = function () {
 	var file_sizes = new Array();
 	var v;
 	var total_size = 0;
-	var size_limit;
 	for (var i = 0; i < file_count; ++i) {
 		// Filename length
 		v = this.__data_to_int(this.__extract_data(2));
 		filename_lengths.push(v);
 		total_size += v;
+		if (v < 0 || total_size < 0) throw "Data overflow";
 		// File length
 		v = this.__data_to_int(this.__extract_data(4));
 		file_sizes.push(v);
 		total_size += v;
+		if (v < 0 || total_size < 0) throw "Data overflow";
 
 		// Error checking
 		size_limit = Math.ceil(((((this.image.width * (this.image.height - this.y) - this.x) * this.channels) - this.c) * this.bitmask) / 8);
-		if (total_size > size_limit) {
-			throw "Data overflow";
-		}
+		if (total_size > size_limit) throw "Data overflow";
 	}
 
 	// Filenames
@@ -177,6 +217,15 @@ DataImageReader.prototype.__unpack = function () {
 		// Add to list
 		filenames.push(fn);
 	}
+
+	// Return
+	return [ file_count, filenames, file_sizes ];
+}
+DataImageReader.prototype.__unpack = function () {
+	var d = this.__unpack_start();
+	var file_count = d[0];
+	var filenames = d[1];
+	var file_sizes = d[2];
 
 	// Sources
 	var sources = new Array();
@@ -190,6 +239,45 @@ DataImageReader.prototype.__unpack = function () {
 	this.hashmasking = false;
 	this.hashmask_value = null;
 	return [ filenames , sources ];
+}
+DataImageReader.prototype.__unpack_slow = function (callback) {
+	try {
+		var loop = new Loop();
+		loop.steps = 1024 * 64;
+	}
+	catch (e) {
+		// Error
+		return this.__unpack(callback);
+	}
+
+	var d = this.__unpack_start();
+	var file_count = d[0];
+	var filenames = d[1];
+	var file_sizes = d[2];
+
+	// Sources
+	var self = this;
+	var sources = new Array();
+	loop.for_lt(
+		0, file_count, 1,
+		{},
+		function (i, data, loop) {
+			// Read source
+			self.__extract_data_slow(
+				file_sizes[i],
+				loop,
+				function (src) {
+					sources.push(src);
+				}
+			);
+		},
+		function (i, data, loop) {
+			// Done
+			self.hashmasking = false;
+			self.hashmask_value = null;
+			callback([ filenames , sources ]);
+		}
+	);
 }
 DataImageReader.prototype.next_pixel_component = function (count) {
 	while (count > 0) {
@@ -224,6 +312,31 @@ DataImageReader.prototype.__extract_data = function (byte_length) {
 		throw "Length mismatch";
 	}
 	return src;
+}
+DataImageReader.prototype.__extract_data_slow = function (byte_length, loop, done_callback) {
+	var src = new Uint8Array(byte_length);
+	var j = 0;
+	var self = this;
+	loop.for_lt(
+		this.bit_count, byte_length * 8, this.bitmask,
+		{},
+		function (i, data, loop) {
+			self.bit_value = self.bit_value | (self.__read_pixel(self.value_mask) << self.bit_count);
+			self.bit_count += self.bitmask;
+			while (self.bit_count >= 8) {
+				src[j] = (self.bit_value & 0xFF);
+				j += 1;
+				self.bit_value = self.bit_value >> 8;
+				self.bit_count -= 8;
+			}
+		},
+		function (i, data, loop) {
+			if (j != byte_length) {
+				throw "Length mismatch (got: " + j + "; expected: " + byte_length + ")";
+			}
+			done_callback(src);
+		}
+	);
 }
 DataImageReader.prototype.__data_to_int = function (data) {
 	var val = 0;
