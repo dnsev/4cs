@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstring>
 #include <sstream>
+#include <vector>
 #include "ImgLib/Image.hpp"
 #include "ImgLib/ImageReader.hpp"
 #include "LodePNG/lodepng.h"
@@ -16,7 +17,7 @@ int main(int argc, char** argv) {
 	// Settings
 	string outputPrefix = "";
 	string outputSuffix = "-extracted";
-	cstring file = NULL;
+	vector<cstring> files;
 	bool setPrefixSuffix = false;
 	bool version = false;
 
@@ -54,9 +55,7 @@ int main(int argc, char** argv) {
 			}
 		}
 		else {
-			if (file == NULL) {
-				file = argv[i];
-			}
+			files.push_back(argv[i]);
 		}
 	}
 
@@ -67,9 +66,9 @@ int main(int argc, char** argv) {
 	}
 
 	// Usage
-	if (file == NULL) {
+	if (files.size() == 0) {
 		cout << "Usage:" << endl;
-		cout << "    " << argv[0] << " [-p ...] [-s ...] image.png" << endl;
+		cout << "    " << argv[0] << " [-p ...] [-s ...] image.png ..." << endl;
 		cout << "" << endl;
 		cout << "    -p prefix : set the prefix of the filenames to be extracted" << endl;
 		cout << "              : default prefix is \"\"" << endl;
@@ -78,6 +77,7 @@ int main(int argc, char** argv) {
 		cout << "              : default suffix is \"-extracted\"" << endl;
 		cout << "" << endl;
 		cout << "    image.png : the file to extract data from" << endl;
+		cout << "              : can also be a list of images" << endl;
 		cout << "" << endl;
 		cout << "" << endl;
 		cout << "    Also note, placing a \"--\" parameter causes any remaining parameters to be treated as files" << endl;
@@ -86,35 +86,37 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	// Load image
-	cout << "Loading image..." << endl;
-	std::vector<unsigned char> pngFile;
-	lodepng::load_file(pngFile, file);
+	for (unsigned int i = 0; i < files.size(); ++i) {
+		// Load image
+		cout << "Loading image..." << endl;
+		std::vector<unsigned char> pngFile;
+		lodepng::load_file(pngFile, files[i]);
 
-	// Decode
-	cout << "Decoding image..." << endl;
-	Image image;
-	stringstream errorStream;
-	if (!image.loadFromSource(&pngFile, true, 0, &errorStream)) {
-		cout << "Error decoding image file \"" << file << "\":" << endl;
-		cout << "  " << errorStream.str() << endl;
-		return -1;
-	}
+		// Decode
+		cout << "Decoding image..." << endl;
+		Image image;
+		stringstream errorStream;
+		if (!image.loadFromSource(&pngFile, true, 0, &errorStream)) {
+			cout << "Error decoding image file \"" << files[i] << "\":" << endl;
+			cout << "  " << errorStream.str() << endl;
+			return -1;
+		}
 
-	// Done
-	pngFile.clear();
+		// Done
+		pngFile.clear();
 
-	// About
-	cout << "  Image contains " << image.getChannelCount() << " channels" << endl;
-	// TODO : ensure prefix directory exists
+		// About
+		cout << "  Image contains " << image.getChannelCount() << " channels" << endl;
+		// TODO : ensure prefix directory exists
 
-	// Extract data
-	cout << "Extracting..." << endl;
-	ImageReader ir(&image);
-	int result = ir.unpack(outputPrefix.c_str(), outputSuffix.c_str());
-	if (result < 0) {
-		cout << "Error extracting: image likely doesn't contain data" << endl;
-		return -1;
+		// Extract data
+		cout << "Extracting..." << endl;
+		ImageReader ir(&image);
+		int result = ir.unpack(outputPrefix.c_str(), outputSuffix.c_str());
+		if (result < 0) {
+			cout << "Error extracting: image likely doesn't contain data" << endl;
+			return -1;
+		}
 	}
 
 	// Done

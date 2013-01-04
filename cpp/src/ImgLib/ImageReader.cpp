@@ -114,7 +114,6 @@ namespace ImgLib {
 		// File count
 		if (!this->extractData(buffer, 2)) return -1;
 		unsigned int fileCount = ImageReader::dataToInt(buffer, 2);
-		std::cout << "fileCount="<<fileCount<<"\n";
 
 		// Filename lengths and file lengths
 		std::vector<unsigned int> filenameLengths;

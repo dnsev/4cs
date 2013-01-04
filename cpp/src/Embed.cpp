@@ -19,7 +19,7 @@ using namespace ImgLib;
 
 bool fullOptimizeEncode(Image* image, lodepng::State* state, std::vector<unsigned char>* pngOutput, ostream* immediateStream, ostream* statusStream, ostream* errorStream);
 void getImageOptimalSize(const Image* image, unsigned int bitRequirement, unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter, bool hashmask, unsigned int* dimensionsBest);
-bool loadSettings(cstring filename, int* filesizeLimit, bool* scatter, bool* randomizeAll, bool* hashmask, bool* upscale);
+bool loadSettings(bool force, cstring filename, int* filesizeLimit, bool* scatter, bool* randomizeAll, bool* hashmask, bool* upscale);
 
 
 
@@ -180,8 +180,7 @@ int main(int argc, char** argv) {
 			}
 			else {
 				if (
-					canFlag && pos >= 1 && argv[i][pos - 1] == '_' && (pos == 1 || argv[i][pos - 2] == '/' || argv[i][pos - 2] == '\\') &&
-					loadSettings(argv[i], &filesizeLimit, &scatter, &randomizeAll, &hashmask, &upscale)
+					canFlag && loadSettings(false, argv[i], &filesizeLimit, &scatter, &randomizeAll, &hashmask, &upscale)
 				) {
 					infoFileRead = true;
 				}
@@ -661,12 +660,25 @@ void getImageOptimalSize(const Image* image, unsigned int bitRequirement, unsign
 
 
 
-bool loadSettings(cstring filename, int* filesizeLimit, bool* scatter, bool* randomizeAll, bool* hashmask, bool* upscale) {
+bool loadSettings(bool force, cstring filename, int* filesizeLimit, bool* scatter, bool* randomizeAll, bool* hashmask, bool* upscale) {
 	assert(filesizeLimit != NULL);
 	assert(scatter != NULL);
 	assert(randomizeAll != NULL);
 	assert(hashmask != NULL);
 	assert(upscale != NULL);
+
+	if (!force) {
+		// filename check
+		unsigned int pos = 0;
+		unsigned int i = 0;
+		while (filename[i] != '\0') {
+			if (filename[i] == '\\' || filename[i] == '/') pos = i + 1;
+			++i;
+		}
+		cstring fname = &filename[pos];
+
+		if (!(stricmp(fname, "_") == 0 || stricmp(fname, "_.txt") == 0 || stricmp(fname, "_.file") == 0)) return false;
+	}
 
 	std::ifstream f(filename, (std::ifstream::in | std::ifstream::binary));
 	if (!f.is_open()) {
