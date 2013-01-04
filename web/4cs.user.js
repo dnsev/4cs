@@ -1032,14 +1032,14 @@ function inline_setup() {
 			E("div")
 			.append(T("[ "))
 			.append(
-				(auto_check_thread_detect_link = E("a"))
+				(sound_auto_checker.link = E("a"))
 				.attr("href", "#")
 				.html("Detect Sounds")
 				.on("click", {}, inline_detect_all_in_thread)
 			)
 			.append(T(" / "))
 			.append(
-				(auto_check_thread_load_all_link = E("a"))
+				(sound_auto_loader.link = E("a"))
 				.attr("href", "#")
 				.html("Load All Sounds")
 				.on("click", {}, inline_load_all_in_thread)
@@ -1138,9 +1138,9 @@ function inline_post_parse(post_data, redo) {
 					.addClass("SPImageSearchingText")
 				)
 			);
-			auto_check_thread_load_all_link.attr("href", "#");
 
 			// Queue
+			sound_auto_loader.add_to_queue(post_data);
 			sound_auto_checker.add_to_queue(post_data);
 		}
 	}
@@ -1224,25 +1224,20 @@ function inline_load_all(event) {
 function inline_detect_all_in_thread(event) {
 	if (sound_auto_checker.enabled) {
 		sound_auto_checker.disable();
-		$(this).attr("href", "#");
-		$(this).html("Detect Sounds");
 	}
 	else {
 		sound_auto_checker.enable();
-		$(this).removeAttr("href");
-		$(this).html("Detecting Sounds");
 	}
 
 	return false;
 }
 function inline_load_all_in_thread(event) {
-	for (var post_id in thread_manager.posts) {
-		if (thread_manager.posts[post_id].image_url != null && !thread_manager.posts[post_id].sounds.loaded) {
-			sound_auto_loader.add_to_queue(thread_manager.posts[post_id]);
-		}
+	if (sound_auto_loader.enabled) {
+		sound_auto_loader.disable();
 	}
-
-	$(this).removeAttr("href");
+	else {
+		sound_auto_loader.enable();
+	}
 
 	return false;
 }
@@ -1270,7 +1265,7 @@ function inline_replace_in_tag(tag) {
 }
 function inline_replace_tags(container) {
 	var sounds_found = false;
-	var new_text = (container.text() + "[tag]").replace(/\[.+?\]/g, function (match) {
+	var new_text = (container.text()/* + "[tag]"*/).replace(/\[.+?\]/g, function (match) {
 		sounds_found = true;
 		return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
 	});
@@ -1386,7 +1381,9 @@ function SoundAutoLoader() {
 	this.delay = 500;
 	this.queue = new Array();
 	this.serial = true;
-	this.enabled = true;
+	this.enabled = false;
+
+	this.link = null;
 }
 SoundAutoLoader.prototype.add_to_queue = function (post_data) {
 	// Set to loaded
@@ -1398,17 +1395,23 @@ SoundAutoLoader.prototype.add_to_queue = function (post_data) {
 }
 SoundAutoLoader.prototype.enable = function () {
 	if (!this.enabled) {
+		this.link.removeAttr("href");
+		this.link.html("Loading All Sounds");
+
 		this.enabled = true;
 		this.loop();
 	}
 }
 SoundAutoLoader.prototype.disable = function () {
 	if (this.enabled) {
+		this.link.attr("href", "#");
+		this.link.html("Load All Sounds");
+
 		this.enabled = false;
+		this.looping = false;
 		if (this.timer != null) {
 			clearTimeout(this.timer);
 			this.timer = null;
-			this.looping = false;
 		}
 	}
 }
@@ -1422,6 +1425,10 @@ SoundAutoLoader.prototype.loop_next = function () {
 	if (!this.enabled) return;
 
 	this.looping = (this.queue.length > 0);
+	if (!this.looping) {
+		this.disable();
+		return;
+	}
 
 	while (this.queue.length > 0) {
 		this.load_single(this.queue.shift());
@@ -1456,6 +1463,7 @@ function SoundAutoChecker() {
 	this.serial = true;
 	this.enabled = false;
 
+	this.link = null;
 	this.callbacks = [ image_check_callback , png_check_callback ];
 }
 SoundAutoChecker.prototype.add_to_queue = function (post_data) {
@@ -1471,6 +1479,8 @@ SoundAutoChecker.prototype.enable = function () {
 		for (var i = 0; i < this.queue.length; ++i) {
 			this.queue[i].sounds.auto_check.search_span.css("display", "");
 		}
+		this.link.removeAttr("href");
+		this.link.html("Detecting Sounds");
 
 		this.enabled = true;
 		this.loop();
@@ -1481,12 +1491,14 @@ SoundAutoChecker.prototype.disable = function () {
 		for (var i = 0; i < this.queue.length; ++i) {
 			this.queue[i].sounds.auto_check.search_span.css("display", "none");
 		}
+		this.link.attr("href", "#");
+		this.link.html("Detect Sounds");
 
 		this.enabled = false;
+		this.looping = false;
 		if (this.timer != null) {
 			clearTimeout(this.timer);
 			this.timer = null;
-			this.looping = false;
 		}
 	}
 }
