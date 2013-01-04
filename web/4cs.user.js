@@ -1279,6 +1279,8 @@ function inline_update_about_image(post_data) {
 	post_data.sounds.about_container.css("display", "");
 	var sound_count = 0;
 	var file_count = post_data.sounds.sound_names.length;
+
+	post_data.sounds.about_list_container.html("");
 	for (var sound = true; ; sound = false) {
 		for (var i = 0; i < post_data.sounds.sound_names.length; ++i) {
 			var is_sound = (post_data.sounds.sound_names[i].split(".").pop().toLowerCase() == "ogg");
@@ -1513,10 +1515,20 @@ SoundAutoChecker.prototype.loop_next = function () {
 
 	this.looping = (this.queue.length > 0);
 
+	var loaded = false;
 	while (this.queue.length > 0) {
-		this.load_single(this.queue.shift());
-		if (this.serial) break;
-	}	
+		var post_data = this.queue.shift();
+		if (post_data.sounds.sound_names.length == 0) {
+			loaded = true;
+			this.load_single(post_data);
+			if (this.serial) break;
+		}
+		else {
+			post_data.sounds.auto_check.search_span.css("display", "none");
+		}
+	}
+
+	this.looping = !loaded;
 }
 SoundAutoChecker.prototype.load_single = function (post_data) {
 	var self = this;
