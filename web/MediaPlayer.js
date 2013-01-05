@@ -1841,7 +1841,7 @@ MediaPlayer.prototype.start = function (index) {
 			);
 			try {
 				var playerVars = {
-							controls: 0,
+/*							controls: 0,
 							showinfo: 0,
 							modestbranding: 1,
 							wmode: "opaque",
@@ -1850,7 +1850,7 @@ MediaPlayer.prototype.start = function (index) {
 							enablejsapi: 1,
 							rel: 0,
 							showinfo: 0,
-							origin: window.location.href.toString(),
+							origin: window.location.href.toString(),*/
 							start: this.current_media.start
 						};
 				console.log(size[0]+","+size[1]+","+this.current_media.vid_id);
