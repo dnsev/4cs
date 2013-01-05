@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name           4chan Sound Player
-// @version        1.0
+// @name           4chan Media Player
+// @version        1.1
 // @namespace      dnsev
-// @description    4chan Sound Player
+// @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
 // @include        http://boards.4chan.org/*
 // @include        https://boards.4chan.org/*
@@ -34,53 +34,63 @@ function arraybuffer_to_uint8array(buffer) {
 	return new Uint8Array(buffer);
 }
 
-function ajax_get_chrome(url, callback_data, progress_callback, done_callback) {
-	var xhr = new XMLHttpRequest();
-	xhr.open("GET", url, true);
-	xhr.overrideMimeType("text/plain; charset=x-user-defined");
-	xhr.responseType = "arraybuffer";
+function ajax_get(url, return_as_string, callback_data, progress_callback, done_callback) {
+	var sound_player = this;
+	if (((navigator.userAgent + "").indexOf(" Chrome/") >= 0)) {
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url, true);
+		xhr.overrideMimeType("text/plain; charset=x-user-defined");
+		xhr.responseType = (return_as_string ? "text" : "arraybuffer");
 
-	xhr.onload = function (event) {
-		if (this.status == 200) {
-			var ui8_data = arraybuffer_to_uint8array(this.response);
-
-			if (typeof(done_callback) == "function") done_callback(true, callback_data, ui8_data);
-		}
-		else {
-			if (typeof(done_callback) == "function") done_callback(false, callback_data, null);
-		}
-	};
-	if (typeof(progress_callback) == "function") {
-		xhr.onprogress = function (event) {
-			progress_callback(event, callback_data);
-		};
-	}
-	xhr.send();
-}
-function ajax_get_firefox(url, callback_data, progress_callback, done_callback) {
-	var arg = {
-		method: "GET",
-		url: url,
-		overrideMimeType: "text/plain; charset=x-user-defined",
-		onload: function (event) {
-			if (event.status == 200) {
-				var ui8_data = string_to_uint8array(event.responseText);
-
-				if (typeof(done_callback) == "function") done_callback(true, callback_data, ui8_data);
+		xhr.onload = function (event) {
+			if (typeof(done_callback) == "function") {
+				if (this.status == 200) {
+					done_callback(
+						true,
+						callback_data,
+						(return_as_string ? this.response : sound_player.arraybuffer_to_uint8array(this.response))
+					);
+				}
+				else {
+					done_callback(false, callback_data, null);
+				}
 			}
-			else {
-				if (typeof(done_callback) == "function") done_callback(false, callback_data, null);
-			}
-		}
-	};
-	if (typeof(progress_callback) == "function") {
-		arg.onprogress = function (event) {
-			progress_callback(event, callback_data);
 		};
+		if (typeof(progress_callback) == "function") {
+			xhr.onprogress = function (event) {
+				progress_callback(event, callback_data);
+			};
+		}
+		xhr.send();
 	}
-	GM_xmlhttpRequest(arg);
+	else {
+		var arg = {
+			method: "GET",
+			url: url,
+			overrideMimeType: "text/plain; charset=x-user-defined",
+			onload: function (event) {
+				if (typeof(done_callback) == "function") {
+					if (event.status == 200) {
+						done_callback(
+							true,
+							callback_data,
+							(return_as_string ? event.responseText : sound_player.string_to_uint8array(event.responseText))
+						);
+					}
+					else {
+						done_callback(false, callback_data, null);
+					}
+				}
+			}
+		};
+		if (typeof(progress_callback) == "function") {
+			arg.onprogress = function (event) {
+				progress_callback(event, callback_data);
+			};
+		}
+		GM_xmlhttpRequest(arg);
+	}
 }
-var ajax_get = (((navigator.userAgent + "").indexOf(" Chrome/") >= 0) ? ajax_get_chrome : ajax_get_firefox);
 
 function E(elem) {
 	return jQuery(document.createElement(elem));
@@ -236,7 +246,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 				// New sound
 				sounds.push({
 					"title": tag,
-					"flagged": (load_tag != SoundPlayer.ALL_SOUNDS && load_tag.toLowerCase() != tag.toLowerCase()),
+					"flagged": (load_tag != MediaPlayer.ALL_SOUNDS && load_tag.toLowerCase() != tag.toLowerCase()),
 					"index": sound_index,
 					"data": null
 				});
@@ -281,10 +291,10 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 
 	// List names
 	var sound_names = [];
-	for (var i = 0; i < sounds.length; ++i) sound_names.push(sounds[i]["title"]);
+	for (var i = 0; i < sounds.length; ++i) sound_names.push(sounds[i]["title"] + ".ogg");
 
 	// Single sound?
-	if (load_tag != SoundPlayer.ALL_SOUNDS) {
+	if (load_tag != MediaPlayer.ALL_SOUNDS) {
 		// Find the correct tag to use
 		var found = null;
 		for (var i = 0; i < sounds.length; ++i) {
@@ -350,10 +360,10 @@ function image_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_
 
 		// List names
 		var sound_names = [];
-		for (var i = 0; i < sounds.length; ++i) sound_names.push(sounds[i]["title"]);
+		for (var i = 0; i < sounds.length; ++i) sound_names.push(sounds[i]["title"] + ".ogg");
 
 		// Single sound?
-		if (load_tag != SoundPlayer.ALL_SOUNDS) {
+		if (load_tag != MediaPlayer.ALL_SOUNDS) {
 			// Find the correct tag to use
 			var found = null;
 			for (var i = 0; i < sounds.length; ++i) {
@@ -507,7 +517,7 @@ function image_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_
 					// New sound
 					sounds.push({
 						"title": tag,
-						"flagged": (load_tag != SoundPlayer.ALL_SOUNDS && load_tag.toLowerCase() != tag.toLowerCase()),
+						"flagged": (load_tag != MediaPlayer.ALL_SOUNDS && load_tag.toLowerCase() != tag.toLowerCase()),
 						"index": sound_index,
 						"data": null
 					});
@@ -846,7 +856,7 @@ function png_load_callback_find_correct(r, load_tag) {
 		filename = filename.join(".");
 		// Must be an ogg
 		if (ext.toLowerCase() == "ogg") {
-			if (load_tag === SoundPlayer.ALL_SOUNDS) {
+			if (load_tag === MediaPlayer.ALL_SOUNDS) {
 				// Load all
 				ret.push({
 					"title": filename,
@@ -976,9 +986,19 @@ ThreadManager.prototype.parse_post = function (container) {
 		var image = container.find(is_archive ? ".thread_image_link" : ".fileThumb");
 		var post = container.find(is_archive ? ".text" : ".postMessage");
 
+		image = (image.length > 0 ? image.attr("href") : null);
+		// Redirect links from the archive
+		if (is_archive && image !== null) {
+			var match;
+			if ((match = /\/(\w+)\/redirect\/(.+)/.exec(image)) !== null) {
+				// match.index
+				image = "//images.4chan.org/" + match[1] + "/src/" + match[2];
+			}
+		}
+
 		this.posts[post_id] = {
 			"container": container,
-			"image_url": (image.length > 0 ? image.attr("href") : null),
+			"image_url": image,
 			"post": (post.length > 0 ? $(post[0]) : null)
 		};
 	}
@@ -1341,7 +1361,7 @@ function inline_activate_load_all_link(post_data, done_callback) {
 	open_player(true);
 	sound_player_instance.attempt_load(
 		post_data.image_url,
-		SoundPlayer.ALL_SOUNDS,
+		MediaPlayer.ALL_SOUNDS,
 		{
 			"object": post_data.sounds.load_all_link,
 			"post_data": post_data,
@@ -1534,6 +1554,7 @@ SoundAutoChecker.prototype.load_single = function (post_data) {
 	var self = this;
 	ajax_get(
 		post_data.image_url,
+		false,
 		post_data,
 		function (event, post_data) {},
 		function (okay, post_data, response) {
@@ -1810,11 +1831,11 @@ function open_player(load_settings) {
 	}
 
 	// CSS
-	sound_player_css = new SoundPlayerCSS("yotsubab", sound_player_css_color_presets, sound_player_css_size_presets);
+	sound_player_css = new MediaPlayerCSS("yotsubab", sound_player_css_color_presets, sound_player_css_size_presets);
 	// Load CSS settings
 	if (load_settings) sound_player_css.load(sound_player_settings["style"]);
 	// Player
-	sound_player_instance = new SoundPlayer(
+	sound_player_instance = new MediaPlayer(
 		sound_player_css,
 		[ png_load_callback , image_load_callback ],
 		sound_player_settings_save,
@@ -1825,6 +1846,9 @@ function open_player(load_settings) {
 	if (load_settings) sound_player_instance.load(sound_player_settings["player"]);
 	// Display
 	sound_player_instance.create();
+
+	// Test loading image
+	sound_player_instance.attempt_load_video("https://www.youtube.com/watch?v=UnURElCzGc0");
 
 	return sound_player_instance;
 }
@@ -1837,10 +1861,20 @@ function open_player(load_settings) {
 ///////////////////////////////////////////////////////////////////////////////
 var thread_manager = null;
 jQuery(document).ready(function () {
+	// Youtube API
+	window.YT = null;
+	$.getScript(
+		"//www.youtube.com/iframe_api",
+		function (script, status, jqXHR) {}
+	);
+
 	inline_setup();
 	thread_manager = new ThreadManager();
 });
 
+unsafeWindow.onYouTubeIframeAPIReady = function () {
+	window.YT = unsafeWindow.YT;
+}
 
 
 
