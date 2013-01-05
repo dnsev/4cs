@@ -1871,17 +1871,18 @@ MediaPlayer.prototype.start = function (index) {
 					}
 				);
 				console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onReady", function (event) { console.log("a:"+event.data);self.on_ytvideo_ready(event, self);console.log("a2"); });
+				var f = function () {};
+				try{this.ytvideo_player.addEventListener("onReady", f);
 				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onStateChange", function (event) { console.log("b:"+event.data);self.on_ytvideo_state_change(event, self);console.log("b2"); });
+				try{this.ytvideo_player.addEventListener("onStateChange", f);
 				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onPlaybackQualityChange", function (event) { console.log("c:"+event.data);self.on_ytvideo_playback_quality_change(event, self);console.log("c2"); });
+				try{this.ytvideo_player.addEventListener("onPlaybackQualityChange", f);
 				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onPlaybackRateChange", function (event) { console.log("d:"+event.data);self.on_ytvideo_playback_rate_change(event, self);console.log("d2"); });
+				try{this.ytvideo_player.addEventListener("onPlaybackRateChange", f);
 				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onError", function (event) { console.log("e:"+event.data);self.on_ytvideo_error(event, self);console.log("e2"); });
+				try{this.ytvideo_player.addEventListener("onError", f);
 				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onApiChange", function (event) { console.log("f:"+event.data);self.on_ytvideo_api_change(event, self);console.log("f2"); });
+				try{this.ytvideo_player.addEventListener("onApiChange", f);
 				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
 			}
 			catch (e) {console.log("1.2:"+this.ytvideo_player);
