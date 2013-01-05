@@ -2525,7 +2525,7 @@ MediaPlayer.prototype.add_to_playlist_ytvideo = function (original_url, vid_id, 
 
 	var playlist_item = {
 		"type": "youtube-video",
-		"title": info_xml.find("title").html(),
+		"title": info_xml.find("title").text(),
 		"original_url": original_url,
 		"tag": tag,
 		"flagged": flagged,
@@ -2775,13 +2775,12 @@ MediaPlayer.prototype.attempt_load_raw = function (is_local, url_or_filename, lo
 
 MediaPlayer.prototype.attempt_load_video = function (url, load_tag, callback_data, progress_callback, done_callback, status_callback) {
 	var vid_id = this.url_get_youtube_video_id(url);
-	
+
 	// Not found
 	if (vid_id === null) {
 		if (typeof(done_callback) == "function") done_callback(false, callback_data);
 		return;
 	}
-
 	// Info
 	var self = this;
 	var info_url = "//gdata.youtube.com/feeds/api/videos/" + vid_id;
@@ -2795,9 +2794,7 @@ MediaPlayer.prototype.attempt_load_video = function (url, load_tag, callback_dat
 
 			if (okay) {
 				var xml = $($.parseXML(response));
-				
 				var status = self.add_to_playlist_ytvideo(url, vid_id, null, false, xml);
-
 				if (typeof(status_callback) == "function") status_callback(status, callback_data, xml);
 			}
 			else {

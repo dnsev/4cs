@@ -1444,7 +1444,7 @@ function inline_post_parse_for_urls(post_data, redo, post_data_copy) {
 						function (okay, data, response) {
 							if (okay) {
 								var xml = $($.parseXML(response));
-								var title = xml.find("title").html();
+								var title = xml.find("title").text();
 								
 								data.a.find("span").html(title);
 							}
