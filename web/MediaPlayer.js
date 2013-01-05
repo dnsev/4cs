@@ -1871,18 +1871,17 @@ MediaPlayer.prototype.start = function (index) {
 					}
 				);
 				console.log("1.1:"+this.ytvideo_player);
-				var f = function () {};
-				try{this.ytvideo_player.addEventListener("onReady", f);
+				try{this.ytvideo_player.addEventListener("onReady", _DO_TEST_);
 				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onStateChange", f);
+				try{this.ytvideo_player.addEventListener("onStateChange", _DO_TEST_);
 				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onPlaybackQualityChange", f);
+				try{this.ytvideo_player.addEventListener("onPlaybackQualityChange", _DO_TEST_);
 				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onPlaybackRateChange", f);
+				try{this.ytvideo_player.addEventListener("onPlaybackRateChange", _DO_TEST_);
 				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onError", f);
+				try{this.ytvideo_player.addEventListener("onError", _DO_TEST_);
 				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onApiChange", f);
+				try{this.ytvideo_player.addEventListener("onApiChange", _DO_TEST_);
 				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
 			}
 			catch (e) {console.log("1.2:"+this.ytvideo_player);
@@ -2008,6 +2007,7 @@ MediaPlayer.prototype.get_loaded_percent = function () {
 	return 0.0;
 }
 
+function _DO_TEST_() {return true;}
 
 MediaPlayer.prototype.nullify = function () {
 	this.sp_container_main = null;
