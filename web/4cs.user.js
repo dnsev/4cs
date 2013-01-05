@@ -13,7 +13,7 @@
 // @require        https://raw.github.com/dnsev/4cs/mp1/web/png.js
 // @require        https://raw.github.com/dnsev/4cs/mp1/web/Loop.js
 // @require        https://raw.github.com/dnsev/4cs/mp1/web/DataImage.js
-// @require        https://raw.github.com/dnsev/4cs/mp1/web/SoundPlayer.js
+// @require        https://raw.github.com/dnsev/4cs/mp1/web/MediaPlayer.js
 // @updateURL      https://raw.github.com/dnsev/4cs/mp1/web/4cs.user.js
 // @downloadURL    https://raw.github.com/dnsev/4cs/mp1/web/4cs.user.js
 // ==/UserScript==
