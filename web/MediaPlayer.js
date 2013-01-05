@@ -304,8 +304,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"left": "0",
 			"top": "0",
 			"width": "100%",
-			"height": "100%",
-			"background": "transparent"
+			"height": "100%"
 		},
 
 		".SPSeekContainerTop": {
@@ -967,6 +966,7 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 	// Not setup
 	this.created = false;
 	this.namespace = "media_player";
+	this.identifier = ""; // TODO : make this dynamic
 	this.is_chrome = ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
 	this.title_default =  "Media Player"
 
@@ -991,6 +991,7 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 	this.ytvideo_player = null;
 	this.ytvideo_qualities = [ "default", "small", "medium", "large", "hd720", "hd1080", "highres" ];
 	this.ytvideo_quality_index = 0;
+	this.ytvideo_flash = false;//true;
 
 	// Image
 	this.image_height_min = 64;
@@ -1609,7 +1610,7 @@ MediaPlayer.prototype.is_paused = function () {
 			return this.audio[0].paused;
 		}
 		else if (this.current_media.type == "youtube-video") {
-			return (this.ytvideo_player != null && this.ytvideo_player.getPlayerState && this.ytvideo_player.getPlayerState() == window.YT.PlayerState.PAUSED);
+			return (this.ytvideo_player != null && this.ytvideo_player.getPlayerState && (this.ytvideo_player.getPlayerState() != window.YT.PlayerState.BUFFERING && this.ytvideo_player.getPlayerState() != window.YT.PlayerState.PLAYING));
 		}
 		else {
 			console.log(this.current_media.type);
@@ -1834,42 +1835,74 @@ MediaPlayer.prototype.start = function (index) {
 		// Create player
 		var self = this;
 		if (this.ytvideo_player == null || !(this.ytvideo_player.loadVideoByUrl)) {
+			this.ytvideo_player = null;
+
 			var size = [ this.video_container.outerWidth() , this.video_container.outerHeight() ];
 			var vid_container;
+			var div_id = "fjsgio35jtg8shfgrui";
 			this.video_container.html(
-				(vid_container = this.D())
+				(vid_container = this.D().attr("id", div_id))
 			);
 			try {
-				var playerVars = 
-				this.ytvideo_player = new window.YT.Player(
-					vid_container[0],
-					{
-						width: size[0],
-						height: size[1],
-						videoId: this.current_media.vid_id,
-						"playerVars": {
-							controls: 0,
-							showinfo: 0,
-							modestbranding: 1,
-							wmode: "opaque",
-							html5: 1,
-							disablekb: 1,
-							enablejsapi: 1,
-							rel: 0,
-							showinfo: 0,
-							origin: window.location.href.toString(),
-							start: this.current_media.start
-						},
-						events: {
-							"onReady": function (event) { self.on_ytvideo_ready(event, self); },
-							"onStateChange": function (event) { self.on_ytvideo_state_change(event, self); },
-							"onPlaybackQualityChange": function (event) { self.on_ytvideo_playback_quality_change(event, self); },
-							"onPlaybackRateChange": function (event) { self.on_ytvideo_playback_rate_change(event, self); },
-							"onError": function (event) { self.on_ytvideo_error(event, self); },
-							"onApiChange": function (event) { self.on_ytvideo_api_change(event, self); }
+				var events = {
+					"onReady": function (event) { self.on_ytvideo_ready(event, self); },
+					"onStateChange": function (event) { self.on_ytvideo_state_change(event, self); },
+					"onPlaybackQualityChange": function (event) { self.on_ytvideo_playback_quality_change(event, self); },
+					"onPlaybackRateChange": function (event) { self.on_ytvideo_playback_rate_change(event, self); },
+					"onError": function (event) { self.on_ytvideo_error(event, self); },
+					"onApiChange": function (event) { self.on_ytvideo_api_change(event, self); }
+				};
+				var playerVars = {
+					controls: 0,
+					showinfo: 0,
+					modestbranding: 1,
+					wmode: "opaque",
+					html5: 1,
+					disablekb: 1,
+					enablejsapi: 1,
+					rel: 0,
+					showinfo: 0,
+					origin: window.location.href.toString(),
+					start: this.current_media.start
+				};
+				if (this.ytvideo_flash) {
+					// This is a work in progress/not used
+					var url_opts = "";
+					for (var key in playerVars) {
+						url_opts += "&" + key + "=" + playerVars[key];
+					}
+
+					var params = {"allowScriptAccess": "always"};
+					var atts = {"id": "MediaPlayer_LFfiowjdiofjagh8fwe"};
+					swfobject.embedSWF(
+						"http://www.youtube.com/v/" + this.current_media.vid_id + "?enablejsapi=1&playerapiid=ytplayer&version=3" + url_opts,
+						div_id, size[0].toString(), size[1].toString(), "8", null, null, params, atts, function (event) {
+							self.ytvideo_player = event.ref;
+							event.ref.media_player = self;
+						}
+					);
+				}
+				else {
+					if (this.is_chrome) {
+						for (var e in events){
+							var name = e + "__" + this.namespace + "__" + this.identifier;
+							unsafeWindow[name] = events[e];
+							events[e] = name;
 						}
 					}
-				);
+
+					this.ytvideo_player = new window.YT.Player(
+						vid_container[0],
+						{
+							width: size[0],
+							height: size[1],
+							videoId: this.current_media.vid_id,
+							"playerVars": playerVars,
+							"events": events
+						}
+					);
+					this.ytvideo_player.media_player = this;
+				}
 			}
 			catch (e) {
 				this.ytvideo_player = null;
@@ -2896,6 +2929,9 @@ MediaPlayer.prototype.on_ytvideo_error = function (event, media_player) {
 };
 MediaPlayer.prototype.on_ytvideo_api_change = function (event, media_player) {
 };
+MediaPlayer.prototype.on_ytplayer_loaded = function (player) {
+
+};
 
 MediaPlayer.prototype.on_titlebar_mousedown = function (event) {
 	// Mouse offset
@@ -3514,7 +3550,13 @@ MediaPlayer.prototype.cancel_event = function (event) {
 
 
 
-
-
+unsafeWindow.onYouTubePlayerReady = function (playerId) {
+	var e = $("#MediaPlayer_LFfiowjdiofjagh8fwe");
+	if (e.length > 0) {
+		if (e[0].media_player) {
+			e[0].media_player.on_ytplayer_loaded(e[0]);
+		}
+	}
+}
 
 
