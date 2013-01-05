@@ -1840,13 +1840,7 @@ MediaPlayer.prototype.start = function (index) {
 				(vid_container = this.D())
 			);
 			try {
-				this.ytvideo_player = new window.YT.Player(
-					vid_container[0],
-					{
-						width: size[0],
-						height: size[1],
-						videoId: this.current_media.vid_id,
-						playerVars: {
+				var playerVars = {
 							controls: 0,
 							showinfo: 0,
 							modestbranding: 1,
@@ -1858,7 +1852,16 @@ MediaPlayer.prototype.start = function (index) {
 							showinfo: 0,
 							origin: window.location.href.toString(),
 							start: this.current_media.start
-						},
+						};
+				console.log(size[0]+","+size[1]+","+this.current_media.vid_id);
+				for (var k in playerVars) console.log(k+":"+playerVars[k]);
+				this.ytvideo_player = new window.YT.Player(
+					vid_container[0],
+					{
+						width: size[0],
+						height: size[1],
+						videoId: this.current_media.vid_id,
+						"playerVars": playerVars,
 						events: {
 							"onReady": function (event) { console.log("a:"+event.data);self.on_ytvideo_ready(event, self);console.log("a2"); },
 							"onStateChange": function (event) { console.log("b:"+event.data);self.on_ytvideo_state_change(event, self);console.log("b2"); },
