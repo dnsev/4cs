@@ -2523,9 +2523,18 @@ MediaPlayer.prototype.add_to_playlist_ytvideo = function (original_url, vid_id, 
 		start = 0.0;
 	}
 
+	var title;
+	try {
+		title = $(info_xml.find("title")[0]).text();
+	}
+	catch (e) {
+		console.log(e);
+		title = "Unknown Title";
+	}
+
 	var playlist_item = {
 		"type": "youtube-video",
-		"title": info_xml.find("title").text(),
+		"title": title,
 		"original_url": original_url,
 		"tag": tag,
 		"flagged": flagged,

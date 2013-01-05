@@ -1444,8 +1444,15 @@ function inline_post_parse_for_urls(post_data, redo, post_data_copy) {
 						function (okay, data, response) {
 							if (okay) {
 								var xml = $($.parseXML(response));
-								var title = xml.find("title").text();
-								
+								var title;
+								try {
+									title = $(xml.find("title")[0]).text();
+								}
+								catch (e) {
+									console.log(e);
+									title = "Unknown Title";
+								}
+
 								data.a.find("span").html(title);
 							}
 							else {
