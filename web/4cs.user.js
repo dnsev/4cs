@@ -8,14 +8,14 @@
 // @include        https://boards.4chan.org/*
 // @include        http://archive.foolz.us/*
 // @include        https://archive.foolz.us/*
-// @require        https://raw.github.com/dnsev/4cs/master/web/jquery.js
-// @require        https://raw.github.com/dnsev/4cs/master/web/zlib.js
-// @require        https://raw.github.com/dnsev/4cs/master/web/png.js
-// @require        https://raw.github.com/dnsev/4cs/master/web/Loop.js
-// @require        https://raw.github.com/dnsev/4cs/master/web/DataImage.js
-// @require        https://raw.github.com/dnsev/4cs/master/web/SoundPlayer.js
-// @updateURL      https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
-// @downloadURL    https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
+// @require        https://raw.github.com/dnsev/4cs/mp1/web/jquery.js
+// @require        https://raw.github.com/dnsev/4cs/mp1/web/zlib.js
+// @require        https://raw.github.com/dnsev/4cs/mp1/web/png.js
+// @require        https://raw.github.com/dnsev/4cs/mp1/web/Loop.js
+// @require        https://raw.github.com/dnsev/4cs/mp1/web/DataImage.js
+// @require        https://raw.github.com/dnsev/4cs/mp1/web/SoundPlayer.js
+// @updateURL      https://raw.github.com/dnsev/4cs/mp1/web/4cs.user.js
+// @downloadURL    https://raw.github.com/dnsev/4cs/mp1/web/4cs.user.js
 // ==/UserScript==
 
 
