@@ -1869,8 +1869,9 @@ MediaPlayer.prototype.start = function (index) {
 						}
 					}
 				);
+				console.log("1.1:"+this.ytvideo_player);
 			}
-			catch (e) {
+			catch (e) {console.log("1.2:"+this.ytvideo_player);
 				this.ytvideo_player = null;
 				console.log(e);
 			}
