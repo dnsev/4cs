@@ -1862,9 +1862,9 @@ MediaPlayer.prototype.start = function (index) {
 						height: size[1],
 						videoId: this.current_media.vid_id,
 						"playerVars": playerVars,
-						events: {/*
+						events: {
 							"onReady": function (event) { console.log("a:"+event.data);self.on_ytvideo_ready(event, self);console.log("a2"); },
-							"onStateChange": function (event) { console.log("b:"+event.data);self.on_ytvideo_state_change(event, self);console.log("b2"); },
+							"onStateChange": function (event) { console.log("b:"+event.data);self.on_ytvideo_state_change(event, self);console.log("b2"); }/*,
 							"onPlaybackQualityChange": function (event) { console.log("c:"+event.data);self.on_ytvideo_playback_quality_change(event, self);console.log("c2"); },
 							"onPlaybackRateChange": function (event) { console.log("d:"+event.data);self.on_ytvideo_playback_rate_change(event, self);console.log("d2"); },
 							"onError": function (event) { console.log("e:"+event.data);self.on_ytvideo_error(event, self);console.log("e2"); },
