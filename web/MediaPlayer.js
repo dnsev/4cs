@@ -1833,14 +1833,21 @@ MediaPlayer.prototype.start = function (index) {
 
 		// Create player
 		var self = this;
-		if (this.ytvideo_player == null || !(this.ytvideo_player.loadVideoByUrl)) {console.log("1");
+		if (this.ytvideo_player == null || !(this.ytvideo_player.loadVideoByUrl)) {
 			var size = [ this.video_container.outerWidth() , this.video_container.outerHeight() ];
 			var vid_container;
 			this.video_container.html(
 				(vid_container = this.D())
 			);
 			try {
-				var playerVars = {
+				var playerVars = 
+				this.ytvideo_player = new window.YT.Player(
+					vid_container[0],
+					{
+						width: size[0],
+						height: size[1],
+						videoId: this.current_media.vid_id,
+						"playerVars": {
 							controls: 0,
 							showinfo: 0,
 							modestbranding: 1,
@@ -1852,44 +1859,24 @@ MediaPlayer.prototype.start = function (index) {
 							showinfo: 0,
 							origin: window.location.href.toString(),
 							start: this.current_media.start
-						};
-				this.ytvideo_player = new window.YT.Player(
-					vid_container[0],
-					{
-						width: size[0],
-						height: size[1],
-						videoId: this.current_media.vid_id,
-						"playerVars": playerVars,
+						},
 						events: {
-/*							"onReady": function (event) { console.log("a:"+event.data);self.on_ytvideo_ready(event, self);console.log("a2"); },
-							"onStateChange": function (event) { console.log("b:"+event.data);self.on_ytvideo_state_change(event, self);console.log("b2"); },
-							"onPlaybackQualityChange": function (event) { console.log("c:"+event.data);self.on_ytvideo_playback_quality_change(event, self);console.log("c2"); },
-							"onPlaybackRateChange": function (event) { console.log("d:"+event.data);self.on_ytvideo_playback_rate_change(event, self);console.log("d2"); },
-							"onError": function (event) { console.log("e:"+event.data);self.on_ytvideo_error(event, self);console.log("e2"); },
-							"onApiChange": function (event) { console.log("f:"+event.data);self.on_ytvideo_api_change(event, self);console.log("f2"); }
-*/						}
+							"onReady": function (event) { self.on_ytvideo_ready(event, self); },
+							"onStateChange": function (event) { self.on_ytvideo_state_change(event, self); },
+							"onPlaybackQualityChange": function (event) { self.on_ytvideo_playback_quality_change(event, self); },
+							"onPlaybackRateChange": function (event) { self.on_ytvideo_playback_rate_change(event, self); },
+							"onError": function (event) { self.on_ytvideo_error(event, self); },
+							"onApiChange": function (event) { self.on_ytvideo_api_change(event, self); }
+						}
 					}
 				);
-				console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onReady", _DO_TEST_);
-				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onStateChange", _DO_TEST_);
-				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onPlaybackQualityChange", _DO_TEST_);
-				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onPlaybackRateChange", _DO_TEST_);
-				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onError", _DO_TEST_);
-				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
-				try{this.ytvideo_player.addEventListener("onApiChange", _DO_TEST_);
-				}catch(e){console.log(e);}console.log("1.1:"+this.ytvideo_player);
 			}
-			catch (e) {console.log("1.2:"+this.ytvideo_player);
+			catch (e) {
 				this.ytvideo_player = null;
 				console.log(e);
 			}
 		}
-		else {console.log("2");
+		else {
 			try {
 				this.ytvideo_player.cueVideoByUrl({
 					mediaContentUrl: "http://www.youtube.com/v/" + this.current_media.vid_id + "?version=3",
@@ -1910,7 +1897,7 @@ MediaPlayer.prototype.start = function (index) {
 	}
 	else {
 		console.log(this.current_media.type);
-	}console.log("3");
+	}
 }
 MediaPlayer.prototype.next = function () {
 	// Next
@@ -2007,7 +1994,6 @@ MediaPlayer.prototype.get_loaded_percent = function () {
 	return 0.0;
 }
 
-function _DO_TEST_() {return true;}
 
 MediaPlayer.prototype.nullify = function () {
 	this.sp_container_main = null;
