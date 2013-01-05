@@ -1833,7 +1833,7 @@ MediaPlayer.prototype.start = function (index) {
 
 		// Create player
 		var self = this;
-		if (this.ytvideo_player == null || !(this.ytvideo_player.loadVideoByUrl)) {
+		if (this.ytvideo_player == null || !(this.ytvideo_player.loadVideoByUrl)) {console.log("1");
 			var size = [ this.video_container.outerWidth() , this.video_container.outerHeight() ];
 			var vid_container;
 			this.video_container.html(
@@ -1860,12 +1860,12 @@ MediaPlayer.prototype.start = function (index) {
 							start: this.current_media.start
 						},
 						events: {
-							"onReady": function (event) { self.on_ytvideo_ready(event, self); },
-							"onStateChange": function (event) { self.on_ytvideo_state_change(event, self); },
-							"onPlaybackQualityChange": function (event) { self.on_ytvideo_playback_quality_change(event, self); },
-							"onPlaybackRateChange": function (event) { self.on_ytvideo_playback_rate_change(event, self); },
-							"onError": function (event) { self.on_ytvideo_error(event, self); },
-							"onApiChange": function (event) { self.on_ytvideo_api_change(event, self); }
+							"onReady": function (event) { console.log("a:"+event.data);self.on_ytvideo_ready(event, self);console.log("a2"); },
+							"onStateChange": function (event) { console.log("b:"+event.data);self.on_ytvideo_state_change(event, self);console.log("b2"); },
+							"onPlaybackQualityChange": function (event) { console.log("c:"+event.data);self.on_ytvideo_playback_quality_change(event, self);console.log("c2"); },
+							"onPlaybackRateChange": function (event) { console.log("d:"+event.data);self.on_ytvideo_playback_rate_change(event, self);console.log("d2"); },
+							"onError": function (event) { console.log("e:"+event.data);self.on_ytvideo_error(event, self);console.log("e2"); },
+							"onApiChange": function (event) { console.log("f:"+event.data);self.on_ytvideo_api_change(event, self);console.log("f2"); }
 						}
 					}
 				);
@@ -1875,7 +1875,7 @@ MediaPlayer.prototype.start = function (index) {
 				console.log(e);
 			}
 		}
-		else {
+		else {console.log("2");
 			try {
 				this.ytvideo_player.cueVideoByUrl({
 					mediaContentUrl: "http://www.youtube.com/v/" + this.current_media.vid_id + "?version=3",
@@ -1896,7 +1896,7 @@ MediaPlayer.prototype.start = function (index) {
 	}
 	else {
 		console.log(this.current_media.type);
-	}
+	}console.log("3");
 }
 MediaPlayer.prototype.next = function () {
 	// Next
