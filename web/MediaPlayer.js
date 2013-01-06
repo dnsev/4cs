@@ -1630,18 +1630,13 @@ MediaPlayer.prototype.is_paused = function () {
 		else if (this.current_media.type == "youtube-video") {
 			if (this.ytvideo_player != null) {
 				if (this.ytvideo_unsafe) {
-					var unsafe_data = {
-						media_player: this,
-						ret: false
-					};
-					_unsafe_exec(function (data) {
-						data.ret = (
+					return _unsafe_exec(function (data) {
+						return (
 							data.media_player.ytvideo_player.getPlayerState &&
 							(data.media_player.ytvideo_player.getPlayerState() != window.YT.PlayerState.BUFFERING &&
 							data.media_player.ytvideo_player.getPlayerState() != window.YT.PlayerState.PLAYING)
 						);
-					}, unsafe_data);
-					return unsafe_data.ret;
+					}, { media_player: this }) || false;
 				}
 				else {
 					return (
@@ -1888,11 +1883,37 @@ MediaPlayer.prototype.start = function (index) {
 		// Title
 		this.title.html(this.current_media.title);
 
-		// Create player
-		var self = this;
-		if (this.ytvideo_player == null || !(this.ytvideo_player.loadVideoByUrl)) {
-			this.ytvideo_player = null;
+		// Old player
+		if (this.ytvideo_player != null) {
+			var params = {
+				mediaContentUrl: "http://www.youtube.com/v/" + this.current_media.vid_id + "?version=3",
+				startSeconds: this.current_media.start,
+				//endSeconds:Number,
+				suggestedQuality: this.ytvideo_qualities[this.ytvideo_quality_index]
+			};
 
+			var okay = false;
+			if (this.ytvideo_unsafe) {
+				okay = _unsafe_exec(function (data) {
+					if (data.media_player.ytvideo_player.cueVideoByUrl) {
+						data.media_player.ytvideo_player.cueVideoByUrl(data.params);
+						return true;
+					}
+					return false;
+				}, { media_player: this, "params": params });
+			}
+			else {
+				// not using loadVideoByUrl because "this.play" resets the timer
+				if (this.ytvideo_player.cueVideoByUrl) {
+					okay = true;
+					this.ytvideo_player.cueVideoByUrl(params);
+				}
+			}
+			if (okay) this.play();
+			else this.ytvideo_player = null;
+		}
+		// Fresh player
+		if (this.ytvideo_player == null) {
 			var fn = function (data) {
 				try {
 					var events = {
@@ -1950,24 +1971,16 @@ MediaPlayer.prototype.start = function (index) {
 
 			// Call
 			if (this.ytvideo_unsafe) {
-				_unsafe_exec(fn, params);
+				try {
+					_unsafe_exec(fn, params);
+				}
+				catch (e) {
+					console.log("ytvideo_unsafe");
+					console.log(e);
+				}
 			}
 			else {
 				fn(params);
-			}
-		}
-		else {
-			try {
-				this.ytvideo_player.cueVideoByUrl({
-					mediaContentUrl: "http://www.youtube.com/v/" + this.current_media.vid_id + "?version=3",
-					startSeconds: this.current_media.start,
-					//endSeconds:Number,
-					suggestedQuality: this.ytvideo_qualities[this.ytvideo_quality_index]
-				});
-				this.play();
-			}
-			catch (e) {
-				console.log(e);
 			}
 		}
 		// Current sound

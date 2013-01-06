@@ -1983,11 +1983,10 @@ jQuery(document).ready(function () {
 	// Hack move the scope out of sandbox
 	window._unsafe_exec = function () {
 		if (window._unsafe !== undefined) {
-			var r = window[window._unsafe.func].call(window, window._unsafe.data);
+			window._unsafe_return = window[window._unsafe.func].call(window, window._unsafe.data);
 			window._unsafe.tag.parentNode.removeChild(window._unsafe.tag);
 			window[window._unsafe.func] = undefined;
 			window._unsafe = undefined;
-			return r;
 		}
 	}
 	tag = document.createElement('script');
@@ -2010,6 +2009,11 @@ jQuery(document).ready(function () {
 		// Run script
 		unsafeWindow._unsafe = _unsafe;
 		document.body.appendChild(tag);
+
+		// Assuming that runs instantly...
+		var r = unsafeWindow._unsafe_return;
+		unsafeWindow._unsafe_return = undefined;
+		return r;
 	}
 
 	// Youtube API
