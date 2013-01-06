@@ -1996,7 +1996,6 @@ jQuery(document).ready(function () {
 		document.body.appendChild(tag);
 	}
 
-
 	// Youtube API
 	$.getScript(
 		"//www.youtube.com/iframe_api",

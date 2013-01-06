@@ -991,7 +991,6 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 	this.ytvideo_player = null;
 	this.ytvideo_qualities = [ "default", "small", "medium", "large", "hd720", "hd1080", "highres" ];
 	this.ytvideo_quality_index = 0;
-	this.ytvideo_flash = false;
 
 	// Image
 	this.image_height_min = 64;
@@ -1610,7 +1609,7 @@ MediaPlayer.prototype.is_paused = function () {
 			return this.audio[0].paused;
 		}
 		else if (this.current_media.type == "youtube-video") {
-			return (this.ytvideo_player != null && this.ytvideo_player.getPlayerState && (this.ytvideo_player.getPlayerState() != window.YT.PlayerState.BUFFERING && this.ytvideo_player.getPlayerState() != window.YT.PlayerState.PLAYING));
+			return (this.ytvideo_player != null && this.ytvideo_player.getPlayerState && (this.ytvideo_player.getPlayerState() != unsafeWindow.YT.PlayerState.BUFFERING && this.ytvideo_player.getPlayerState() != unsafeWindow.YT.PlayerState.PLAYING));
 		}
 		else {
 			console.log(this.current_media.type);
@@ -1837,22 +1836,15 @@ MediaPlayer.prototype.start = function (index) {
 		if (this.ytvideo_player == null || !(this.ytvideo_player.loadVideoByUrl)) {
 			this.ytvideo_player = null;
 
-			var size = [ this.video_container.outerWidth() , this.video_container.outerHeight() ];
-			var vid_container;
-			var div_id = "fjsgio35jtg8shfgrui";
-			this.video_container.html(
-				(vid_container = this.D().attr("id", div_id))
-			);
-
-			var fn = function () {
+			var fn = function (data) {
 				try {
 					var events = {
-						"onReady": function (event) { self.on_ytvideo_ready(event, self); },
-						"onStateChange": function (event) { self.on_ytvideo_state_change(event, self); },
-						"onPlaybackQualityChange": function (event) { self.on_ytvideo_playback_quality_change(event, self); },
-						"onPlaybackRateChange": function (event) { self.on_ytvideo_playback_rate_change(event, self); },
-						"onError": function (event) { self.on_ytvideo_error(event, self); },
-						"onApiChange": function (event) { self.on_ytvideo_api_change(event, self); }
+						"onReady": function (event) { data.media_player.on_ytvideo_ready(event, data.media_player); },
+						"onStateChange": function (event) { data.media_player.on_ytvideo_state_change(event, data.media_player); },
+						"onPlaybackQualityChange": function (event) { data.media_player.on_ytvideo_playback_quality_change(event, data.media_player); },
+						"onPlaybackRateChange": function (event) { data.media_player.on_ytvideo_playback_rate_change(event, data.media_player); },
+						"onError": function (event) { data.media_player.on_ytvideo_error(event, data.media_player); },
+						"onApiChange": function (event) { data.media_player.on_ytvideo_api_change(event, data.media_player); }
 					};
 					var playerVars = {
 						controls: 0,
@@ -1865,79 +1857,47 @@ MediaPlayer.prototype.start = function (index) {
 						rel: 0,
 						showinfo: 0,
 						origin: window.location.href.toString(),
-						start: self.current_media.start
+						start: data.media_player.current_media.start
 					};
 
-					if (self.ytvideo_flash) {
-						// This is a work in progress/not used
-						var url_opts = "";
-						for (var key in playerVars) {
-							url_opts += "&" + key + "=" + playerVars[key];
+					data.media_player.ytvideo_player = new data.Player(
+						data.vid_container,
+						{
+							width: data.size[0],
+							height: data.size[1],
+							videoId: data.media_player.current_media.vid_id,
+							"playerVars": playerVars,
+							"events": events
 						}
-
-						var params = {"allowScriptAccess": "always"};
-						var atts = {"id": "MediaPlayer_LFfiowjdiofjagh8fwe"};
-						swfobject.embedSWF(
-							"http://www.youtube.com/apiplayer?enablejsapi=1&playerapiid=" + atts.id + "&version=3" + url_opts,
-							div_id, size[0].toString(), size[1].toString(), "8", null, null, params, atts, function (event) {
-								self.ytvideo_player = event.ref;
-								event.ref.media_player = self;
-							}
-						);
-					}
-					else {
-						self.ytvideo_player = new window.YT.Player(
-							vid_container[0],
-							{
-								width: size[0],
-								height: size[1],
-								videoId: self.current_media.vid_id,
-								"playerVars": playerVars,
-								"events": events
-							}
-						);
-						self.ytvideo_player.media_player = self;
-					}
+					);
+					data.media_player.ytvideo_player.media_player = data.media_player;
 				}
 				catch (e) {
-					self.ytvideo_player = null;
+					data.media_player.ytvideo_player = null;
 					console.log(e);
 				}
 			}
-			
-			alert("is_chrome="+this.is_chrome);
-			if (this.is_chrome||true) {
-				var fn = function (data) {
-					var playerVars = {
-						controls: 0,
-						showinfo: 0,
-						modestbranding: 1,
-						wmode: 'opaque',
-						html5: 1,
-						disablekb: 1,
-						enablejsapi: 1,
-						rel: 0,
-						showinfo: 0,
-						origin: window.location.href.toString()
-					};
-					var player = new window.YT.Player(data.div_id, {
-						height: '390',
-						width: '640',
-						videoId: 'UnURElCzGc0',
-						"playerVars": playerVars,
-						events: {
-							'onReady': function (event) { event.target.playVideo(); },
-							'onStateChange': function (event) { document.title = 'onStateChange:' + (event.data); },
-						}
-					});
-				};
-				_unsafe_exec(fn, {"div_id": div_id});
+
+			// Params
+			var vid_container;
+			var div_id = "MediaPlayer_LFfiowjdiofjagh8fwe";
+			this.video_container.html((vid_container = this.D().attr("id", div_id)));
+
+			var params = {
+				"media_player": this,
+				"size": [ this.video_container.outerWidth() , this.video_container.outerHeight() ],
+				"div_id": div_id,
+				"vid_container": vid_container[0],
+				"Player": unsafeWindow.YT.Player
+			};
+
+			// Call
+			if (this.is_chrome) {
+				_unsafe_exec(fn, params);
 			}
 			else {
-				fn();
+				fn(params);
 			}
-			//if (this.is_chrome) unsafeWindow._unsafe_scope(fn);
-			//else fn();
 		}
 		else {
 			try {
@@ -2919,20 +2879,20 @@ MediaPlayer.prototype.on_ytvideo_ready = function (event, media_player) {
 };
 MediaPlayer.prototype.on_ytvideo_state_change = function (event, media_player) {
 	switch (event.data) {
-		case window.YT.PlayerState.ENDED:
+		case unsafeWindow.YT.PlayerState.ENDED:
 			media_player.update_playing_status();
 			media_player.next();
 		break;
-		case window.YT.PlayerState.PLAYING:
+		case unsafeWindow.YT.PlayerState.PLAYING:
 			media_player.update_playing_status();
 		break;
-		case window.YT.PlayerState.PAUSED:
+		case unsafeWindow.YT.PlayerState.PAUSED:
 			media_player.update_playing_status();
 		break;
-		case window.YT.PlayerState.BUFFERING:
+		case unsafeWindow.YT.PlayerState.BUFFERING:
 			media_player.update_playing_status();
 		break;
-		case window.YT.PlayerState.CUED:
+		case unsafeWindow.YT.PlayerState.CUED:
 		break;
 	}
 };
@@ -2958,21 +2918,6 @@ MediaPlayer.prototype.on_ytvideo_error = function (event, media_player) {
 	}
 };
 MediaPlayer.prototype.on_ytvideo_api_change = function (event, media_player) {
-};
-MediaPlayer.prototype.on_ytplayer_loaded = function (player) {
-	var events = [
-		"onReady",
-		"onStateChange",
-		"onPlaybackQualityChange",
-		"onPlaybackRateChange",
-		"onError",
-		"onApiChange",
-	];
-
-	for (var i = 0; i < events.length; ++i) {
-		var name = events[i] + "__" + this.namespace + "__" + this.identifier;
-		player.addEventListener(events[i], name);
-	}
 };
 
 MediaPlayer.prototype.on_titlebar_mousedown = function (event) {
@@ -3591,18 +3536,5 @@ MediaPlayer.prototype.cancel_event = function (event) {
 }
 
 
-
-unsafeWindow.onYouTubePlayerReady = function (playerId) {
-	var e = $("#" + playerId);
-	if (e.length > 0) {
-		var s = "";
-		for (var key in s) s += "\n" + key;
-		alert(s);
-		alert(e.parent().html());
-		if (e[0].media_player) {
-			e[0].media_player.on_ytplayer_loaded(e[0]);
-		}
-	}
-}
 
 
