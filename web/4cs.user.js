@@ -1117,7 +1117,30 @@ function inline_post_parse(post_data, redo, post_data_copy) {
 			};
 
 			// Replace tags in post
-			var sounds_found = inline_replace_in_tag(post_data.post, inline_replace_tags);
+			var sounds_found = dom_replace(
+				post_data.post,
+				function (tag, old_tags) { // check
+					var name = tag.prop("tagName");
+					if (name === undefined) return 2;
+					name = name.toLowerCase();
+
+					if (is_archive) {
+						if (
+							(name == "span" && tag.hasClass("greentext")) ||
+							(name == "span" && tag.hasClass("spoiler"))
+						) return 1;
+					}
+					else {
+						if (
+							(name == "span" && tag.hasClass("quote")) ||
+							name == "s"
+						) return 1;
+					}
+					
+					return 0;
+				},
+				inline_replace_tags
+			);
 
 			// Sounds links
 			post_data.post.find(".SPLoadLink").each(function (index) {
@@ -1276,36 +1299,14 @@ function inline_load_all_in_thread(event) {
 
 	return false;
 }
-function inline_replace_in_tag(tag, replace_callback) {
-	var found = false;
-	var c = tag.contents();
-	for (var j = 0; j < c.length; ++j) {
-		var tag_name = $(c[j]).prop("tagName");
-		if (tag_name == undefined) {
-			found = (replace_callback($(c[j])) || found);
-		}
-		else {
-			tag_name = tag_name.toLowerCase();
-			if (
-				is_archive ?
-				((tag_name == "span" && $(c[j]).hasClass("greentext")) || (tag_name == "span" && $(c[j]).hasClass("spoiler"))) :
-				((tag_name == "span" && $(c[j]).hasClass("quote")) || tag_name == "s")
-			) {
-				// quote or spoiler
-				found = (inline_replace_in_tag($(c[j]), replace_callback) || found);
-			}
-		}
-	}
-	return found;
-}
-function inline_replace_tags(container) {
+function inline_replace_tags(tags) {
 	var sounds_found = false;
-	var new_text = (container.text()/* + "[tag]"*/).replace(/\[.+?\]/g, function (match) {
+	var new_text = (tags[0].text()/* + "[tag]"*/).replace(/\[.+?\]/g, function (match) {
 		sounds_found = true;
 		return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
 	});
 	if (sounds_found) {
-		container.after(new_text).remove();
+		tags[0].after(new_text).remove();
 		return true;
 	}
 	return false;
@@ -1421,12 +1422,36 @@ function inline_post_parse_for_urls(post_data, redo, post_data_copy) {
 		});
 	}
 	else {
-		var links_found = inline_replace_in_tag(post_data.post, inline_replace_urls);
+		var links_found = dom_replace(
+			post_data.post,
+			function (tag, old_tags) { // check
+				var name = tag.prop("tagName");
+				if (name === undefined) return 2;
+				name = name.toLowerCase();
+
+				if (is_archive) {
+					if (
+						(name == "span" && tag.hasClass("greentext")) ||
+						(name == "span" && tag.hasClass("spoiler"))
+					) return 1;
+				}
+				else {
+					if (
+						(name == "span" && tag.hasClass("quote")) ||
+						name == "s"
+					) return 1;
+					if (name == "wbr") return 2;
+				}
+				
+				return 0;
+			},
+			inline_replace_urls
+		);
 
 		if (links_found) {
 			// Sounds links
 			post_data.post.find(".MPReplacedURL").each(function (index) {
-				var href = $(this).html()
+				var href = string_remove_tags($(this).html())
 					.replace(/&amp;/g, "&")
 					.replace(/&gt;/g, ">")
 					.replace(/&lt;/g, "<")
@@ -1481,18 +1506,50 @@ function inline_post_parse_for_urls(post_data, redo, post_data_copy) {
 		}
 	}
 }
-function inline_replace_urls(container) {
-	var sounds_found = false;
-	var new_text = container.text().replace(/((?:\w+):\/\/|www\.)(?:[^\s]+)/im, function (match) {
-		sounds_found = true;
-		return "<a class=\"MPReplacedURL\">" + match + "</a>";
-	});
-	if (sounds_found) {
-		container.after(new_text).remove();
-		return true;
+function inline_replace_urls(tags) {
+	var full_text = "";
+	var in_url = false;
+	var any_found = true;
+	var length_add;
+	var link_str = [ "<a class=\"MPReplacedURL\">" , "</a>" ];
+
+	for (var i = 0; i < tags.length; ++i) {
+		if (tags[i].prop("tagName") === undefined) {
+			var text = tags[i].text();
+			var start = 0;
+			// Previous URL
+			if (in_url) {
+				in_url = false;
+				text = text.replace(/^(?:[^\s]*)/im, function (match, groups, offset) {
+					return match + link_str[1];
+				});
+			}
+			// New URLs
+			length_add = 0;
+			text = text.replace(/((?:\w+):\/\/|www\.)(?:[^\s]+)/im, function (match, groups, offset) {
+				any_found = true;
+				in_url = (offset + match.length == text.length + length_add);
+				length_add += (link_str[0].length + (in_url ? 0 : link_str[1].length));
+				return link_str[0] + match + (in_url ? "" : link_str[1]);
+			});
+			
+			// Update
+			full_text += text;
+		}
+		else {
+			full_text += $('<div>').append(tags[i].clone()).html();
+		}
 	}
-	return false;
+
+	// DOM update
+	if (any_found) {
+		tags[0].before(full_text);
+		for (var i = 0; i < tags.length; ++i) tags[i].remove();
+	}
+
+	return any_found;
 }
+
 function on_inline_url_click(event) {
 	// Add to playlist
 	open_player(true);
@@ -1511,6 +1568,46 @@ function on_inline_url_click(event) {
 		}
 	);
 	return false;
+}
+
+
+function string_remove_tags(str) {
+	return str.replace(/<[^>]*>?/g, "");
+}
+function dom_replace(tag, check_callback, replace_callback) {
+	var c = tag.contents();
+	var sub_tags = [ new Array() ];
+	var check, t;
+
+	var i = 0;
+	for (var j = 0; j < c.length; ++j) {
+		t = $(c[j]);
+		check = check_callback(t, sub_tags[i]);
+
+		// 0: Ignore tag, don't parse into
+		// 1: Parse standalone
+		// 2: Parse in group
+		if (check <= 1 && sub_tags[i].length > 0) {
+			sub_tags.push(new Array());
+			++i;
+		}
+		if (check >= 1) {
+			sub_tags[i].push(t);
+			// Sub-scan
+			if (t.prop("tagName") !== undefined && t.contents().length > 0) {
+				dom_replace(t, check_callback, replace_callback);
+			}
+		}
+	}
+
+	// Replace
+	var found = false;
+	for (i = 0; i < sub_tags.length && sub_tags[i].length > 0; ++i) {
+		found = (replace_callback(sub_tags[i]) || found);
+	}
+
+	// Done
+	return found;
 }
 
 
