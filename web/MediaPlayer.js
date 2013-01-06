@@ -1010,7 +1010,7 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 	this.playlist_height = this.playlist_height_default;
 	this.player_width_min = 64;
 	this.playlist_height_min = 0;
-	this.playlist_play_on_load = 0; // 0 = no, 1 = if paused, 2 = always
+	this.playlist_play_on_load = 1; // 0 = no, 1 = if paused, 2 = always
 
 	this.mouse_offset = null;
 	this.mouse_moved = false;
@@ -1821,6 +1821,10 @@ MediaPlayer.prototype.deselect = function (old_type) {
 			this.seek_time_current_label.html(this.duration_to_string(0.0));
 			this.seek_time_end_label.html(this.duration_to_string(0.0));
 			this.current_media = null;
+			this.set_loaded();
+			
+			// Title
+			this.title.html(this.title_default);
 		}
 	}
 }
@@ -2057,12 +2061,15 @@ MediaPlayer.prototype.set_loaded = function (offset, percent) {
 		else {
 			percent = this.get_loaded_percent();
 		}
-
-		// Update html
-		var w = this.load_percent_bar_container.outerWidth();
-		this.load_percent_bar_mover.width(offset * w);
-		this.load_percent_bar.width(percent * w);
 	}
+	else {
+		percent = 0.0;
+		offset = 0.0;
+	}
+	// Update html
+	var w = this.load_percent_bar_container.outerWidth();
+	this.load_percent_bar_mover.width(offset * w);
+	this.load_percent_bar.width(percent * w);
 }
 MediaPlayer.prototype.get_loaded_offset = function () {
 	if (this.current_media !== null) {
