@@ -3195,10 +3195,12 @@ MediaPlayer.prototype.on_audio_pause = function (event) {
 	event.data.media_player.update_playing_status();
 }
 MediaPlayer.prototype.on_audio_ended = function (event) {
-	// Update playing status
-	event.data.media_player.update_playing_status();
-	// Next
-	event.data.media_player.next();
+	if (!event.data.media_player.seek_exacting && !event.data.media_player.seek_dragging) {
+		// Update playing status
+		event.data.media_player.update_playing_status();
+		// Next
+		event.data.media_player.next();
+	}
 }
 MediaPlayer.prototype.on_audio_timeupdate = function (event) {
 	// Update seek bar
