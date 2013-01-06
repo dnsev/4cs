@@ -1010,7 +1010,7 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 	this.playlist_height = this.playlist_height_default;
 	this.player_width_min = 64;
 	this.playlist_height_min = 0;
-	this.playlist_play_on_load = 1; // 0 = no, 1 = if paused, 2 = always
+	this.playlist_play_on_load = 1; // 0 = no, 1 = if empty, 2 = if paused, 3 = always
 
 	this.mouse_offset = null;
 	this.mouse_moved = false;
@@ -1363,7 +1363,7 @@ MediaPlayer.prototype.create = function () {
 									this.D("SPHelpColorInputDiv2")
 									.append(
 										this.E("a", "SPHelpModeLink")
-										.html(this.playlist_play_on_load == 0 ? "Don't play" : (this.playlist_play_on_load == 1 ? "Play if paused" : "Always play"))
+										.html(this.playlist_play_on_load == 0 ? "Don't play" : (this.playlist_play_on_load == 1 ? "Play if empty playlist" : (this.playlist_play_on_load == 2 ? "Play if paused" : "Always play")))
 										.on("click." + this.namespace, {media_player: this}, this.on_playlist_onload_change)
 										.on("mousedown", this.cancel_event)
 									)
@@ -2606,7 +2606,7 @@ MediaPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, soun
 	this.playlist.push(playlist_item);
 
 	// Play?
-	if (this.playlist_play_on_load == 2 || (this.playlist_play_on_load == 1 && this.is_paused())) {
+	if (this.playlist_play_on_load == 3 || (this.playlist_play_on_load == 1 && this.playlist.length == 1) || (this.playlist_play_on_load == 2 && this.is_paused())) {
 		this.start(this.playlist.length - 1);
 	}
 }
@@ -2719,7 +2719,7 @@ MediaPlayer.prototype.add_to_playlist_ytvideo = function (original_url, vid_id, 
 	this.playlist.push(playlist_item);
 
 	// Play?
-	if (this.playlist_play_on_load == 2 || (this.playlist_play_on_load == 1 && this.is_paused())) {
+	if (this.playlist_play_on_load == 3 || (this.playlist_play_on_load == 1 && this.playlist.length == 1) || (this.playlist_play_on_load == 2 && this.is_paused())) {
 		this.start(this.playlist.length - 1);
 	}
 }
@@ -3268,11 +3268,11 @@ MediaPlayer.prototype.on_playlist_mode_change = function (event) {
 }
 MediaPlayer.prototype.on_playlist_onload_change = function (event) {
 	// Change mode
-	var v = (event.data.media_player.playlist_play_on_load + 1) % 3;
+	var v = (event.data.media_player.playlist_play_on_load + 1) % 4;
 	event.data.media_player.playlist_play_on_load = v;
 
 	// Label
-	$(this).html(v == 0 ? "Don't play" : (v == 1 ? "Play if paused" : "Always play"));
+	$(this).html(v == 0 ? "Don't play" : (v == 1 ? "Play if empty playlist" : (v == 2 ? "Play if paused" : "Always play")));
 
 	// Callback
 	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
