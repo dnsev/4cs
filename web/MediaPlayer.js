@@ -1907,7 +1907,7 @@ MediaPlayer.prototype.start = function (index) {
 			
 			alert("is_chrome="+this.is_chrome);
 			if (this.is_chrome||true) {
-				var fn = function () {
+				var fn = function (data) {
 					var playerVars = {
 						controls: 0,
 						showinfo: 0,
@@ -1920,7 +1920,7 @@ MediaPlayer.prototype.start = function (index) {
 						showinfo: 0,
 						origin: window.location.href.toString()
 					};
-					var player = new unsafeWindow.YT.Player(div_id, {
+					var player = new window.YT.Player(data.div_id, {
 						height: '390',
 						width: '640',
 						videoId: 'UnURElCzGc0',
@@ -1931,7 +1931,7 @@ MediaPlayer.prototype.start = function (index) {
 						}
 					});
 				};
-				unsafeWindow._unsafe_scope(fn);
+				_unsafe_exec(fn, {"div_id": div_id});
 			}
 			else {
 				fn();

@@ -1964,24 +1964,52 @@ function open_player(load_settings) {
 ///////////////////////////////////////////////////////////////////////////////
 var thread_manager = null;
 jQuery(document).ready(function () {
+	// Hack move the scope out of sandbox
+	window._unsafe_exec = function () {
+		if (window._unsafe !== undefined) {
+			var r = window[window._unsafe.func].call(window, window._unsafe.data);
+			window._unsafe.tag.parentNode.removeChild(window._unsafe.tag);
+			window[window._unsafe.func] = undefined;
+			window._unsafe = undefined;
+			return r;
+		}
+	}
+	tag = document.createElement('script');
+	tag.innerHTML = "window._unsafe_exec = " + window._unsafe_exec.toString() + ";";
+	document.body.appendChild(tag);
+	window._unsafe_exec = function (exec_function, data) {
+		// Create script tag
+		var tag = document.createElement('script');
+
+		// Set data to be passed
+		var _unsafe = {
+			"tag": tag,
+			"func": "_unsafe_f049fwjef0rghr09", // TODO : maybe make this change
+			"data": data
+		};
+
+		// Apply script source and run it
+		tag.innerHTML = "window." + _unsafe.func + " = " + exec_function.toString() + "; window._unsafe_exec();";
+
+		// Run script
+		unsafeWindow._unsafe = _unsafe;
+		document.body.appendChild(tag);
+	}
+
+
 	// Youtube API
-	window.YT = null;
 	$.getScript(
 		"//www.youtube.com/iframe_api",
 		function (script, status, jqXHR) {}
 	);
 
-	// Scope changing for chome
-	var tag = document.createElement('script');
-	tag.innerHTML = "function _unsafe_scope(callback, data) { return callback(data); }";
-	document.body.appendChild(tag);
-
+	// Setup
 	inline_setup();
 	thread_manager = new ThreadManager();
 });
 
 unsafeWindow.onYouTubeIframeAPIReady = function () {
-	window.YT = unsafeWindow.YT;
+//	window.YT = unsafeWindow.YT;
 }
 
 
