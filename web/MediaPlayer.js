@@ -1904,8 +1904,40 @@ MediaPlayer.prototype.start = function (index) {
 					console.log(e);
 				}
 			}
-			if (this.is_chrome) unsafeWindow._unsafe_scope(fn);
-			else fn();
+			
+			alert("is_chrome="+this.is_chrome);
+			if (this.is_chrome||true) {
+				var fn = function () {
+					var playerVars = {
+						controls: 0,
+						showinfo: 0,
+						modestbranding: 1,
+						wmode: 'opaque',
+						html5: 1,
+						disablekb: 1,
+						enablejsapi: 1,
+						rel: 0,
+						showinfo: 0,
+						origin: window.location.href.toString()
+					};
+					var player = new unsafeWindow.YT.Player(div_id, {
+						height: '390',
+						width: '640',
+						videoId: 'UnURElCzGc0',
+						"playerVars": playerVars,
+						events: {
+							'onReady': function (event) { event.target.playVideo(); },
+							'onStateChange': function (event) { document.title = 'onStateChange:' + (event.data); },
+						}
+					});
+				};
+				unsafeWindow._unsafe_scope(fn);
+			}
+			else {
+				fn();
+			}
+			//if (this.is_chrome) unsafeWindow._unsafe_scope(fn);
+			//else fn();
 		}
 		else {
 			try {
