@@ -1971,6 +1971,11 @@ jQuery(document).ready(function () {
 		function (script, status, jqXHR) {}
 	);
 
+	// Scope changing for chome
+	var tag = document.createElement('script');
+	tag.innerHTML = "function _unsafe_scope(callback, data) { return callback(data); }";
+	document.body.appendChild(tag);
+
 	inline_setup();
 	thread_manager = new ThreadManager();
 });
