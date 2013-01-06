@@ -92,6 +92,22 @@ function ajax_get(url, return_as_string, callback_data, progress_callback, done_
 	}
 }
 
+function xml_find_nodes_by_name(xml, name) {
+	// Because chrome is bad
+	var nodes = [], n2;
+
+	for (var n = 0; n < xml.childNodes.length; ++n) {
+		if (xml.childNodes[n].nodeName != "#text") {
+			if (xml.childNodes[n].nodeName == name) nodes.push(xml.childNodes[n]);
+
+			n2 = xml_find_nodes_by_name(xml.childNodes[n], name);
+			if (n2.length > 0) nodes = nodes.concat(n2);
+		}
+	}
+
+	return nodes;
+}
+
 function E(elem) {
 	return jQuery(document.createElement(elem));
 }
@@ -1444,10 +1460,10 @@ function inline_post_parse_for_urls(post_data, redo, post_data_copy) {
 						"//gdata.youtube.com/feeds/api/videos/" + vid_id, true, {a: $(this)}, null,
 						function (okay, data, response) {
 							if (okay) {
-								var xml = $($.parseXML(response));
+								var xml = $.parseXML(response);
 								var title;
 								try {
-									title = $(xml.find("title")[0]).text();
+									title = $(xml_find_nodes_by_name(xml, "title")).text();
 								}
 								catch (e) {
 									console.log(e);

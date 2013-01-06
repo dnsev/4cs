@@ -2535,9 +2535,15 @@ MediaPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, soun
 }
 MediaPlayer.prototype.add_to_playlist_ytvideo = function (original_url, vid_id, tag, flagged, info_xml) {
 	// Setup playlist settings
-	var duration = info_xml.find("yt\\:duration").attr("seconds");
-	duration = parseFloat(duration);
-	duration = isFinite(duration) ? duration : 0.0;
+	var duration = xml_find_nodes_by_name(info_xml, "yt:duration");
+	if (duration.length > 0) {
+		duration = duration[0].getAttribute("seconds");
+		duration = parseFloat(duration);
+		duration = isFinite(duration) ? duration : 0.0;
+	}
+	else {
+		duration = 0.0;
+	}
 
 	var start = /[\!\#\?\&]t=[0-9smh]+/.exec(original_url);
 	if (start != null) {
@@ -2549,7 +2555,7 @@ MediaPlayer.prototype.add_to_playlist_ytvideo = function (original_url, vid_id, 
 
 	var title;
 	try {
-		title = $(info_xml.find("title")[0]).text();
+		title = $(xml_find_nodes_by_name(info_xml, "title")).text();
 	}
 	catch (e) {
 		console.log(e);
@@ -2826,7 +2832,7 @@ MediaPlayer.prototype.attempt_load_video = function (url, load_tag, callback_dat
 			if (typeof(done_callback) == "function") done_callback(okay, callback_data);
 
 			if (okay) {
-				var xml = $($.parseXML(response));
+				var xml = $.parseXML(response);
 				var status = self.add_to_playlist_ytvideo(url, vid_id, null, false, xml);
 				if (typeof(status_callback) == "function") status_callback(status, callback_data, xml);
 			}
@@ -2859,8 +2865,10 @@ MediaPlayer.prototype.on_ytvideo_time_update = function (playlist_item, media_pl
 	if (media_player.ytvideo_player != null) {
 		if (media_player.ytvideo_player.getCurrentTime) {
 			// Seek
+			console.log("Seeking: "+media_player.ytvideo_player.getCurrentTime+"; "+media_player.ytvideo_player.getCurrentTime());
 			media_player.seek_to(media_player.ytvideo_player.getCurrentTime(), true);
 		}
+		else{console.log("BadSeek: "+media_player.ytvideo_player.getCurrentTime);}
 		if (media_player.ytvideo_player.getVideoLoadedFraction) {
 			// Loaded
 			media_player.set_loaded(media_player.get_loaded_offset(), media_player.ytvideo_player.getVideoLoadedFraction());
