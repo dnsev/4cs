@@ -1,51 +1,97 @@
-To run using the executable, the files are located in "cpp/"
+-------------------------------------------------------------------------------
+Sound Encoding/Decoding:
+-------------------------------------------------------------------------------
+	To encode/decode your own files, use the 2 executables in "/cpp".
 
-Tested on Windows, using MinGW/g++ and Python 2.7. Javascript tested in Firefox + Greasemonkey / Chrome + Tampermonkey.
+	To batch decode old files, get the executable from "/batch" and PUT IT IN
+	THE SAME FOLDER AS THE DECODER.
 
-Makefile is currently designed for Windows. While most of it is system independent,
-anyone with knowledge of makefiles should be able to adapt it for unix.
+	Drag and drop files onto the decoder executables to decode them.
 
-Run "embed.exe" to see instructions on how to embed.
+	If you consider yourself an "advanced" user, embed.exe has many command
+	line flags, explained if you simply run "embed.exe". "extract.exe" also
+	has a few minor flags.
 
-Run "extract.exe" to see instructions on how to extract.
-
-
-Examples:
-
-	embed.exe test.png song.ogg
-	embed.exe test.png song1.ogg song2.ogg song3.ogg song4.ogg
-	embed.exe -x output.png test.png song.ogg
-
-	extract.exe output.png
-	extract.exe -p ex/ output.png
-	extract.exe -s -ex output.png
+	Otherwise, to embed a file in an image (using default settings):
+	1) Create a blank file called "_" (note: no .txt or similar extension)
+	2) Select 3+ files in your explorer: "_", your image, and any .ogg sounds
+	3) Drag these 3 files (at the same time) onto "embed.exe" and wait
 
 
+-------------------------------------------------------------------------------
+Testing Platform:
+-------------------------------------------------------------------------------
+	C++:
+		Windows, using MinGW/g++
+		(mostly cross platform, with a few exceptions in the makefile)
+	Python (deprecated):
+		Python 2.7.3
+	Javascript:
+		Nightly/Firefox + Greasemonkey / Chrome + Tampermonkey
 
-(Python version is now deprecated)
 
-
+-------------------------------------------------------------------------------
 Web Plugin / User End:
+-------------------------------------------------------------------------------
+	Install Version: https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
+	IMPORTANT INSTALLATION NOTE: Before installing, do the following:
+	In Firefox/Nightly:
+		Go to "Tools" -> "Add-ons" -> "User-Scripts"
+		"Remove" any older versions.
+	In Chrome:
+		Open Tampermonkey "Options"
+		Delete any old versions.
+		Close Chrome completely, re-open, THEN install.
+	Why?
+		Because I have the code sectioned off into more workable pieces, rather
+		than all in one big script. Without worrying whether or not this is
+		good or bad practice for userscripts, Firefox likes to keep old
+		dependencies when it updates, and Tampermonkey stores its files in
+		some sort of database, and there have been issues with it updating the
+		dependencies without a restart.
 
-	Designed to be a bit better looking, and have some selectable stylesheets to choose
-	from. It's also more clear about draging and dropping files into the player, and
-	properly displays the image when doing so.
+
+	Version 1.1:
+
+	Bugfixes for the previous sound embeds.
+
+	Added functionality to convert inline URLs and play Youtube videos in the
+	player.
+
+
+	Version 1.0:
+
+	Designed to be a bit better looking, and have some selectable stylesheets
+	to choose from. It's also more clear about draging and dropping files into
+	the player, and properly displays the image when doing so.
 
 	The player is also a bit more customizable.
 
 
+-------------------------------------------------------------------------------
 Web Plugin / Dev End:
+-------------------------------------------------------------------------------
+	Version 1.1:
 
-	On the developer side, the plugin is designed to be much more modular than its
-	counterpart. The sound player is designed to be stand-alone and non-site-specific.
-	Additionally, it's designed such that it is able to have multiple instances,
-	possibly even using different stylesheets. While this is ultimately useless in
-	most applications, it's better designed without global variables anyway.
+	Youtube playback feature has been added, using the iframe API. Works well
+	in Firefox and Chrome (although it was much more difficult to get it
+	working in Chrome due to userscript sandbox settings.)
 
-	Adding a new extraction format is as simple as adding a function
-	callback and adding it to a list in one place. Descriptions of parameters
-	passed into and out of the callbacks are located in SoundPlayer.js. Everything
+
+	Version 1.0:
+
+	On the developer side, the plugin is designed to be much more modular than
+	its counterpart. The sound player is designed to be stand-alone and mostly
+	non-site-specific. Additionally, it's designed such that it is able to have
+	multiple instances, possibly even using different stylesheets. While this
+	is ultimately useless in most applications, it's better designed with less
+	global variables anyway.
+
+	Adding a new extraction format is as simple as adding a function callback
+	and adding it to a list in one place. Descriptions of parameters passed
+	into and out of the callbacks are located in "MediaPlayer.js". Everything
 	else is taken care of automatically.
 
-	The inline post code and site-specific sound_player code are all sectioned off
-	a bit better too.
+	The inline post code and site-specific sound_player code are all sectioned
+	off a bit better too.
+

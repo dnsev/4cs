@@ -3437,6 +3437,8 @@ MediaPlayer.prototype.on_timer_resize_open = function () {
 	$("body").append(d = this.D("SPResizingContainerText").html("I"));
 	this.resize_sizes[2] = d.outerHeight();
 	d.remove();
+	if (this.resize_sizes[1] > this.resize_sizes[2]) this.resize_sizes[1] = this.resize_sizes[2];
+
 	this.resize_side_sizes_target = [ this.resize_sizes[1], this.resize_sizes[1], this.resize_sizes[1], this.resize_sizes[1] ];
 	this.resize_side_sizes_needed = true;
 	this.on_resize_mouse_update(null, null);
@@ -3514,7 +3516,7 @@ MediaPlayer.prototype.on_resize_mouse_update = function (rel_x, rel_y) {
 	if (rel_y !== null) this.resize_mouse_offset[1] = rel_y;
 	else rel_y = this.resize_mouse_offset[1];
 
-	var size = [ this.sp_container_main.outerWidth() , this.sp_container_main.outerHeight() ];
+	var size = [ this.sp_container.outerWidth() , this.sp_container.outerHeight() ];
 	var should_open = this.resizing;
 	if (this.resize_container_hovered && !this.resizing) {
 		should_open = (
@@ -3680,7 +3682,7 @@ MediaPlayer.prototype.on_document_mouseup = function (event) {
 	}
 	else if (event.data.media_player.resizing) {
 		event.data.media_player.resizing = false;
-		event.data.media_player.on_resize_mouse_update();
+		event.data.media_player.on_resize_mouse_update(null, null);
 		event.data.media_player.reposition();
 
 		// Callback
@@ -3798,7 +3800,7 @@ MediaPlayer.prototype.on_document_mousemove = function (event) {
 	}
 
 	if (event.data.media_player.resize_container_hovered) {
-		var rel = event.data.media_player.sp_container_main.offset();
+		var rel = event.data.media_player.sp_container.offset();
 		rel.left -= event.pageX;
 		rel.top -= event.pageY;
 
