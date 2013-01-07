@@ -2376,9 +2376,9 @@ MediaPlayer.prototype.start = function (index) {
 		console.log(this.current_media.type);
 	}
 }
-MediaPlayer.prototype.next = function () {
+MediaPlayer.prototype.next = function (follow_policy) {
 	// Next
-	if (this.playlist_randomize) {
+	if (this.playlist_randomize && follow_policy) {
 		// Random
 		var i = 0;
 		if (this.playlist.length > 1) {
@@ -2389,7 +2389,7 @@ MediaPlayer.prototype.next = function () {
 		}
 		this.start(i);
 	}
-	else if (this.playlist_loop || this.current_media.index < this.playlist.length - 1) {
+	else if (!follow_policy || this.playlist_loop || this.current_media.index < this.playlist.length - 1) {
 		// Next
 		this.start((this.current_media.index + 1) % this.playlist.length);
 	}
@@ -3373,7 +3373,7 @@ MediaPlayer.prototype.on_ytvideo_state_change = function (event, media_player) {
 	switch (event.data) {
 		case unsafeWindow.YT.PlayerState.ENDED:
 			media_player.update_playing_status();
-			media_player.next();
+			media_player.next(true);
 		break;
 		case unsafeWindow.YT.PlayerState.PLAYING:
 			media_player.update_playing_status();
@@ -3824,7 +3824,7 @@ MediaPlayer.prototype.on_audio_ended = function (event) {
 		// Update playing status
 		event.data.media_player.update_playing_status();
 		// Next
-		event.data.media_player.next();
+		event.data.media_player.next(true);
 	}
 }
 MediaPlayer.prototype.on_audio_timeupdate = function (event) {

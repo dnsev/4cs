@@ -270,7 +270,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 				sound_magic_string_index = s;
 				sound_masked_state = (masked ? unmask_state : null);
 				sound_masked_mask = (masked ? mask : null);
-				i += magic_strings_ui8[s].length;
+				//i += magic_strings_ui8[s].length;
 			}
 		}
 		// Complete any sounds
@@ -309,7 +309,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 	for (var i = 0; i < sounds.length; ++i) sound_names.push(sounds[i]["title"] + ".ogg");
 
 	// Single sound?
-	if (load_tag != MediaPlayer.ALL_SOUNDS) {
+	if (load_tag !== MediaPlayer.ALL_SOUNDS) {
 		// Find the correct tag to use
 		var found = null;
 		for (var i = 0; i < sounds.length; ++i) {
@@ -378,7 +378,7 @@ function image_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_
 		for (var i = 0; i < sounds.length; ++i) sound_names.push(sounds[i]["title"] + ".ogg");
 
 		// Single sound?
-		if (load_tag != MediaPlayer.ALL_SOUNDS) {
+		if (load_tag !== MediaPlayer.ALL_SOUNDS) {
 			// Find the correct tag to use
 			var found = null;
 			for (var i = 0; i < sounds.length; ++i) {
@@ -541,7 +541,7 @@ function image_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_
 					sound_magic_string_index = s;
 					sound_masked_state = (masked ? unmask_state : null);
 					sound_masked_mask = (masked ? mask : null);
-					i += magic_strings_ui8[s].length;
+					//i += magic_strings_ui8[s].length;
 				}
 				return i;
 			},
@@ -712,7 +712,7 @@ function image_check_callback(url_or_filename, raw_ui8_data, callback_data, done
 					sounds[1].push(tag);
 					sounds[2].push(-i);
 					// Next
-					i += magic_strings_ui8[s].length;
+					//i += magic_strings_ui8[s].length;
 				}
 
 				// Done
