@@ -3426,10 +3426,11 @@ MediaPlayer.prototype.on_timer_resize_open = function () {
 	this.resize_should_close = false;
 
 	// Update sizes
-	var d = this.D("SPResizingSizeOff");
+	var d;
+	$("body").append(d = this.D("SPResizingSizeOff"));
 	this.resize_sizes[0] = d.outerWidth();
 	d.remove();
-	d = this.D("SPResizingSizeAvailable");
+	$("body").append(d = this.D("SPResizingSizeAvailable"));
 	this.resize_sizes[1] = d.outerWidth();
 	d.remove();
 	$("body").append(d = this.D("SPResizingContainerText").html("I"));
