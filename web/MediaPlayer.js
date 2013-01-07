@@ -2261,6 +2261,7 @@ MediaPlayer.prototype.start = function (index) {
 		// Image
 		this.no_image.css("display", "none");
 		this.image.css("display", "none");
+		this.image.removeAttr("src");
 		this.image.attr("src", this.current_media.image_url);
 	}
 	else if (this.current_media.type == "youtube-video") {
