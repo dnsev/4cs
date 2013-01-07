@@ -4048,6 +4048,9 @@ MediaPlayer.prototype.on_firstrun_page_exit_click = function (event) {
 	event.data.media_player.first_run_container.css("display", "none");
 	event.data.media_player.first_run = false;
 
+	// Callback
+	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+
 	return false;
 }
 
