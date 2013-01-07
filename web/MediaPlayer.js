@@ -3011,8 +3011,10 @@ MediaPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, soun
 	this.playlist.push(playlist_item);
 
 	// Play?
-	if (this.playlist_play_on_load == 3 || (this.playlist_play_on_load == 1 && this.playlist.length == 1) || (this.playlist_play_on_load == 2 && this.is_paused())) {
-		this.start(this.playlist.length - 1);
+	if (!this.first_run) {
+		if (this.playlist_play_on_load == 3 || (this.playlist_play_on_load == 1 && this.playlist.length == 1) || (this.playlist_play_on_load == 2 && this.is_paused())) {
+			this.start(this.playlist.length - 1);
+		}
 	}
 }
 MediaPlayer.prototype.add_to_playlist_ytvideo = function (original_url, vid_id, tag, flagged, info_xml) {
@@ -3124,8 +3126,10 @@ MediaPlayer.prototype.add_to_playlist_ytvideo = function (original_url, vid_id, 
 	this.playlist.push(playlist_item);
 
 	// Play?
-	if (this.playlist_play_on_load == 3 || (this.playlist_play_on_load == 1 && this.playlist.length == 1) || (this.playlist_play_on_load == 2 && this.is_paused())) {
-		this.start(this.playlist.length - 1);
+	if (!this.first_run) {
+		if (this.playlist_play_on_load == 3 || (this.playlist_play_on_load == 1 && this.playlist.length == 1) || (this.playlist_play_on_load == 2 && this.is_paused())) {
+			this.start(this.playlist.length - 1);
+		}
 	}
 }
 MediaPlayer.prototype.remove_from_playlist = function (index) {
@@ -3989,20 +3993,22 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 		case 0:
 		{
 			// Options
-			var open = false;
-			for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-				if (event.data.media_player.help_container[i].css("display") != "none") {
-					open = true;
-					break;
-				}
-			}
-			if (open) {
+			if (event.data.media_player.first_run_container.css("display") == "none") {
+				var open = false;
 				for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-					event.data.media_player.help_container[i].css("display", "none");
+					if (event.data.media_player.help_container[i].css("display") != "none") {
+						open = true;
+						break;
+					}
 				}
-			}
-			else {
-				event.data.media_player.help_container[0].css("display", "");
+				if (open) {
+					for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+						event.data.media_player.help_container[i].css("display", "none");
+					}
+				}
+				else {
+					event.data.media_player.help_container[0].css("display", "");
+				}
 			}
 		}
 		break;
@@ -4034,10 +4040,8 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 	}
 }
 MediaPlayer.prototype.on_helppage_goto = function (event) {
-	if (event.data.media_player.first_run_container.css("display") == "none") {
-		for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-			event.data.media_player.help_container[i].css("display", (event.data.help_page == i ? "" : "none"));
-		}
+	for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+		event.data.media_player.help_container[i].css("display", (event.data.help_page == i ? "" : "none"));
 	}
 }
 MediaPlayer.prototype.on_firstrun_page_exit_click = function (event) {
