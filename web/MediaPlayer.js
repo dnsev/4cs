@@ -55,15 +55,17 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 		".SPContainerMain": {
 			"border-radius": "{exp:bg_outer_border_radius,*,border_scale}px",
 			"padding": "{exp:bg_outer_size,*,padding_scale}px",
-			"background": "{rgba:bg_outer_color}",
+			"background": "transparent",
 			"font-family": "{main_font}",
 			"font-size": "{exp:font_size,*,font_scale}px",
 			"position": "fixed",
 			"color": "{hex:color_standard}",
 			"z-index": "1000000"
 		},
+		".SPContainerMainBorders": {
+			"background": "{rgba:bg_outer_color}"
+		},
 		".SPContainer": {
-			"border-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
 			"position": "relative"
 		},
 
@@ -104,7 +106,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"height": "100%",
 			"overflow": "hidden"
 		},
-		".SPMainButtonInfo": {
+		".SPMainButtonLeft": {
 			"display": "inline-block",
 			"padding": "{exp:1,*,padding_scale}px",
 			"border-top-left-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
@@ -115,19 +117,19 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_disabled} !important",
 			"background": "transparent"
 		},
-		".SPMainButtonInfo:hover": {
+		".SPMainButtonLeft:hover": {
 			"opacity": "1.0",
 			"text-decoration": "none !important",
 			"color": "{hex:color_light} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
-		".SPMainButtonInfo:active": {
+		".SPMainButtonLeft:active": {
 			"opacity": "1.0",
 			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
-		".SPMainButtonClose": {
+		".SPMainButtonRight": {
 			"display": "inline-block",
 			"padding": "{exp:1,*,padding_scale}px",
 			"border-top-right-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
@@ -138,19 +140,19 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_disabled} !important",
 			"background": "transparent"
 		},
-		".SPMainButtonClose:hover": {
+		".SPMainButtonRight:hover": {
 			"opacity": "1.0",
 			"text-decoration": "none !important",
 			"color": "{hex:color_light} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
-		".SPMainButtonClose:active": {
+		".SPMainButtonRight:active": {
 			"opacity": "1.0",
 			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
-		".SPMainButtonMinMax": {
+		".SPMainButtonGeneric": {
 			"display": "inline-block",
 			"padding": "{exp:1,*,padding_scale}px",
 			"text-decoration": "none !important",
@@ -160,13 +162,13 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_disabled} !important",
 			"background": "transparent"
 		},
-		".SPMainButtonMinMax:hover": {
+		".SPMainButtonGeneric:hover": {
 			"opacity": "1.0",
 			"text-decoration": "none !important",
 			"color": "{hex:color_light} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
-		".SPMainButtonMinMax:active": {
+		".SPMainButtonGeneric:active": {
 			"opacity": "1.0",
 			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
@@ -645,8 +647,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"text-align": "center",
 			"height": "{exp:bg_inner_border_radius,*,border_scale}px",
 			"border-bottom-left-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
-			"border-bottom-right-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
-			"cursor": "se-resize"
+			"border-bottom-right-radius": "{exp:bg_inner_border_radius,*,border_scale}px"
 		},
 
 
@@ -666,6 +667,145 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"text-align": "center",
 			"font-size": "{exp:40,*,font_scale}px",
 			"margin-top": "{exp:-40,*,font_scale}px"
+		},
+
+		".SPFirstRunContainer": {
+			"position": "absolute",
+			"left": "0",
+			"top": "0",
+			"width": "100%",
+			"height": "100%",
+			"overflow-x": "hidden",
+			"overflow-y": "auto",
+			"display": "block",
+			"background": "{rgba:bg_color_light}"
+		},
+		".SPFirstRunLabel": {
+			"display": "block",
+			"text-align": "left",
+			"font-weight": "bold",
+			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px"
+		},
+		".SPFirstRunTextContainer": {
+			"display": "block",
+			"text-align": "left",
+			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:4,*,padding_scale}px"
+		},
+		".SPFirstRunExitLink": {
+			"display": "block",
+			"text-align": "center",
+			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px"
+		},
+
+		".SPResizingSizeOff": {
+			"width": "{exp:bg_outer_size,*,padding_scale}px",
+			"height": "{exp:bg_outer_size,*,padding_scale}px",
+		},
+		".SPResizingSizeAvailable": {
+			"width": "{exp:bg_outer_size,*,padding_scale,*,2}px",
+			"height": "{exp:bg_outer_size,*,padding_scale,*,2}px",
+		},
+		".SPResizingContainerFull": {
+			"position": "absolute",
+			"left": "-{exp:bg_outer_size,*,padding_scale}px",
+			"top": "-{exp:bg_outer_size,*,padding_scale}px",
+			"right": "-{exp:bg_outer_size,*,padding_scale}px",
+			"bottom": "-{exp:bg_outer_size,*,padding_scale}px",
+			"left":"-16px","top":"-16px","right":"-16px","bottom":"-16px",
+
+			"border-radius": "{exp:bg_outer_border_radius,*,border_scale}px",
+			"background": "{rgba:bg_outer_color}"
+		},
+		".SPResizingContainerInner": {
+			"position": "relative",
+			"width": "100%",
+			"height": "100%"
+		},
+		".SPResizingContainerControl": {
+			"overflow": "hidden",
+			"position": "absolute"
+		},
+		".SPResizingContainerTopLeft": {
+			"left": "0",
+			"width": "16px",
+			"top": "0",
+			"height": "16px",
+			"cursor": "nw-resize"
+		},
+		".SPResizingContainerTop": {
+			"left": "16px",
+			"right": "16px",
+			"top": "0",
+			"height": "16px",
+			"cursor": "n-resize"
+		},
+		".SPResizingContainerTopRight": {
+			"right": "0",
+			"width": "16px",
+			"top": "0",
+			"height": "16px",
+			"cursor": "ne-resize"
+		},
+		".SPResizingContainerLeft": {
+			"left": "0",
+			"width": "16px",
+			"top": "16px",
+			"bottom": "16px",
+			"cursor": "w-resize"
+		},
+		".SPResizingContainerRight": {
+			"right": "0",
+			"width": "16px",
+			"top": "16px",
+			"bottom": "16px",
+			"cursor": "e-resize"
+		},
+		".SPResizingContainerBottomLeft": {
+			"left": "0",
+			"width": "16px",
+			"bottom": "0",
+			"height": "16px",
+			"cursor": "sw-resize"
+		},
+		".SPResizingContainerBottom": {
+			"left": "16px",
+			"right": "16px",
+			"bottom": "0",
+			"height": "16px",
+			"cursor": "s-resize"
+		},
+		".SPResizingContainerBottomRight": {
+			"right": "0",
+			"width": "16px",
+			"bottom": "0",
+			"height": "16px",
+			"cursor": "se-resize"
+		},
+		".SPResizingContainerTextContainerOuter": {
+			"position": "relative",
+			"width": "100%",
+			"height": "100%"
+		},
+		".SPResizingContainerTextContainerInner": {
+			"position": "absolute",
+			"left": "0",
+			"top": "50%",
+			"width": "100%",
+			"height": "100%",
+			"margin-top": "-{exp:font_size_controls,*,font_scale,/,2}px",
+		},
+		".SPResizingContainerTextContainer": {
+			"width": "100%",
+			"height": "100%",
+			"text-align": "center",
+			"cursor": "inherit"
+		},
+		".SPResizingContainerText": {
+			"font-family": "{controls_font}",
+			"font-size": "{exp:font_size_controls,*,font_scale}px",
+			"font-weight": "bold",
+			"color": "{hex:color_standard}",
+			"text-shadow": "{exp:1,*,font_scale}px {exp:1,*,font_scale}px 1px {hex:color_highlight_light}"
 		}
 	};
 }
@@ -962,13 +1102,14 @@ MediaPlayerCSS.prototype.load = function (data) {
 
 
 
-function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback, help_text) {
+function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback) {
 	// Not setup
 	this.created = false;
 	this.namespace = "media_player";
 	this.identifier = ""; // TODO : make this dynamic
 	this.is_chrome = ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
-	this.title_default =  "Media Player"
+	this.title_default =  "Media Player";
+	this.first_run = true;
 
 	// Loading
 	this.load_callbacks = [];
@@ -979,10 +1120,6 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 	}
 	this.settings_callback = settings_callback;
 	this.destruct_callback = destruct_callback;
-	this.help_text = help_text || "";
-
-	// html elements
-	this.nullify();
 
 	// Dimension scaling
 	this.scale_factor = 1.0;
@@ -995,18 +1132,17 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 
 	// Image
 	this.image_height_min = 64;
-	this.image_height_max = 128;
+	this.image_height_max = 225;
 	this.image_height_default = this.image_height_max;
 	this.image_height = this.image_height_default;
 
 	// Size/position settings
 	this.moving = false;
-	this.resizing = false;
 	this.resizing_image = false;
 	this.position_offset = [ 0 , 0 ];
-	this.player_width_default = 240;
+	this.player_width_default = 400;
 	this.player_width = this.player_width_default;
-	this.playlist_height_default = 200;
+	this.playlist_height_default = 34;
 	this.playlist_height = this.playlist_height_default;
 	this.player_width_min = 64;
 	this.playlist_height_min = 0;
@@ -1014,6 +1150,24 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 
 	this.mouse_offset = null;
 	this.mouse_moved = false;
+
+	// Resize settings
+	this.resizing = false;
+	this.resizing_sides = [];
+	this.resizing_base_size = { width: 0, height: 0 };
+	this.resize_sides = [ false , false , false , false ];
+	this.resize_sizes = [ 0.0 , 0.0 , 0.0 ]; // off, available, full
+	this.resize_side_sizes = [ 0.0 , 0.0 , 0.0 , 0.0 ]; // current: t,r,b,l
+	this.resize_side_sizes_target = [ 0.0 , 0.0 , 0.0 , 0.0 ]; // current: t,r,b,l
+	this.resize_side_sizes_needed = false; // true if resizing should happen, false otherwise
+	this.resize_wait_times = [ 0.25 , 0.5 , 0.05 ]; // open ms, close ms
+	this.resize_timers = [ null , null , null ]; // open timer, close timer, resize timer
+	this.resize_distance = [ 4.0 , 4.0 ]; // distance from border, distance to expand
+	this.resize_side_speed = 32.0; // ?px/sec
+	this.resize_container_hovered = false;
+	this.resize_container_border_hovered = false;
+	this.resize_should_close = false;
+	this.resize_mouse_offset = [ 0.0 , 0.0 ];
 
 	// Volume settings (low -> high)
 	this.volume = 0.5;
@@ -1033,6 +1187,9 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 	this.current_image_width = 0;
 	this.current_image_height = 0;
 	this.current_media = null;
+
+	// html elements
+	this.nullify();
 
 	// CSS
 	this.css = css;
@@ -1066,7 +1223,8 @@ MediaPlayer.prototype.save = function () {
 		"playlist_randomize": this.playlist_randomize,
 		"playlist_play_on_load": this.playlist_play_on_load,
 		"position_offset": [ this.position_offset[0] , this.position_offset[1] ],
-		"ytvideo_quality_index": this.ytvideo_quality_index
+		"ytvideo_quality_index": this.ytvideo_quality_index,
+		"first_run": this.first_run
 	};
 
 	// Done
@@ -1085,6 +1243,7 @@ MediaPlayer.prototype.load = function (data) {
 	if ("playlist_height" in data) this.playlist_height = data["playlist_height"];
 	if ("image_height_max" in data) this.image_height_max = data["image_height_max"];
 	if ("ytvideo_quality_index" in data) this.ytvideo_quality_index = data["ytvideo_quality_index"];
+	if ("first_run" in data) this.first_run = data["first_run"];
 
 	if ("position_offset" in data) {
 		this.position_offset[0] = data["position_offset"][0];
@@ -1105,22 +1264,103 @@ MediaPlayer.prototype.create = function () {
 	.on("mousemove." + this.namespace, {media_player: this}, this.on_document_mousemove);
 
 	// Vars
-	var title_buttons = [ null , null , null ];
+	var title_buttons = new Array();
 	this.playback_controls = [ null , null , null , null , null ];
 	this.help_container = [ null , null , null ];
 	this.player_theme_value_updaters = new Array();
+	this.resizing_controls = new Array();
+	this.resizing_texts = new Array();
 
 	// Container
 	$("body").append( //{ DOM Source
-		(this.sp_container_main = this.D("SPContainerMain"))
+		(this.sp_container_main = this.D("SPContainerMain", "SPContainerMainBorders"))
 		.width(this.player_width * this.scale_factor)
 		.css({"right": this.position_offset[0], "bottom": this.position_offset[1]})
 		.on("dragover." + this.namespace, {media_player: this}, this.on_container_dragover)
 		.on("dragenter." + this.namespace, {media_player: this}, this.on_container_dragenter)
 		.on("dragexit." + this.namespace, {media_player: this}, this.on_container_dragexit)
 		.on("drop." + this.namespace, {media_player: this}, this.on_container_drop)
+		.on("mouseover." + this.namespace, {media_player: this}, this.on_main_container_mouseover)
+		.on("mouseout." + this.namespace, {media_player: this}, this.on_main_container_mouseout)
 		.append(
 			(this.sp_container = this.D("SPContainer"))
+			.append( //{ Resizing
+				(this.resizing_container = this.D("SPResizingContainerFull"))
+				.css("display", "none")
+				.append(
+					this.D("SPResizingContainerInner")
+					.append(
+						(this.resizing_controls[0] = this.D("SPResizingContainerTopLeft", "SPResizingContainerControl"))
+						.on("mousedown." + this.namespace, {media_player: this, sides: [0,3]}, this.on_resizer_mousedown)
+						.append(
+							(this.resizing_texts[0] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+							.html("&#x2196;")
+						)
+					)
+					.append(
+						(this.resizing_controls[1] = this.D("SPResizingContainerTop", "SPResizingContainerControl"))
+						.on("mousedown." + this.namespace, {media_player: this, sides: [0,null]}, this.on_resizer_mousedown)
+						.append(
+							(this.resizing_texts[1] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+							.html("&#x2191;")
+						)
+					)
+					.append(
+						(this.resizing_controls[2] = this.D("SPResizingContainerTopRight", "SPResizingContainerControl"))
+						.on("mousedown." + this.namespace, {media_player: this, sides: [0,1]}, this.on_resizer_mousedown)
+						.append(
+							(this.resizing_texts[2] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+							.html("&#x2197;")
+						)
+					)
+					.append(
+						(this.resizing_controls[3] = this.D("SPResizingContainerLeft", "SPResizingContainerControl"))
+						.on("mousedown." + this.namespace, {media_player: this, sides: [null,3]}, this.on_resizer_mousedown)
+						.append(
+							this.D("SPResizingContainerTextContainerOuter")
+							.append(
+								(this.resizing_texts[3] = this.D("SPResizingContainerTextContainerInner", "SPResizingContainerTextContainer", "SPResizingContainerText"))
+								.html("&#x2190;")
+							)
+						)
+					)
+					.append(
+						(this.resizing_controls[4] = this.D("SPResizingContainerRight", "SPResizingContainerControl"))
+						.on("mousedown." + this.namespace, {media_player: this, sides: [null,1]}, this.on_resizer_mousedown)
+						.append(
+							this.D("SPResizingContainerTextContainerOuter")
+							.append(
+								(this.resizing_texts[4] = this.D("SPResizingContainerTextContainerInner", "SPResizingContainerTextContainer", "SPResizingContainerText"))
+								.html("&#x2192;")
+							)
+						)
+					)
+					.append(
+						(this.resizing_controls[5] = this.D("SPResizingContainerBottomLeft", "SPResizingContainerControl"))
+						.on("mousedown." + this.namespace, {media_player: this, sides: [2,3]}, this.on_resizer_mousedown)
+						.append(
+							(this.resizing_texts[5] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+							.html("&#x2199;")
+						)
+					)
+					.append(
+						(this.resizing_controls[6] = this.D("SPResizingContainerBottom", "SPResizingContainerControl"))
+						.on("mousedown." + this.namespace, {media_player: this, sides: [2,null]}, this.on_resizer_mousedown)
+						.append(
+							(this.resizing_texts[6] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+							.html("&#x2193;")
+						)
+					)
+					.append(
+						(this.resizing_controls[7] = this.D("SPResizingContainerBottomRight", "SPResizingContainerControl"))
+						.on("mousedown." + this.namespace, {media_player: this, sides: [2,1]}, this.on_resizer_mousedown)
+						.append(
+							(this.resizing_texts[7] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+							.html("&#x2198;")
+						)
+					)
+				)
+			) //}
 			.append( //{ Title bar
 				this.D("SPTitleBarContainer")
 				.on("mousedown." + this.namespace, {media_player: this}, this.on_titlebar_mousedown)
@@ -1134,18 +1374,22 @@ MediaPlayer.prototype.create = function () {
 				.append(
 					this.D("SPMainButtonsLeft")
 					.append(
-						(title_buttons[0] = this.E("a", "SPMainButtonInfo"))
+						(title_buttons[0] = this.E("a", "SPMainButtonLeft"))
+						.html("[S]")
+					)
+					.append(
+						(title_buttons[1] = this.E("a", "SPMainButtonGeneric"))
 						.html("[?]")
 					)
 				)
 				.append(
 					this.D("SPMainButtonsRight")
 					.append(
-						(title_buttons[1] = this.E("a", "SPMainButtonMinMax"))
+						(title_buttons[2] = this.E("a", "SPMainButtonGeneric"))
 						.html("[&#x2012;]")
 					)
 					.append(
-						(title_buttons[2] = this.E("a", "SPMainButtonClose"))
+						(title_buttons[3] = this.E("a", "SPMainButtonRight"))
 						.html("[&times;]")
 					)
 				)
@@ -1306,135 +1550,128 @@ MediaPlayer.prototype.create = function () {
 				.append( //{ Help 0
 					(this.help_container[0] = this.D("SPHelpContainer"))
 					.css("display", "none")
-					.append( //{ About
+					.append( //{ Playlist Settings
 						this.D("SPHelpLabelDiv")
-						.html(this.help_text.length > 0 ? "About" : "")
+						.html("Playlist Settings")
 					)
 					.append(
-						this.D("SPHelpTextDiv")
-						.html(this.help_text)
-					) //}
+						this.D("SPHelpSectionDiv")
+						.append(
+							this.D("SPHelpColorInputDiv0")
+							.append(
+								this.D("SPHelpColorInputDiv2b")
+								.append(
+									this.D("SPHelpColorLabelText")
+									.html("Mode")
+								)
+							)
+						)
+						.append(
+							this.D("SPHelpColorInputDiv1Full")
+							.append(
+								this.D("SPHelpColorInputDiv2")
+								.append(
+									this.E("a", "SPHelpModeLink")
+									.html(this.playlist_randomize ? "Randomize" : (this.playlist_loop ? "Loop" : "Play Once"))
+									.on("click." + this.namespace, {media_player: this}, this.on_playlist_mode_change)
+									.on("mousedown", this.cancel_event)
+								)
+							)
+						)
+					)
 					.append(
-						(help_div0 = this.D("SPHelpLinkDiv"))
-						.append( //{ Playlist Settings
-							this.D("SPHelpLabelDiv")
-							.html("Playlist Settings")
-						)
+						this.D("SPHelpSectionDiv")
 						.append(
-							this.D("SPHelpSectionDiv")
+							this.D("SPHelpColorInputDiv0")
 							.append(
-								this.D("SPHelpColorInputDiv0")
+								this.D("SPHelpColorInputDiv2b")
 								.append(
-									this.D("SPHelpColorInputDiv2b")
-									.append(
-										this.D("SPHelpColorLabelText")
-										.html("Mode")
-									)
-								)
-							)
-							.append(
-								this.D("SPHelpColorInputDiv1Full")
-								.append(
-									this.D("SPHelpColorInputDiv2")
-									.append(
-										this.E("a", "SPHelpModeLink")
-										.html(this.playlist_randomize ? "Randomize" : (this.playlist_loop ? "Loop" : "Play Once"))
-										.on("click." + this.namespace, {media_player: this}, this.on_playlist_mode_change)
-										.on("mousedown", this.cancel_event)
-									)
+									this.D("SPHelpColorLabelText")
+									.html("On Load")
 								)
 							)
 						)
 						.append(
-							this.D("SPHelpSectionDiv")
+							this.D("SPHelpColorInputDiv1Full")
 							.append(
-								this.D("SPHelpColorInputDiv0")
+								this.D("SPHelpColorInputDiv2")
 								.append(
-									this.D("SPHelpColorInputDiv2b")
-									.append(
-										this.D("SPHelpColorLabelText")
-										.html("On Load")
-									)
+									this.E("a", "SPHelpModeLink")
+									.html(this.playlist_play_on_load == 0 ? "Don't play" : (this.playlist_play_on_load == 1 ? "Play if empty playlist" : (this.playlist_play_on_load == 2 ? "Play if paused" : "Always play")))
+									.on("click." + this.namespace, {media_player: this}, this.on_playlist_onload_change)
+									.on("mousedown", this.cancel_event)
 								)
 							)
+						)
+					)
+					.append(
+						this.D("SPHelpSectionDiv")
+						.append(
+							this.D("SPHelpColorInputDiv0")
 							.append(
-								this.D("SPHelpColorInputDiv1Full")
+								this.D("SPHelpColorInputDiv2b")
 								.append(
-									this.D("SPHelpColorInputDiv2")
-									.append(
-										this.E("a", "SPHelpModeLink")
-										.html(this.playlist_play_on_load == 0 ? "Don't play" : (this.playlist_play_on_load == 1 ? "Play if empty playlist" : (this.playlist_play_on_load == 2 ? "Play if paused" : "Always play")))
-										.on("click." + this.namespace, {media_player: this}, this.on_playlist_onload_change)
-										.on("mousedown", this.cancel_event)
-									)
+									this.D("SPHelpColorLabelText")
+									.html("YT Quality")
 								)
 							)
 						)
 						.append(
-							this.D("SPHelpSectionDiv")
+							this.D("SPHelpColorInputDiv1Full")
 							.append(
-								this.D("SPHelpColorInputDiv0")
+								this.D("SPHelpColorInputDiv2")
 								.append(
-									this.D("SPHelpColorInputDiv2b")
-									.append(
-										this.D("SPHelpColorLabelText")
-										.html("YT Quality")
-									)
+									this.E("a", "SPHelpModeLink")
+									.html(this.ytvideo_qualities[this.ytvideo_quality_index])
+									.on("click." + this.namespace, {media_player: this}, this.on_ytquality_change)
+									.on("mousedown", this.cancel_event)
 								)
 							)
+						)
+					) //}
+					.append( //{ Player Settings
+						this.D("SPHelpLabelDiv")
+						.html("Player Settings")
+					)
+					.append(
+						this.D("SPHelpSectionDiv")
+						.append(
+							this.D("SPHelpColorInputDiv0")
 							.append(
-								this.D("SPHelpColorInputDiv1Full")
+								this.D("SPHelpColorInputDiv2b")
 								.append(
-									this.D("SPHelpColorInputDiv2")
-									.append(
-										this.E("a", "SPHelpModeLink")
-										.html(this.ytvideo_qualities[this.ytvideo_quality_index])
-										.on("click." + this.namespace, {media_player: this}, this.on_ytquality_change)
-										.on("mousedown", this.cancel_event)
-									)
+									this.D("SPHelpColorLabelText")
+									.html("Theme")
 								)
 							)
-						) //}
-						.append( //{ Player Settings
-							this.D("SPHelpLabelDiv")
-							.html("Player Settings")
 						)
 						.append(
-							this.D("SPHelpSectionDiv")
+							this.D("SPHelpColorInputDiv1Full")
 							.append(
-								this.D("SPHelpColorInputDiv0")
+								this.D("SPHelpColorInputDiv2")
 								.append(
-									this.D("SPHelpColorInputDiv2b")
-									.append(
-										this.D("SPHelpColorLabelText")
-										.html("Theme")
-									)
+									(this.player_theme_name = this.E("a", "SPHelpModeLink"))
+									.on("click." + this.namespace, {media_player: this}, this.on_player_theme_change)
+									.on("mousedown", this.cancel_event)
 								)
 							)
-							.append(
-								this.D("SPHelpColorInputDiv1Full")
-								.append(
-									this.D("SPHelpColorInputDiv2")
-									.append(
-										(this.player_theme_name = this.E("a", "SPHelpModeLink"))
-										.on("click." + this.namespace, {media_player: this}, this.on_player_theme_change)
-										.on("mousedown", this.cancel_event)
-									)
-								)
-							)
-						) //}
-						.append( //{ Scaling Settings
-							this.D("SPHelpLabelDiv")
-							.html("Scaling Settings")
 						)
-						.append(this.generate_value_editor("Padding", "padding_scale", this.css.css_size_presets[this.css.preset].padding_scale, false))
-						.append(this.generate_value_editor("Text", "font_scale", this.css.css_size_presets[this.css.preset].font_scale, false))
-						.append(this.generate_value_editor("Borders", "border_scale", this.css.css_size_presets[this.css.preset].border_scale, false))
-						.append(this.generate_value_editor("Window", "@scale_factor", this.scale_factor, false))
+					) //}
+					.append( //{ Scaling Settings
+						this.D("SPHelpLabelDiv")
+						.html("Scaling Settings")
+					)
+					.append(this.generate_value_editor("Padding", "padding_scale", this.css.css_size_presets[this.css.preset].padding_scale, false))
+					.append(this.generate_value_editor("Text", "font_scale", this.css.css_size_presets[this.css.preset].font_scale, false))
+					.append(this.generate_value_editor("Borders", "border_scale", this.css.css_size_presets[this.css.preset].border_scale, false))
+					.append(this.generate_value_editor("Window", "@scale_factor", this.scale_factor, false))
+					//}
+					.append( //{ More
+						this.D("SPHelpLinkDiv")
 						.append(
 							this.D("SPHelpLabelDiv")
 							.html("More Settings")
-						)
+						) 
 						.append(
 							this.D("SPHelpSectionDiv")
 							.append(
@@ -1447,8 +1684,8 @@ MediaPlayer.prototype.create = function () {
 								.html("Other Settings")
 								.on("click." + this.namespace, {media_player: this, help_page: 2}, this.on_helppage_goto)
 							)
-						) //}
-					)
+						)
+					) //}
 				) //}
 				.append( //{ Help 1
 					(this.help_container[1] = this.D("SPHelpContainer"))
@@ -1488,10 +1725,148 @@ MediaPlayer.prototype.create = function () {
 					.append(this.generate_value_editor("Small", "font_size_small", this.css.css_size_presets[this.css.preset].font_size_small, false))
 					.append(this.generate_value_editor("Controls", "font_size_controls", this.css.css_size_presets[this.css.preset].font_size_controls, false))
 				) //}
+
+				.append( //{ First run
+					(this.first_run_container = this.D("SPFirstRunContainer"))
+					.append(
+						this.D("SPFirstRunLabel")
+						.html("Info")
+					)
+					.append(
+						this.D("SPFirstRunTextContainer")
+						.append(
+							"This player can play embedded sound files in images " +
+							"as well as Youtube videos. Scroll to the "
+						)
+						.append(
+							this.E("a")
+							.attr("href", "#")
+							.html("bottom")
+						)
+						.on("click." + this.namespace, {media_player: this}, function (event) {
+							event.data.media_player.first_run_container.scrollTop(
+								event.data.media_player.first_run_container.outerHeight()
+								- (event.data.media_player.first_run_container.attr("scrollHeight") || 0)
+							);
+							return false;
+						})
+						.append(
+							" for a link to exit this page."
+						)
+					)
+					.append(
+						this.D("SPFirstRunLabel")
+						.html("Player")
+					)
+					.append(
+						this.D("SPFirstRunTextContainer")
+						.append(
+							this.D()
+							.css("padding-bottom", "0.5em")
+							.html("To move, click and drag on the title bar.")
+						)
+						.append(
+							this.D()
+							.css("padding-bottom", "0.5em")
+							.html("To resize, click and drag any edge.")
+						)
+						.append(
+							this.D()
+							.css("padding-bottom", "0.5em")
+							.html("To resize the image/video, click and drag it.")
+						)
+						.append(
+							this.D()
+							.html("There are additional (hidden) buttons on the right " +
+							"and left sides of the title bar.")
+						)
+					)
+					.append(
+						this.D("SPFirstRunLabel")
+						.html("Playlist")
+					)
+					.append(
+						this.D("SPFirstRunTextContainer")
+						.append(
+							this.D()
+							.css("padding-bottom", "0.5em")
+							.html(
+								"You can add media to the player by either " +
+								"clicking on inline media URLs/[tags], or " +
+								"clicking and dragging images/urls into the player " +
+								"from your browser or computer."
+							)
+						)
+						.append(
+							this.D()
+							.html(
+								"Once the media has been loaded, it will appear in " +
+								"the playlist. To remove, change order, or save the source, " +
+								"hover over the right side of the playlist item for controls."
+							)
+						)
+					)
+					.append(
+						this.D("SPFirstRunLabel")
+						.html("Customization")
+					)
+					.append(
+						this.D("SPFirstRunTextContainer")
+						.append(
+							this.D()
+							.css("padding-bottom", "0.5em")
+							.html(
+								"There are 3 settings tabs available for customizing the " +
+								"player. Access them by clicking [S] in the top left."
+							)
+						)
+						.append(
+							this.D()
+							.html(
+								"For simplicity, there are 4 preset stylesheets that you " +
+								"can switch between. If you edit the settings, it will be " +
+								"saved as a new custom stylesheet."
+							)
+						)
+					)
+					.append(
+						this.D("SPFirstRunLabel")
+						.html("Broken?")
+					)
+					.append(
+						this.D("SPFirstRunTextContainer")
+						.append(
+							this.D()
+							.css("padding-bottom", "0.5em")
+							.html(
+								"If you mess up some customization settings such that " +
+								"your player isn't properly useable anymore, close the player, " +
+								"then click the \"Reload\" link next to the [ Media Player ] " +
+								"link at the top of the page."
+							)
+						)
+						.append(
+							this.D()
+							.html(
+								"(By default this option is hidden; hover over the right bracket " +
+								"to make it appear.)"
+							)
+						)
+					)
+					.append(
+						this.D("SPFirstRunLabel")
+						.html("Done")
+					)
+					.append(
+						this.E("a", "SPFirstRunExitLink")
+						.attr("href", "#")
+						.on("click." + this.namespace, {media_player: this}, this.on_firstrun_page_exit_click)
+						.html("Exit Page")
+					)
+				) //}
 			) //}
 			.append( //{ Footer
 				(this.footer_container = this.D("SPFooterBarContainer"))
-				.on("mousedown." + this.namespace, {media_player: this}, this.on_footerbar_mousedown)
 			) //}
 			.append( //{ Alert page
 				(this.alert_container = this.D("SPAlertContainer"))
@@ -1506,6 +1881,9 @@ MediaPlayer.prototype.create = function () {
 
 
 	// Final settings
+	if (!this.first_run) {
+		this.first_run_container.css("display", "none");
+	}
 	for (var i = 0; i < title_buttons.length; ++i) {
 		title_buttons[i].on("mousedown", this.cancel_event);
 		title_buttons[i].on("click." + this.namespace, {media_player: this, control_id: i}, this.on_main_control_click);
@@ -1514,10 +1892,12 @@ MediaPlayer.prototype.create = function () {
 		this.playback_controls[i].on("click." + this.namespace, {control_id: i, media_player: this}, this.on_playback_control_click);
 		this.playback_controls[i].on("mousedown", this.cancel_event);
 	}
+	for (var i = 0; i < this.resizing_texts.length; ++i) {
+		this.resizing_texts[i].css("display", "none");
+	}
 	this.update_player_theme_name({media_player: this});
 	this.set_volume(this.volume);
 	this.reposition();
-
 
 	// Done
 	this.created = true;
@@ -2128,6 +2508,22 @@ MediaPlayer.prototype.nullify = function () {
 	this.load_percent_bar_container = null;
 	this.load_percent_bar_mover = null;
 	this.load_percent_bar = null;
+	this.resizing_container = null;
+	this.resizing_controls = null;
+	this.resizing_texts = null;
+	this.first_run_container = null;
+
+	for (var i = 0; i < this.resize_timers.length; ++i) {
+		if (this.resize_timers[i] !== null) {
+			if (i == 2) {
+				clearInterval(this.resize_timers[i]);
+			}
+			else {
+				clearTimeout(this.resize_timers[i]);
+			}
+			this.resize_timers[i] = null;
+		}
+	}
 
 	this.player_theme_value_updaters = null;
 }
@@ -2178,45 +2574,54 @@ MediaPlayer.prototype.reposition = function (left, top) {
 	if (this.position_offset[1] < 0) this.position_offset[1] = 0;
 	this.sp_container_main.css({"right": this.position_offset[0], "bottom": this.position_offset[1]});
 }
-MediaPlayer.prototype.resize_to = function (width, height) {
+MediaPlayer.prototype.resize_to = function (width, height, is_left, is_top) {
 	// Current size
 	var current_size = [ this.sp_container_main.outerWidth() , this.sp_container_main.outerHeight() ];
-	var playlist_size = [ this.playlist_container.outerWidth() , this.playlist_container.outerHeight() ];
-	var image_size = [ this.image_container.outerWidth() , this.image_container.outerHeight() ];
-	var non_height = current_size[1] - playlist_size[1] - image_size[1];
 
-	// Playlist height change
-	var playlist_height_target = height - (non_height + this.image_height_max * this.scale_factor);
-	if (playlist_height_target < this.playlist_height_min * this.scale_factor) {
-		playlist_height_target = this.playlist_height_min * this.scale_factor;
-	}
-	// Image
-	var image_height_target = height - (non_height);
-	if (image_height_target > this.image_height_max * this.scale_factor) {
-		image_height_target = this.image_height_max * this.scale_factor
-	}
-	if (image_height_target < this.image_height_min * this.scale_factor) {
-		image_height_target = this.image_height_min * this.scale_factor;
-	}
+	// Height change
+	if (height !== null) {
+		var playlist_size = [ this.playlist_container.outerWidth() , this.playlist_container.outerHeight() ];
+		var image_size = [ this.image_container.outerWidth() , this.image_container.outerHeight() ];
+		var non_height = current_size[1] - playlist_size[1] - image_size[1];
 
-	// Update height
-	this.playlist_container.outerHeight(playlist_height_target);
-	this.image_container.outerHeight(image_height_target);
-	this.playlist_height = playlist_height_target / this.scale_factor;
-	this.image_height = image_height_target / this.scale_factor;
-	this.update_image_scale();
-	this.position_offset[1] -= (playlist_height_target - playlist_size[1]) + (image_height_target - image_size[1]);
+		// Playlist height change
+		var playlist_height_target = height - (non_height + this.image_height_max * this.scale_factor);
+		if (playlist_height_target < this.playlist_height_min * this.scale_factor) {
+			playlist_height_target = this.playlist_height_min * this.scale_factor;
+		}
+		// Image
+		var image_height_target = height - (non_height);
+		if (image_height_target > this.image_height_max * this.scale_factor) {
+			image_height_target = this.image_height_max * this.scale_factor
+		}
+		if (image_height_target < this.image_height_min * this.scale_factor) {
+			image_height_target = this.image_height_min * this.scale_factor;
+		}
 
+		// Update height
+		this.playlist_container.outerHeight(playlist_height_target);
+		this.image_container.outerHeight(image_height_target);
+		this.playlist_height = playlist_height_target / this.scale_factor;
+		this.image_height = image_height_target / this.scale_factor;
+		this.update_image_scale();
+		if (!is_top) {
+			this.position_offset[1] -= (playlist_height_target - playlist_size[1]) + (image_height_target - image_size[1]);
+		}
+	}
 
 	// Width change
-	if (width < this.player_width_min * this.scale_factor) {
-		width = this.player_width_min * this.scale_factor;
-	}
+	if (width !== null) {
+		if (width < this.player_width_min * this.scale_factor) {
+			width = this.player_width_min * this.scale_factor;
+		}
 
-	// Update width
-	this.player_width = width / this.scale_factor;
-	this.sp_container_main.outerWidth(width);
-	this.position_offset[0] -= (width - current_size[0]);
+		// Update width
+		this.player_width = width / this.scale_factor;
+		this.sp_container_main.outerWidth(width);
+		if (!is_left) {
+			this.position_offset[0] -= (width - current_size[0]);
+		}
+	}
 
 	// Update position
 	this.sp_container_main.css({"right": this.position_offset[0], "bottom": this.position_offset[1]});
@@ -3003,23 +3408,201 @@ MediaPlayer.prototype.on_ytvideo_error = function (event, media_player) {
 MediaPlayer.prototype.on_ytvideo_api_change = function (event, media_player) {
 };
 
+MediaPlayer.prototype.on_main_container_mouseover = function (event) {
+	event.data.media_player.resize_container_hovered = true;
+	event.data.media_player.on_resize_mouse_update(null, null);
+}
+MediaPlayer.prototype.on_main_container_mouseout = function (event) {
+	event.data.media_player.resize_container_hovered = false;
+	event.data.media_player.on_resize_mouse_update(null, null);
+}
+
+MediaPlayer.prototype.on_timer_resize_open = function () {
+	this.resize_timers[0] = null;
+	this.resize_should_close = false;
+
+	// Update sizes
+	var d = this.D("SPResizingSizeOff");
+	this.resize_sizes[0] = d.outerWidth();
+	d.remove();
+	d = this.D("SPResizingSizeAvailable");
+	this.resize_sizes[1] = d.outerWidth();
+	d.remove();
+	$("body").append(d = this.D("SPResizingContainerText").html("I"));
+	this.resize_sizes[2] = d.outerHeight();
+	d.remove();
+	this.resize_side_sizes_target = [ this.resize_sizes[1], this.resize_sizes[1], this.resize_sizes[1], this.resize_sizes[1] ];
+	this.resize_side_sizes_needed = true;
+	this.on_resize_mouse_update(null, null);
+
+	if (this.resize_timers[2] === null) {
+		// Current size
+		this.resize_side_sizes = [ this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0] ];
+
+		// CSS update
+		this.sp_container_main.removeClass("SPContainerMainBorders");
+		this.resizing_container.css("display", "");
+
+		// Size update loop
+		var self = this;
+		this.on_interval_resize_update();
+		this.resize_timers[2] = setInterval(function () {
+			self.on_interval_resize_update();
+		}, Math.floor(this.resize_wait_times[2] * 1000));
+	}
+}
+MediaPlayer.prototype.on_timer_resize_close = function () {
+	this.resize_timers[1] = null;
+	this.resize_should_close = true;
+	this.resize_side_sizes_needed = true;
+	this.resize_side_sizes_target = [ this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0] ];
+	for (var i = 0; i < this.resizing_texts.length; ++i) {
+		this.resizing_texts[i].css("display", "none");
+	}
+}
+MediaPlayer.prototype.on_interval_resize_update = function () {
+	// Stop condition
+	if (this.resize_side_sizes_needed) {
+		this.resize_side_sizes_needed = false;
+		for (var i = 0; i < this.resize_side_sizes.length; ++i) {
+			this.resize_side_sizes[i] = this.merge_value_towards(
+				this.resize_side_sizes[i],
+				this.resize_side_sizes_target[i],
+				this.resize_side_speed * this.resize_wait_times[2]
+			);
+			this.resize_side_sizes_needed = (this.resize_side_sizes_needed || (this.resize_side_sizes[i] != this.resize_side_sizes_target[i]));
+		}
+
+		// CSS update sizes
+		var css = [
+			this.resize_side_sizes[0] + "px",
+			this.resize_side_sizes[1] + "px",
+			this.resize_side_sizes[2] + "px",
+			this.resize_side_sizes[3] + "px"
+		];
+		this.resizing_container.css({"top": "-" + css[0], "right": "-" + css[1], "bottom": "-" + css[2], "left": "-" + css[3]});
+		this.resizing_controls[0].css({"width": css[3], "height": css[0]});
+		this.resizing_controls[1].css({"height": css[0], "left": css[3], "right": css[1]});
+		this.resizing_controls[2].css({"width": css[1], "height": css[0]});
+		this.resizing_controls[3].css({"width": css[3], "top": css[0], "bottom": css[2]});
+		this.resizing_controls[4].css({"width": css[1], "top": css[0], "bottom": css[2]});
+		this.resizing_controls[5].css({"width": css[3], "height": css[2]});
+		this.resizing_controls[6].css({"height": css[2], "left": css[3], "right": css[1]});
+		this.resizing_controls[7].css({"width": css[1], "height": css[2]});
+	}
+	else if (this.resize_should_close) {
+		clearTimeout(this.resize_timers[2]);
+		this.resize_timers[2] = null;
+
+		this.resize_container_border_hovered = false;
+
+		this.sp_container_main.addClass("SPContainerMainBorders");
+		this.resizing_container.css("display", "none");
+
+		return;
+	}
+}
+MediaPlayer.prototype.on_resize_mouse_update = function (rel_x, rel_y) {
+	if (rel_x !== null) this.resize_mouse_offset[0] = rel_x;
+	else rel_x = this.resize_mouse_offset[0];
+	if (rel_y !== null) this.resize_mouse_offset[1] = rel_y;
+	else rel_y = this.resize_mouse_offset[1];
+
+	var size = [ this.sp_container_main.outerWidth() , this.sp_container_main.outerHeight() ];
+	var should_open = this.resizing;
+	if (this.resize_container_hovered && !this.resizing) {
+		should_open = (
+			rel_x <= this.resize_distance[0] ||
+			rel_y <= this.resize_distance[0] ||
+			rel_x >= size[0] - this.resize_distance[0] ||
+			rel_y >= size[1] - this.resize_distance[0]
+		);
+
+		// What sides should be expanded
+		if (this.resize_timers[2] !== null) {
+			this.resize_side_sizes_needed = true;
+			var open = [
+				(rel_y <= this.resize_distance[1]),
+				(rel_x >= size[0] - this.resize_distance[1]),
+				(rel_y >= size[1] - this.resize_distance[1]),
+				(rel_x <= this.resize_distance[1])
+			];
+			for (var i = 0; i < 4; ++i) {
+				this.resize_side_sizes_target[i] = this.resize_sizes[open[i] ? 2 : 1];
+			}
+			this.resizing_texts[0].css("display", (open[0] && open[3]) ? "" : "none");
+			this.resizing_texts[1].css("display", (open[0]) ? "" : "none");
+			this.resizing_texts[2].css("display", (open[0] && open[1]) ? "" : "none");
+			this.resizing_texts[3].css("display", (open[3]) ? "" : "none");
+			this.resizing_texts[4].css("display", (open[1]) ? "" : "none");
+			this.resizing_texts[5].css("display", (open[2] && open[3]) ? "" : "none");
+			this.resizing_texts[6].css("display", (open[2]) ? "" : "none");
+			this.resizing_texts[7].css("display", (open[2] && open[1]) ? "" : "none");
+		}
+	}
+
+	if (should_open != this.resize_container_border_hovered) {
+		this.resize_container_border_hovered = should_open;
+		// Clear timers
+		for (var i = 0; i < 2; ++i) {
+			if (this.resize_timers[i] !== null) {
+				clearTimeout(this.resize_timers[i]);
+				this.resize_timers[i] = null;
+			}
+		}
+		// Set timer to close/open
+		var self = this;
+		if (should_open) {
+			if (this.resize_timers[2] === null) {
+				this.resize_timers[0] = setTimeout(function () {
+					self.on_timer_resize_open();
+				}, Math.floor(this.resize_wait_times[0] * 1000));
+			}
+			else {
+				self.on_timer_resize_open();
+			}
+		}
+		else if (this.resize_timers[2] !== null) {
+			this.resize_timers[1] = setTimeout(function () {
+				self.on_timer_resize_close();
+			}, Math.floor(this.resize_wait_times[1] * 1000));
+		}
+	}
+}
+
+MediaPlayer.prototype.on_resizer_mousedown = function (event) {
+	// Cannot be minimized
+	if (event.data.media_player.playlist_container.css("display") != "none") {
+		event.data.media_player.resizing = true;
+		event.data.media_player.resizing_sides = event.data.sides;
+		event.data.media_player.mouse_offset = {
+			"left": (event.pageX - $(document).scrollLeft()),
+			"top": (event.pageY - $(document).scrollTop())
+		};
+		event.data.media_player.resizing_base_size = {
+			//"width": event.data.media_player.sp_container.outerWidth() + event.data.media_player.resize_sizes[0] * 2,
+			//"height": event.data.media_player.sp_container.outerHeight() + event.data.media_player.resize_sizes[0] * 2
+			"width": event.data.media_player.sp_container_main.outerWidth(),
+			"height": event.data.media_player.sp_container_main.outerHeight()
+		};
+	}
+
+	// Done
+	return false;
+}
+
+MediaPlayer.prototype.merge_value_towards = function (value, target, incr) {
+	return (value < target) ?
+		((target - value < incr) ? target : value + incr) :
+		((value - target < incr) ? target : value - incr);
+}
+
 MediaPlayer.prototype.on_titlebar_mousedown = function (event) {
 	// Mouse offset
 	event.data.media_player.moving = true;
 	event.data.media_player.mouse_offset = event.data.media_player.sp_container_main.offset();
 	event.data.media_player.mouse_offset.left -= event.pageX;
 	event.data.media_player.mouse_offset.top -= event.pageY;
-
-	// Done
-	event.preventDefault();
-	return false;
-}
-MediaPlayer.prototype.on_footerbar_mousedown = function (event) {
-	// Mouse offset
-	event.data.media_player.resizing = true;
-	event.data.media_player.mouse_offset = event.data.media_player.sp_container_main.offset();
-	event.data.media_player.mouse_offset.left -= (event.pageX - $(document).scrollLeft()) - event.data.media_player.sp_container_main.outerWidth();
-	event.data.media_player.mouse_offset.top -= (event.pageY - $(document).scrollTop()) - event.data.media_player.sp_container_main.outerHeight();
 
 	// Done
 	event.preventDefault();
@@ -3091,6 +3674,7 @@ MediaPlayer.prototype.on_document_mouseup = function (event) {
 	}
 	else if (event.data.media_player.resizing) {
 		event.data.media_player.resizing = false;
+		event.data.media_player.on_resize_mouse_update();
 		event.data.media_player.reposition();
 
 		// Callback
@@ -3147,11 +3731,31 @@ MediaPlayer.prototype.on_document_mousemove = function (event) {
 		event.data.media_player.reposition(left, top);
 	}
 	else if (event.data.media_player.resizing) {
-		var size = event.data.media_player.sp_container_main.offset();
-		size.left = ((event.pageX - $(document).scrollLeft()) - size.left) + event.data.media_player.mouse_offset.left;
-		size.top = ((event.pageY - $(document).scrollTop()) - size.top) + event.data.media_player.mouse_offset.top;
+		var size = {width: null, height: null};
 
-		event.data.media_player.resize_to(size.left, size.top);
+		var is_top, is_left;
+		if ((is_top = (event.data.media_player.resizing_sides[0] === 0))) { // top
+			size.height = event.data.media_player.mouse_offset.top
+				- (event.pageY - $(document).scrollTop())
+				+ event.data.media_player.resizing_base_size.height;
+		}
+		else if (event.data.media_player.resizing_sides[0] === 2) { // bottom
+			size.height = (event.pageY - $(document).scrollTop())
+				- event.data.media_player.mouse_offset.top
+				+ event.data.media_player.resizing_base_size.height;
+		}
+		if ((is_left = (event.data.media_player.resizing_sides[1] === 3))) { // left
+			size.width = event.data.media_player.mouse_offset.left
+				- (event.pageX - $(document).scrollLeft())
+				+ event.data.media_player.resizing_base_size.width;
+		}
+		else if (event.data.media_player.resizing_sides[1] === 1) { // right
+			size.width = (event.pageX - $(document).scrollLeft())
+				- event.data.media_player.mouse_offset.left
+				+ event.data.media_player.resizing_base_size.width;
+		}
+
+		event.data.media_player.resize_to(size.width, size.height, is_left, is_top);
 	}
 	else if (event.data.media_player.resizing_image) {
 		var size = event.data.media_player.sp_container_main.offset();
@@ -3186,6 +3790,15 @@ MediaPlayer.prototype.on_document_mousemove = function (event) {
 		if (max_offset > 0.0) offset = offset / max_offset * event.data.media_player.get_duration();
 		event.data.media_player.seek_to(offset, false, true);
 	}
+
+	if (event.data.media_player.resize_container_hovered) {
+		var rel = event.data.media_player.sp_container_main.offset();
+		rel.left -= event.pageX;
+		rel.top -= event.pageY;
+
+		event.data.media_player.on_resize_mouse_update(-rel.left, -rel.top);
+	}
+
 	return true;
 }
 MediaPlayer.prototype.on_window_resize = function (event) {
@@ -3364,6 +3977,15 @@ MediaPlayer.prototype.on_playback_control_click = function (event) {
 }
 MediaPlayer.prototype.on_main_control_click = function (event) {
 	switch (event.data.control_id) {
+		case 1:
+		{
+			// Info
+			event.data.media_player.first_run_container.css("display", "");
+			for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+				event.data.media_player.help_container[i].css("display", "none");
+			}
+		}
+		break;
 		case 0:
 		{
 			// Options
@@ -3384,7 +4006,7 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 			}
 		}
 		break;
-		case 1:
+		case 2:
 		{
 			// Min/max
 			var open = (event.data.media_player.playlist_container.css("display") != "none");
@@ -3396,11 +4018,14 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 				event.data.media_player.help_container[i].css("display", "none");
 			}
 
+			// HTML
+			$(this).html(open ? "[+]" : "[&#x2012;]");
+
 			// On screen
 			event.data.media_player.reposition();
 		}
 		break;
-		case 2:
+		case 3:
 		{
 			// Close
 			event.data.media_player.destructor();
@@ -3409,9 +4034,17 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 	}
 }
 MediaPlayer.prototype.on_helppage_goto = function (event) {
-	for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-		event.data.media_player.help_container[i].css("display", (event.data.help_page == i ? "" : "none"));
+	if (event.data.media_player.first_run_container.css("display") == "none") {
+		for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+			event.data.media_player.help_container[i].css("display", (event.data.help_page == i ? "" : "none"));
+		}
 	}
+}
+MediaPlayer.prototype.on_firstrun_page_exit_click = function (event) {
+	event.data.media_player.first_run_container.css("display", "none");
+	event.data.media_player.first_run = false;
+
+	return false;
 }
 
 MediaPlayer.prototype.on_playlist_item_click = function (event) {

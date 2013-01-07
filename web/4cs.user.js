@@ -1830,9 +1830,6 @@ var sound_auto_checker = new SoundAutoChecker();
 ///////////////////////////////////////////////////////////////////////////////
 // Sound player control
 ///////////////////////////////////////////////////////////////////////////////
-var media_player_about = "To load sounds in the sound player, either click on links enclosed " +
-	"in [square brackets,] or click and drag files (either by URL or " +
-	"from a local folder) into the player."
 var media_player_instance = null;
 var media_player_css = null;
 var media_player_css_color_presets = {
@@ -2059,8 +2056,7 @@ function open_player(load_settings) {
 		media_player_css,
 		[ png_load_callback , image_load_callback ],
 		media_player_settings_save,
-		media_player_destruct_callback,
-		media_player_about
+		media_player_destruct_callback
 	);
 	// Load settings	
 	if (load_settings) media_player_instance.load(media_player_settings["player"]);
