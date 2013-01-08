@@ -240,7 +240,7 @@ void extractSounds(cstring filename) {
 			// New sound
 			sounds.push_back(Sound(tag, i, 0, s, unmaskState, mask, masked));
 			// Next
-			i += headerLength - 1;
+			//i += headerLength - 1;
 		}
 	}
 	if (sounds.size() > 0) {
