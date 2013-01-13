@@ -238,6 +238,39 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"font-size": "{exp:font_size_small,*,font_scale}px"
 		},
 
+		".SPPlaylistIndexContainer": {
+			"position": "absolute",
+			"right": "0",
+			"top": "0",
+			"cursor": "default",
+			"opacity": "0.0",
+			"padding": "{exp:2,*,padding_scale}px"
+		},
+		".SPPlaylistIndexContainerActive": {
+			"opacity": "1.0 !important"
+		},
+		".SPContainerMain:hover .SPPlaylistIndexContainer": {
+			"opacity": "0.5"
+		},
+		".SPContainerMain:hover .SPTopContainer:hover .SPPlaylistIndexContainer": {
+			"opacity": "1.0"
+		},
+		".SPPlaylistIndexContainerInner": {
+			"padding": "{exp:2,*,padding_scale}px",
+			"border-radius": "{exp:2,*,padding_scale}px",
+			"background": "{rgba:bg_color_lightest}"
+		},
+		".SPPlaylistIndexText1": {
+			"display": "inline-block"
+		},
+		".SPPlaylistIndexText2": {
+			"display": "inline-block",
+			"padding": "0px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px",
+		},
+		".SPPlaylistIndexText3": {
+			"display": "inline-block"
+		},
+
 		".SPControlContainer": {
 			"width": "100%",
 			"padding-top": "{exp:2,*,padding_scale}px",
@@ -1106,7 +1139,7 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback)
 	// Not setup
 	this.created = false;
 	this.namespace = "media_player";
-	this.identifier = ""; // TODO : make this dynamic
+	this.identifier = ""; // make this dynamic
 	this.is_chrome = ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
 	this.title_default =  "Media Player";
 	this.first_run = true;
@@ -1129,6 +1162,7 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback)
 	this.ytvideo_qualities = [ "default", "small", "medium", "large", "hd720", "hd1080", "highres" ];
 	this.ytvideo_quality_index = 0;
 	this.ytvideo_unsafe = this.is_chrome;
+	this.ytvideo_html5 = true;
 
 	// Image
 	this.image_height_min = 64;
@@ -1147,6 +1181,7 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback)
 	this.player_width_min = 64;
 	this.playlist_height_min = 0;
 	this.playlist_play_on_load = 1; // 0 = no, 1 = if empty, 2 = if paused, 3 = always
+	this.playlist_play_on_load_settings = [ "Don't Play" , "Play if empty playlist" , "Play if at end of playlist" , "Play if paused" , "Always play" ];
 
 	this.mouse_offset = null;
 	this.mouse_moved = false;
@@ -1182,6 +1217,8 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback)
 	this.playlist = [];
 	this.playlist_loop = true;
 	this.playlist_randomize = false;
+	this.playlist_scrollto_onload = true;
+	this.playlist_index_timer = null;
 
 	// Current
 	this.current_image_width = 0;
@@ -1222,6 +1259,7 @@ MediaPlayer.prototype.save = function () {
 		"playlist_loop": this.playlist_loop,
 		"playlist_randomize": this.playlist_randomize,
 		"playlist_play_on_load": this.playlist_play_on_load,
+		"playlist_scrollto_onload": this.playlist_scrollto_onload,
 		"position_offset": [ this.position_offset[0] , this.position_offset[1] ],
 		"ytvideo_quality_index": this.ytvideo_quality_index,
 		"first_run": this.first_run
@@ -1244,6 +1282,8 @@ MediaPlayer.prototype.load = function (data) {
 	if ("image_height_max" in data) this.image_height_max = data["image_height_max"];
 	if ("ytvideo_quality_index" in data) this.ytvideo_quality_index = data["ytvideo_quality_index"];
 	if ("first_run" in data) this.first_run = data["first_run"];
+
+	if ("playlist_scrollto_onload" in data) this.playlist_scrollto_onload = data["playlist_scrollto_onload"];
 
 	if ("position_offset" in data) {
 		this.position_offset[0] = data["position_offset"][0];
@@ -1474,6 +1514,25 @@ MediaPlayer.prototype.create = function () {
 						.on("timeupdate." + this.namespace, {media_player: this}, this.on_audio_timeupdate)
 						.on("durationchange." + this.namespace, {media_player: this}, this.on_audio_durationchange)
 					) //}
+					.append( //{ Playlist index
+						(this.playlist_index_container = this.D("SPPlaylistIndexContainer"))
+						.on("mousedown", this.cancel_event)
+						.append(
+							this.D("SPPlaylistIndexContainerInner")
+							.append(
+								(this.playlist_index_text1 = this.D("SPPlaylistIndexText1"))
+								.html("-")
+							)
+							.append(
+								this.D("SPPlaylistIndexText2")
+								.html("/")
+							)
+							.append(
+								(this.playlist_index_text2 = this.D("SPPlaylistIndexText3"))
+								.html("-")
+							)
+						)
+					) //}
 					.append( //{ Volume
 						(this.volume_container = this.D("SPVolumeContainer"))
 						.append(
@@ -1597,8 +1656,32 @@ MediaPlayer.prototype.create = function () {
 								this.D("SPHelpColorInputDiv2")
 								.append(
 									this.E("a", "SPHelpModeLink")
-									.html(this.playlist_play_on_load == 0 ? "Don't play" : (this.playlist_play_on_load == 1 ? "Play if empty playlist" : (this.playlist_play_on_load == 2 ? "Play if paused" : "Always play")))
+									.html(this.playlist_play_on_load_settings[this.playlist_play_on_load])
 									.on("click." + this.namespace, {media_player: this}, this.on_playlist_onload_change)
+									.on("mousedown", this.cancel_event)
+								)
+							)
+						)
+					)
+					.append(
+						this.D("SPHelpSectionDiv")
+						.append(
+							this.D("SPHelpColorInputDiv0")
+							.append(
+								this.D("SPHelpColorInputDiv2b")
+								.append(
+									this.D("SPHelpColorLabelText")
+								)
+							)
+						)
+						.append(
+							this.D("SPHelpColorInputDiv1Full")
+							.append(
+								this.D("SPHelpColorInputDiv2")
+								.append(
+									this.E("a", "SPHelpModeLink")
+									.html(this.playlist_scrollto_onload ? "Scroll to in playlist" : "Don't scroll playlist")
+									.on("click." + this.namespace, {media_player: this}, this.on_playlist_scrollto_change)
 									.on("mousedown", this.cancel_event)
 								)
 							)
@@ -1905,7 +1988,7 @@ MediaPlayer.prototype.create = function () {
 MediaPlayer.prototype.destroy = function () {
 	// Playlist clear
 	while (this.playlist.length > 0) {
-		this.remove_from_playlist(0);
+		this.remove(0);
 	}
 
 	// Remove html
@@ -2205,6 +2288,9 @@ MediaPlayer.prototype.deselect = function (old_type) {
 			
 			// Title
 			this.title.html(this.title_default);
+
+			// Index display
+			this.update_index_display(-1, this.playlist.length, true);
 		}
 	}
 }
@@ -2237,13 +2323,7 @@ MediaPlayer.prototype.start = function (index) {
 	this.seek_time_end_label.html(this.duration_to_string(this.current_media.duration));
 
 	// Scroll to
-	var a, b;
-	if (
-		(a = this.current_media.playlist_item.offset().top) < (b = this.playlist_container.offset().top) ||
-		(a = this.current_media.playlist_item.offset().top + this.current_media.playlist_item.outerHeight()) > (b = this.playlist_container.offset().top + this.playlist_container.outerHeight())
-	) {
-		this.playlist_container.scrollTop(this.playlist_container.scrollTop() + (a - b));
-	}
+	this.scroll_to(index);
 
 	if (this.current_media.type == "image-audio") {
 		// Title
@@ -2269,7 +2349,7 @@ MediaPlayer.prototype.start = function (index) {
 		this.title.html(this.current_media.title);
 
 		// Old player
-		if (this.ytvideo_player != null) {
+		if (this.ytvideo_player != null && this.ytvideo_html5) {
 			var params = {
 				mediaContentUrl: "http://www.youtube.com/v/" + this.current_media.vid_id + "?version=3",
 				startSeconds: this.current_media.start,
@@ -2297,6 +2377,9 @@ MediaPlayer.prototype.start = function (index) {
 			if (okay) this.play();
 			else this.ytvideo_player = null;
 		}
+		else {
+			this.ytvideo_player = null;
+		}
 		// Fresh player
 		if (this.ytvideo_player == null) {
 			var fn = function (data) {
@@ -2313,14 +2396,16 @@ MediaPlayer.prototype.start = function (index) {
 						controls: 0,
 						showinfo: 0,
 						modestbranding: 1,
-						wmode: "opaque",
+						//wmode: "opaque",
 						html5: 1,
 						disablekb: 1,
 						enablejsapi: 1,
 						rel: 0,
 						showinfo: 0,
 						origin: window.location.href.toString(),
-						start: data.media_player.current_media.start
+						start: data.media_player.current_media.start,
+						iv_load_policy: 3,
+						loop: 0
 					};
 
 					data.media_player.ytvideo_player = new data.Player(
@@ -2354,6 +2439,8 @@ MediaPlayer.prototype.start = function (index) {
 				"Player": unsafeWindow.YT.Player
 			};
 
+			this.ytvideo_html5 = true;
+
 			// Call
 			if (this.ytvideo_unsafe) {
 				try {
@@ -2375,6 +2462,18 @@ MediaPlayer.prototype.start = function (index) {
 	}
 	else {
 		console.log(this.current_media.type);
+	}
+
+	// Index display
+	this.update_index_display(index, this.playlist.length, true);
+}
+MediaPlayer.prototype.scroll_to = function (index) {
+	var a, b;
+	if (
+		(a = this.playlist[index].playlist_item.offset().top) < (b = this.playlist_container.offset().top) ||
+		(a = this.playlist[index].playlist_item.offset().top + this.playlist[index].playlist_item.outerHeight()) > (b = this.playlist_container.offset().top + this.playlist_container.outerHeight())
+	) {
+		this.playlist_container.scrollTop(this.playlist_container.scrollTop() + (a - b));
 	}
 }
 MediaPlayer.prototype.next = function (follow_policy) {
@@ -2474,6 +2573,45 @@ MediaPlayer.prototype.get_loaded_percent = function () {
 	}
 	return 0.0;
 }
+MediaPlayer.prototype.remove = function (index) {
+	// Stop
+	if (this.current_media != null && this.current_media.index == index) this.deselect();
+
+	if (this.playlist[index].type == "image-audio") {
+		// Remove temp audio
+		if (this.playlist[index].temp_audio) {
+			this.playlist[index].temp_audio[0].pause();
+			this.playlist[index].temp_audio.removeAttr("src").remove();
+			this.playlist[index].temp_audio = null;
+		}
+
+		// Revoke url
+		(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].audio_blob_url);
+		if (this.playlist[index].image_url_blob != null) {
+			(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].image_url_blob);
+		}
+	}
+	else if (this.playlist[index].type == "youtube-video") {
+		// Nothing to do
+	}
+	else {
+		console.log(this.playlist[index].type);
+	}
+
+	// Remove html
+	this.playlist[index].playlist_item.remove();
+
+	// Remove from list
+	this.playlist.splice(index, 1);
+
+	// Update indices
+	for (var i = 0; i < this.playlist.length; ++i) {
+		this.playlist[i].index = i;
+	}
+
+	// Index display
+	this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
+}
 
 
 MediaPlayer.prototype.nullify = function () {
@@ -2513,6 +2651,13 @@ MediaPlayer.prototype.nullify = function () {
 	this.resizing_controls = null;
 	this.resizing_texts = null;
 	this.first_run_container = null;
+	this.playlist_index_container = null;
+	this.playlist_index_text1 = null;
+	this.playlist_index_text2 = null;
+	if (this.playlist_index_timer !== null) {
+		clearTimeout(this.playlist_index_timer);
+		this.playlist_index_timer = null;
+	}
 
 	for (var i = 0; i < this.resize_timers.length; ++i) {
 		if (this.resize_timers[i] !== null) {
@@ -2545,6 +2690,24 @@ MediaPlayer.prototype.regen_stylesheet = function () {
 
 	var vol_col = this.get_volume_color(this.volume);
 	this.volume_bar.css("background", "rgb(" + vol_col[0] + "," + vol_col[1] + "," + vol_col[2] + ")");
+}
+
+MediaPlayer.prototype.update_index_display = function (index, count, activate) {
+	this.playlist_index_text1.html(count == 0 ? "-" : (index >= 0 ? (index + 1).toString() : "-"));
+	this.playlist_index_text2.html(count == 0 ? "-" : count.toString());
+
+	if (!activate) return;
+
+	this.playlist_index_container.addClass("SPPlaylistIndexContainerActive");
+	if (this.playlist_index_timer !== null) {
+		clearTimeout(this.playlist_index_timer);
+		this.playlist_index_timer = null;
+	}
+	var self = this;
+	this.playlist_index_timer = setTimeout(function () {
+		self.playlist_index_timer = null;
+		self.playlist_index_container.removeClass("SPPlaylistIndexContainerActive");
+	}, 1000);
 }
 
 MediaPlayer.prototype.get_volume_color = function (percent) {
@@ -2604,7 +2767,6 @@ MediaPlayer.prototype.resize_to = function (width, height, is_left, is_top) {
 		this.image_container.outerHeight(image_height_target);
 		this.playlist_height = playlist_height_target / this.scale_factor;
 		this.image_height = image_height_target / this.scale_factor;
-		this.update_image_scale();
 		if (!is_top) {
 			this.position_offset[1] -= (playlist_height_target - playlist_size[1]) + (image_height_target - image_size[1]);
 		}
@@ -2626,6 +2788,7 @@ MediaPlayer.prototype.resize_to = function (width, height, is_left, is_top) {
 
 	// Update position
 	this.sp_container_main.css({"right": this.position_offset[0], "bottom": this.position_offset[1]});
+	this.update_image_scale();
 
 	// Update others
 	this.set_loaded();
@@ -3011,9 +3174,28 @@ MediaPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, soun
 	// Add
 	this.playlist.push(playlist_item);
 
+	// Scroll to?
+	if (this.playlist_scrollto_onload) {
+		this.scroll_to(this.playlist.length - 1);
+	}
+
+	// Index display
+	this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
+
 	// Play?
 	if (!this.first_run) {
-		if (this.playlist_play_on_load == 3 || (this.playlist_play_on_load == 1 && this.playlist.length == 1) || (this.playlist_play_on_load == 2 && this.is_paused())) {
+		if (
+			(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
+			(this.playlist_play_on_load == 2 &&
+				(this.current_media == null || (
+					this.current_media.index == this.playlist.length - 2 &&
+					this.current_media.position >= this.current_media.duration - 1.0 &&
+					this.is_paused()
+				))
+			) ||
+			(this.playlist_play_on_load == 3 && this.is_paused()) ||
+			(this.playlist_play_on_load == 4)
+		) {
 			this.start(this.playlist.length - 1);
 		}
 	}
@@ -3126,47 +3308,30 @@ MediaPlayer.prototype.add_to_playlist_ytvideo = function (original_url, vid_id, 
 	// Add
 	this.playlist.push(playlist_item);
 
+	// Scroll to?
+	if (this.playlist_scrollto_onload) {
+		this.scroll_to(this.playlist.length - 1);
+	}
+
+	// Index display
+	this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
+
 	// Play?
 	if (!this.first_run) {
-		if (this.playlist_play_on_load == 3 || (this.playlist_play_on_load == 1 && this.playlist.length == 1) || (this.playlist_play_on_load == 2 && this.is_paused())) {
+		if (
+			(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
+			(this.playlist_play_on_load == 2 &&
+				(this.current_media == null || (
+					this.current_media.index == this.playlist.length - 2 &&
+					this.current_media.position >= this.current_media.duration - 1.0 &&
+					this.is_paused()
+				))
+			) ||
+			(this.playlist_play_on_load == 3 && this.is_paused()) ||
+			(this.playlist_play_on_load == 4)
+		) {
 			this.start(this.playlist.length - 1);
 		}
-	}
-}
-MediaPlayer.prototype.remove_from_playlist = function (index) {
-	// Stop
-	if (this.current_media != null && this.current_media.index == index) this.deselect();
-
-	if (this.playlist[index].type == "image-audio") {
-		// Remove temp audio
-		if (this.playlist[index].temp_audio) {
-			this.playlist[index].temp_audio[0].pause();
-			this.playlist[index].temp_audio.removeAttr("src").remove();
-			this.playlist[index].temp_audio = null;
-		}
-
-		// Revoke url
-		(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].audio_blob_url);
-		if (this.playlist[index].image_url_blob != null) {
-			(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].image_url_blob);
-		}
-	}
-	else if (this.playlist[index].type == "youtube-video") {
-		// Nothing to do
-	}
-	else {
-		console.log(this.playlist[index].type);
-	}
-
-	// Remove html
-	this.playlist[index].playlist_item.remove();
-
-	// Remove from list
-	this.playlist.splice(index, 1);
-
-	// Update indices
-	for (var i = 0; i < this.playlist.length; ++i) {
-		this.playlist[i].index = i;
 	}
 }
 
@@ -3400,6 +3565,7 @@ MediaPlayer.prototype.on_ytvideo_error = function (event, media_player) {
 		break;
 		case 5:
 			// Cannot be html5'd
+			media_player.ytvideo_html5 = false;
 		break;
 		case 100:
 			// Not found
@@ -3889,15 +4055,26 @@ MediaPlayer.prototype.on_playlist_mode_change = function (event) {
 }
 MediaPlayer.prototype.on_playlist_onload_change = function (event) {
 	// Change mode
-	var v = (event.data.media_player.playlist_play_on_load + 1) % 4;
+	var v = (event.data.media_player.playlist_play_on_load + 1) % event.data.media_player.playlist_play_on_load_settings.length;
 	event.data.media_player.playlist_play_on_load = v;
 
 	// Label
-	$(this).html(v == 0 ? "Don't play" : (v == 1 ? "Play if empty playlist" : (v == 2 ? "Play if paused" : "Always play")));
+	$(this).html(event.data.media_player.playlist_play_on_load_settings[event.data.media_player.playlist_play_on_load]);
 
 	// Callback
 	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
 }
+MediaPlayer.prototype.on_playlist_scrollto_change = function (event) {
+	// Change mode
+	event.data.media_player.playlist_scrollto_onload = !event.data.media_player.playlist_scrollto_onload;
+
+	// Label
+	$(this).html(event.data.media_player.playlist_scrollto_onload ? "Scroll to in playlist" : "Don't scroll playlist");
+
+	// Callback
+	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+}
+
 MediaPlayer.prototype.on_ytquality_change = function (event) {
 	// Change mode
 	event.data.media_player.ytvideo_quality_index = (event.data.media_player.ytvideo_quality_index + 1) % event.data.media_player.ytvideo_qualities.length;
@@ -4068,7 +4245,7 @@ MediaPlayer.prototype.on_playlist_control_click = function (event) {
 		case 0:
 		{
 			// Delete
-			event.data.media_player.remove_from_playlist(event.data.playlist_item.index);
+			event.data.media_player.remove(event.data.playlist_item.index);
 		}
 		return false;
 		case 1:

@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.1
+// @version        1.2
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
+// @grant          GM_info
 // @include        http://boards.4chan.org/*
 // @include        https://boards.4chan.org/*
 // @include        http://archive.foolz.us/*
@@ -14,8 +15,8 @@
 // @require        https://raw.github.com/dnsev/4cs/master/web/Loop.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/DataImage.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/MediaPlayer.js
-// @updateURL      https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
-// @downloadURL    https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
+// _updateURL      https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
+// _downloadURL    https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
 // ==/UserScript==
 
 
@@ -34,8 +35,11 @@ function arraybuffer_to_uint8array(buffer) {
 	return new Uint8Array(buffer);
 }
 
+function is_chrome() {
+	return ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
+}
 function ajax_get(url, return_as_string, callback_data, progress_callback, done_callback) {
-	if (((navigator.userAgent + "").indexOf(" Chrome/") >= 0)) {
+	if (is_chrome()) {
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", url, true);
 		if (!return_as_string) xhr.overrideMimeType("text/plain; charset=x-user-defined");
@@ -924,6 +928,7 @@ function png_load_callback_find_correct(r, load_tag) {
 // Thread Manager
 ///////////////////////////////////////////////////////////////////////////////
 var is_archive = ((document.location + "").indexOf("boards.4chan.org") < 0);
+var thread_manager = null;
 function ThreadManager () {
 	// Manager
 	this.posts = {};
@@ -1030,6 +1035,8 @@ ThreadManager.prototype.post = function (index) {
 ///////////////////////////////////////////////////////////////////////////////
 // Inline text
 ///////////////////////////////////////////////////////////////////////////////
+var inline_update_span = null;
+var inline_update_link = null;
 function inline_setup() {
 	$ = jQuery;
 
@@ -1048,9 +1055,18 @@ function inline_setup() {
 		end = " ]";
 	}
 
+	reload.before(inline_update_span = E("span").css("display", "none"));
+	inline_update_span.append(T(" / "));
+	inline_update_span.append(
+		(inline_update_link = E("a"))
+		.html("Update")
+		.attr("href", "#")
+		.on("click", function (event) { return script_update(event); })
+	);
+
 	reload.append(reload_span = E("span").css("display", "none"));
 	reload_span.append(T(" / "));
-	reload_span.append(E("a").html("Reload").attr("href", "#").on("click", function (event) { media_player_settings_save(open_player(false)); return false; }));
+	reload_span.append(E("a").html("Reload").attr("href", "#").on("click", function (event) { open_player(false); settings_save(); return false; }));
 	reload.append(T(end));
 	reload.on("mouseover", {"reload_span": reload_span}, function (event) {
 		reload_span.css("display", "");
@@ -2000,32 +2016,13 @@ var media_player_css_size_presets = {
 		"border_scale": 1.0
 	}
 };
-var media_player_settings = {
-	"player": {},
-	"style": {}
-};
-var media_player_settings_loaded = false;
 
-function media_player_settings_save(sound_player) {
-	// Get settings
-	media_player_settings = {
-		"player": sound_player.save(),
-		"style": sound_player.css.save()
-	};
-	// Save
-	try {
-		localStorage.setItem("4cs", JSON.stringify(media_player_settings));
-	}
-	catch (e) {
-		console.log(e);
-	}
-}
 function media_player_destruct_callback(sound_player) {
+	// Save settings
+	settings_save();
 	// Nullify
 	media_player_instance = null;
 	media_player_css = null;
-	// Save settings
-	media_player_settings_save(sound_player);
 }
 
 function open_player(load_settings) {
@@ -2035,31 +2032,19 @@ function open_player(load_settings) {
 		return media_player_instance;
 	}
 
-	// Settings
-	if (load_settings && !media_player_settings_loaded) {
-		media_player_settings_loaded = true;
-		try {
-			var s = localStorage.getItem("4cs");
-			media_player_settings = (s ? JSON.parse(s) : media_player_settings);
-		}
-		catch (e) {
-			console.log(e);
-		}
-	}
-
 	// CSS
 	media_player_css = new MediaPlayerCSS("yotsubab", media_player_css_color_presets, media_player_css_size_presets);
 	// Load CSS settings
-	if (load_settings) media_player_css.load(media_player_settings["style"]);
+	if (load_settings) media_player_css.load(script_settings["style"]);
 	// Player
 	media_player_instance = new MediaPlayer(
 		media_player_css,
 		[ png_load_callback , image_load_callback ],
-		media_player_settings_save,
+		function (media_player) { settings_save(); },
 		media_player_destruct_callback
 	);
 	// Load settings	
-	if (load_settings) media_player_instance.load(media_player_settings["player"]);
+	if (load_settings) media_player_instance.load(script_settings["player"]);
 	// Display
 	media_player_instance.create();
 
@@ -2068,12 +2053,118 @@ function open_player(load_settings) {
 
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Entry
 ///////////////////////////////////////////////////////////////////////////////
-var thread_manager = null;
+var script_settings_loaded = false;
+var script_settings = {
+	"player": {},
+	"style": {},
+	"script": { "sub_version": 0, "last_update": 0, "update_found": false, "update_url": "", "update_version": "", "current_version": "" }
+};
+function settings_save() {
+	// Get
+	if (media_player_instance != null) {
+		script_settings["player"] = media_player_instance.save();
+		script_settings["style"] = media_player_instance.css.save();
+	}
+	// Save
+	try {
+		localStorage.setItem("4cs", JSON.stringify(script_settings));
+	}
+	catch (e) {
+		console.log(e);
+	}
+}
+function settings_load() {
+	// Load
+	if (!script_settings_loaded) {
+		script_settings_loaded = true;
+		try {
+			var s = localStorage.getItem("4cs");
+			if (s) {
+				s = JSON.parse(s);
+				for (var key in script_settings) {
+					if (key in s) script_settings[key] = s[key];
+				}
+			}
+		}
+		catch (e) {
+			console.log(e);
+		}
+	}
+}
+
+var script_update_version_url = "https://raw.github.com/dnsev/4cs/master/web/version.txt";
+function script_update(event) {
+	if (!event.originalEvent.which || event.originalEvent.which == 1) {
+		var scr = {};
+		try {
+			scr = GM_info.script;
+		}
+		catch (e) {
+			console.log(e);
+		}
+
+		var s = "An update is available to \"" + scr.name + "\".\n\n" +
+			"Current version: " + scr.version + "\n" +
+			"Update Version: " + script_settings["script"]["update_version"] + "\n\n" +
+			"Middle click the link or copy and paste the following url:               ";
+		
+		prompt(s, script_settings["script"]["update_url"]);
+		return false;
+	}
+	return true;
+}
+function script_update_check(ajax) {
+	var fn = function () {
+		inline_update_span.css("display", "");
+		inline_update_link.html("UPDATE");
+		inline_update_link.attr("href", script_settings["script"]["update_url"]);
+	};
+
+	if (ajax) {
+		ajax_get(
+			"https://raw.github.com/dnsev/4cs/master/web/version.txt",
+			true,
+			{},
+			null,
+			function (okay, data, response) {
+				if (okay) {
+					try {
+						var s = JSON.parse(response);
+						// Settings
+						script_settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
+						script_settings["script"]["update_version"] = s["version"].toString();
+						script_settings["script"]["last_update"] = (new Date()).getTime();
+						// Check
+						if (script_settings["script"]["update_version"] !== GM_info.script.version) {
+							// Okay
+							fn();
+							script_settings["script"]["update_found"] = true;
+						}
+						else {
+							script_settings["script"]["update_found"] = false;
+						}
+						// Update settings
+						settings_save();
+					}
+					catch (e) {
+						console.log(e);
+					}
+				}
+			}
+		);
+	}
+	else {
+		fn();
+	}
+}
+
 jQuery(document).ready(function () {
+	// Settings
+	settings_load();
+
 	// Hack move the scope out of sandbox
 	window._unsafe_exec = function () {
 		if (window._unsafe !== undefined) {
@@ -2111,19 +2202,34 @@ jQuery(document).ready(function () {
 	}
 
 	// Youtube API
-	$.getScript(
-		"//www.youtube.com/iframe_api",
-		function (script, status, jqXHR) {}
-	);
+	$.getScript("//www.youtube.com/iframe_api", function (script, status, jqXHR) {});
 
 	// Setup
 	inline_setup();
 	thread_manager = new ThreadManager();
+
+	// Update check once a day
+	var time_update;
+	var version = "";
+	try {
+		version = GM_info.script.version;
+	}
+	catch (e) {
+		console.log(e);
+	}
+	if (
+		(time_update = ((new Date()).getTime() - script_settings["script"]["last_update"] >= 1000 * 60 * 60 * 24)) ||
+		(time_update = (version != script_settings["script"]["current_version"])) ||
+		script_settings["script"]["update_found"]
+	) {	
+		script_settings["script"]["current_version"] = version;
+		script_update_check(time_update);
+	}
 });
 
-unsafeWindow.onYouTubeIframeAPIReady = function () {
+/*unsafeWindow.onYouTubeIframeAPIReady = function () {
 //	window.YT = unsafeWindow.YT;
-}
+}*/
 
 
 
