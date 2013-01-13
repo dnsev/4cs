@@ -287,8 +287,9 @@ void reencode(cstring filename, vector<Sound>& sounds, vector<char>& source) {
 	// Command
 	string cmd;
 	cmd += exe;
-	cmd += " _ ";
+	cmd += " _ \"";
 	cmd += filename;
+	cmd += "\"";
 	for (unsigned int i = 0; i < sounds.size(); ++i) {
 		cmd += " \"";
 		cmd += sounds[i].newname;
