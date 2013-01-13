@@ -51,6 +51,11 @@ Web Plugin / User End:
 		dependencies without a restart.
 
 
+	Version 1.2:
+
+	Includes auto-update notification.
+
+
 	Version 1.1:
 
 	Bugfixes for the previous sound embeds.
@@ -71,6 +76,11 @@ Web Plugin / User End:
 -------------------------------------------------------------------------------
 Web Plugin / Dev End:
 -------------------------------------------------------------------------------
+	Version 1.2:
+
+	Auto-update notifications via a daily ajax query.
+
+
 	Version 1.1:
 
 	Youtube playback feature has been added, using the iframe API. Works well
