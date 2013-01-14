@@ -122,7 +122,7 @@ void completeSound(vector<Sound>& sounds, vector<char>& source, cstring* magicSt
 			if (j == replaceLength) {
 				// Replace
 				for (j = 0; j < replaceLength; ++j) {
-					source[i + j] = magicStrings[s.header][j];
+					source[i + j] = magicStrings[0][j];
 				}
 			}
 		}

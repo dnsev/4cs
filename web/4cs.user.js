@@ -872,6 +872,10 @@ function png_check_callback(url_or_filename, raw_ui8_data, callback_data, done_c
 }
 
 function png_load_callback_find_correct(r, load_tag) {
+	if (r[0].length == 0) {
+		return null;
+	}
+
 	// List names
 	var sound_names = [];
 	for (var i = 0; i < r[0].length; ++i) sound_names.push(r[0][i]);
@@ -1007,7 +1011,7 @@ ThreadManager.prototype.on_dom_mutation = function (target) {
 }
 ThreadManager.prototype.parse_post = function (container) {
 	// Get id
-	var post_id = container.attr("id").replace(/(\w+_)?[^0-9]/g, "");
+	var post_id = (container.attr("id") || "0").replace(/(\w+_)?[^0-9]/g, "");
 	var redo = (post_id in this.posts);
 
 	var image = container.find(is_archive ? ".thread_image_link" : ".fileThumb");
