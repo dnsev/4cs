@@ -2072,7 +2072,15 @@ var script_settings_loaded = false;
 var script_settings = {
 	"player": {},
 	"style": {},
-	"script": { "sub_version": 0, "last_update": 0, "update_found": false, "update_url": "", "update_version": "", "current_version": "" }
+	"script": {
+		"sub_version": 0,
+		"last_update": 0,
+		"update_found": false,
+		"update_url": "",
+		"update_version": "",
+		"current_version": "",
+		"update_message": ""
+	}
 };
 function settings_save() {
 	// Get
@@ -2121,6 +2129,7 @@ function script_update(event) {
 		var s = "An update is available to \"" + scr.name + "\".\n\n" +
 			"Current version: " + scr.version + "\n" +
 			"Update Version: " + script_settings["script"]["update_version"] + "\n\n" +
+			"About: " + script_settings["script"]["update_message"] + "\n\n" +
 			"Middle click the link or copy and paste the following url:               ";
 		
 		prompt(s, script_settings["script"]["update_url"]);
@@ -2149,6 +2158,7 @@ function script_update_check(ajax) {
 						script_settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
 						script_settings["script"]["update_version"] = s["version"].toString();
 						script_settings["script"]["last_update"] = (new Date()).getTime();
+						script_settings["script"]["update_message"] = (s["message"] || "").toString();
 						// Check
 						if (script_settings["script"]["update_version"] !== GM_info.script.version) {
 							// Okay

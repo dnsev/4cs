@@ -2,5 +2,6 @@
 	"version": 1.2,
 	"sub_version": 0,
 	"update_url_ff": "https://raw.github.com/dnsev/4cs/master/web/update-ff.txt",
-	"update_url_gc": "https://raw.github.com/dnsev/4cs/master/web/update-gc.txt"
+	"update_url_gc": "https://raw.github.com/dnsev/4cs/master/web/update-gc.txt",
+	"message": ""
 }
