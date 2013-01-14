@@ -1980,6 +1980,7 @@ MediaPlayer.prototype.create = function () {
 	}
 	this.update_player_theme_name({media_player: this});
 	this.set_volume(this.volume);
+	this.audio[0].volume = this.volume;
 	this.reposition();
 
 	// Done

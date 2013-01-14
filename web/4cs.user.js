@@ -118,6 +118,18 @@ function T(text) {
 	return jQuery(document.createTextNode(text));
 }
 
+function text_to_html(str) {
+	return str.replace(/&/g, "&amp;")
+		.replace(/>/g, "&gt;")
+		.replace(/</g, "&lt;")
+		.replace(/"/g, "&quot;");
+}
+function html_to_text(str) {
+	return str.replace(/&amp;/g, "&")
+		.replace(/&gt;/g, ">")
+		.replace(/&lt;/g, "<")
+		.replace(/&quot;/g, "\"");
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1317,7 +1329,7 @@ function inline_load_all_in_thread(event) {
 }
 function inline_replace_tags(tags) {
 	var sounds_found = false;
-	var new_text = (tags[0].text()/* + "[tag]"*/).replace(/\[.+?\]/g, function (match) {
+	var new_text = text_to_html(tags[0].text()).replace(/\[.+?\]/g, function (match) {
 		sounds_found = true;
 		return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
 	});
@@ -1348,7 +1360,7 @@ function inline_update_about_image(post_data) {
 							E("a")
 							.attr("href", "#")
 							.addClass("SPLoadLinkTop")
-							.html(post_data.sounds.sound_names[i].substr(0, post_data.sounds.sound_names[i].length - 4)) // remove extension
+							.html(text_to_html(post_data.sounds.sound_names[i].substr(0, post_data.sounds.sound_names[i].length - 4))) // remove extension
 							.on("click", {"post_data": post_data, "sound_id": i}, inline_link_top_click)
 						)
 					);
@@ -1361,7 +1373,7 @@ function inline_update_about_image(post_data) {
 						.append(
 							E("span")
 							.addClass("SPLoadLinkTopFile")
-							.html(post_data.sounds.sound_names[i])
+							.html(text_to_html(post_data.sounds.sound_names[i]))
 						)
 					);
 				}
@@ -1467,11 +1479,7 @@ function inline_post_parse_for_urls(post_data, redo, post_data_copy) {
 		if (links_found) {
 			// Sounds links
 			post_data.post.find(".MPReplacedURL").each(function (index) {
-				var href = string_remove_tags($(this).html())
-					.replace(/&amp;/g, "&")
-					.replace(/&gt;/g, ">")
-					.replace(/&lt;/g, "<")
-					.replace(/&quot/g, "\"");
+				var href = html_to_text(string_remove_tags($(this).html()));
 				if (href.indexOf(":") < 0) href = "//" + href;
 
 				var vid_id = MediaPlayer.prototype.url_get_youtube_video_id(href);
@@ -1531,7 +1539,7 @@ function inline_replace_urls(tags) {
 
 	for (var i = 0; i < tags.length; ++i) {
 		if (tags[i].prop("tagName") === undefined) {
-			var text = tags[i].text();
+			var text = text_to_html(tags[i].text());
 			var start = 0;
 			// Previous URL
 			if (in_url) {
