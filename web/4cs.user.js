@@ -22,6 +22,17 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// Bug-fixes for other userscripts
+///////////////////////////////////////////////////////////////////////////////
+window.$.prototype.exists = function () {
+	// Bugfix for 4chan Style Script on Google Chrome in Tampermonkey
+	// Somehow, their pseudo-jQuery conflicts with this legit jQuery
+	return (this.length > 0);
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
 // Multi-use
 ///////////////////////////////////////////////////////////////////////////////
 function string_to_uint8array(str) {
@@ -161,8 +172,8 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 	}
 	else {
 		// No footer
-		var magic_strings = [ "OggS\x00\x02" , "moot\x00\x02" , "Krni\x00\x02" ];
-		var magic_strings_ui8 = [ string_to_uint8array(magic_strings[0]) , string_to_uint8array(magic_strings[1]) , string_to_uint8array(magic_strings[2]) ];
+		var magic_strings = [ "OggS\x00\x02" , "moot\x00\x02" , "Krni\x00\x02" , "79\x06\x08\x00\x02" ];
+		var magic_strings_ui8 = [ string_to_uint8array(magic_strings[0]) , string_to_uint8array(magic_strings[1]) , string_to_uint8array(magic_strings[2]) , string_to_uint8array(magic_strings[3]) ];
 		var magic_strings_fix_size = 4;
 		var len, s, i, j, k, found, tag, temp_tag, data, id;
 		var sound_index = 0;
@@ -226,7 +237,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 				// Find the key location
 				tag_pos = i;
 				k = 1;
-				tag = "[Name Unknown]";
+				tag = load_tag || "[Name Unknown]";
 				if (masked) {
 					// Get the tag
 					if (i - tag_start < tag_max_length) {
@@ -497,7 +508,7 @@ function image_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_
 					// Find the key location
 					tag_pos = i;
 					k = 1;
-					tag = "[Name Unknown]";
+					tag = load_tag || "[Name Unknown]";
 					if (masked) {
 						// Get the tag
 						if (i - tag_start < tag_max_length) {
@@ -685,7 +696,7 @@ function image_check_callback(url_or_filename, raw_ui8_data, callback_data, done
 					// Find the key location
 					tag_pos = i;
 					k = 1;
-					tag = "[Name Unknown]";
+					tag = load_tag || "[Name Unknown]";
 					if (masked) {
 						// Get the tag
 						if (i - tag_start < tag_max_length) {

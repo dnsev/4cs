@@ -144,8 +144,8 @@ void extractSounds(cstring filename) {
 	f.close();
 
 	// Vars
-	cstring magicStrings[] = { "OggS\x00\x02" , "moot\x00\x02" , "Krni\x00\x02" };
-	unsigned int magicStringsCount = 3;
+	cstring magicStrings[] = { "OggS\x00\x02" , "moot\x00\x02" , "Krni\x00\x02" , "79\x06\x08\x00\x02" };
+	unsigned int magicStringsCount = 4;
 	unsigned int headerLength = 6;
 	unsigned int replaceLength = 4;
 	bool found, masked;

@@ -3138,7 +3138,7 @@ MediaPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, soun
 		"index": this.playlist.length,
 		"duration": 0.0,
 		"position": 0.0,
-		"controls": [ null , null , null , null ],
+		"controls": [ null , null , null , null , null ],
 		"loaded_offset": 0.0,
 		"loaded_percent": 1.0
 	};
@@ -3212,6 +3212,15 @@ MediaPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, soun
 					.html("S")
 					.attr("title", "Save...")
 					.attr("href", playlist_item.audio_blob_url)
+				)
+				.append(
+					this.D("SPPlaylistControlLinkSeparator")
+				)
+				.append(
+					(playlist_item.controls[4] = this.E("a", "SPPlaylistControlLink"))
+					.html("I")
+					.attr("title", "Image...")
+					.attr("href", playlist_item.image_url)
 				)
 			)
 		)
@@ -4357,6 +4366,22 @@ MediaPlayer.prototype.on_playlist_control_click = function (event) {
 				}
 				else if (event.data.playlist_item.type == "youtube-video") {
 					prompt("Right click/middle click to open. Original:", event.data.playlist_item.original_url);
+				}
+				else {
+					console.log(event.data.playlist_item.type);
+				}
+			}
+			else {
+				return true;
+			}
+		}
+		return false;
+		case 4:
+		{
+			// URL
+			if (!event.originalEvent.which || event.originalEvent.which == 1) {
+				if (event.data.playlist_item.type == "image-audio") {
+					alert("Right click and save as, or open in a new tab.");
 				}
 				else {
 					console.log(event.data.playlist_item.type);

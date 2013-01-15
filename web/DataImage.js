@@ -87,6 +87,9 @@ function DataImageReader (image) {
 	this.hashmask_index = 0;
 	this.hashmask_value = null;
 }
+DataImageReader.prototype.decode_title = function (title) {
+	return title;
+}
 DataImageReader.prototype.unpack = function () {
 	try {
 		return this.__unpack();
@@ -215,7 +218,7 @@ DataImageReader.prototype.__unpack_start = function () {
 		var fn = this.__data_to_string(this.__extract_data(filename_lengths[i]));
 		// TODO : Decode this to utf-8
 		// Add to list
-		filenames.push(fn);
+		filenames.push(this.decode_title(fn));
 	}
 
 	// Return
@@ -459,6 +462,5 @@ DataImageReader.prototype.__decode_hashmask = function (value, bits) {
 		}
 	}
 }
-
 
 
