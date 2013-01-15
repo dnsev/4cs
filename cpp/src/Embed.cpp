@@ -11,7 +11,7 @@
 #include "ImgLib/Image.hpp"
 #include "ImgLib/ImageWriter.hpp"
 #include "LodePNG/lodepng.h"
-#define EMBED_VERSION "1.0c"
+#define EMBED_VERSION "1.0d"
 using namespace std;
 using namespace ImgLib;
 
