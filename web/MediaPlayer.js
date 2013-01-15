@@ -1135,7 +1135,7 @@ MediaPlayerCSS.prototype.load = function (data) {
 
 
 
-function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback) {
+function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback, additional_options) {
 	// Not setup
 	this.created = false;
 	this.namespace = "media_player";
@@ -1227,6 +1227,7 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback)
 
 	// html elements
 	this.nullify();
+	this.additional_options = additional_options;
 
 	// CSS
 	this.css = css;
@@ -1304,6 +1305,7 @@ MediaPlayer.prototype.create = function () {
 	.on("mousemove." + this.namespace, {media_player: this}, this.on_document_mousemove);
 
 	// Vars
+	var help_custom_div = null;
 	var title_buttons = new Array();
 	this.playback_controls = [ null , null , null , null , null ];
 	this.help_container = [ null , null , null ];
@@ -1717,7 +1719,7 @@ MediaPlayer.prototype.create = function () {
 						.html("Player Settings")
 					)
 					.append(
-						this.D("SPHelpSectionDiv")
+						(help_custom_div = this.D("SPHelpSectionDiv"))
 						.append(
 							this.D("SPHelpColorInputDiv0")
 							.append(
@@ -1963,6 +1965,51 @@ MediaPlayer.prototype.create = function () {
 	); //}
 
 
+	// Custom settings
+	if (this.additional_options.length > 0) {
+		var next_div;
+		help_custom_div.after(
+			(next_div = this.D("SPHelpLabelDiv"))
+			.html("Other Settings")
+		)
+		help_custom_div = next_div;
+		for (var i = 0; i < this.additional_options.length; ++i) {
+			var v_id = 0;
+			for (var j = 0; j < this.additional_options[i]["values"].length; ++j) {
+				if (this.additional_options[i]["current"] == this.additional_options[i]["values"][j]) {
+					v_id = j;
+					break;
+				}
+			}
+			help_custom_div.after(
+				(next_div = this.D("SPHelpSectionDiv"))
+				.append(
+					this.D("SPHelpColorInputDiv0")
+					.append(
+						this.D("SPHelpColorInputDiv2b")
+						.append(
+							this.D("SPHelpColorLabelText")
+							.html(this.additional_options[i]["label"])
+						)
+					)
+				)
+				.append(
+					this.D("SPHelpColorInputDiv1Full")
+					.append(
+						this.D("SPHelpColorInputDiv2")
+						.append(
+							this.E("a", "SPHelpModeLink")
+							.html(this.additional_options[i]["descr"][v_id])
+							.on("click." + this.namespace, {media_player: this, custom_data: this.additional_options[i]}, this.on_custom_option_click)
+							.on("mousedown", this.cancel_event)
+						)
+					)
+				)
+			);
+			help_custom_div = next_div;
+		}
+	}
+
 	// Final settings
 	if (!this.first_run) {
 		this.first_run_container.css("display", "none");
@@ -2022,6 +2069,22 @@ MediaPlayer.prototype.focus = function () {
 
 	// On screen
 	this.reposition();
+}
+
+MediaPlayer.prototype.on_custom_option_click = function (event) {
+	var v_id = 0;
+	for (var j = 0; j < event.data.custom_data["values"].length; ++j) {
+		if (event.data.custom_data["current"] == event.data.custom_data["values"][j]) {
+			v_id = j;
+			break;
+		}
+	}
+	v_id = (v_id + 1) % event.data.custom_data["values"].length;
+
+	$(this).html(event.data.custom_data["descr"][v_id]);
+	
+	event.data.custom_data["current"] = event.data.custom_data["values"][v_id];
+	event.data.custom_data["change"](event.data.custom_data["values"][v_id]);
 }
 
 MediaPlayer.prototype.play = function () {

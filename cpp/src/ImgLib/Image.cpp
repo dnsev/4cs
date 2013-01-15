@@ -66,7 +66,7 @@ namespace ImgLib {
 			}
 		}
 		else {
-			int actual_comps = 0;;
+			int actual_comps = 0;
 			int w, h;
 			unsigned char* image = jpgd::decompress_jpeg_image_from_memory(
 				&((*source)[0]),

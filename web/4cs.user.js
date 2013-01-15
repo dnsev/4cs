@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.2
+// @version        1.3
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -1039,7 +1039,7 @@ ThreadManager.prototype.parse_post = function (container) {
 
 	// Auto checking images
 	inline_post_parse(this.posts[post_id], redo, post_data_copy);
-	inline_post_parse_for_urls(this.posts[post_id], redo, post_data_copy);
+	if (script_settings["inline"]["url_replace"]) inline_post_parse_for_urls(this.posts[post_id], redo, post_data_copy);
 }
 ThreadManager.prototype.post = function (index) {
 	index += "";
@@ -1275,24 +1275,30 @@ function inline_link_top_click(event) {
 	var load_str = "loading...";
 	$(this).html(load_str);
 
+	var tag = event.data.post_data.sounds.sound_names[event.data.sound_id];
+	if (tag.substr(tag.length - 4, 4).toLowerCase() == ".ogg") {
+		tag = tag.substr(0, tag.length - 4);
+	}
+
 	// Load sound
 	event.data.post_data.sounds.loaded = true;
 	open_player(true);
 	media_player_instance.attempt_load(
 		event.data.post_data.image_url,
-		event.data.post_data.sounds.sound_names[event.data.sound_id],
+		tag,
 		{
 			"object": $(this),
 			"post_data": event.data.post_data,
 			"sound_id": event.data.sound_id,
-			"load_str": load_str
+			"load_str": load_str,
+			"tag": tag
 		},
 		function (event, data) {
 			var progress = Math.floor((event.loaded / event.total) * 100);
 			data.object.html(data.load_str + " (" + progress + ")");
 		},
 		function (okay, data) {
-			data.object.html(data.post_data.sounds.sound_names[data.sound_id] + (okay ? "" : " (ajax&nbsp;error)"));
+			data.object.html(data.tag + (okay ? "" : " (ajax&nbsp;error)"));
 		},
 		function (status, data, all_files) {
 			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
@@ -2053,7 +2059,19 @@ function open_player(load_settings) {
 		media_player_css,
 		[ png_load_callback , image_load_callback ],
 		function (media_player) { settings_save(); },
-		media_player_destruct_callback
+		media_player_destruct_callback,
+		[
+			{
+				"current": script_settings["inline"]["url_replace"],
+				"label": "URL Replacing",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script_settings["inline"]["url_replace"] = value;
+					settings_save();
+				}
+			}
+		]
 	);
 	// Load settings	
 	if (load_settings) media_player_instance.load(script_settings["player"]);
@@ -2080,6 +2098,9 @@ var script_settings = {
 		"update_version": "",
 		"current_version": "",
 		"update_message": ""
+	},
+	"inline": {
+		"url_replace": true
 	}
 };
 function settings_save() {
