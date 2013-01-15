@@ -26,6 +26,7 @@ namespace ImgLib {
 		scatterPos(0),
 		scatterRange(0),
 		scatterFullRange(0),
+		pass(0),
 		scatter(false),
 		randomizeAll(false),
 		deband(false)
@@ -78,7 +79,7 @@ namespace ImgLib {
 			unsigned int flags2 = 0;
 			// bit 1 is reserved
 			flags2 |= (metadataLength > 0 ? 2 : 0); // has metadata
-			flags2 |= ((hashmask && !this->deband) ? 4 : 0); // hashmask data
+			flags2 |= (hashmask ? 4 : 0); // hashmask data
 			// bit 8 is reserved
 			ImageWriter::intToData(flags2, buffer, 1);
 			this->embedData(buffer, 1);
@@ -161,6 +162,15 @@ namespace ImgLib {
 		// Done
 		this->complete();
 		this->freeHashmask();
+		// Pass 2?
+		if (hashmask && this->deband && this->pass == 0) {
+			// When debanding AND hashmasking, there needs to be a pass 2 to use the corrected pixel color
+			this->pass = 1;
+			this->pack(sources, bitmask, randomizeAll, scatter, hashmask, deband);
+		}
+		else {
+			this->pass = 0;
+		}
 		return embedCount;
 	}
 
@@ -270,10 +280,10 @@ namespace ImgLib {
 		value = (value & valueMask);
 		if (this->isHashmasking()) {
 			// Modify value
-			// Hashmasking should not occur while debanding
 			value = this->encodeHashmask(value, this->bitmask);
 		}
-		if (this->deband) {
+		if (this->deband && this->pass == 0) {
+			// Only perform debanding on the first pass; on any subsequent pass(es) it will already be done
 			int pixel = this->image->getPixel(this->x, this->y, this->c);
 			pixel = static_cast<int>(pixel * (256 - valueMask) / 256.0);
 			pixel = pixel + ((value - pixel) & valueMask);
@@ -283,10 +293,9 @@ namespace ImgLib {
 		else {
 			value = (this->image->getPixel(this->x, this->y, this->c) & pixelMask) | value;
 		}
-		this->image->setPixel(
-			this->x, this->y, this->c,
-			value
-		);
+
+		this->image->setPixel(this->x, this->y, this->c, value);
+
 		if (this->scatter) {
 			++this->scatterPos;
 			assert(this->scatterPos <= this->scatterRange);

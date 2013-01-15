@@ -701,7 +701,7 @@ bool loadSettings(bool force, cstring filename, int* filesizeLimit, bool* scatte
 	*scatter = false;
 	*randomizeAll = true;
 	*upscale = true;
-	*hashmask = true; // clashes with debanding; debanding takes priority for now
+	*hashmask = true;
 	*deband = true;
 
 	return true;

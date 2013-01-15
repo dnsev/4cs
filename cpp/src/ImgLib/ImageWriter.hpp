@@ -28,6 +28,7 @@ namespace ImgLib {
 		unsigned long long scatterPos;
 		unsigned long long scatterRange;
 		unsigned long long scatterFullRange;
+		unsigned int pass;
 		bool scatter;
 		bool randomizeAll;
 		bool deband;
