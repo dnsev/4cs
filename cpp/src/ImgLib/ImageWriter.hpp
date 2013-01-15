@@ -30,12 +30,13 @@ namespace ImgLib {
 		unsigned long long scatterFullRange;
 		bool scatter;
 		bool randomizeAll;
+		bool deband;
 
 	public:
 		explicit ImageWriter(Image* image);
 		~ImageWriter();
 
-		int pack(const std::vector<std::string>& sources, unsigned int bitmask, bool randomizeAll, bool scatter, bool hashmask);
+		int pack(const std::vector<std::string>& sources, unsigned int bitmask, bool randomizeAll, bool scatter, bool hashmask, bool deband);
 
 		static unsigned int getBitRequirement(const std::vector<std::string>& sources);
 		static unsigned int getBitAvailability(unsigned int width, unsigned int height, unsigned int channelCount, unsigned int bitmask, unsigned int metadataLength, bool scatter, bool hashmask);

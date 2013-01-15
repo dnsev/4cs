@@ -19,7 +19,7 @@ using namespace ImgLib;
 
 bool fullOptimizeEncode(Image* image, lodepng::State* state, std::vector<unsigned char>* pngOutput, ostream* immediateStream, ostream* statusStream, ostream* errorStream);
 void getImageOptimalSize(const Image* image, unsigned int bitRequirement, unsigned int bitmask, unsigned int channelCount, unsigned int metadataLength, bool scatter, bool hashmask, unsigned int* dimensionsBest);
-bool loadSettings(bool force, cstring filename, int* filesizeLimit, bool* scatter, bool* randomizeAll, bool* hashmask, bool* upscale);
+bool loadSettings(bool force, cstring filename, int* filesizeLimit, bool* scatter, bool* randomizeAll, bool* hashmask, bool* upscale, bool* deband);
 
 
 
@@ -39,6 +39,7 @@ int main(int argc, char** argv) {
 	bool version = false;
 	bool hashmask = true;
 	bool infoFileRead = false;
+	bool deband = false;
 	std::string imageFile = "";
 	std::vector<std::string> sources;
 
@@ -150,6 +151,12 @@ int main(int argc, char** argv) {
 			else if (argv[i][1] == 'E' && argv[i][2] == '\0') {
 				embed = false;
 			}
+			else if (argv[i][1] == 'n' && argv[i][2] == '\0') {
+				deband = true;
+			}
+			else if (argv[i][1] == 'N' && argv[i][2] == '\0') {
+				deband = false;
+			}
 			else if (argv[i][1] == 'v' && argv[i][2] == '\0') {
 				version = true;
 			}
@@ -180,7 +187,7 @@ int main(int argc, char** argv) {
 			}
 			else {
 				if (
-					canFlag && loadSettings(false, argv[i], &filesizeLimit, &scatter, &randomizeAll, &hashmask, &upscale)
+					canFlag && loadSettings(false, argv[i], &filesizeLimit, &scatter, &randomizeAll, &hashmask, &upscale, &deband)
 				) {
 					infoFileRead = true;
 				}
@@ -252,6 +259,9 @@ int main(int argc, char** argv) {
 		cout << "" << endl;
 		cout << "               -h : enable image hash-masking" << endl;
 		cout << "               -H : disable image hash-masking" << endl;
+		cout << "" << endl;
+		cout << "               -n : enable image de-banding" << endl;
+		cout << "               -N : disable image de-banding" << endl;
 		cout << "" << endl;
 		cout << "    image.png : the file to embed data in" << endl;
 		cout << "" << endl;
@@ -450,7 +460,7 @@ int main(int argc, char** argv) {
 		// Packing
 		if (embed) {
 			cout << "  Embedded using bitmask of " << bitmask << " with " << channelCount << " channels" << endl;
-			int packCount = iw.pack(sources, bitmask, randomizeAll, scatter, hashmask);
+			int packCount = iw.pack(sources, bitmask, randomizeAll, scatter, hashmask, deband);
 			if (packCount < 0) {
 				cout << "  Error packing data into image" << endl;
 			}
@@ -660,12 +670,13 @@ void getImageOptimalSize(const Image* image, unsigned int bitRequirement, unsign
 
 
 
-bool loadSettings(bool force, cstring filename, int* filesizeLimit, bool* scatter, bool* randomizeAll, bool* hashmask, bool* upscale) {
+bool loadSettings(bool force, cstring filename, int* filesizeLimit, bool* scatter, bool* randomizeAll, bool* hashmask, bool* upscale, bool* deband) {
 	assert(filesizeLimit != NULL);
 	assert(scatter != NULL);
 	assert(randomizeAll != NULL);
 	assert(hashmask != NULL);
 	assert(upscale != NULL);
+	assert(deband != NULL);
 
 	if (!force) {
 		// filename check
@@ -689,8 +700,9 @@ bool loadSettings(bool force, cstring filename, int* filesizeLimit, bool* scatte
 	*filesizeLimit = 3 * 1024 * 1024;
 	*scatter = false;
 	*randomizeAll = true;
-	*hashmask = true;
 	*upscale = true;
+	*hashmask = true; // clashes with debanding; debanding takes priority for now
+	*deband = true;
 
 	return true;
 }

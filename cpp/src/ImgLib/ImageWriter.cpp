@@ -27,14 +27,15 @@ namespace ImgLib {
 		scatterRange(0),
 		scatterFullRange(0),
 		scatter(false),
-		randomizeAll(false)
+		randomizeAll(false),
+		deband(false)
 	{
 		assert(image != NULL);
 	}
 	ImageWriter :: ~ImageWriter() {
 	}
 
-	int ImageWriter :: pack(const std::vector<std::string>& sources, unsigned int bitmask, bool randomizeAll, bool scatter, bool hashmask) {
+	int ImageWriter :: pack(const std::vector<std::string>& sources, unsigned int bitmask, bool randomizeAll, bool scatter, bool hashmask, bool deband) {
 		unsigned int metadataLength = 0;
 
 		assert(bitmask >= 1);
@@ -60,6 +61,7 @@ namespace ImgLib {
 		this->scatterPos = 0;
 		this->scatterRange = 0;
 		this->scatterFullRange = 0;
+		this->deband = deband;
 		this->resetHashmask();
 
 		// Metadata settings
@@ -76,13 +78,13 @@ namespace ImgLib {
 			unsigned int flags2 = 0;
 			// bit 1 is reserved
 			flags2 |= (metadataLength > 0 ? 2 : 0); // has metadata
-			flags2 |= (hashmask ? 4 : 0); // hashmask data
+			flags2 |= ((hashmask && !this->deband) ? 4 : 0); // hashmask data
 			// bit 8 is reserved
 			ImageWriter::intToData(flags2, buffer, 1);
 			this->embedData(buffer, 1);
 
 			// Hashmask enabled
-			if (hashmask) {
+			if ((flags2 & 4) != 0) {
 				this->completePixel();
 				this->initHashmask(this->image, this->image->getWidth(), this->image->getHeight(), this->channels, this->bitmask);
 			}
@@ -268,11 +270,22 @@ namespace ImgLib {
 		value = (value & valueMask);
 		if (this->isHashmasking()) {
 			// Modify value
+			// Hashmasking should not occur while debanding
 			value = this->encodeHashmask(value, this->bitmask);
+		}
+		if (this->deband) {
+			int pixel = this->image->getPixel(this->x, this->y, this->c);
+			pixel = static_cast<int>(pixel * (256 - valueMask) / 256.0);
+			pixel = pixel + ((value - pixel) & valueMask);
+			assert((pixel & valueMask) == value);
+			value = pixel;
+		}
+		else {
+			value = (this->image->getPixel(this->x, this->y, this->c) & pixelMask) | value;
 		}
 		this->image->setPixel(
 			this->x, this->y, this->c,
-			(this->image->getPixel(this->x, this->y, this->c) & pixelMask) | value
+			value
 		);
 		if (this->scatter) {
 			++this->scatterPos;
