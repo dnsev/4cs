@@ -9,8 +9,8 @@
 // @include     https://boards.4chan.org/*
 // @include     http://archive.foolz.us/*
 // @include     https://archive.foolz.us/*
-// @updateURL   https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
-// @downloadURL https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
+// @updateURL   https://raw.github.com/dnsev/4cs/master/web/4cs.full.user.js
+// @downloadURL https://raw.github.com/dnsev/4cs/master/web/4cs.full.user.js
 // ==/UserScript==
 
 
