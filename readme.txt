@@ -51,6 +51,16 @@ Web Plugin / User End:
 		dependencies without a restart.
 
 
+	Version 1.4:
+
+	Auto-updating is MUCH less of a hassle.
+
+
+	Version 1.3:
+
+	Various bugfixes
+
+
 	Version 1.2:
 
 	Includes auto-update notification.
@@ -76,6 +86,24 @@ Web Plugin / User End:
 -------------------------------------------------------------------------------
 Web Plugin / Dev End:
 -------------------------------------------------------------------------------
+	Version 1.4:
+
+	The main script now has all dependencies compiled into 1 script, thus
+	eliminating the need to reinstall each time. There are still the other
+	versions available:
+	1)	https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
+		Basic installation; does not include any comments
+	2)	https://raw.github.com/dnsev/4cs/master/web/4cs.full.user.js
+		Similar to above, but has no comments removed
+	3)	https://raw.github.com/dnsev/4cs/master/web/4cs.dev.user.js
+		Maintains file separation. Development version
+
+
+	Version 1.3:
+
+	Various small bugfixes / feature additions.
+
+
 	Version 1.2:
 
 	Auto-update notifications via a daily ajax query.
