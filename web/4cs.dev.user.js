@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.3
+// @version        1.4
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -143,6 +143,7 @@ function html_to_text(str) {
 		.replace(/&lt;/g, "<")
 		.replace(/&quot;/g, "\"");
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.3
+// @version     1.4
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -3840,7 +3840,7 @@ MediaPlayer.prototype.create = function () {
 		help_custom_div.after(
 			(next_div = this.D("SPHelpLabelDiv"))
 			.html("Other Settings")
-		)
+		);
 		help_custom_div = next_div;
 		for (var i = 0; i < this.additional_options.length; ++i) {
 			var v_id = 0;
@@ -6533,6 +6533,7 @@ function html_to_text(str) {
 		.replace(/&lt;/g, "<")
 		.replace(/&quot;/g, "\"");
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
