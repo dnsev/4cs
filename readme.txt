@@ -1,4 +1,14 @@
 -------------------------------------------------------------------------------
+Wiki
+-------------------------------------------------------------------------------
+	For instructions on how to use the web plugin, check out this page:
+	https://github.com/dnsev/4cs/wiki/Userscript
+
+	For other information about the project, check out the main wiki page:
+	https://github.com/dnsev/4cs/wiki
+
+
+-------------------------------------------------------------------------------
 Sound Encoding/Decoding:
 -------------------------------------------------------------------------------
 	To encode/decode your own files, use the 2 executables in "/cpp".
