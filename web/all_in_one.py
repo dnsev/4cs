@@ -189,19 +189,20 @@ class Parser:
 			self.token_str_pre = literal;
 		return ( type , whitespace , literal );
 
-	def join(self, token1, token2):
+	def join(self, token1, token2, newline, pre_whitespace):
 		# Ignore
-		if (token2[0] == Parser.COMMENT or token2[0] == Parser.COMMENT_BLOCK):
-			# Append whitespace to next token
-			return [ None , token2[1] ];
+		if (token2[0] == Parser.COMMENT_BLOCK):
+			return [ None , "" ];
+		if (token2[0] == Parser.COMMENT):
+			return [ None , token2[1] + "\n" ];
 
 		# First token
 		if (token1 == None): return token2[2];
 
 		# Newlines
-		newline = token2[1].rfind("\n");
-		if (newline >= 0): 
-			return token2[1][newline : ] + token2[2];
+		if ((pre_whitespace + token2[1]).rfind("\n") >= 0):
+			pos = token2[1].rfind("\n");
+			return newline + token2[1][pos + 1 : ] + token2[2];
 
 		# Spacing
 		space = " ";
@@ -224,14 +225,13 @@ class Parser:
 		return token2[2];
 
 
-def write_compressed(source, out, t_pre):
+def write_compressed(source, out, t_pre, newline):
 	p = Parser(source);
 	add = "";
 	while (True):
 		t = p.get_token();
 		if (t[0] == None): break;
-		t = (t[0] , add + t[1] , t[2]);
-		s = p.join(t_pre, t);
+		s = p.join(t_pre, t, newline, add);
 		if (s[0] != None):
 			add = "";
 			out.write(s);
@@ -321,7 +321,7 @@ def main():
 		f.close();
 
 		if (shrink):
-			t_pre = write_compressed(require_source, out, t_pre);
+			t_pre = write_compressed(require_source, out, t_pre, newline);
 		else:
 			out.write(("/" * 80) + newline);
 			out.write("//{ " + requires[i] + newline);
@@ -337,7 +337,7 @@ def main():
 
 	# Main source
 	if (shrink):
-		t_pre = write_compressed(newline.join(source[source_line_first : ]), out, t_pre);
+		t_pre = write_compressed(newline.join(source[source_line_first : ]), out, t_pre, newline);
 		out.write(newline);
 	else:
 		out.write(("/" * 80) + newline);
