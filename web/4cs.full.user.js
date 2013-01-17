@@ -8191,24 +8191,27 @@ function inline_replace_urls(tags) {
 
 function on_inline_url_click(event) {
 	// Add to playlist
-	if (event.data.vid_id !== null) {
-		open_player(true);
-		media_player_instance.attempt_load_video(
-			event.data.url,
-			null,
-			{"post_data": event.data.post_data, "link": $(this)},
-			function (event, data) {
-				//var progress = Math.floor((event.loaded / event.total) * 100);
-				//data.object.html(data.load_str + " (" + progress + ")");
-			},
-			function (okay, data) {
-				//data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
-			},
-			function (status, data, xml_info) {
-			}
-		);
+	if (!event.originalEvent.which || event.originalEvent.which == 1) {
+		if (event.data.vid_id !== null) {
+			open_player(true);
+			media_player_instance.attempt_load_video(
+				event.data.url,
+				null,
+				{"post_data": event.data.post_data, "link": $(this)},
+				function (event, data) {
+					//var progress = Math.floor((event.loaded / event.total) * 100);
+					//data.object.html(data.load_str + " (" + progress + ")");
+				},
+				function (okay, data) {
+					//data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
+				},
+				function (status, data, xml_info) {
+				}
+			);
+		}
+		return false;
 	}
-	return false;
+	return true;
 }
 
 

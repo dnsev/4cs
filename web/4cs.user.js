@@ -6956,21 +6956,24 @@ function inline_replace_urls(tags){
 	return any_found;
 }
 function on_inline_url_click(event){
-	if(event.data.vid_id!==null){
-		open_player(true);
-		media_player_instance.attempt_load_video(
-			event.data.url,
-			null,
-			{"post_data":event.data.post_data,"link":$(this)},
-			function(event,data){
-			},
-			function(okay,data){
-			},
-			function(status,data,xml_info){
-			}
-		);
+	if(!event.originalEvent.which||event.originalEvent.which==1){
+		if(event.data.vid_id!==null){
+			open_player(true);
+			media_player_instance.attempt_load_video(
+				event.data.url,
+				null,
+				{"post_data":event.data.post_data,"link":$(this)},
+				function(event,data){
+				},
+				function(okay,data){
+				},
+				function(status,data,xml_info){
+				}
+			);
+		}
+		return false;
 	}
-	return false;
+	return true;
 }
 function string_remove_tags(str){
 	return str.replace(/<[^>]*>?/g,"");
