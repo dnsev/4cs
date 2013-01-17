@@ -9,6 +9,7 @@
 // @include        https://boards.4chan.org/*
 // @include        http://archive.foolz.us/*
 // @include        https://archive.foolz.us/*
+// @icon           data:image/gif;base64,R0lGODlhEAAQAKECAAAAAGbMM////////yH5BAEKAAIALAAAAAAQABAAAAIllI+pB70KQgAPNUmroDHX7Gie95AkpCUn1ISlhKVR/MEre6dLAQA7
 // @require        https://raw.github.com/dnsev/4cs/master/web/jquery.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/jquery.svg.pack.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/zlib.js

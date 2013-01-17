@@ -9,6 +9,7 @@
 // @include     https://boards.4chan.org/*
 // @include     http://archive.foolz.us/*
 // @include     https://archive.foolz.us/*
+// @icon        data:image/gif;base64,R0lGODlhEAAQAKECAAAAAGbMM////////yH5BAEKAAIALAAAAAAQABAAAAIllI+pB70KQgAPNUmroDHX7Gie95AkpCUn1ISlhKVR/MEre6dLAQA7
 // @updateURL   https://raw.github.com/dnsev/4cs/master/web/4cs.full.user.js
 // @downloadURL https://raw.github.com/dnsev/4cs/master/web/4cs.full.user.js
 // ==/UserScript==
