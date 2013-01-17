@@ -6925,22 +6925,29 @@ function inline_replace_urls(tags){
 			var start=0;
 			if(in_url){
 				in_url=false;
-				text=text.replace(/^(?:[^\s]*)/im,function(match,groups,offset){
-					return match+link_str[1];
+				text=text.replace(/^(?:[^\s]*)/im,function(match,offset){
+					in_url=(text.length==offset+match.length);
+					return match+(in_url?"":link_str[1]);
 				});
 			}
-			length_add=0;
-			text=text.replace(/((?:\w+):\/\/|www\.)(?:[^\s]+)/im,function(match,groups,offset){
-				any_found=true;
-				in_url=(offset+match.length==text.length+length_add);
-				length_add+=(link_str[0].length+(in_url?0:link_str[1].length));
-				return link_str[0]+match+(in_url?"":link_str[1]);
-			});
+			if(!in_url){
+				length_add=0;
+				text=text.replace(/(?:(?:\w+):\/\/|www\.)(?:[^\s]+)/im,function(match,offset){
+					any_found=true;
+					in_url=(offset+match.length==text.length+length_add);
+					length_add+=(link_str[0].length+(in_url?0:link_str[1].length));
+					return link_str[0]+match+(in_url?"":link_str[1]);
+				});
+			}
 			full_text+=text;
 		}
 		else{
 			full_text+=$('<div>').append(tags[i].clone()).html();
 		}
+	}
+	if(in_url){
+		in_url=false;
+		full_text+=link_str[1];
 	}
 	if(any_found){
 		tags[0].before(full_text);

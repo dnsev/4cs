@@ -8148,18 +8148,24 @@ function inline_replace_urls(tags) {
 			// Previous URL
 			if (in_url) {
 				in_url = false;
-				text = text.replace(/^(?:[^\s]*)/im, function (match, groups, offset) {
-					return match + link_str[1];
+				text = text.replace(/^(?:[^\s]*)/im, function (match, offset) {
+					in_url = (text.length == offset + match.length);
+					return match + (in_url ? "" : link_str[1]);
 				});
 			}
 			// New URLs
-			length_add = 0;
-			text = text.replace(/((?:\w+):\/\/|www\.)(?:[^\s]+)/im, function (match, groups, offset) {
-				any_found = true;
-				in_url = (offset + match.length == text.length + length_add);
-				length_add += (link_str[0].length + (in_url ? 0 : link_str[1].length));
-				return link_str[0] + match + (in_url ? "" : link_str[1]);
-			});
+			if (!in_url) {
+				length_add = 0;
+				text = text.replace(/(?:(?:\w+):\/\/|www\.)(?:[^\s]+)/im, function (match, offset) {
+					// Interesting note: If all groups have the prefix of "?:", then the callback parameter
+					// order is "match, offset, groups". If you remove one of the "?:" (say the first one)
+					// then the order is changed to "match, groups, offset". (in Nightly)
+					any_found = true;
+					in_url = (offset + match.length == text.length + length_add);
+					length_add += (link_str[0].length + (in_url ? 0 : link_str[1].length));
+					return link_str[0] + match + (in_url ? "" : link_str[1]);
+				});
+			}
 
 			// Update
 			full_text += text;
@@ -8167,6 +8173,11 @@ function inline_replace_urls(tags) {
 		else {
 			full_text += $('<div>').append(tags[i].clone()).html();
 		}
+	}
+
+	if (in_url) {
+		in_url = false;
+		full_text += link_str[1];
 	}
 
 	// DOM update
