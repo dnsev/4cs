@@ -26,11 +26,11 @@ rebuild: clean compile
 
 
 
-$(BIN)embed : $(OBJ)Embed.o $(OBJ)ImgLib/Image.o $(OBJ)ImgLib/ImageWriter.o $(OBJ)LodePNG/lodepng.o $(SRC)JPEG/jpgd.o $(OBJ)ImgLib/ImageHashmasker.o $(OBJ)Random/Random.o
+$(BIN)embed : $(OBJ)Embed.o $(OBJ)ImgLib/Image.o $(OBJ)ImgLib/ImageWriter.o $(OBJ)LodePNG/lodepng.o $(SRC)JPEG/jpgd.o $(OBJ)stb_image/stb_image.o $(OBJ)ImgLib/ImageHashmasker.o $(OBJ)Random/Random.o
 	@$(CC) $(CC_FLAGS) -o $@ $^
 	@echo $(BIN)embed compiled
 
-$(BIN)extract : $(OBJ)Extract.o $(OBJ)ImgLib/Image.o $(OBJ)ImgLib/ImageReader.o $(OBJ)LodePNG/lodepng.o $(SRC)JPEG/jpgd.o $(OBJ)ImgLib/ImageHashmasker.o
+$(BIN)extract : $(OBJ)Extract.o $(OBJ)ImgLib/Image.o $(OBJ)ImgLib/ImageReader.o $(OBJ)LodePNG/lodepng.o $(SRC)JPEG/jpgd.o $(OBJ)stb_image/stb_image.o $(OBJ)ImgLib/ImageHashmasker.o
 	@$(CC) $(CC_FLAGS) -o $@ $^
 	@echo $(BIN)extract compiled
 
@@ -41,7 +41,7 @@ $(OBJ)Embed.o : $(SRC)Embed.cpp $(SRC)Include.hpp $(SRC)LodePNG/lodepng.h
 $(OBJ)Extract.o : $(SRC)Extract.cpp $(SRC)Include.hpp $(SRC)LodePNG/lodepng.h
 	@$(CC) $(CC_CFLAGS) -o $@ $<
 
-$(OBJ)ImgLib/Image.o : $(SRC)ImgLib/Image.cpp $(SRC)ImgLib/Image.hpp $(SRC)Include.hpp $(SRC)LodePNG/lodepng.h $(SRC)JPEG/jpgd.h
+$(OBJ)ImgLib/Image.o : $(SRC)ImgLib/Image.cpp $(SRC)ImgLib/Image.hpp $(SRC)Include.hpp $(SRC)LodePNG/lodepng.h $(SRC)JPEG/jpgd.h $(SRC)stb_image/stb_image.c
 	@$(CC) $(CC_CFLAGS) -o $@ $<
 
 $(OBJ)ImgLib/ImageReader.o : $(SRC)ImgLib/ImageReader.cpp $(SRC)ImgLib/ImageReader.hpp $(SRC)Include.hpp
@@ -56,6 +56,10 @@ $(OBJ)ImgLib/ImageHashmasker.o : $(SRC)ImgLib/ImageHashmasker.cpp $(SRC)ImgLib/I
 
 $(OBJ)LodePNG/lodepng.o : $(SRC)LodePNG/lodepng.cpp $(SRC)LodePNG/lodepng.h
 	@$(CC) $(CC_CFLAGS) -o $@ $<
+
+
+$(OBJ)stb_image/stb_image.o : $(SRC)stb_image/stb_image.c
+	@$(CC) $(CC_CFLAGS) -o $@ $< -DSTBI_NO_STDIO
 
 
 $(OBJ)JPEG/jpgd.o : $(SRC)JPEG/jpgd.cpp $(SRC)JPEG/jpgd.h

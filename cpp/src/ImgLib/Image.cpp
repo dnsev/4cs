@@ -1,6 +1,9 @@
 #include "Image.hpp"
 #include "../LodePNG/lodepng.h"
 #include "../JPEG/jpgd.h"
+#define STBI_NO_STDIO
+#define STBI_HEADER_FILE_ONLY
+#include "../stb_image/stb_image.c"
 #include <cassert>
 
 
@@ -25,7 +28,7 @@ namespace ImgLib {
 	}
 	Image :: ~Image() {
 	}
-	bool Image :: loadFromSource(const std::vector<unsigned char>* source, bool isPng, int colorDepthOverride, std::ostream* errorStream) {
+	bool Image :: loadFromSource(const std::vector<unsigned char>* source, Image::ImageType imageType, int colorDepthOverride, std::ostream* errorStream) {
 		assert(source != NULL);
 
 		// Load
@@ -33,8 +36,7 @@ namespace ImgLib {
 		this->width = 0;
 		this->height = 0;
 
-
-		if (isPng) {
+		if (imageType == Image::PNG) {
 			// Load the PNG
 			lodepng::State state;
 			state.info_raw.colortype = LCT_RGBA;
@@ -65,7 +67,7 @@ namespace ImgLib {
 				}
 			}
 		}
-		else {
+		else if (imageType == Image::JPEG) {
 			int actual_comps = 0;
 			int w, h;
 			unsigned char* image = jpgd::decompress_jpeg_image_from_memory(
@@ -97,6 +99,36 @@ namespace ImgLib {
 
 			// Jpeg, so no alpha
 			this->hasAlphaDefault = false;
+		}
+		else { // GIF
+			int w, h, comp;
+			unsigned char* image = stbi_load_from_memory(
+				&(*source)[0],
+				source->size(),
+				&w,
+				&h,
+				&comp,
+				4
+			);
+
+			if (image == NULL) {
+				if (errorStream != NULL) {
+					*errorStream << "Failed to load GIF";
+				}
+
+				return false;
+			}
+
+			// Transfer
+			this->width = w;
+			this->height = h;
+
+			this->pixels.resize(this->width * this->height * 4);
+			std::copy(image, image + (this->width * this->height * 4), this->pixels.begin());
+			stbi_image_free(image);
+
+			// Gif, so alpha
+			this->hasAlphaDefault = true;
 		}
 
 		// Override

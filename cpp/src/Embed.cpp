@@ -179,6 +179,7 @@ int main(int argc, char** argv) {
 			if (
 				imageFile.length() == 0 && (
 					(pos >= 4 && (argv[i][pos - 4] == '.' && (argv[i][pos - 3] & 0xDF) == 'P' && (argv[i][pos - 2] & 0xDF) == 'N' && (argv[i][pos - 1] & 0xDF) == 'G')) ||
+					(pos >= 4 && (argv[i][pos - 4] == '.' && (argv[i][pos - 3] & 0xDF) == 'G' && (argv[i][pos - 2] & 0xDF) == 'I' && (argv[i][pos - 1] & 0xDF) == 'F')) ||
 					(pos >= 4 && (argv[i][pos - 4] == '.' && (argv[i][pos - 3] & 0xDF) == 'J' && (argv[i][pos - 2] & 0xDF) == 'P' && (argv[i][pos - 1] & 0xDF) == 'G')) ||
 					(pos >= 5 && (argv[i][pos - 5] == '.' && (argv[i][pos - 4] & 0xDF) == 'J' && (argv[i][pos - 3] & 0xDF) == 'P' && (argv[i][pos - 2] & 0xDF) == 'E' && (argv[i][pos - 1] & 0xDF) == 'G'))
 				)
@@ -275,7 +276,15 @@ int main(int argc, char** argv) {
 
 	// PNG/JPG
 	int pos = imageFile.length();
-	bool isPng = imageFile.length() >= 4 && (imageFile[pos - 4] == '.' && (imageFile[pos - 3] & 0xDF) == 'P' && (imageFile[pos - 2] & 0xDF) == 'N' && (imageFile[pos - 1] & 0xDF) == 'G');
+	ImgLib::Image::ImageType imageType = ImgLib::Image::JPEG;
+	if (imageFile.length() >= 4 && imageFile[pos - 4] == '.') {
+		if ((imageFile[pos - 3] & 0xDF) == 'P' && (imageFile[pos - 2] & 0xDF) == 'N' && (imageFile[pos - 1] & 0xDF) == 'G') {
+			imageType = ImgLib::Image::PNG;
+		}
+		else if ((imageFile[pos - 3] & 0xDF) == 'G' && (imageFile[pos - 2] & 0xDF) == 'I' && (imageFile[pos - 1] & 0xDF) == 'F') {
+			imageType = ImgLib::Image::GIF;
+		}
+	}
 
 	// Load image
 	if (!info) cout << "Loading image \"" << imageFile << "\"..." << endl;
@@ -286,7 +295,7 @@ int main(int argc, char** argv) {
 	if (!info) cout << "Decoding image..." << endl;
 	Image image;
 	stringstream errorStream;
-	if (!image.loadFromSource(&imageSrc, isPng, channelCount, &errorStream)) {
+	if (!image.loadFromSource(&imageSrc, imageType, channelCount, &errorStream)) {
 		cout << "Error decoding image file \"" << imageFile << "\":" << endl;
 		cout << "  " << errorStream.str() << endl;
 		return -1;
@@ -336,7 +345,7 @@ int main(int argc, char** argv) {
 
 		outputFile.insert(pos, "-embed");
 
-		if (!isPng) {
+		if (imageType != ImgLib::Image::PNG) {
 			// PNG extension required
 			pos = outputFile.length();
 			while (--pos >= 0 && outputFile[pos] != '.');
@@ -393,7 +402,7 @@ int main(int argc, char** argv) {
 		// Reload
 		if (filesizeLoopIndex > 0) {
 			cout << "  Re-decoding image..." << endl;
-			image.loadFromSource(&imageSrc, isPng, channelCount, NULL);
+			image.loadFromSource(&imageSrc, imageType, channelCount, NULL);
 			if (dimensionsUpscale[0] != 0 && dimensionsUpscale[1] != 0) {
 				cout << "  Upscaling to { " << dimensionsUpscale[0] << " x " << dimensionsUpscale[1] << " }..." << endl;
 				image.upscale(dimensionsUpscale[0], dimensionsUpscale[1]);
@@ -422,7 +431,7 @@ int main(int argc, char** argv) {
 				// Upscale
 				if (upscaleLoopIndex > 1) {
 					// Reload image
-					image.loadFromSource(&imageSrc, isPng, channelCount, NULL);
+					image.loadFromSource(&imageSrc, imageType, channelCount, NULL);
 				}
 				dimensionsUpscale[0] = (image.getWidth() * (upscaleLoopIndex + 1));
 				dimensionsUpscale[1] = (image.getHeight() * (upscaleLoopIndex + 1));

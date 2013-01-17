@@ -20,13 +20,20 @@ namespace ImgLib {
 		std::vector<unsigned char> pixels;
 
 	public:
+		enum ImageType {
+			PNG = 0,
+			JPEG = 1,
+			GIF = 2,
+			//BMP = 3,
+		};
+
 		Image();
 		Image(const Image& other);
 		~Image();
 
 		void copy(const Image* other);
 
-		bool loadFromSource(const std::vector<unsigned char>* source, bool isPng, int colorDepthOverride, std::ostream* errorStream);
+		bool loadFromSource(const std::vector<unsigned char>* source, Image::ImageType imageType, int colorDepthOverride, std::ostream* errorStream);
 
 		unsigned char getPixel(unsigned int x, unsigned int y, unsigned int component) const;
 		void setPixel(unsigned int x, unsigned int y, unsigned int component, unsigned char value);
