@@ -342,7 +342,6 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"height": "{exp:14,*,font_scale}px"
 		},
 		".SPControlLinkSvgMainGroup": {
-			"transform": "scale({exp:14,*,font_scale}, {exp:14,*,font_scale})"
 		},
 		".SPControlLinkSvgShapeColor": {
 			"fill": "{rgb:color_standard}",
@@ -1194,7 +1193,7 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 	this.settings_callback = settings_callback;
 	this.destruct_callback = destruct_callback;
 
-	this.use_svg = !this.is_chrome; // TODO : fix this
+	this.use_svg = this.is_chrome;
 
 	// Dimension scaling
 	this.scale_factor = 1.0;
@@ -2805,7 +2804,11 @@ MediaPlayer.prototype.createPlaybackControls = function () {
 				html_svg.attr("height", h);
 
 				// Create contents
-				var g = this.playback_controls_svg[i][j].group({"class": "SPControlLinkSvgMainGroup"});
+				var g = this.playback_controls_svg[i][j].group({
+					"class": "SPControlLinkSvgMainGroup",
+					"transform": "scale(" + w + "," + h + ")"
+				});
+
 				if (i == 0) {
 					// Back
 					this.playback_controls_svg[i][j].rect(g,

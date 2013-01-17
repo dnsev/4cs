@@ -1865,7 +1865,6 @@ function MediaPlayerCSS(preset,css_color_presets,css_size_presets){
 			"height":"{exp:14,*,font_scale}px"
 		},
 		".SPControlLinkSvgMainGroup":{
-			"transform":"scale({exp:14,*,font_scale}, {exp:14,*,font_scale})"
 		},
 		".SPControlLinkSvgShapeColor":{
 			"fill":"{rgb:color_standard}",
@@ -2646,7 +2645,7 @@ function MediaPlayer(css,load_callbacks,settings_callback,destruct_callback,addi
 	}
 	this.settings_callback=settings_callback;
 	this.destruct_callback=destruct_callback;
-	this.use_svg=!this.is_chrome;
+	this.use_svg=this.is_chrome;
 	this.scale_factor=1.0;
 	this.ytvideo_player=null;
 	this.ytvideo_qualities=["default","small","medium","large","hd720","hd1080","highres"];
@@ -4080,7 +4079,10 @@ MediaPlayer.prototype.createPlaybackControls=function(){
 				var html_svg=$(svg_finder.contents()[0]);
 				html_svg.attr("width",w);
 				html_svg.attr("height",h);
-				var g=this.playback_controls_svg[i][j].group({"class":"SPControlLinkSvgMainGroup"});
+				var g=this.playback_controls_svg[i][j].group({
+					"class":"SPControlLinkSvgMainGroup",
+					"transform":"scale("+w+","+h+")"
+				});
 				if(i==0){
 					this.playback_controls_svg[i][j].rect(g,
 						0.125,0.0,0.25,1.0,
