@@ -312,6 +312,8 @@ def main():
 	out.write("// ==/" + metadata_labels[0] + "==" + newline);
 	if (not shrink):
 		out.write(newline + newline);
+	else:
+		out.write("// For license information, check the individual files" + newline);
 
 	# Include requirements
 	t_pre = None;

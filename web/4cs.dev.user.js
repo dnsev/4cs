@@ -10,6 +10,7 @@
 // @include        http://archive.foolz.us/*
 // @include        https://archive.foolz.us/*
 // @require        https://raw.github.com/dnsev/4cs/master/web/jquery.js
+// @require        https://raw.github.com/dnsev/4cs/master/web/jquery.svg.pack.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/zlib.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/png.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/Loop.js

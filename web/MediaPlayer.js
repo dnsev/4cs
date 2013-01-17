@@ -324,6 +324,44 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"width": "{exp:2,*,padding_scale}px"
 		},
 
+		".SPControlLinkSvgContainer": {
+			"padding": "{exp:1,*,padding_scale}px {exp:2,*,padding_scale}px {exp:1,*,padding_scale}px {exp:2,*,padding_scale}px",
+			"border-radius": "{exp:border_radius_small,*,border_scale}px",
+			"background": "transparent",
+			"display": "inline-block",
+			"cursor": "pointer"
+		},
+		".SPControlLinkSvgContainer:hover": {
+			"background": "{rgba:bg_color_light}"
+		},
+		".SPControlLinkSvgContainer:active": {
+			"background": "{rgba:bg_color_dark}"
+		},
+		".SPControlLinkSvg": {
+			"width": "{exp:14,*,font_scale}px", 
+			"height": "{exp:14,*,font_scale}px"
+		},
+		".SPControlLinkSvgMainGroup": {
+			"transform": "scale({exp:14,*,font_scale}, {exp:14,*,font_scale})"
+		},
+		".SPControlLinkSvgShapeColor": {
+			"fill": "{rgb:color_standard}",
+			"fill-opacity": "0.5",
+			"stroke": "none"
+		},
+		".SPTopContainer:hover .SPControlLinkSvgShapeColor": {
+			"fill-opacity": "1.0 !important"
+		},
+		".SPTopContainer:hover .SPControlLinkDisabled .SPControlLinkSvgShapeColor": {
+			"fill-opacity": "0.5 !important"
+		},
+		".SPControlLinkSvgContainer:hover .SPControlLinkSvgShapeColor": {
+			"fill": "{rgb:color_standard}",
+		},
+		".SPControlLinkSvgContainer:active .SPControlLinkSvgShapeColor": {
+			"fill": "{rgb:color_special_2}",
+		},
+
 		".SPVideoContainer": {
 			"display": "block",
 			"position": "absolute",
@@ -874,9 +912,10 @@ MediaPlayerCSS.prototype.parse_out_values = function (value) {
 		match = match.replace(/.+?:/g, function (match2) {
 			match2 = match2.toLowerCase();
 			if (match2 == "hex:") format_mode = 1;
-			else if (match2 == "rgba:") format_mode = 2;
-			else if (match2 == "exp:") format_mode = 3;
-			else if (match2 == "iexp:") format_mode = 4;
+			else if (match2 == "rgb:") format_mode = 2;
+			else if (match2 == "rgba:") format_mode = 3;
+			else if (match2 == "exp:") format_mode = 4;
+			else if (match2 == "iexp:") format_mode = 5;
 			return "";
 		});
 		// Split
@@ -932,7 +971,8 @@ MediaPlayerCSS.prototype.parse_out_values = function (value) {
 					v = "#" + v;
 				}
 				return v;
-				case 2: // rgba
+				case 2: // rgb
+				case 3: // rgba
 				{
 					if (values.length == 2) {
 						a = (translated[1] ? values[1] : parseFloat(values[1]));
@@ -942,7 +982,7 @@ MediaPlayerCSS.prototype.parse_out_values = function (value) {
 					}
 
 					v = (translated[0] ? values[0] : parseFloat(values[0]));
-					if (a >= 1.0) {
+					if (a >= 1.0 || format_mode == 2) {
 						v = "rgb(" + v[0] + "," + v[1] + "," + v[2] + ")";
 					}
 					else {
@@ -950,8 +990,8 @@ MediaPlayerCSS.prototype.parse_out_values = function (value) {
 					}
 				}
 				return v;
-				case 3: // exp
-				case 4: // iexp
+				case 4: // exp
+				case 5: // iexp
 				{
 					v = 0.0;
 					op = "+";
@@ -1154,6 +1194,8 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 	this.settings_callback = settings_callback;
 	this.destruct_callback = destruct_callback;
 
+	this.use_svg = !this.is_chrome; // TODO : fix this
+
 	// Dimension scaling
 	this.scale_factor = 1.0;
 
@@ -1263,7 +1305,8 @@ MediaPlayer.prototype.save = function () {
 		"playlist_scrollto_onload": this.playlist_scrollto_onload,
 		"position_offset": [ this.position_offset[0] , this.position_offset[1] ],
 		"ytvideo_quality_index": this.ytvideo_quality_index,
-		"first_run": this.first_run
+		"first_run": this.first_run,
+		"use_svg": this.use_svg
 	};
 
 	// Done
@@ -1283,6 +1326,7 @@ MediaPlayer.prototype.load = function (data) {
 	if ("image_height_max" in data) this.image_height_max = data["image_height_max"];
 	if ("ytvideo_quality_index" in data) this.ytvideo_quality_index = data["ytvideo_quality_index"];
 	if ("first_run" in data) this.first_run = data["first_run"];
+	if ("use_svg" in data) this.use_svg = data["use_svg"];
 
 	if ("playlist_scrollto_onload" in data) this.playlist_scrollto_onload = data["playlist_scrollto_onload"];
 
@@ -1307,7 +1351,6 @@ MediaPlayer.prototype.create = function () {
 	// Vars
 	var help_custom_div = null;
 	var title_buttons = new Array();
-	this.playback_controls = [ null , null , null , null , null ];
 	this.help_container = [ null , null , null ];
 	this.player_theme_value_updaters = new Array();
 	this.resizing_controls = new Array();
@@ -1472,38 +1515,6 @@ MediaPlayer.prototype.create = function () {
 							this.D("SPControlContainer")
 							.append(
 								(this.playback_control_container = this.D("SPControlContainerInner"))
-								.append(
-									(this.playback_controls[0] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
-									.html("|&lt;")
-								)
-								.append(
-									this.D("SPControlLinkSeparator")
-								)
-								.append(
-									(this.playback_controls[1] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
-									.html("&lt;&lt;")
-								)
-								.append(
-									this.D("SPControlLinkSeparator")
-								)
-								.append(
-									(this.playback_controls[2] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
-									.html("&gt;")
-								)
-								.append(
-									this.D("SPControlLinkSeparator")
-								)
-								.append(
-									(this.playback_controls[3] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
-									.html("&gt;&gt;")
-								)
-								.append(
-									this.D("SPControlLinkSeparator")
-								)
-								.append(
-									(this.playback_controls[4] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
-									.html("&gt;|")
-								)
 							)
 						) //}
 					)
@@ -1741,6 +1752,28 @@ MediaPlayer.prototype.create = function () {
 								)
 							)
 						)
+						.append(
+							this.D("SPHelpColorInputDiv0")
+							.append(
+								this.D("SPHelpColorInputDiv2b")
+								.append(
+									this.D("SPHelpColorLabelText")
+									.html("Player Graphics")
+								)
+							)
+						)
+						.append(
+							this.D("SPHelpColorInputDiv1Full")
+							.append(
+								this.D("SPHelpColorInputDiv2")
+								.append(
+									this.E("a", "SPHelpModeLink")
+									.on("click." + this.namespace, {media_player: this}, this.on_player_use_svg_update)
+									.on("mousedown", this.cancel_event)
+									.html(this.use_svg ? "Allowed" : "Disallowed")
+								)
+							)
+						)
 					) //}
 					.append( //{ Scaling Settings
 						this.D("SPHelpLabelDiv")
@@ -1964,6 +1997,8 @@ MediaPlayer.prototype.create = function () {
 		)
 	); //}
 
+	// Playback controls
+	this.createPlaybackControls();
 
 	// Custom settings
 	if (this.additional_options.length > 0) {
@@ -2017,10 +2052,6 @@ MediaPlayer.prototype.create = function () {
 	for (var i = 0; i < title_buttons.length; ++i) {
 		title_buttons[i].on("mousedown", this.cancel_event);
 		title_buttons[i].on("click." + this.namespace, {media_player: this, control_id: i}, this.on_main_control_click);
-	}
-	for (var i = 0; i < this.playback_controls.length; ++i) {
-		this.playback_controls[i].on("click." + this.namespace, {control_id: i, media_player: this}, this.on_playback_control_click);
-		this.playback_controls[i].on("mousedown", this.cancel_event);
 	}
 	for (var i = 0; i < this.resizing_texts.length; ++i) {
 		this.resizing_texts[i].css("display", "none");
@@ -2343,7 +2374,9 @@ MediaPlayer.prototype.deselect = function (old_type) {
 
 			// Global
 			for (var i = 0; i < this.playback_controls.length; ++i) {
-				this.C(this.playback_controls[i], "SPControlLinkDisabled");
+				for (var j = 0; j < this.playback_controls[i].length; ++j) {
+					this.C(this.playback_controls[i][j], "SPControlLinkDisabled");
+				}
 			}
 			this.seek_time_current_label.html(this.duration_to_string(0.0));
 			this.seek_time_end_label.html(this.duration_to_string(0.0));
@@ -2376,7 +2409,9 @@ MediaPlayer.prototype.start = function (index) {
 
 	// Controls
 	for (var i = 0; i < this.playback_controls.length; ++i) {
-		this.unC(this.playback_controls[i], "SPControlLinkDisabled");
+		for (var j = 0; j < this.playback_controls[i].length; ++j) {
+			this.unC(this.playback_controls[i][j], "SPControlLinkDisabled");
+		}
 	}
 
 	// Select
@@ -2699,6 +2734,7 @@ MediaPlayer.prototype.nullify = function () {
 	this.seek_bar = null;
 	this.playlist_container = null;
 	this.playback_controls = null;
+	this.playback_controls_svg = null;
 	this.help_container = null;
 	this.content_container = null;
 	this.top_container = null;
@@ -2736,6 +2772,127 @@ MediaPlayer.prototype.nullify = function () {
 	}
 
 	this.player_theme_value_updaters = null;
+}
+
+MediaPlayer.prototype.createPlaybackControls = function () {
+	this.playback_control_container.html("");
+	this.playback_controls = [ [null] , [null] , [null,null] , [null] , [null] ];
+	this.playback_controls_svg = null;
+	if (this.use_svg) {
+		this.playback_controls_svg = [ [null] , [null] , [null,null] , [null] , [null] ]
+
+		for (var i = 0; i < this.playback_controls.length; ++i) {
+			// Separator
+			if (i > 0) this.playback_control_container.append(this.D("SPControlLinkSeparator"));
+
+			for (var j = 0; j < this.playback_controls[i].length; ++j) {
+				// Create SVG container
+				this.playback_control_container.append(
+					(this.playback_controls[i][j] = this.D("SPControlLinkSvgContainer", "SPControlLinkDisabled"))
+				);
+				if (j > 0) this.playback_controls[i][j].css("display", "none");
+
+				var svg_finder;
+				this.playback_controls[i][j].append((svg_finder = this.D("SPControlLinkSvg")));
+				var w = svg_finder.outerWidth();
+				var h = svg_finder.outerHeight();
+
+				svg_finder.svg();
+				this.playback_controls_svg[i][j] = svg_finder.svg("get");
+				var html_svg = $(svg_finder.contents()[0]);
+
+				html_svg.attr("width", w);
+				html_svg.attr("height", h);
+
+				// Create contents
+				var g = this.playback_controls_svg[i][j].group({"class": "SPControlLinkSvgMainGroup"});
+				if (i == 0) {
+					// Back
+					this.playback_controls_svg[i][j].rect(g,
+						0.125, 0.0, 0.25, 1.0,
+						{"class": "SPControlLinkSvgShapeColor"}
+					);
+					this.playback_controls_svg[i][j].polygon(g,
+						[ [0.875 , 0.0] , [0.875 , 1.0] , [0.375 , 0.5] ],
+						{"class": "SPControlLinkSvgShapeColor"}
+					);
+				}
+				else if (i == 1) {
+					// RW
+					this.playback_controls_svg[i][j].polygon(g,
+						[ [0.5 , 0.0] , [0.5 , 1.0] , [0.125 , 0.5] ],
+						{"class": "SPControlLinkSvgShapeColor"}
+					);
+					this.playback_controls_svg[i][j].polygon(g,
+						[ [0.875 , 0.0] , [0.875 , 1.0] , [0.5 , 0.5] ],
+						{"class": "SPControlLinkSvgShapeColor"}
+					);
+				}
+				else if (i == 2) {
+					// Play/pause
+					if (j == 1) {
+						this.playback_controls_svg[i][j].rect(g,
+							0.125, 0.0, 0.25, 1.0,
+							{"class": "SPControlLinkSvgShapeColor"}
+						);
+						this.playback_controls_svg[i][j].rect(g,
+							0.625, 0.0, 0.25, 1.0,
+							{"class": "SPControlLinkSvgShapeColor"}
+						);
+					}
+					else {
+						this.playback_controls_svg[i][j].polygon(g,
+							[ [0.25 , 0.0] , [0.25 , 1.0] , [0.75 , 0.5] ],
+							{"class": "SPControlLinkSvgShapeColor"}
+						);
+					}
+				}
+				else if (i == 3) {
+					// FFW
+					this.playback_controls_svg[i][j].polygon(g,
+						[ [0.125 , 0.0] , [0.125 , 1.0] , [0.5 , 0.5] ],
+						{"class": "SPControlLinkSvgShapeColor"}
+					);
+					this.playback_controls_svg[i][j].polygon(g,
+						[ [0.5 , 0.0] , [0.5 , 1.0] , [0.875 , 0.5] ],
+						{"class": "SPControlLinkSvgShapeColor"}
+					);
+				}
+				else {
+					// Next
+					this.playback_controls_svg[i][j].rect(g,
+						0.625, 0.0, 0.25, 1.0,
+						{"class": "SPControlLinkSvgShapeColor"}
+					);
+					this.playback_controls_svg[i][j].polygon(g,
+						[ [0.125 , 0.0] , [0.125 , 1.0] , [0.625 , 0.5] ],
+						{"class": "SPControlLinkSvgShapeColor"}
+					);
+				}
+			}
+		}
+	}
+	else {
+		this.playback_controls_svg = null;
+		var control_texts = [ ["|&lt;"] , ["&lt;&lt"] , ["&gt;","||"] , ["&gt;&gt;"] , ["&gt;|"] ];
+
+		for (var i = 0; i < this.playback_controls.length; ++i) {
+			if (i > 0) this.playback_control_container.append(this.D("SPControlLinkSeparator"));
+			for (var j = 0; j < this.playback_controls[i].length; ++j) {
+				this.playback_control_container.append(
+					(this.playback_controls[i][j] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
+					.html(control_texts[i][j])
+				);
+				if (j > 0) this.playback_controls[i][j].css("display", "none");
+			}
+		}
+	}
+	for (var i = 0; i < this.playback_controls.length; ++i) {
+		for (var j = 0; j < this.playback_controls[i].length; ++j) {
+			this.playback_controls[i][j].on("click." + this.namespace, {control_id: i, control_id2: j, media_player: this}, this.on_playback_control_click);
+			this.playback_controls[i][j].on("mousedown", this.cancel_event);
+		}
+	}
 }
 
 MediaPlayer.prototype.get_audio_duration = function (audio) {
@@ -2861,10 +3018,12 @@ MediaPlayer.prototype.resize_to = function (width, height, is_left, is_top) {
 MediaPlayer.prototype.update_playing_status = function () {
 	if (!this.seek_exacting && !this.seek_dragging) {
 		if (this.is_paused()) {
-			this.playback_controls[2].html("&gt;");
+			this.playback_controls[2][0].css("display", "");
+			this.playback_controls[2][1].css("display", "none");
 		}
 		else {
-			this.playback_controls[2].html("||");
+			this.playback_controls[2][0].css("display", "none");
+			this.playback_controls[2][1].css("display", "");
 		}
 	}
 }
@@ -4192,6 +4351,19 @@ MediaPlayer.prototype.on_player_theme_change = function (event) {
 	// Callback
 	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
 }
+MediaPlayer.prototype.on_player_use_svg_update = function (event) {
+	// Change mode
+	event.data.media_player.use_svg = !event.data.media_player.use_svg;
+
+	$(this).html(event.data.media_player.use_svg ? "Allowed" : "Disallowed");
+
+	event.data.media_player.createPlaybackControls();
+
+	// Callback
+	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+}
+
+
 
 MediaPlayer.prototype.on_playback_control_click = function (event) {
 	if (event.data.media_player.current_media != null) {
