@@ -177,8 +177,8 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 	}
 	else {
 		// No footer
-		var magic_strings = [ "OggS\x00\x02" , "moot\x00\x02" , "Krni\x00\x02" , "79\x06\x08\x00\x02" ];
-		var magic_strings_ui8 = [ string_to_uint8array(magic_strings[0]) , string_to_uint8array(magic_strings[1]) , string_to_uint8array(magic_strings[2]) , string_to_uint8array(magic_strings[3]) ];
+		var magic_strings = [ "OggS\x00\x02" , "moot\x00\x02" , "Krni\x00\x02" ];
+		var magic_strings_ui8 = [ string_to_uint8array(magic_strings[0]) , string_to_uint8array(magic_strings[1]) , string_to_uint8array(magic_strings[2]) ];
 		var magic_strings_fix_size = 4;
 		var len, s, i, j, k, found, tag, temp_tag, data, id;
 		var sound_index = 0;
