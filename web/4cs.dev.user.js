@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.5
+// @version        1.6
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -274,7 +274,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 						}
 					}
 				}
-				tag = tag || "?";
+				tag = (tag && tag !== true ? tag : "?");
 
 				// If there was an old sound, complete it
 				if (sounds.length > 0) {
@@ -302,7 +302,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 				sound_magic_string_index = s;
 				sound_masked_state = (masked ? unmask_state : null);
 				sound_masked_mask = (masked ? mask : null);
-				//i += magic_strings_ui8[s].length;
+				sound_index += 1;
 			}
 		}
 		// Complete any sounds
@@ -1033,7 +1033,7 @@ ThreadManager.prototype.parse_post = function (container) {
 	var image = container.find(is_archive ? ".thread_image_link" : ".fileThumb");
 	var post = container.find(is_archive ? ".text" : ".postMessage");
 
-	image = (image.length > 0 ? image.attr("href") : null);
+	image = (image.length > 0 ? (image.attr("href") || "") : null);
 	// Redirect links from the archive
 	if (is_archive && image !== null) {
 		var match;
@@ -1158,6 +1158,8 @@ function inline_post_parse(post_data, redo, post_data_copy) {
 				"about_container": null,
 				"about_count_label": null,
 				"about_list_container": null,
+				"about_list_container_inner": null,
+				"about_list_container_toggler": null,
 				"auto_check": {
 					"search_span": null,
 					"search_status": null
@@ -1365,21 +1367,55 @@ function inline_replace_tags(tags) {
 	}
 	return false;
 }
+
 function inline_update_about_image(post_data) {
+	// Show container
 	post_data.sounds.about_container.css("display", "");
 	var sound_count = 0;
 	var file_count = post_data.sounds.sound_names.length;
 
-	post_data.sounds.about_list_container.html("");
+	// Create a list of sounds (and files)
+	var display_count = 0;
+	var container = post_data.sounds.about_list_container;
+	container.html("");
 	for (var sound = true; ; sound = false) {
 		for (var i = 0; i < post_data.sounds.sound_names.length; ++i) {
 			var is_sound = (post_data.sounds.sound_names[i].split(".").pop().toLowerCase() == "ogg");
-			if (sound == is_sound) {
+			if (sound == is_sound) {	
+				// Only display 2 without expansion
+				if (display_count++ == 2 && file_count > 3) {
+					container.append(
+						(container = post_data.sounds.about_list_container_inner = E("div"))
+						.css("display", "none")
+					)
+					.append(
+						(post_data.sounds.about_list_container_toggler = E("a"))
+						.attr("href", "#")
+						.css("font-style", "italic")
+					);
+					var label = "And " + file_count + " more...";
+					var hide = "Hide " + file_count + " files";
+					post_data.sounds.about_list_container_toggler
+					.html(label)
+					.on(
+						"click", {"container": container, "label": label, "hide": hide}, function (event) {
+							if (container.css("display") == "none") {
+								container.css("display", "");
+								$(this).html(hide);
+							}
+							else {
+								container.css("display", "none");
+								$(this).html(label);
+							}
+							return false;
+						}
+					);
+				}
+
 				if (sound) {
 					if (is_sound) ++sound_count;
 
-					post_data.sounds.about_list_container
-					.append(
+					container.append(
 						E("div")
 						.append(T("- "))
 						.append(
@@ -1392,8 +1428,7 @@ function inline_update_about_image(post_data) {
 					);
 				}
 				else {
-					post_data.sounds.about_list_container
-					.append(
+					container.append(
 						E("div")
 						.append(T("- "))
 						.append(
@@ -1410,6 +1445,7 @@ function inline_update_about_image(post_data) {
 		if (!sound) break;
 	}
 
+	// Found string
 	var str = "";
 	if (sound_count > 0) {
 		str += sound_count + " Sound" + (sound_count == 1 ? "" : "s") + " Found";
@@ -1462,6 +1498,21 @@ function inline_activate_load_all_link(post_data, done_callback) {
 	return false;
 }
 
+function inline_on_image_drag(data) {
+	var url_lower = data.text.toLowerCase();
+	for (var post_id in thread_manager.posts) {
+		if (
+			thread_manager.posts[post_id].image_url !== null &&
+			url_lower.indexOf(thread_manager.posts[post_id].image_url.toLowerCase()) >= 0
+		) {
+			// Found; activate manual load
+			inline_activate_load_all_link(thread_manager.posts[post_id]);
+			data.text = "";
+			return false;
+		}
+	}
+	return true;
+}
 
 function inline_post_parse_for_urls(post_data, redo, post_data_copy) {
 	if (redo) {
@@ -1892,6 +1943,46 @@ var sound_auto_checker = new SoundAutoChecker();
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// Hotkeys
+///////////////////////////////////////////////////////////////////////////////
+function HotkeyListener() {
+	this.flags = 0;
+
+	$(document)
+	.off("keydown.HotkeyListener keyup.HotkeyListener")
+	.on("keydown.HotkeyListener", {self: this}, function (event) {
+		if (event.which >= 16 && event.which <= 17) { // changing 17 to 18 enables "alt" support, but is buggy
+			event.data.self.flags |= (1 << (event.which - 16));
+		}
+		else if (
+			script_settings["hotkeys"]["open_player"][0] != 0 &&
+			script_settings["hotkeys"]["open_player"][0] == event.which &&
+			script_settings["hotkeys"]["open_player"][1] == event.data.self.flags
+		) {
+			// Not typing
+			var t = $(document.activeElement).prop("tagName").toLowerCase();
+			if (t !== "input" && t !== "textarea") {
+				// Open the player
+				open_player(true);
+
+				event.stopPropagation();
+				event.preventDefault();
+				return false;
+			}
+		}
+		return true;
+	})
+	.on("keyup.HotkeyListener", {self: this}, function (event) {
+		if (event.which >= 16 && event.which <= 17) {
+			event.data.self.flags &= ~(1 << (event.which - 16));
+		}
+	});
+}
+var hotkey_listener = null;
+
+
+
+///////////////////////////////////////////////////////////////////////////////
 // Sound player control
 ///////////////////////////////////////////////////////////////////////////////
 var media_player_instance = null;
@@ -2084,24 +2175,153 @@ function open_player(load_settings) {
 	media_player_css = new MediaPlayerCSS("yotsubab", media_player_css_color_presets, media_player_css_size_presets);
 	// Load CSS settings
 	if (load_settings) media_player_css.load(script_settings["style"]);
+	//{ Hotkey settings
+	var hotkey_settings = {
+		"section": "Hotkeys",
+		"label": "Open Player",
+		"html": null,
+		"html_input": null,
+		"html_input_clear": null,
+		"value": "",
+		"value_code": script_settings["hotkeys"]["open_player"][0],
+		"value_modifiers": script_settings["hotkeys"]["open_player"][1],
+		"value_modifiers_current": 0, // 1 = shift, 2 = ctrl, 4 = alt
+		"update_value": null
+	};
+	hotkey_settings.update_value = function (hotkey_settings) {
+		// Update
+		var v = hotkey_settings.value_modifiers;
+		var str = "";
+		if ((v & 1) != 0) str += "Shift";
+		if ((v & 2) != 0) str += (str.length > 0 ? " + " : "") + "Ctrl";
+		if ((v & 4) != 0) str += (str.length > 0 ? " + " : "") + "Alt";
+		v = hotkey_settings.value_code;
+		if (v != 0) str += (str.length > 0 ? " + " : "") + String.fromCharCode(v);
+		
+		hotkey_settings.value = str;
+
+		hotkey_settings.html_input.val(hotkey_settings.value);
+	};
+
+	// HTML
+	(hotkey_settings.html = E("div"))
+	.append( //{ DOM
+		E("div")
+		.addClass("SPHelpColorInputDiv2")
+		.append(
+			E("div")
+			.addClass("SPHelpColorInputDiv3")
+			.css({
+				"position": "relative",
+			})
+			.append(
+				(hotkey_settings.html_input = E("input"))
+				.addClass("SPHelpColorInput")
+				.attr("type", "text")
+				.val(hotkey_settings.value)
+			)
+			.append(
+				E("div")
+				.css({
+					"position": "absolute",
+					"right": "0",
+					"top": "0",
+					"bottom": "0",
+				})
+				.append(
+					(hotkey_settings.html_input_clear = E("a"))
+					.attr("href", "#")
+					.html("Clear")
+				)
+			)
+		)
+	); //}
+
+	// Update value
+	hotkey_settings.update_value(hotkey_settings);
+
+	// Events
+	hotkey_settings.html_input_clear.on("click", {"hotkey_settings": hotkey_settings}, function (event) {
+		// Clear value
+		event.data.hotkey_settings.value_code = 0;
+		event.data.hotkey_settings.value_modifiers = 0;
+		event.data.hotkey_settings.value_modifiers_current = 0;
+		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+
+		// Update
+		script_settings["hotkeys"]["open_player"][0] = event.data.hotkey_settings.value_code;
+		script_settings["hotkeys"]["open_player"][1] = event.data.hotkey_settings.value_modifiers;
+		settings_save();
+
+		return false;
+	});
+	hotkey_settings.html_input.on("keydown", {"hotkey_settings": hotkey_settings}, function (event) {
+		if (event.which >= 16 && event.which <= 17) {
+			var v = 1 << (event.which - 16);
+			event.data.hotkey_settings.value_modifiers_current |= v;
+
+			event.data.hotkey_settings.value_modifiers = event.data.hotkey_settings.value_modifiers_current;
+			event.data.hotkey_settings.value_code = 0;
+		}
+		else {
+			// Key
+			event.data.hotkey_settings.value_modifiers = event.data.hotkey_settings.value_modifiers_current;
+			event.data.hotkey_settings.value_code = event.which;
+		}
+
+		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+
+		event.stopPropagation();
+		event.preventDefault();
+		return false;
+	})
+	.on("keyup", {"hotkey_settings": hotkey_settings}, function (event) {
+		if (event.which >= 16 && event.which <= 17) {
+			var v = 1 << (event.which - 16);
+			event.data.hotkey_settings.value_modifiers_current &= ~v;
+
+			event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+		}
+
+		event.stopPropagation();
+		event.preventDefault();
+		return false;
+	})
+	.on("blur", {"hotkey_settings": hotkey_settings}, function (event) {
+		// No key?
+		if (event.data.hotkey_settings.value_code == 0) {
+			event.data.hotkey_settings.value_modifiers = 0;
+		}
+		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+
+		// Update
+		script_settings["hotkeys"]["open_player"][0] = event.data.hotkey_settings.value_code;
+		script_settings["hotkeys"]["open_player"][1] = event.data.hotkey_settings.value_modifiers;
+		settings_save();
+	});
+	//}
+	// Custom settings
+	var extra_options = [
+		{
+			"current": script_settings["inline"]["url_replace"],
+			"label": "URL Replacing",
+			"values": [ true , false ],
+			"descr": [ "Enabled" , "Disabled" ],
+			"change": function (value) {
+				script_settings["inline"]["url_replace"] = value;
+				settings_save();
+			}
+		},
+		hotkey_settings
+	];
 	// Player
 	media_player_instance = new MediaPlayer(
 		media_player_css,
 		[ png_load_callback , image_load_callback ],
+		inline_on_image_drag,
 		function (media_player) { settings_save(); },
 		media_player_destruct_callback,
-		[
-			{
-				"current": script_settings["inline"]["url_replace"],
-				"label": "URL Replacing",
-				"values": [ true , false ],
-				"descr": [ "Enabled" , "Disabled" ],
-				"change": function (value) {
-					script_settings["inline"]["url_replace"] = value;
-					settings_save();
-				}
-			}
-		]
+		extra_options
 	);
 	// Load settings	
 	if (load_settings) media_player_instance.load(script_settings["player"]);
@@ -2128,6 +2348,9 @@ var script_settings = {
 		"update_version": "",
 		"current_version": "",
 		"update_message": ""
+	},
+	"hotkeys": {
+		"open_player": [0, 0]
 	},
 	"inline": {
 		"url_replace": true
@@ -2280,6 +2503,7 @@ jQuery(document).ready(function () {
 	// Setup
 	inline_setup();
 	thread_manager = new ThreadManager();
+	hotkey_listener = new HotkeyListener();
 
 	// Update check once a day
 	var time_update;

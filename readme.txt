@@ -61,6 +61,19 @@ Web Plugin / User End:
 		dependencies without a restart.
 
 
+	Version 1.6:
+
+	Inline file display now only shows the first 2 or 3 files of a long list of files.
+	Added hotkey to open the sound player.
+	Fixed a titling issue when loading all sounds and there is no tag.
+	Fixed the first page of settings's scrollbar.
+
+
+	Version 1.5:
+
+	Various bugfixes.
+
+
 	Version 1.4:
 
 	Auto-updating is MUCH less of a hassle.

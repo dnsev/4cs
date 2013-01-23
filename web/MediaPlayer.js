@@ -86,7 +86,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"display": "inline",
 			"white-space": "nowrap",
 			"font-weight": "bold",
-			"color": "{hex:color_special_1}",
+			"color": "{hex:color_special_1} !important",
 			"text-shadow": "{exp:1,*,font_scale}px {exp:1,*,font_scale}px 1px {hex:color_highlight_light}"
 		},
 
@@ -106,7 +106,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"height": "100%",
 			"overflow": "hidden"
 		},
-		".SPMainButtonLeft": {
+		".SPMainButtonLeft, a.SPMainButtonLeft": {
 			"display": "inline-block",
 			"padding": "{exp:1,*,padding_scale}px",
 			"border-top-left-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
@@ -129,7 +129,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
-		".SPMainButtonRight": {
+		".SPMainButtonRight, a.SPMainButtonRight": {
 			"display": "inline-block",
 			"padding": "{exp:1,*,padding_scale}px",
 			"border-top-right-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
@@ -152,7 +152,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
-		".SPMainButtonGeneric": {
+		".SPMainButtonGeneric, a.SPMainButtonGeneric": {
 			"display": "inline-block",
 			"padding": "{exp:1,*,padding_scale}px",
 			"text-decoration": "none !important",
@@ -183,7 +183,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 		},
 
 		".SPTopContainer": {
-			"position": "relative"
+			"position": "relative",
 		},
 		".SPVolumeContainer": {
 			"position": "absolute",
@@ -231,11 +231,13 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"text-shadow": "{exp:1,*,font_scale}px {exp:1,*,font_scale}px 1px {hex:color_highlight_light}"
 		},
 		".SPVolumeLabel": {
-			"display": "block"
+			"display": "block",
+			"color": "{hex:color_standard} !important",
 		},
 		".SPVolumeValue": {
 			"display": "block",
-			"font-size": "{exp:font_size_small,*,font_scale}px"
+			"font-size": "{exp:font_size_small,*,font_scale}px",
+			"color": "{hex:color_standard} !important",
 		},
 
 		".SPPlaylistIndexContainer": {
@@ -244,7 +246,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"top": "0",
 			"cursor": "default",
 			"opacity": "0.0",
-			"padding": "{exp:2,*,padding_scale}px"
+			"padding": "{exp:2,*,padding_scale}px",
 		},
 		".SPPlaylistIndexContainerActive": {
 			"opacity": "1.0 !important"
@@ -258,16 +260,19 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 		".SPPlaylistIndexContainerInner": {
 			"padding": "{exp:2,*,padding_scale}px",
 			"border-radius": "{exp:2,*,padding_scale}px",
-			"background": "{rgba:bg_color_lightest}"
+			"background": "{rgba:bg_color_lightest}",
 		},
 		".SPPlaylistIndexText1": {
+			"color": "{hex:color_standard} !important",
 			"display": "inline-block"
 		},
 		".SPPlaylistIndexText2": {
+			"color": "{hex:color_standard} !important",
 			"display": "inline-block",
 			"padding": "0px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px",
 		},
 		".SPPlaylistIndexText3": {
+			"color": "{hex:color_standard} !important",
 			"display": "inline-block"
 		},
 
@@ -292,26 +297,26 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 		".SPTopContainer:hover .SPControlContainerInner": {
 			"background": "{rgba:bg_color_lightest}"
 		},
-		".SPControlLink": {
+		".SPControlLink, a.SPControlLink": {
 			"padding": "{exp:1,*,padding_scale}px {exp:2,*,padding_scale}px {exp:1,*,padding_scale}px {exp:2,*,padding_scale}px",
-			"font-family": "{controls_font}",
+			"font-family": "{controls_font} !important",
 			"font-size": "{exp:font_size_controls,*,font_scale}px",
-			"font-weight": "bold",
+			"font-weight": "bold !important",
 			"text-decoration": "none !important",
 			"display": "inline-block",
 			"border-radius": "{exp:border_radius_small,*,border_scale}px",
 			"cursor": "pointer",
-			"color": "{hex:color_standard}",
+			"color": "{hex:color_standard} !important",
 			"background": "transparent"
 		},
-		".SPControlLink:hover": {
+		".SPControlLink:hover, a.SPControlLink:hover": {
 			"text-decoration": "none !important",
-			"color": "{hex:color_standard}",
+			"color": "{hex:color_standard} !important",
 			"background": "{rgba:bg_color_light}"
 		},
-		".SPControlLink:active": {
+		".SPControlLink:active, a.SPControlLink:active": {
 			"text-decoration": "none !important",
-			"color": "{hex:color_special_2}",
+			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_dark}"
 		},
 		".SPControlLinkDisabled, .SPControlLinkDisabled:hover, .SPControlLinkDisabled:active": {
@@ -400,7 +405,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"text-align": "center"
 		},
 		".SPSeekTime": {
-			"color": "{hex:color_standard}",
+			"color": "{hex:color_standard} !important",
 			"display": "inline-block",
 			"text-shadow": "{exp:1,*,font_scale}px {exp:1,*,font_scale}px 1px {hex:color_highlight_light}",
 		},
@@ -409,14 +414,14 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"left": "0",
 			"padding-left": "{exp:1,*,padding_scale}px",
 			"display": "inline-block",
-			"color": "{hex:color_disabled}"
+			"color": "{hex:color_disabled} !important"
 		},
 		".SPSeekTimeRight": {
 			"position": "absolute",
 			"right": "0",
 			"padding-right": "{exp:1,*,padding_scale}px",
 			"display": "inline-block",
-			"color": "{hex:color_disabled}"
+			"color": "{hex:color_disabled} !important"
 		},
 		".SPSeekBarContainer": {
 			"position": "absolute",
@@ -523,7 +528,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"right": "0",
 			"top": "0",
 			"white-space": "nowrap",
-			"color": "{hex:color_light}",
+			"color": "{hex:color_light} !important",
 			"display": "block",
 			"cursor": "default",
 			"padding": "{exp:1,*,padding_scale}px {exp:2,*,padding_scale}px {exp:1,*,padding_scale}px 0px",
@@ -550,7 +555,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"text-decoration": "none !important",
 			"opacity": "1.0"
 		},
-		".SPPlaylistControlLink": {
+		".SPPlaylistControlLink, a.SPPlaylistControlLink, .SPPlaylistControlLink:visited, a.SPPlaylistControlLink:visited": {
 			"display": "inline-block",
 			"padding": "0px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px",
 			"width": "{exp:12,*,font_scale}px",
@@ -558,19 +563,19 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"cursor": "pointer",
 			"border-radius": "{exp:border_radius_small,*,border_scale}px",
 			"text-decoration": "none",
-			"color": "{hex:color_disabled}",
+			"color": "{hex:color_disabled} !important",
 			"background": "transparent"
 		},
-		".SPPlaylistControls:hover .SPPlaylistControlLink, .SPPlaylistControlLink:visited": {
+		".SPPlaylistControls:hover .SPPlaylistControlLink, .SPPlaylistControls:hover a.SPPlaylistControlLink": {
 			"text-decoration": "none !important",
 			"background": "{rgba:bg_color_light} !important"
 		},
-		".SPPlaylistControls:hover .SPPlaylistControlLink:hover": {
+		".SPPlaylistControls:hover .SPPlaylistControlLink:hover, .SPPlaylistControls:hover a.SPPlaylistControlLink:hover": {
 			"text-decoration": "none !important",
 			"color": "{hex:color_standard} !important",
 			"background": "{rgba:bg_color_dark}"
 		},
-		".SPPlaylistControls:hover .SPPlaylistControlLink:active": {
+		".SPPlaylistControls:hover .SPPlaylistControlLink:active, .SPPlaylistControls:hover a.SPPlaylistControlLink:active": {
 			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_dark}"
@@ -595,27 +600,42 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"top": "0",
 			"width": "100%",
 			"height": "100%",
+			"background": "{rgba:bg_color_light}"
+		},
+		".SPHelpContainerInner0": {
+			"position": "relative",
+			"width": "100%",
+			"height": "100%",
+		},
+		".SPHelpContainerInner1": {
+			"position": "absolute",
+			"left": "0",
+			"top": "0",
+			"right": "0",
+			"bottom": "0",
 			"overflow-x": "hidden",
 			"overflow-y": "auto",
-			"background": "{rgba:bg_color_light}"
 		},
 		".SPHelpLabelDiv": {
 			"display": "block",
 			"width": "100%",
 			"text-align": "left",
 			"font-weight": "bold",
+			"color": "{hex:color_standard} !important",
 			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px"
 		},
 		".SPHelpTextDiv": {
 			"display": "block",
 			"width": "100%",
 			"text-align": "left",
+			"color": "{hex:color_standard} !important",
 			"padding": "{exp:2,*,padding_scale}px {exp:4,*,padding_scale}px 0px {exp:4,*,padding_scale}px"
 		},
 		".SPHelpSectionDiv": {
 			"display": "block",
 			"width": "100%",
 			"text-align": "left",
+			"color": "{hex:color_standard} !important",
 			"padding-top": "{exp:2,*,padding_scale}px"
 		},
 		".SPHelpLinkDiv": {
@@ -626,7 +646,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"bottom": "0",
 			"left": "0"
 		},
-		".SPHelpTextLink": {
+		".SPHelpTextLink, a.SPHelpTextLink": {
 			"display": "inline-block",
 			"width": "50%",
 			"text-align": "center",
@@ -634,15 +654,18 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"text-decoration": "none",
 			"color": "{hex:color_standard} !important"
 		},
-		".SPHelpTextLink:hover": {
+		".SPHelpTextLink:hover, a.SPHelpTextLink:hover": {
 			"text-decoration": "underline",
 			"color": "{hex:color_standard} !important"
 		},
-		".SPHelpTextLink:active": {
+		".SPHelpTextLink:active, a.SPHelpTextLink:active": {
 			"text-decoration": "underline",
 			"color": "{hex:color_special_2} !important"
 		},
-		".SPHelpModeLink": {
+		".SPHelpModeNonLink": {
+			"padding-left": "{exp:4.0,*,padding_scale}px"
+		},
+		".SPHelpModeLink, a.SPHelpModeLink": {
 			"display": "inline-block",
 			"width": "100%",
 			"text-align": "left",
@@ -651,11 +674,11 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_standard} !important",
 			"padding-left": "{exp:4.0,*,padding_scale}px"
 		},
-		".SPHelpModeLink:hover": {
+		".SPHelpModeLink:hover, a.SPHelpModeLink:hover": {
 			"text-decoration": "underline",
 			"color": "{hex:color_standard} !important"
 		},
-		".SPHelpModeLink:active": {
+		".SPHelpModeLink:active, a.SPHelpModeLink:active": {
 			"text-decoration": "underline",
 			"color": "{hex:color_special_2} !important"
 		},
@@ -669,6 +692,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"width": "100%",
 			"text-align": "right",
 			"font-style": "italic",
+			"color": "{hex:color_standard} !important",
 			"vertical-align": "middle"
 		},
 		".SPHelpColorLabelDisplay": {
@@ -698,7 +722,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"padding": "{exp:2,*,padding_scale}px",
 			"background": "{rgba:bg_color_lightest}"
 		},
-		".SPHelpColorInput, .SPHelpColorInput:hover, .SPHelpColorInput:active, .SPHelpColorInput:focus, input.SPHelpColorInput[type=\"text\"], input.SPHelpColorInput[type=\"text\"]:focus": {
+		".SPHelpColorInput[type=\"text\"], .SPHelpColorInput[type=\"text\"]:hover, .SPHelpColorInput[type=\"text\"]:active, .SPHelpColorInput[type=\"text\"]:focus, input.SPHelpColorInput[type=\"text\"], input.SPHelpColorInput[type=\"text\"]:hover, input.SPHelpColorInput[type=\"text\"]:active, input.SPHelpColorInput[type=\"text\"]:focus": {
 			"width": "100% !important",
 			"display": "inline-block !important",
 			"padding": "0px !important",
@@ -1174,7 +1198,7 @@ MediaPlayerCSS.prototype.load = function (data) {
 
 
 
-function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback, additional_options) {
+function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, destruct_callback, additional_options) {
 	// Not setup
 	this.created = false;
 	this.namespace = "media_player";
@@ -1190,6 +1214,7 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 			this.load_callbacks.push(load_callbacks[i]);
 		}
 	}
+	this.drag_callback = drag_callback;
 	this.settings_callback = settings_callback;
 	this.destruct_callback = destruct_callback;
 
@@ -1269,6 +1294,9 @@ function MediaPlayer (css, load_callbacks, settings_callback, destruct_callback,
 	// html elements
 	this.nullify();
 	this.additional_options = additional_options;
+	for (var i = 0; i < this.additional_options.length; ++i) {
+		this.additional_options[i].media_player = this;
+	}
 
 	// CSS
 	this.css = css;
@@ -1351,6 +1379,8 @@ MediaPlayer.prototype.create = function () {
 	var help_custom_div = null;
 	var title_buttons = new Array();
 	this.help_container = [ null , null , null ];
+	this.help_container_inner1 = [ null , null , null ];
+	this.help_container_footer = [ null , null , null ];
 	this.player_theme_value_updaters = new Array();
 	this.resizing_controls = new Array();
 	this.resizing_texts = new Array();
@@ -1621,226 +1651,244 @@ MediaPlayer.prototype.create = function () {
 				.append( //{ Help 0
 					(this.help_container[0] = this.D("SPHelpContainer"))
 					.css("display", "none")
-					.append( //{ Playlist Settings
-						this.D("SPHelpLabelDiv")
-						.html("Playlist Settings")
-					)
 					.append(
-						this.D("SPHelpSectionDiv")
+						this.D("SPHelpContainerInner0")
 						.append(
-							this.D("SPHelpColorInputDiv0")
+							(this.help_container_inner1[0] = this.D("SPHelpContainerInner1"))
+							.append( //{ Playlist Settings
+								this.D("SPHelpLabelDiv")
+								.html("Playlist Settings")
+							)
 							.append(
-								this.D("SPHelpColorInputDiv2b")
+								this.D("SPHelpSectionDiv")
 								.append(
-									this.D("SPHelpColorLabelText")
-									.html("Mode")
+									this.D("SPHelpColorInputDiv0")
+									.append(
+										this.D("SPHelpColorInputDiv2b")
+										.append(
+											this.D("SPHelpColorLabelText")
+											.html("Mode")
+										)
+									)
+								)
+								.append(
+									this.D("SPHelpColorInputDiv1Full")
+									.append(
+										this.D("SPHelpColorInputDiv2")
+										.append(
+											this.E("a", "SPHelpModeLink")
+											.html(this.playlist_randomize ? "Randomize" : (this.playlist_loop ? "Loop" : "Play Once"))
+											.on("click." + this.namespace, {media_player: this}, this.on_playlist_mode_change)
+											.on("mousedown", this.cancel_event)
+										)
+									)
 								)
 							)
-						)
-						.append(
-							this.D("SPHelpColorInputDiv1Full")
 							.append(
-								this.D("SPHelpColorInputDiv2")
+								this.D("SPHelpSectionDiv")
 								.append(
-									this.E("a", "SPHelpModeLink")
-									.html(this.playlist_randomize ? "Randomize" : (this.playlist_loop ? "Loop" : "Play Once"))
-									.on("click." + this.namespace, {media_player: this}, this.on_playlist_mode_change)
-									.on("mousedown", this.cancel_event)
+									this.D("SPHelpColorInputDiv0")
+									.append(
+										this.D("SPHelpColorInputDiv2b")
+										.append(
+											this.D("SPHelpColorLabelText")
+											.html("On Load")
+										)
+									)
+								)
+								.append(
+									this.D("SPHelpColorInputDiv1Full")
+									.append(
+										this.D("SPHelpColorInputDiv2")
+										.append(
+											this.E("a", "SPHelpModeLink")
+											.html(this.playlist_play_on_load_settings[this.playlist_play_on_load])
+											.on("click." + this.namespace, {media_player: this}, this.on_playlist_onload_change)
+											.on("mousedown", this.cancel_event)
+										)
+									)
 								)
 							)
+							.append(
+								this.D("SPHelpSectionDiv")
+								.append(
+									this.D("SPHelpColorInputDiv0")
+									.append(
+										this.D("SPHelpColorInputDiv2b")
+										.append(
+											this.D("SPHelpColorLabelText")
+										)
+									)
+								)
+								.append(
+									this.D("SPHelpColorInputDiv1Full")
+									.append(
+										this.D("SPHelpColorInputDiv2")
+										.append(
+											this.E("a", "SPHelpModeLink")
+											.html(this.playlist_scrollto_onload ? "Scroll to in playlist" : "Don't scroll playlist")
+											.on("click." + this.namespace, {media_player: this}, this.on_playlist_scrollto_change)
+											.on("mousedown", this.cancel_event)
+										)
+									)
+								)
+							)
+							.append(
+								this.D("SPHelpSectionDiv")
+								.append(
+									this.D("SPHelpColorInputDiv0")
+									.append(
+										this.D("SPHelpColorInputDiv2b")
+										.append(
+											this.D("SPHelpColorLabelText")
+											.html("YT Quality")
+										)
+									)
+								)
+								.append(
+									this.D("SPHelpColorInputDiv1Full")
+									.append(
+										this.D("SPHelpColorInputDiv2")
+										.append(
+											this.E("a", "SPHelpModeLink")
+											.html(this.ytvideo_qualities[this.ytvideo_quality_index])
+											.on("click." + this.namespace, {media_player: this}, this.on_ytquality_change)
+											.on("mousedown", this.cancel_event)
+										)
+									)
+								)
+							) //}
+							.append( //{ Player Settings
+								this.D("SPHelpLabelDiv")
+								.html("Player Settings")
+							)
+							.append(
+								(help_custom_div = this.D("SPHelpSectionDiv"))
+								.append(
+									this.D("SPHelpColorInputDiv0")
+									.append(
+										this.D("SPHelpColorInputDiv2b")
+										.append(
+											this.D("SPHelpColorLabelText")
+											.html("Theme")
+										)
+									)
+								)
+								.append(
+									this.D("SPHelpColorInputDiv1Full")
+									.append(
+										this.D("SPHelpColorInputDiv2")
+										.append(
+											(this.player_theme_name = this.E("a", "SPHelpModeLink"))
+											.on("click." + this.namespace, {media_player: this}, this.on_player_theme_change)
+											.on("mousedown", this.cancel_event)
+										)
+									)
+								)
+								.append(
+									this.D("SPHelpColorInputDiv0")
+									.append(
+										this.D("SPHelpColorInputDiv2b")
+										.append(
+											this.D("SPHelpColorLabelText")
+											.html("Player Graphics")
+										)
+									)
+								)
+								.append(
+									this.D("SPHelpColorInputDiv1Full")
+									.append(
+										this.D("SPHelpColorInputDiv2")
+										.append(
+											this.E("a", "SPHelpModeLink")
+											.on("click." + this.namespace, {media_player: this}, this.on_player_use_svg_update)
+											.on("mousedown", this.cancel_event)
+											.html(this.use_svg ? "Allowed" : "Disallowed")
+										)
+									)
+								)
+							) //}
+							.append( //{ Scaling Settings
+								this.D("SPHelpLabelDiv")
+								.html("Scaling Settings")
+							)
+							.append(this.generate_value_editor("Padding", "padding_scale", this.css.css_size_presets[this.css.preset].padding_scale, false))
+							.append(this.generate_value_editor("Text", "font_scale", this.css.css_size_presets[this.css.preset].font_scale, false))
+							.append(this.generate_value_editor("Borders", "border_scale", this.css.css_size_presets[this.css.preset].border_scale, false))
+							.append(this.generate_value_editor("Window", "@scale_factor", this.scale_factor, false))
+							//}
 						)
+						.append( //{ More
+							(this.help_container_footer[0] = this.D("SPHelpLinkDiv"))
+							.append(
+								this.D("SPHelpLabelDiv")
+								.html("More Settings")
+							) 
+							.append(
+								this.D("SPHelpSectionDiv")
+								.append(
+									this.E("A", "SPHelpTextLink")
+									.html("Color Settings")
+									.on("click." + this.namespace, {media_player: this, help_page: 1}, this.on_helppage_goto)
+								)
+								.append(
+									this.E("A", "SPHelpTextLink")
+									.html("Other Settings")
+									.on("click." + this.namespace, {media_player: this, help_page: 2}, this.on_helppage_goto)
+								)
+							)
+						) //}
 					)
-					.append(
-						this.D("SPHelpSectionDiv")
-						.append(
-							this.D("SPHelpColorInputDiv0")
-							.append(
-								this.D("SPHelpColorInputDiv2b")
-								.append(
-									this.D("SPHelpColorLabelText")
-									.html("On Load")
-								)
-							)
-						)
-						.append(
-							this.D("SPHelpColorInputDiv1Full")
-							.append(
-								this.D("SPHelpColorInputDiv2")
-								.append(
-									this.E("a", "SPHelpModeLink")
-									.html(this.playlist_play_on_load_settings[this.playlist_play_on_load])
-									.on("click." + this.namespace, {media_player: this}, this.on_playlist_onload_change)
-									.on("mousedown", this.cancel_event)
-								)
-							)
-						)
-					)
-					.append(
-						this.D("SPHelpSectionDiv")
-						.append(
-							this.D("SPHelpColorInputDiv0")
-							.append(
-								this.D("SPHelpColorInputDiv2b")
-								.append(
-									this.D("SPHelpColorLabelText")
-								)
-							)
-						)
-						.append(
-							this.D("SPHelpColorInputDiv1Full")
-							.append(
-								this.D("SPHelpColorInputDiv2")
-								.append(
-									this.E("a", "SPHelpModeLink")
-									.html(this.playlist_scrollto_onload ? "Scroll to in playlist" : "Don't scroll playlist")
-									.on("click." + this.namespace, {media_player: this}, this.on_playlist_scrollto_change)
-									.on("mousedown", this.cancel_event)
-								)
-							)
-						)
-					)
-					.append(
-						this.D("SPHelpSectionDiv")
-						.append(
-							this.D("SPHelpColorInputDiv0")
-							.append(
-								this.D("SPHelpColorInputDiv2b")
-								.append(
-									this.D("SPHelpColorLabelText")
-									.html("YT Quality")
-								)
-							)
-						)
-						.append(
-							this.D("SPHelpColorInputDiv1Full")
-							.append(
-								this.D("SPHelpColorInputDiv2")
-								.append(
-									this.E("a", "SPHelpModeLink")
-									.html(this.ytvideo_qualities[this.ytvideo_quality_index])
-									.on("click." + this.namespace, {media_player: this}, this.on_ytquality_change)
-									.on("mousedown", this.cancel_event)
-								)
-							)
-						)
-					) //}
-					.append( //{ Player Settings
-						this.D("SPHelpLabelDiv")
-						.html("Player Settings")
-					)
-					.append(
-						(help_custom_div = this.D("SPHelpSectionDiv"))
-						.append(
-							this.D("SPHelpColorInputDiv0")
-							.append(
-								this.D("SPHelpColorInputDiv2b")
-								.append(
-									this.D("SPHelpColorLabelText")
-									.html("Theme")
-								)
-							)
-						)
-						.append(
-							this.D("SPHelpColorInputDiv1Full")
-							.append(
-								this.D("SPHelpColorInputDiv2")
-								.append(
-									(this.player_theme_name = this.E("a", "SPHelpModeLink"))
-									.on("click." + this.namespace, {media_player: this}, this.on_player_theme_change)
-									.on("mousedown", this.cancel_event)
-								)
-							)
-						)
-						.append(
-							this.D("SPHelpColorInputDiv0")
-							.append(
-								this.D("SPHelpColorInputDiv2b")
-								.append(
-									this.D("SPHelpColorLabelText")
-									.html("Player Graphics")
-								)
-							)
-						)
-						.append(
-							this.D("SPHelpColorInputDiv1Full")
-							.append(
-								this.D("SPHelpColorInputDiv2")
-								.append(
-									this.E("a", "SPHelpModeLink")
-									.on("click." + this.namespace, {media_player: this}, this.on_player_use_svg_update)
-									.on("mousedown", this.cancel_event)
-									.html(this.use_svg ? "Allowed" : "Disallowed")
-								)
-							)
-						)
-					) //}
-					.append( //{ Scaling Settings
-						this.D("SPHelpLabelDiv")
-						.html("Scaling Settings")
-					)
-					.append(this.generate_value_editor("Padding", "padding_scale", this.css.css_size_presets[this.css.preset].padding_scale, false))
-					.append(this.generate_value_editor("Text", "font_scale", this.css.css_size_presets[this.css.preset].font_scale, false))
-					.append(this.generate_value_editor("Borders", "border_scale", this.css.css_size_presets[this.css.preset].border_scale, false))
-					.append(this.generate_value_editor("Window", "@scale_factor", this.scale_factor, false))
-					//}
-					.append( //{ More
-						this.D("SPHelpLinkDiv")
-						.append(
-							this.D("SPHelpLabelDiv")
-							.html("More Settings")
-						) 
-						.append(
-							this.D("SPHelpSectionDiv")
-							.append(
-								this.E("A", "SPHelpTextLink")
-								.html("Color Settings")
-								.on("click." + this.namespace, {media_player: this, help_page: 1}, this.on_helppage_goto)
-							)
-							.append(
-								this.E("A", "SPHelpTextLink")
-								.html("Other Settings")
-								.on("click." + this.namespace, {media_player: this, help_page: 2}, this.on_helppage_goto)
-							)
-						)
-					) //}
 				) //}
 				.append( //{ Help 1
 					(this.help_container[1] = this.D("SPHelpContainer"))
 					.css("display", "none")
-					.append(this.D("SPHelpLabelDiv").html("Background Colors"))
-					.append(this.generate_color_editor("Outline", "bg_outer_color", this.css.css_color_presets[this.css.preset].bg_outer_color))
-					.append(this.generate_color_editor("Lightest", "bg_color_lightest", this.css.css_color_presets[this.css.preset].bg_color_lightest))
-					.append(this.generate_color_editor("Light", "bg_color_light", this.css.css_color_presets[this.css.preset].bg_color_light))
-					.append(this.generate_color_editor("Medium", "bg_color_dark", this.css.css_color_presets[this.css.preset].bg_color_dark))
-					.append(this.generate_color_editor("Dark", "bg_color_darker", this.css.css_color_presets[this.css.preset].bg_color_darker))
-					.append(this.generate_color_editor("Darkest", "bg_color_darkest", this.css.css_color_presets[this.css.preset].bg_color_darkest))
-					.append(this.D("SPHelpLabelDiv").html("Text Colors"))
-					.append(this.generate_color_editor("Default", "color_standard", this.css.css_color_presets[this.css.preset].color_standard))
-					.append(this.generate_color_editor("Disabled", "color_disabled", this.css.css_color_presets[this.css.preset].color_disabled))
-					.append(this.generate_color_editor("Light", "color_light", this.css.css_color_presets[this.css.preset].color_light))
-					.append(this.generate_color_editor("Special 1", "color_special_1", this.css.css_color_presets[this.css.preset].color_special_1))
-					.append(this.generate_color_editor("Special 2", "color_special_2", this.css.css_color_presets[this.css.preset].color_special_2))
-					.append(this.generate_color_editor("Highlight", "color_highlight_light", this.css.css_color_presets[this.css.preset].color_highlight_light))
-					.append(this.D("SPHelpLabelDiv").html("Other Colors"))
-					.append(this.generate_color_editor("Volume", "volume_colors[0]", this.css.css_color_presets[this.css.preset].volume_colors[0]))
+					.append(
+						this.D("SPHelpContainerInner0")
+						.append(
+							(this.help_container_inner1[1] = this.D("SPHelpContainerInner1"))
+							.append(this.D("SPHelpLabelDiv").html("Background Colors"))
+							.append(this.generate_color_editor("Outline", "bg_outer_color", this.css.css_color_presets[this.css.preset].bg_outer_color))
+							.append(this.generate_color_editor("Lightest", "bg_color_lightest", this.css.css_color_presets[this.css.preset].bg_color_lightest))
+							.append(this.generate_color_editor("Light", "bg_color_light", this.css.css_color_presets[this.css.preset].bg_color_light))
+							.append(this.generate_color_editor("Medium", "bg_color_dark", this.css.css_color_presets[this.css.preset].bg_color_dark))
+							.append(this.generate_color_editor("Dark", "bg_color_darker", this.css.css_color_presets[this.css.preset].bg_color_darker))
+							.append(this.generate_color_editor("Darkest", "bg_color_darkest", this.css.css_color_presets[this.css.preset].bg_color_darkest))
+							.append(this.D("SPHelpLabelDiv").html("Text Colors"))
+							.append(this.generate_color_editor("Default", "color_standard", this.css.css_color_presets[this.css.preset].color_standard))
+							.append(this.generate_color_editor("Disabled", "color_disabled", this.css.css_color_presets[this.css.preset].color_disabled))
+							.append(this.generate_color_editor("Light", "color_light", this.css.css_color_presets[this.css.preset].color_light))
+							.append(this.generate_color_editor("Special 1", "color_special_1", this.css.css_color_presets[this.css.preset].color_special_1))
+							.append(this.generate_color_editor("Special 2", "color_special_2", this.css.css_color_presets[this.css.preset].color_special_2))
+							.append(this.generate_color_editor("Highlight", "color_highlight_light", this.css.css_color_presets[this.css.preset].color_highlight_light))
+							.append(this.D("SPHelpLabelDiv").html("Other Colors"))
+							.append(this.generate_color_editor("Volume", "volume_colors[0]", this.css.css_color_presets[this.css.preset].volume_colors[0]))
+						)
+					)
 				) //}
 				.append( //{ Help 2
 					(this.help_container[2] = this.D("SPHelpContainer"))
 					.css("display", "none")
-					.append(this.D("SPHelpLabelDiv").html("Borders"))
-					.append(this.generate_value_editor("Outer", "bg_outer_size", this.css.css_size_presets[this.css.preset].bg_outer_size, false))
-					.append(this.D("SPHelpLabelDiv").html("Border Radii"))
-					.append(this.generate_value_editor("Outer", "bg_outer_border_radius", this.css.css_size_presets[this.css.preset].bg_outer_border_radius, false))
-					.append(this.generate_value_editor("Inner", "bg_inner_border_radius", this.css.css_size_presets[this.css.preset].bg_inner_border_radius, false))
-					.append(this.generate_value_editor("Major", "border_radius_normal", this.css.css_size_presets[this.css.preset].border_radius_normal, false))
-					.append(this.generate_value_editor("Minor", "border_radius_small", this.css.css_size_presets[this.css.preset].border_radius_small, false))
-					.append(this.D("SPHelpLabelDiv").html("Fonts"))
-					.append(this.generate_value_editor("Font", "main_font", this.css.css_size_presets[this.css.preset].main_font, true))
-					.append(this.generate_value_editor("Controls", "controls_font", this.css.css_size_presets[this.css.preset].controls_font, true))
-					.append(this.D("SPHelpLabelDiv").html("Font Sizes"))
-					.append(this.generate_value_editor("Default", "font_size", this.css.css_size_presets[this.css.preset].font_size, false))
-					.append(this.generate_value_editor("Small", "font_size_small", this.css.css_size_presets[this.css.preset].font_size_small, false))
-					.append(this.generate_value_editor("Controls", "font_size_controls", this.css.css_size_presets[this.css.preset].font_size_controls, false))
+					.append(
+						this.D("SPHelpContainerInner0")
+						.append(
+							(this.help_container_inner1[2] = this.D("SPHelpContainerInner1"))
+							.append(this.D("SPHelpLabelDiv").html("Borders"))
+							.append(this.generate_value_editor("Outer", "bg_outer_size", this.css.css_size_presets[this.css.preset].bg_outer_size, false))
+							.append(this.D("SPHelpLabelDiv").html("Border Radii"))
+							.append(this.generate_value_editor("Outer", "bg_outer_border_radius", this.css.css_size_presets[this.css.preset].bg_outer_border_radius, false))
+							.append(this.generate_value_editor("Inner", "bg_inner_border_radius", this.css.css_size_presets[this.css.preset].bg_inner_border_radius, false))
+							.append(this.generate_value_editor("Major", "border_radius_normal", this.css.css_size_presets[this.css.preset].border_radius_normal, false))
+							.append(this.generate_value_editor("Minor", "border_radius_small", this.css.css_size_presets[this.css.preset].border_radius_small, false))
+							.append(this.D("SPHelpLabelDiv").html("Fonts"))
+							.append(this.generate_value_editor("Font", "main_font", this.css.css_size_presets[this.css.preset].main_font, true))
+							.append(this.generate_value_editor("Controls", "controls_font", this.css.css_size_presets[this.css.preset].controls_font, true))
+							.append(this.D("SPHelpLabelDiv").html("Font Sizes"))
+							.append(this.generate_value_editor("Default", "font_size", this.css.css_size_presets[this.css.preset].font_size, false))
+							.append(this.generate_value_editor("Small", "font_size_small", this.css.css_size_presets[this.css.preset].font_size_small, false))
+							.append(this.generate_value_editor("Controls", "font_size_controls", this.css.css_size_presets[this.css.preset].font_size_controls, false))
+						)
+					)
 				) //}
 
 				.append( //{ First run
@@ -2001,22 +2049,60 @@ MediaPlayer.prototype.create = function () {
 
 	// Custom settings
 	if (this.additional_options.length > 0) {
-		var next_div;
-		help_custom_div.after(
-			(next_div = this.D("SPHelpLabelDiv"))
-			.html("Other Settings")
-		);
-		help_custom_div = next_div;
+		var section_label_references = [ help_custom_div , help_custom_div ];
+		var section_default = "Other Settings";
+		var sections = {};
+		var default_set = false;
+
+		// Loop over all options
 		for (var i = 0; i < this.additional_options.length; ++i) {
-			var v_id = 0;
-			for (var j = 0; j < this.additional_options[i]["values"].length; ++j) {
-				if (this.additional_options[i]["current"] == this.additional_options[i]["values"][j]) {
-					v_id = j;
-					break;
+			// Section label
+			var s = ("section" in this.additional_options[i] ? this.additional_options[i]["section"] : section_default);
+			var reference;
+			if (!(s in sections)) {
+				// Create a new label (ensure the default is always last)
+				section_label_references[(s == section_default ? 0 : 1)].after(
+					(reference = this.D("SPHelpLabelDiv"))
+					.html(s)
+				);
+				reference.after(
+					(sections[s] = this.D())
+				);
+				if (s == section_default) {
+					default_set = true;
+					section_label_references[0] = sections[s];
+				}
+				else {
+					section_label_references[1] = sections[s];
+					if (!default_set) section_label_references[0] = sections[s];
 				}
 			}
-			help_custom_div.after(
-				(next_div = this.D("SPHelpSectionDiv"))
+			reference = sections[s];
+
+			// Value enumeration: find the current value/label
+			var v_id = 0;
+			if ("values" in this.additional_options[i] && "current" in this.additional_options[i]) {
+				for (var j = 0; j < this.additional_options[i]["values"].length; ++j) {
+					if (this.additional_options[i]["current"] == this.additional_options[i]["values"][j]) {
+						v_id = j;
+						break;
+					}
+				}
+			}
+			var content = null;
+			if ("descr" in this.additional_options[i]) {
+				(content = this.E("a", "SPHelpModeLink"))
+				.html(this.additional_options[i]["descr"][v_id])
+				.on("click." + this.namespace, {media_player: this, custom_data: this.additional_options[i]}, this.on_custom_option_click)
+				.on("mousedown", this.cancel_event);
+			}
+			// Custom HTML
+			else if ("html" in this.additional_options[i]) {
+				content = this.D("SPHelpModeNonLink").html(this.additional_options[i]["html"]);
+			}
+			// Setup DOM
+			reference.append(
+				(sections[s] = this.D("SPHelpSectionDiv"))
 				.append(
 					this.D("SPHelpColorInputDiv0")
 					.append(
@@ -2031,16 +2117,10 @@ MediaPlayer.prototype.create = function () {
 					this.D("SPHelpColorInputDiv1Full")
 					.append(
 						this.D("SPHelpColorInputDiv2")
-						.append(
-							this.E("a", "SPHelpModeLink")
-							.html(this.additional_options[i]["descr"][v_id])
-							.on("click." + this.namespace, {media_player: this, custom_data: this.additional_options[i]}, this.on_custom_option_click)
-							.on("mousedown", this.cancel_event)
-						)
+						.append(content)
 					)
 				)
 			);
-			help_custom_div = next_div;
 		}
 	}
 
@@ -2735,6 +2815,8 @@ MediaPlayer.prototype.nullify = function () {
 	this.playback_controls = null;
 	this.playback_controls_svg = null;
 	this.help_container = null;
+	this.help_container_inner1 = null;
+	this.help_container_footer = null;
 	this.content_container = null;
 	this.top_container = null;
 	this.footer_container = null;
@@ -3748,6 +3830,12 @@ MediaPlayer.prototype.url_get_youtube_video_id = function (url) {
 	return vid_id;
 }
 
+MediaPlayer.prototype.merge_value_towards = function (value, target, incr) {
+	return (value < target) ?
+		((target - value < incr) ? target : value + incr) :
+		((value - target < incr) ? target : value - incr);
+}
+
 MediaPlayer.prototype.on_ytvideo_time_update = function (playlist_item, media_player) {
 	if (media_player.ytvideo_player != null) {
 		if (media_player.ytvideo_player.getCurrentTime) {
@@ -3998,12 +4086,6 @@ MediaPlayer.prototype.on_resizer_mousedown = function (event) {
 
 	// Done
 	return false;
-}
-
-MediaPlayer.prototype.merge_value_towards = function (value, target, incr) {
-	return (value < target) ?
-		((target - value < incr) ? target : value + incr) :
-		((value - target < incr) ? target : value - incr);
 }
 
 MediaPlayer.prototype.on_titlebar_mousedown = function (event) {
@@ -4437,6 +4519,15 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 				}
 				else {
 					event.data.media_player.help_container[0].css("display", "");
+					// Bottom offset (so not to be obscured by the footer)
+					if (
+						event.data.media_player.help_container_footer[0] &&
+						event.data.media_player.help_container_inner1[0]
+					) {
+						event.data.media_player.help_container_inner1[0].css(
+							"bottom", (event.data.media_player.help_container_footer[0].height()) + "px"
+						);
+					}
 				}
 			}
 		}
@@ -4663,12 +4754,33 @@ MediaPlayer.prototype.on_container_drop = function (event) {
 	// Load
 	if (event.originalEvent.dataTransfer.files.length > 0) {
 		for (var i = 0; i < event.originalEvent.dataTransfer.files.length; ++i) {
-			event.data.media_player.attempt_load(event.originalEvent.dataTransfer.files[i], MediaPlayer.ALL_SOUNDS);
+			event.data.media_player.attempt_load(
+				event.originalEvent.dataTransfer.files[i],
+				MediaPlayer.ALL_SOUNDS,
+				null, null, null, null
+			);
 		}
 	}
 	else {
 		// URL
-		event.data.media_player.attempt_load(event.originalEvent.dataTransfer.getData("text/plain"), MediaPlayer.ALL_SOUNDS);
+		var data = {
+			text: event.originalEvent.dataTransfer.getData("text/plain"),
+			callback_data: null,
+			progress_callback: null,
+			done_callback: null,
+			status_callback: null,
+		};
+		event.data.media_player.drag_callback(data);
+		if (data.text) {
+			event.data.media_player.attempt_load(
+				data.text,
+				MediaPlayer.ALL_SOUNDS,
+				data.callback_data,
+				data.progress_callback,
+				data.done_callback,
+				data.status_callback
+			);
+		}
 	}
 
 	// Done

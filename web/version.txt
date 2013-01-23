@@ -1,9 +1,10 @@
 {
-	"version": 1.5,
+	"version": 1.6,
 	"sub_version": 0,
 	"update_url_ff": "https://raw.github.com/dnsev/4cs/master/web/4cs.user.js",
 	"update_url_gc": "https://raw.github.com/dnsev/4cs/master/web/4cs.user.js",
-	"message": "Various performance bugfixes",
+	"message": "Hotkeys, style fixes, better click+drag loading, long file list changes, and bugfixes",
+	"message[1.5]": "Various performance bugfixes",
 	"message[1.4]": "Updating the script is now no longer a pain",
 	"message[1.3]": "Able to disable inline URL replacement"
 }
