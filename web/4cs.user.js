@@ -6659,9 +6659,13 @@ function inline_post_parse(post_data,redo,post_data_copy){
 				.off("click")
 				.on("click",{"post_data":post_data,"tag_id":tag_id},inline_link_click);
 			});
-			post_data_copy.sounds.load_all_link
-			.html(post_data.sounds.load_all_text)
-			.on("click",{"post_data":post_data},inline_load_all);
+			post_data_copy.container.find(".SPLoadAllLink").each(function(index){
+				var tag_id=parseInt($(this).attr("_sp_tag_id"));
+				$(this)
+				.attr("href","#")
+				.html(post_data.sounds.load_all_text)
+				.on("click",{"post_data":post_data},inline_load_all);
+			});
 		}
 		else{
 			post_data.sounds={
