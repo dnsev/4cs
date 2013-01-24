@@ -744,6 +744,47 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"border-bottom-right-radius": "{exp:bg_inner_border_radius,*,border_scale}px"
 		},
 
+		".SPDownloadsContainer": {
+			"position": "absolute",
+			"left": "0",
+			"top": "0",
+			"width": "100%",
+			"height": "100%",
+			"overflow-x": "hidden",
+			"overflow-y": "auto",
+			"display": "block",
+			"background": "{rgba:bg_color_light}"
+		},
+		".SPDownloadsLabel": {
+			"display": "block",
+			"width": "100%",
+			"text-align": "left",
+			"font-weight": "bold",
+			"color": "{hex:color_standard} !important",
+			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px"
+		},
+		".SPDownloadsContent": {
+			"display": "block",
+			"width": "100%",
+			"text-align": "left",
+			"color": "{hex:color_standard} !important",
+			"padding": "{exp:2,*,padding_scale}px {exp:4,*,padding_scale}px 0px {exp:4,*,padding_scale}px"
+		},
+		".SPDownloadsLink, a.SPDownloadsLink, .SPDownloadsLink:visited, a.SPDownloadsLink:visited": {
+			"cursor": "pointer",
+			"text-decoration": "underline !important",
+			"color": "{hex:color_standard} !important",
+		},
+		".SPDownloadsLink:hover, a.SPDownloadsLink:hover": {
+			"color": "{hex:color_special_2} !important"
+		},
+		".SPDownloadsLink:active, a.SPDownloadsLink:active": {
+			"color": "{hex:color_special_2} !important"
+		},
+
+		".SPDownloadsContentReady": {
+			"padding-top": "{exp:6,*,padding_scale}px",
+		},
 
 		".SPAlertContainer": {
 			"width": "100%",
@@ -1298,6 +1339,10 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 		this.additional_options[i].media_player = this;
 	}
 
+	// Batch
+	this.batch_download_blob = null;
+	this.batch_download_blob_url = "";
+
 	// CSS
 	this.css = css;
 	this.css.on_theme_change_callback = this.update_player_theme_name;
@@ -1495,15 +1540,19 @@ MediaPlayer.prototype.create = function () {
 						(title_buttons[1] = this.E("a", "SPMainButtonGeneric"))
 						.html("[?]")
 					)
+					.append(
+						(title_buttons[2] = this.E("a", "SPMainButtonGeneric"))
+						.html("[D]")
+					)
 				)
 				.append(
 					this.D("SPMainButtonsRight")
 					.append(
-						(title_buttons[2] = this.E("a", "SPMainButtonGeneric"))
+						(title_buttons[3] = this.E("a", "SPMainButtonGeneric"))
 						.html("[&#x2012;]")
 					)
 					.append(
-						(title_buttons[3] = this.E("a", "SPMainButtonRight"))
+						(title_buttons[4] = this.E("a", "SPMainButtonRight"))
 						.html("[&times;]")
 					)
 				)
@@ -1891,6 +1940,59 @@ MediaPlayer.prototype.create = function () {
 					)
 				) //}
 
+				.append( //{ Downloads
+					(this.downloads_container = this.D("SPDownloadsContainer"))
+					.css("display", "none")
+					.append(
+						this.D("SPDownloadsLabel")
+						.html("Download Content")
+					)
+					.append(
+						this.D("SPDownloadsContent")
+						.append(
+							this.D()
+							.append(
+								this.D()
+								.html("Generate download link for:")
+							)
+							.append(
+								this.D()
+								.append("- ")
+								.append(
+									this.E("a", "SPDownloadsLink")
+									.attr("href", "#")
+									.html("All loaded sounds")
+									.on("click." + this.namespace, {media_player: this, type: "sounds"}, this.on_downloads_generate_click)
+								)
+							)
+							.append(
+								this.D()
+								.append("- ")
+								.append(
+									this.E("a", "SPDownloadsLink")
+									.attr("href", "#")
+									.html("All loaded images")
+									.on("click." + this.namespace, {media_player: this, type: "images"}, this.on_downloads_generate_click)
+								)
+							)
+						)
+						.append(
+							(this.downloads_ready_container = this.D("SPDownloadsContentReady"))
+							.css("display", "none")
+							.append("Click ")
+							.append(
+								(this.downloads_link = this.E("a", "SPDownloadsLink"))
+								.attr("href", "#")
+								.html("here")
+								.on("click." + this.namespace, {media_player: this}, this.on_downloads_link_click)
+							)
+							.append(
+								(this.downloads_about = this.E("span"))
+							)
+						)
+					)
+				) //}
+
 				.append( //{ First run
 					(this.first_run_container = this.D("SPFirstRunContainer"))
 					.append(
@@ -2045,7 +2147,7 @@ MediaPlayer.prototype.create = function () {
 	); //}
 
 	// Playback controls
-	this.createPlaybackControls();
+	this.create_playback_controls();
 
 	// Custom settings
 	if (this.additional_options.length > 0) {
@@ -2173,6 +2275,7 @@ MediaPlayer.prototype.focus = function () {
 	this.top_container.css("display", (open ? "none" : ""));
 
 	// Close overlays
+	this.downloads_container.css("display", "none");
 	for (var i = 0; i < this.help_container.length; ++i) {
 		this.help_container[i].css("display", "none");
 	}
@@ -2765,8 +2868,8 @@ MediaPlayer.prototype.remove = function (index) {
 
 		// Revoke url
 		(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].audio_blob_url);
-		if (this.playlist[index].image_url_blob != null) {
-			(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].image_url_blob);
+		if (this.playlist[index].image_blob_url != null) {
+			(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].image_blob_url);
 		}
 	}
 	else if (this.playlist[index].type == "youtube-video") {
@@ -2835,6 +2938,11 @@ MediaPlayer.prototype.nullify = function () {
 	this.playlist_index_container = null;
 	this.playlist_index_text1 = null;
 	this.playlist_index_text2 = null;
+	this.downloads_container = null;
+	this.downloads_ready_container = null;
+	this.downloads_link = null;
+	this.downloads_about = null;
+
 	if (this.playlist_index_timer !== null) {
 		clearTimeout(this.playlist_index_timer);
 		this.playlist_index_timer = null;
@@ -2855,7 +2963,7 @@ MediaPlayer.prototype.nullify = function () {
 	this.player_theme_value_updaters = null;
 }
 
-MediaPlayer.prototype.createPlaybackControls = function () {
+MediaPlayer.prototype.create_playback_controls = function () {
 	this.playback_control_container.html("");
 	this.playback_controls = [ [null] , [null] , [null,null] , [null] , [null] ];
 	this.playback_controls_svg = null;
@@ -3384,17 +3492,19 @@ MediaPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, soun
 		"position": 0.0,
 		"controls": [ null , null , null , null , null ],
 		"loaded_offset": 0.0,
-		"loaded_percent": 1.0
+		"loaded_percent": 1.0,
+		"audio_blob": null,
 	};
 
 	// Create ogg audio
-	var blob = new Blob([raw_data], {type: "audio/ogg"});
-	playlist_item.audio_blob_url = (window.webkitURL || window.URL).createObjectURL(blob);
+	playlist_item.audio_blob = new Blob([raw_data], {type: "audio/ogg"});
+	playlist_item.audio_blob_url = (window.webkitURL || window.URL).createObjectURL(playlist_item.audio_blob);
 
 	// Create/get image url
 	if (typeof(image_src) == typeof("")) {
 		playlist_item.image_url = image_src;
-		playlist_item.image_url_blob = null;
+		playlist_item.image_blob = null;
+		playlist_item.image_blob_url = null;
 	}
 	else {
 		var ext = url.split(".").pop().toLowerCase();
@@ -3402,9 +3512,9 @@ MediaPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, soun
 		if (ext == "png") mime = "image/png";
 		else if (ext == "gif") mime = "image/gif";
 
-		blob = new Blob([image_src], {type: mime});
-		playlist_item.image_url_blob = (window.webkitURL || window.URL).createObjectURL(blob);
-		playlist_item.image_url = playlist_item.image_url_blob;
+		playlist_item.image_blob = new Blob([image_src], {type: mime});
+		playlist_item.image_blob_url = (window.webkitURL || window.URL).createObjectURL(playlist_item.image_blob);
+		playlist_item.image_url = playlist_item.image_blob_url;
 	}
 
 	// html setup
@@ -3835,6 +3945,118 @@ MediaPlayer.prototype.merge_value_towards = function (value, target, incr) {
 		((target - value < incr) ? target : value + incr) :
 		((value - target < incr) ? target : value - incr);
 }
+
+MediaPlayer.prototype.downloads_generate_image_list = function (files, about, gen_function, index) {
+	if (index >= this.playlist.length) {
+		// Done
+		gen_function(files, about);
+		return;
+	}
+
+	// Type
+	if (this.playlist[index].type != "image-audio") {
+		// Next
+		this.downloads_generate_image_list(files, about, gen_function, index + 1);
+		return;
+	}
+
+	// Make sure image is unique
+	var image_url = this.playlist[index].image_url;
+	for (var j = 0; j < files.length; ++j) {
+		if (files[j][2] == image_url) {
+			// Next
+			this.downloads_generate_image_list(files, about, gen_function, index + 1);
+			return;
+		}
+	}
+
+	// Filename
+	var fn = this.playlist[index].url.split("/").pop().split(".");
+	var ext = "." + fn.pop();
+	fn = fn.join(".")
+	try {
+		fn = this.normalize_filename(unescape(encodeURIComponent(fn)));
+	}
+	catch (e) {
+		console.log(e);
+	}
+	// Make sure it's unique
+	var n = 1;
+	var name = fn + ext;
+	for (var j = 0; j < files.length; ++j) {
+		if (name == files[j][0]) {
+			name = fn + " (" + (++n) + ")" + ext;
+			j = -1;
+			continue;
+		}
+	}
+	fn = name;
+
+	// Get file
+	if (this.playlist[index].image_blob !== null) {
+		// Add
+		files.push([fn, this.playlist[index].image_blob, image_url]);
+
+		// Next
+		this.downloads_generate_image_list(files, about, gen_function, index + 1);
+	}
+	else {
+		// Ajax query
+		var self = this;
+		this.ajax_get(this.playlist[index].image_url, false, null, null, function (okay, data, response) {
+			if (okay) {
+				// Add
+				files.push([fn, response, image_url]);
+
+				// Next
+				self.downloads_generate_image_list(files, about, gen_function, index + 1);
+			}
+		});
+	}
+};
+MediaPlayer.prototype.downloads_generate_link = function (files, zip_writer, about, index) {
+	if (index >= files.length) {
+		// Central directory + footer
+		zip_writer.write_end();
+		// Destroy blob
+		if (this.batch_download_blob !== null) {
+			(window.webkitURL || window.URL).revokeObjectURL(this.batch_download_blob_url);
+		}
+		this.batch_download_blob = null;
+		// Create blob
+		this.batch_download_blob = new Blob([zip_writer.buffer], {type: "application/zip"});
+		this.batch_download_blob_url = (window.webkitURL || window.URL).createObjectURL(this.batch_download_blob);
+		// Display
+		this.downloads_ready_container.css("display", "");
+		this.downloads_about.html(about(files));
+		this.downloads_link.attr("href", this.batch_download_blob_url);
+		// Done
+		return;
+	}
+
+	if  (files[index][1] instanceof Uint8Array) {
+		// Direct
+		zip_writer.write_file(files[index][0], files[index][1]);
+		this.downloads_generate_link(files, zip_writer, about, index + 1);
+	}
+	else {
+		// Blob reading
+		var self = this;
+		var reader = new FileReader();
+		// Done function
+		reader.onload = function () {
+			// Convert and call load function
+			var ui8_data = new Uint8Array(this.result);
+			zip_writer.write_file(files[index][0], ui8_data);
+			self.downloads_generate_link(files, zip_writer, about, index + 1);
+		};
+		// Start
+		reader.readAsArrayBuffer(files[index][1]);
+	}
+};
+MediaPlayer.prototype.normalize_filename = function (fname) {
+	return fname;
+};
 
 MediaPlayer.prototype.on_ytvideo_time_update = function (playlist_item, media_player) {
 	if (media_player.ytvideo_player != null) {
@@ -4442,13 +4664,11 @@ MediaPlayer.prototype.on_player_use_svg_update = function (event) {
 
 	$(this).html(event.data.media_player.use_svg ? "Allowed" : "Disallowed");
 
-	event.data.media_player.createPlaybackControls();
+	event.data.media_player.create_playback_controls();
 
 	// Callback
 	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
 }
-
-
 
 MediaPlayer.prototype.on_playback_control_click = function (event) {
 	if (event.data.media_player.current_media != null) {
@@ -4499,6 +4719,7 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 			for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
 				event.data.media_player.help_container[i].css("display", "none");
 			}
+			event.data.media_player.downloads_container.css("display", "none");
 		}
 		break;
 		case 0:
@@ -4512,6 +4733,7 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 						break;
 					}
 				}
+				event.data.media_player.downloads_container.css("display", "none");
 				if (open) {
 					for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
 						event.data.media_player.help_container[i].css("display", "none");
@@ -4534,6 +4756,16 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 		break;
 		case 2:
 		{
+			// Downloads
+			var open = (event.data.media_player.downloads_container.css("display") == "none");
+			for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+				event.data.media_player.help_container[i].css("display", "none");
+			}
+			event.data.media_player.downloads_container.css("display", open ? "" : "none");
+		}
+		break;
+		case 3:
+		{
 			// Min/max
 			var open = (event.data.media_player.playlist_container.css("display") != "none");
 			event.data.media_player.playlist_container.css("display", (open ? "none" : ""));
@@ -4551,7 +4783,7 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 			event.data.media_player.reposition();
 		}
 		break;
-		case 3:
+		case 4:
 		{
 			// Close
 			event.data.media_player.destructor();
@@ -4747,6 +4979,7 @@ MediaPlayer.prototype.on_settings_value_change = function (event) {
 MediaPlayer.prototype.on_container_drop = function (event) {
 	// Close overlays
 	event.data.media_player.alert_container.css("display", "none");
+	event.data.media_player.downloads_container.css("display", "none");
 	for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
 		event.data.media_player.help_container[i].css("display", "none")
 	}
@@ -4810,6 +5043,96 @@ MediaPlayer.prototype.on_container_dragexit = function (event) {
 	return false;
 }
 
+MediaPlayer.prototype.on_downloads_generate_click = function (event) {
+	var mp = event.data.media_player;
+	if (mp.batch_download_blob !== null) {
+		(window.webkitURL || window.URL).revokeObjectURL(mp.batch_download_blob_url);
+	}
+	mp.batch_download_blob = null;
+	mp.downloads_ready_container.css("display", "none");
+
+	// Generation function
+	var gen_function = function (files, about) {
+		// Get required size
+		var total_length = 0;
+		var comment = "";
+		for (var i = 0; i < files.length; ++i) {
+			total_length += 30 + files[i][0].length + (files[i][1].size || files[i][1].length || 0);
+			total_length += 46 + files[i][0].length;
+		}
+		total_length += 22 + comment.length;
+
+		// Attempt buffer create
+		var buffer = null;
+		try {
+			buffer = new Uint8Array(new ArrayBuffer(total_length));
+		}
+		catch (e) {
+			console.log(e);
+			return false;
+		}
+
+		// Create
+		var zw = new ZipWriter(buffer, comment);
+		mp.downloads_generate_link(files, zw, about, 0);
+	};
+
+	// Generate filename list
+	var files = [];
+	var about = "";
+	if (event.data.type == "sounds") {
+		for (var i = 0; i < mp.playlist.length; ++i) {
+			if (mp.playlist[i].type == "image-audio") {
+				// Get the filename
+				var fn = mp.playlist[i].title;
+				var ext = ".ogg";
+				try {
+					fn = mp.normalize_filename(unescape(encodeURIComponent(fn)));
+				}
+				catch (e) {
+					console.log(e);
+				}
+				// Make sure it's unique
+				var n = 1;
+				var name = fn + ext;
+				for (var j = 0; j < files.length; ++j) {
+					if (name == files[j][0]) {
+						name = fn + " (" + (++n) + ")" + ext;
+						j = -1;
+						continue;
+					}
+				}
+				fn = name;
+				// Add
+				files.push([fn, mp.playlist[i].audio_blob]);
+			}
+		}
+
+		about = function (files) {
+			return " to download " + files.length + " sound" + (files.length == 1 ? "" : "s");
+		};
+
+		gen_function(files, about);
+	}
+	else {
+		about = function (files) {
+			return " to download " + files.length + " image" + (files.length == 1 ? "" : "s");
+		};
+	
+		mp.downloads_generate_image_list(files, about, gen_function, 0);
+	}
+
+	// Done
+	return false;
+}
+MediaPlayer.prototype.on_downloads_link_click = function (event) {
+	if (event.which == 1) {
+		prompt("Right click -> save as, middle click, or visit this URL:", event.data.media_player.batch_download_blob_url);
+		return false;
+	}
+	return true;
+}
+
 MediaPlayer.prototype.cancel_event = function (event) {
 	// Done
 	event.preventDefault();
@@ -4819,4 +5142,121 @@ MediaPlayer.prototype.cancel_event = function (event) {
 
 
 
+function ZipWriter (buffer, comment) {
+	this.buffer = buffer;
+	this.comment = comment || "";
+	this.date = new Date();
+	this.pos = 0;
+	this.offsets = new Array();
+	this.crc32s = new Array();
+	this.sizes = new Array();
+	this.fnames = new Array();
+};
+ZipWriter.prototype.date_convert = function (date) {
+	var mod_time = (Math.floor(date.getSeconds() / 2) | (date.getMinutes() << 5) | (date.getHours() << 11));
+	var mod_date = ((date.getDate()) | ((date.getMonth() + 1) << 5) | ((date.getFullYear() - 1980) << 9));
+
+	return [ mod_time , mod_date ];
+};
+ZipWriter.prototype.write_end = function () {
+	var date = this.date_convert(this.date);
+	var cd_pos = this.pos;
+
+	for (var i = 0; i < this.fnames.length; ++i) {
+		this.write_data(0x02014b50, 4); // Signature
+		this.write_data(20, 2); // Version
+		this.write_data(20, 2); // Version required
+		this.write_data(0, 2); // Flags
+		this.write_data(0, 2); // Compression
+		this.write_data(date[0], 2); // Mod time
+		this.write_data(date[1], 2); // Mod date
+		this.write_data(this.crc32s[i], 4); // CRC
+		this.write_data(this.sizes[i], 4); // Compressed size
+		this.write_data(this.sizes[i], 4); // Uncompressed size
+		this.write_data(this.fnames[i].length, 2); // File name length
+		this.write_data(0, 2); // Extra field length
+		this.write_data(0, 2); // Comment length
+		this.write_data(0, 2); // Disk number start
+		this.write_data(0, 2); // Internal attr
+		this.write_data(32, 4); // External attr
+		this.write_data(this.offsets[i], 4); // Offset
+		this.write_data(this.fnames[i]); // File name
+	}
+
+	// End
+	var cd_end_pos = this.pos;
+	this.write_data(0x06054b50, 4); // Signature
+	this.write_data(0, 2); // Disk number
+	this.write_data(0, 2); // Disk number with cd
+	this.write_data(this.fnames.length, 2); // Disk entries
+	this.write_data(this.fnames.length, 2); // Total entries
+	this.write_data(cd_end_pos - cd_pos, 4); // cd size
+	this.write_data(cd_pos, 4); // cd size
+	this.write_data(this.comment.length, 2); // comment
+	this.write_data(this.comment); // comment
+};
+ZipWriter.prototype.write_file = function (filename, filedata) {
+	var crc = this.crc32(filedata);
+	this.offsets.push(this.pos);
+	this.crc32s.push(crc);
+	this.sizes.push(filedata.length);
+	this.fnames.push(filename);
+
+	var date = this.date_convert(this.date);
+
+	this.write_data(0x04034b50, 4); // Signature
+	this.write_data(20, 2); // Version
+	this.write_data(0, 2); // Flags
+	this.write_data(0, 2); // Compression
+	this.write_data(date[0], 2); // Mod time
+	this.write_data(date[1], 2); // Mod date
+	this.write_data(crc, 4); // CRC
+	this.write_data(filedata.length, 4); // Compressed size
+	this.write_data(filedata.length, 4); // Uncompressed size
+	this.write_data(filename.length, 2); // Filename length
+	this.write_data(0, 2); // Comment length
+	this.write_data(filename); // Filename
+	this.write_data(filedata); // File data
+};
+ZipWriter.prototype.write_data = function (data, bytes) {
+	if (typeof(data) === typeof(0)) {
+		data = data & 0xFFFFFFFF;
+		for (var i = 0; i < bytes; ++i) {
+			this.buffer[this.pos] = data & 0xFF;
+			++this.pos;
+			data = data >>> 8;
+		}
+	}
+	else if (typeof(data) === typeof("")) {
+		for (var i = 0; i < data.length; ++i) {
+			this.buffer[this.pos] = data.charCodeAt(i);
+			++this.pos;
+		}
+	}
+	else {
+		for (var i = 0; i < data.length; ++i) {
+			this.buffer[this.pos] = data[i];
+			++this.pos;
+		}
+	}
+};
+ZipWriter.prototype.crc32 = function (value) {
+	var table = "00000000 77073096 EE0E612C 990951BA 076DC419 706AF48F E963A535 9E6495A3 0EDB8832 79DCB8A4 E0D5E91E 97D2D988 09B64C2B 7EB17CBD E7B82D07 90BF1D91 1DB71064 6AB020F2 F3B97148 84BE41DE 1ADAD47D 6DDDE4EB F4D4B551 83D385C7 136C9856 646BA8C0 FD62F97A 8A65C9EC 14015C4F 63066CD9 FA0F3D63 8D080DF5 3B6E20C8 4C69105E D56041E4 A2677172 3C03E4D1 4B04D447 D20D85FD A50AB56B 35B5A8FA 42B2986C DBBBC9D6 ACBCF940 32D86CE3 45DF5C75 DCD60DCF ABD13D59 26D930AC 51DE003A C8D75180 BFD06116 21B4F4B5 56B3C423 CFBA9599 B8BDA50F 2802B89E 5F058808 C60CD9B2 B10BE924 2F6F7C87 58684C11 C1611DAB B6662D3D 76DC4190 01DB7106 98D220BC EFD5102A 71B18589 06B6B51F 9FBFE4A5 E8B8D433 7807C9A2 0F00F934 9609A88E E10E9818 7F6A0DBB 086D3D2D 91646C97 E6635C01 6B6B51F4 1C6C6162 856530D8 F262004E 6C0695ED 1B01A57B 8208F4C1 F50FC457 65B0D9C6 12B7E950 8BBEB8EA FCB9887C 62DD1DDF 15DA2D49 8CD37CF3 FBD44C65 4DB26158 3AB551CE A3BC0074 D4BB30E2 4ADFA541 3DD895D7 A4D1C46D D3D6F4FB 4369E96A 346ED9FC AD678846 DA60B8D0 44042D73 33031DE5 AA0A4C5F DD0D7CC9 5005713C 270241AA BE0B1010 C90C2086 5768B525 206F85B3 B966D409 CE61E49F 5EDEF90E 29D9C998 B0D09822 C7D7A8B4 59B33D17 2EB40D81 B7BD5C3B C0BA6CAD EDB88320 9ABFB3B6 03B6E20C 74B1D29A EAD54739 9DD277AF 04DB2615 73DC1683 E3630B12 94643B84 0D6D6A3E 7A6A5AA8 E40ECF0B 9309FF9D 0A00AE27 7D079EB1 F00F9344 8708A3D2 1E01F268 6906C2FE F762575D 806567CB 196C3671 6E6B06E7 FED41B76 89D32BE0 10DA7A5A 67DD4ACC F9B9DF6F 8EBEEFF9 17B7BE43 60B08ED5 D6D6A3E8 A1D1937E 38D8C2C4 4FDFF252 D1BB67F1 A6BC5767 3FB506DD 48B2364B D80D2BDA AF0A1B4C 36034AF6 41047A60 DF60EFC3 A867DF55 316E8EEF 4669BE79 CB61B38C BC66831A 256FD2A0 5268E236 CC0C7795 BB0B4703 220216B9 5505262F C5BA3BBE B2BD0B28 2BB45A92 5CB36A04 C2D7FFA7 B5D0CF31 2CD99E8B 5BDEAE1D 9B64C2B0 EC63F226 756AA39C 026D930A 9C0906A9 EB0E363F 72076785 05005713 95BF4A82 E2B87A14 7BB12BAE 0CB61B38 92D28E9B E5D5BE0D 7CDCEFB7 0BDBDF21 86D3D2D4 F1D4E242 68DDB3F8 1FDA836E 81BE16CD F6B9265B 6FB077E1 18B74777 88085AE6 FF0F6A70 66063BCA 11010B5C 8F659EFF F862AE69 616BFFD3 166CCF45 A00AE278 D70DD2EE 4E048354 3903B3C2 A7672661 D06016F7 4969474D 3E6E77DB AED16A4A D9D65ADC 40DF0B66 37D83BF0 A9BCAE53 DEBB9EC5 47B2CF7F 30B5FFE9 BDBDF21C CABAC28A 53B39330 24B4A3A6 BAD03605 CDD70693 54DE5729 23D967BF B3667A2E C4614AB8 5D681B02 2A6F2B94 B40BBE37 C30C8EA1 5A05DF1B 2D02EF8D";
+	var crc = 0;
+	var y;
+
+	var t = [];
+	for (var i = 0; i < table.length; i += 9) {
+		t.push(0 ^ ("0x" + table.substr(i, 8)));
+	}
+
+	crc = crc ^ (-1);
+	var iMax = value.length;
+	for (var i = 0; i < iMax; ++i) {
+		y = (crc ^ value[i]) & 0xFF;
+		crc = (crc >>> 8) ^ t[((crc ^ value[i]) & 0xFF)];
+	}
+
+	return (crc ^ (-1)) >>> 0;
+};
 
