@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.6
+// @version     1.7
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -5155,6 +5155,10 @@ MediaPlayer.prototype.downloads_generate_link=function(files,zip_writer,about,in
 	}
 };
 MediaPlayer.prototype.normalize_filename=function(fname){
+	var disallowed="<>:\"/\\|?*\0";
+	for(var i=0;i<disallowed.length;++i){
+		fname=fname.replace(new RegExp("\\"+disallowed[i],"gi"),"_");
+	}
 	return fname;
 };
 MediaPlayer.prototype.on_ytvideo_time_update=function(playlist_item,media_player){
@@ -5992,13 +5996,13 @@ MediaPlayer.prototype.on_downloads_generate_click=function(event){
 			}
 		}
 		about=function(files){
-			return" to download "+files.length+" sound"+(files.length==1?"":"s");
+			return" to download "+files.length+" sound"+(files.length==1?"":"s")+" (save as .zip)";
 		};
 		gen_function(files,about);
 	}
 	else{
 		about=function(files){
-			return" to download "+files.length+" image"+(files.length==1?"":"s");
+			return" to download "+files.length+" image"+(files.length==1?"":"s")+" (save as .zip)";
 		};
 		mp.downloads_generate_image_list(files,about,gen_function,0);
 	}
