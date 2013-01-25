@@ -9704,16 +9704,19 @@ function settings_load() {
 var script_update_version_url = "https://raw.github.com/dnsev/4cs/master/web/version.txt";
 function script_update(event) {
 	if (!event.originalEvent.which || event.originalEvent.which == 1) {
-		var scr = {};
+		var scr_name = "";
+		var scr_version = "";
 		try {
-			scr = GM_info.script;
+			scr_name = GM_info.script.name;
+			scr_version = GM_info.script.version;
 		}
 		catch (e) {
-			console.log(e);
+			scr_name = "userscript.js";
+			scr_version = GM_getMetadata("version").toString();
 		}
 
-		var s = "An update is available to \"" + scr.name + "\".\n\n" +
-			"Current version: " + scr.version + "\n" +
+		var s = "An update is available to \"" + scr_name + "\".\n\n" +
+			"Current version: " + scr_version + "\n" +
 			"Update Version: " + script_settings["script"]["update_version"] + "\n\n" +
 			"About: " + script_settings["script"]["update_message"] + "\n\n" +
 			"Middle click the link or copy and paste the following url:               ";
@@ -9738,28 +9741,31 @@ function script_update_check(ajax) {
 			null,
 			function (okay, data, response) {
 				if (okay) {
+					var version;
 					try {
-						var s = JSON.parse(response);
-						// Settings
-						script_settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
-						script_settings["script"]["update_version"] = s["version"].toString();
-						script_settings["script"]["last_update"] = (new Date()).getTime();
-						script_settings["script"]["update_message"] = (s["message"] || "").toString();
-						// Check
-						if (script_settings["script"]["update_version"] !== GM_info.script.version) {
-							// Okay
-							fn();
-							script_settings["script"]["update_found"] = true;
-						}
-						else {
-							script_settings["script"]["update_found"] = false;
-						}
-						// Update settings
-						settings_save();
+						version = GM_info.script.version;
 					}
 					catch (e) {
-						console.log(e);
+						version = GM_getMetadata("version").toString();
 					}
+
+					var s = JSON.parse(response);
+					// Settings
+					script_settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
+					script_settings["script"]["update_version"] = s["version"].toString();
+					script_settings["script"]["last_update"] = (new Date()).getTime();
+					script_settings["script"]["update_message"] = (s["message"] || "").toString();
+					// Check
+					if (script_settings["script"]["update_version"] !== version) {
+						// Okay
+						fn();
+						script_settings["script"]["update_found"] = true;
+					}
+					else {
+						script_settings["script"]["update_found"] = false;
+					}
+					// Update settings
+					settings_save();
 				}
 			}
 		);
@@ -9825,7 +9831,7 @@ jQuery(document).ready(function () {
 		version = GM_info.script.version;
 	}
 	catch (e) {
-		console.log(e);
+		version = GM_getMetadata("version").toString();
 	}
 	if (
 		(time_update = ((new Date()).getTime() - script_settings["script"]["last_update"] >= 1000 * 60 * 60 * 24)) ||
