@@ -44,21 +44,20 @@ Testing Platform:
 Web Plugin / User End:
 -------------------------------------------------------------------------------
 	Install Version: https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
-	IMPORTANT INSTALLATION NOTE: Before installing, do the following:
-	In Firefox/Nightly:
-		Go to "Tools" -> "Add-ons" -> "User-Scripts"
-		"Remove" any older versions.
-	In Chrome:
-		Open Tampermonkey "Options"
-		Delete any old versions.
-		Close Chrome completely, re-open, THEN install.
-	Why?
-		Because I have the code sectioned off into more workable pieces, rather
-		than all in one big script. Without worrying whether or not this is
-		good or bad practice for userscripts, Firefox likes to keep old
-		dependencies when it updates, and Tampermonkey stores its files in
-		some sort of database, and there have been issues with it updating the
-		dependencies without a restart.
+
+
+	Version 1.8:
+
+	Versioning can now include more sub-version numbers.
+	More hotkeys for player/playback control.
+	URLs can now be replaced if a url contains a spoiler. (might be buggy)
+	Fixed the ability to view settings while minimized.
+
+
+	Version 1.7:
+
+	Batch downloading. All images/sounds loaded in the player can now be
+	downloaded in a zip archive.
 
 
 	Version 1.6:

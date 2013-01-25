@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.7
+// @version        1.8
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -2604,14 +2604,20 @@ function script_update_check(ajax) {
 					script_settings["script"]["update_version"] = s["version"].toString();
 					script_settings["script"]["last_update"] = (new Date()).getTime();
 					script_settings["script"]["update_message"] = (s["message"] || "").toString();
-					// Check
-					if (script_settings["script"]["update_version"] !== version) {
-						// Okay
-						fn();
-						script_settings["script"]["update_found"] = true;
-					}
-					else {
-						script_settings["script"]["update_found"] = false;
+					// Version compare
+					script_settings["script"]["update_found"] = false;
+					var current_version_split = version.toString().split(".");
+					var new_version_split = script_settings["script"]["update_version"].split(".");
+					var len = (new_version_split.length > current_version_split.length ? new_version_split.length : current_version_split.length);
+					for (var i = 0; i < len; ++i) {
+						if (
+							(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) >
+							(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
+						) {
+							fn();
+							script_settings["script"]["update_found"] = true;
+							break;
+						}
 					}
 					// Update settings
 					settings_save();
