@@ -9171,8 +9171,8 @@ function HotkeyListener() {
 		[ "player_close" , this.on_player_close , "Close Player" ],
 		[ "player_minmax" , this.on_player_minmax , "Min/Max Player" ],
 		[ "playlist_play" , this.on_playlist_play , "Play/Pause" ],
-		[ "playlist_next" , this.on_playlist_previous , "Next" ],
-		[ "playlist_previous" , this.on_playlist_next , "Previous" ],
+		[ "playlist_next" , this.on_playlist_next , "Next" ],
+		[ "playlist_previous" , this.on_playlist_previous , "Previous" ],
 		[ "volume_up" , this.on_volume_up , "Volume Up" ],
 		[ "volume_down" , this.on_volume_down , "Volume Down" ],
 	];
