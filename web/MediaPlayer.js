@@ -1422,7 +1422,7 @@ MediaPlayer.prototype.create = function () {
 
 	// Vars
 	var help_custom_div = null;
-	var title_buttons = new Array();
+	this.title_buttons = new Array();
 	this.help_container = [ null , null , null ];
 	this.help_container_inner1 = [ null , null , null ];
 	this.help_container_footer = [ null , null , null ];
@@ -1533,26 +1533,26 @@ MediaPlayer.prototype.create = function () {
 				.append(
 					this.D("SPMainButtonsLeft")
 					.append(
-						(title_buttons[0] = this.E("a", "SPMainButtonLeft"))
+						(this.title_buttons[0] = this.E("a", "SPMainButtonLeft"))
 						.html("[S]")
 					)
 					.append(
-						(title_buttons[1] = this.E("a", "SPMainButtonGeneric"))
+						(this.title_buttons[1] = this.E("a", "SPMainButtonGeneric"))
 						.html("[?]")
 					)
 					.append(
-						(title_buttons[2] = this.E("a", "SPMainButtonGeneric"))
+						(this.title_buttons[2] = this.E("a", "SPMainButtonGeneric"))
 						.html("[D]")
 					)
 				)
 				.append(
 					this.D("SPMainButtonsRight")
 					.append(
-						(title_buttons[3] = this.E("a", "SPMainButtonGeneric"))
+						(this.title_buttons[3] = this.E("a", "SPMainButtonGeneric"))
 						.html("[&#x2012;]")
 					)
 					.append(
-						(title_buttons[4] = this.E("a", "SPMainButtonRight"))
+						(this.title_buttons[4] = this.E("a", "SPMainButtonRight"))
 						.html("[&times;]")
 					)
 				)
@@ -2230,9 +2230,9 @@ MediaPlayer.prototype.create = function () {
 	if (!this.first_run) {
 		this.first_run_container.css("display", "none");
 	}
-	for (var i = 0; i < title_buttons.length; ++i) {
-		title_buttons[i].on("mousedown", this.cancel_event);
-		title_buttons[i].on("click." + this.namespace, {media_player: this, control_id: i}, this.on_main_control_click);
+	for (var i = 0; i < this.title_buttons.length; ++i) {
+		this.title_buttons[i].on("mousedown", this.cancel_event);
+		this.title_buttons[i].on("click." + this.namespace, {media_player: this, control_id: i}, this.on_main_control_click);
 	}
 	for (var i = 0; i < this.resizing_texts.length; ++i) {
 		this.resizing_texts[i].css("display", "none");
@@ -2282,22 +2282,6 @@ MediaPlayer.prototype.focus = function () {
 
 	// On screen
 	this.reposition();
-}
-
-MediaPlayer.prototype.on_custom_option_click = function (event) {
-	var v_id = 0;
-	for (var j = 0; j < event.data.custom_data["values"].length; ++j) {
-		if (event.data.custom_data["current"] == event.data.custom_data["values"][j]) {
-			v_id = j;
-			break;
-		}
-	}
-	v_id = (v_id + 1) % event.data.custom_data["values"].length;
-
-	$(this).html(event.data.custom_data["descr"][v_id]);
-	
-	event.data.custom_data["current"] = event.data.custom_data["values"][v_id];
-	event.data.custom_data["change"](event.data.custom_data["values"][v_id]);
 }
 
 MediaPlayer.prototype.play = function () {
@@ -2894,6 +2878,44 @@ MediaPlayer.prototype.remove = function (index) {
 	this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
 }
 
+MediaPlayer.prototype.is_maximized = function () {
+	return (this.playlist_container.css("display") != "none");
+};
+MediaPlayer.prototype.maximize = function () {
+	// Min/max
+	this.playlist_container.css("display", "");
+	this.top_container.css("display", "");
+
+	// Close overlays
+	this.downloads_container.css("display", "none");
+	for (var i = 0; i < this.help_container.length; ++i) {
+		this.help_container[i].css("display", "none");
+	}
+
+	// HTML
+	this.title_buttons[this.title_buttons.length - 2].html("[&#x2012;]");
+
+	// On screen
+	this.reposition();
+};
+MediaPlayer.prototype.minimize = function () {
+	// Min/max
+	this.playlist_container.css("display", "none");
+	this.top_container.css("display", "none");
+
+	// Close overlays
+	this.downloads_container.css("display", "none");
+	for (var i = 0; i < this.help_container.length; ++i) {
+		this.help_container[i].css("display", "none");
+	}
+
+	// HTML
+	this.title_buttons[this.title_buttons.length - 2].html("[+]");
+
+	// On screen
+	this.reposition();
+};
+
 
 MediaPlayer.prototype.nullify = function () {
 	this.sp_container_main = null;
@@ -2942,6 +2964,7 @@ MediaPlayer.prototype.nullify = function () {
 	this.downloads_ready_container = null;
 	this.downloads_link = null;
 	this.downloads_about = null;
+	this.title_buttons = null;
 
 	if (this.playlist_index_timer !== null) {
 		clearTimeout(this.playlist_index_timer);
@@ -4063,6 +4086,22 @@ MediaPlayer.prototype.normalize_filename = function (fname) {
 	return fname;
 };
 
+MediaPlayer.prototype.on_custom_option_click = function (event) {
+	var v_id = 0;
+	for (var j = 0; j < event.data.custom_data["values"].length; ++j) {
+		if (event.data.custom_data["current"] == event.data.custom_data["values"][j]) {
+			v_id = j;
+			break;
+		}
+	}
+	v_id = (v_id + 1) % event.data.custom_data["values"].length;
+
+	$(this).html(event.data.custom_data["descr"][v_id]);
+	
+	event.data.custom_data["current"] = event.data.custom_data["values"][v_id];
+	event.data.custom_data["change"](event.data.custom_data["values"][v_id]);
+}
+
 MediaPlayer.prototype.on_ytvideo_time_update = function (playlist_item, media_player) {
 	if (media_player.ytvideo_player != null) {
 		if (media_player.ytvideo_player.getCurrentTime) {
@@ -4771,21 +4810,12 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 		break;
 		case 3:
 		{
-			// Min/max
-			var open = (event.data.media_player.playlist_container.css("display") != "none");
-			event.data.media_player.playlist_container.css("display", (open ? "none" : ""));
-			event.data.media_player.top_container.css("display", (open ? "none" : ""));
-
-			// Close overlays
-			for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-				event.data.media_player.help_container[i].css("display", "none");
+			if (event.data.media_player.is_maximized()) {
+				event.data.media_player.minimize();
 			}
-
-			// HTML
-			$(this).html(open ? "[+]" : "[&#x2012;]");
-
-			// On screen
-			event.data.media_player.reposition();
+			else {
+				event.data.media_player.maximize();
+			}
 		}
 		break;
 		case 4:

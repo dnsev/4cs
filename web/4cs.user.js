@@ -2830,7 +2830,7 @@ MediaPlayer.prototype.create=function(){
 	.on("mouseup."+this.namespace,{media_player:this},this.on_document_mouseup)
 	.on("mousemove."+this.namespace,{media_player:this},this.on_document_mousemove);
 	var help_custom_div=null;
-	var title_buttons=new Array();
+	this.title_buttons=new Array();
 	this.help_container=[null,null,null];
 	this.help_container_inner1=[null,null,null];
 	this.help_container_footer=[null,null,null];
@@ -2939,26 +2939,26 @@ MediaPlayer.prototype.create=function(){
 				.append(
 					this.D("SPMainButtonsLeft")
 					.append(
-						(title_buttons[0]=this.E("a","SPMainButtonLeft"))
+						(this.title_buttons[0]=this.E("a","SPMainButtonLeft"))
 						.html("[S]")
 					)
 					.append(
-						(title_buttons[1]=this.E("a","SPMainButtonGeneric"))
+						(this.title_buttons[1]=this.E("a","SPMainButtonGeneric"))
 						.html("[?]")
 					)
 					.append(
-						(title_buttons[2]=this.E("a","SPMainButtonGeneric"))
+						(this.title_buttons[2]=this.E("a","SPMainButtonGeneric"))
 						.html("[D]")
 					)
 				)
 				.append(
 					this.D("SPMainButtonsRight")
 					.append(
-						(title_buttons[3]=this.E("a","SPMainButtonGeneric"))
+						(this.title_buttons[3]=this.E("a","SPMainButtonGeneric"))
 						.html("[&#x2012;]")
 					)
 					.append(
-						(title_buttons[4]=this.E("a","SPMainButtonRight"))
+						(this.title_buttons[4]=this.E("a","SPMainButtonRight"))
 						.html("[&times;]")
 					)
 				)
@@ -3618,9 +3618,9 @@ MediaPlayer.prototype.create=function(){
 	if(!this.first_run){
 		this.first_run_container.css("display","none");
 	}
-	for(var i=0;i<title_buttons.length;++i){
-		title_buttons[i].on("mousedown",this.cancel_event);
-		title_buttons[i].on("click."+this.namespace,{media_player:this,control_id:i},this.on_main_control_click);
+	for(var i=0;i<this.title_buttons.length;++i){
+		this.title_buttons[i].on("mousedown",this.cancel_event);
+		this.title_buttons[i].on("click."+this.namespace,{media_player:this,control_id:i},this.on_main_control_click);
 	}
 	for(var i=0;i<this.resizing_texts.length;++i){
 		this.resizing_texts[i].css("display","none");
@@ -3653,19 +3653,6 @@ MediaPlayer.prototype.focus=function(){
 		this.help_container[i].css("display","none");
 	}
 	this.reposition();
-}
-MediaPlayer.prototype.on_custom_option_click=function(event){
-	var v_id=0;
-	for(var j=0;j<event.data.custom_data["values"].length;++j){
-		if(event.data.custom_data["current"]==event.data.custom_data["values"][j]){
-			v_id=j;
-			break;
-		}
-	}
-	v_id=(v_id+1)%event.data.custom_data["values"].length;
-	$(this).html(event.data.custom_data["descr"][v_id]);
-	event.data.custom_data["current"]=event.data.custom_data["values"][v_id];
-	event.data.custom_data["change"](event.data.custom_data["values"][v_id]);
 }
 MediaPlayer.prototype.play=function(){
 	if(this.current_media!==null){
@@ -4171,6 +4158,29 @@ MediaPlayer.prototype.remove=function(index){
 	}
 	this.update_index_display((this.current_media!=null?this.current_media.index:-1),this.playlist.length,true);
 }
+MediaPlayer.prototype.is_maximized=function(){
+	return(this.playlist_container.css("display")!="none");
+};
+MediaPlayer.prototype.maximize=function(){
+	this.playlist_container.css("display","");
+	this.top_container.css("display","");
+	this.downloads_container.css("display","none");
+	for(var i=0;i<this.help_container.length;++i){
+		this.help_container[i].css("display","none");
+	}
+	this.title_buttons[this.title_buttons.length-2].html("[&#x2012;]");
+	this.reposition();
+};
+MediaPlayer.prototype.minimize=function(){
+	this.playlist_container.css("display","none");
+	this.top_container.css("display","none");
+	this.downloads_container.css("display","none");
+	for(var i=0;i<this.help_container.length;++i){
+		this.help_container[i].css("display","none");
+	}
+	this.title_buttons[this.title_buttons.length-2].html("[+]");
+	this.reposition();
+};
 MediaPlayer.prototype.nullify=function(){
 	this.sp_container_main=null;
 	this.sp_container=null;
@@ -4218,6 +4228,7 @@ MediaPlayer.prototype.nullify=function(){
 	this.downloads_ready_container=null;
 	this.downloads_link=null;
 	this.downloads_about=null;
+	this.title_buttons=null;
 	if(this.playlist_index_timer!==null){
 		clearTimeout(this.playlist_index_timer);
 		this.playlist_index_timer=null;
@@ -5161,6 +5172,19 @@ MediaPlayer.prototype.normalize_filename=function(fname){
 	}
 	return fname;
 };
+MediaPlayer.prototype.on_custom_option_click=function(event){
+	var v_id=0;
+	for(var j=0;j<event.data.custom_data["values"].length;++j){
+		if(event.data.custom_data["current"]==event.data.custom_data["values"][j]){
+			v_id=j;
+			break;
+		}
+	}
+	v_id=(v_id+1)%event.data.custom_data["values"].length;
+	$(this).html(event.data.custom_data["descr"][v_id]);
+	event.data.custom_data["current"]=event.data.custom_data["values"][v_id];
+	event.data.custom_data["change"](event.data.custom_data["values"][v_id]);
+}
 MediaPlayer.prototype.on_ytvideo_time_update=function(playlist_item,media_player){
 	if(media_player.ytvideo_player!=null){
 		if(media_player.ytvideo_player.getCurrentTime){
@@ -5726,14 +5750,12 @@ MediaPlayer.prototype.on_main_control_click=function(event){
 		break;
 		case 3:
 		{
-			var open=(event.data.media_player.playlist_container.css("display")!="none");
-			event.data.media_player.playlist_container.css("display",(open?"none":""));
-			event.data.media_player.top_container.css("display",(open?"none":""));
-			for(var i=0;i<event.data.media_player.help_container.length;++i){
-				event.data.media_player.help_container[i].css("display","none");
+			if(event.data.media_player.is_maximized()){
+				event.data.media_player.minimize();
 			}
-			$(this).html(open?"[+]":"[&#x2012;]");
-			event.data.media_player.reposition();
+			else{
+				event.data.media_player.maximize();
+			}
 		}
 		break;
 		case 4:
@@ -7714,23 +7736,75 @@ SoundAutoChecker.prototype.load_single_done=function(){
 var sound_auto_checker=new SoundAutoChecker();
 function HotkeyListener(){
 	this.flags=0;
+	this.keycode_names={
+		8:"BACKSPACE",
+		9:"TAB",
+		13:"ENTER",
+		18:"ESCAPE",
+		20:"CAPS LOCK",
+		32:"SPACE",
+		33:"PAGE UP",
+		34:"PAGE DOWN",
+		35:"END",
+		36:"HOME",
+		37:"LEFT",
+		38:"UP",
+		39:"RIGHT",
+		40:"DOWN",
+		112:"F1",
+		113:"F2",
+		114:"F3",
+		115:"F4",
+		116:"F5",
+		117:"F6",
+		118:"F7",
+		119:"F8",
+		120:"F9",
+		121:"F10",
+		122:"F11",
+		123:"F12",
+		173:"-",
+		192:"`",
+		219:"[",
+		220:"\\",
+		221:"]",
+		222:"'",
+		188:"<",
+		190:">",
+		191:"/",
+	};
+	this.hotkeys=[
+		["player_open",this.on_player_open,"Open Player"],
+		["player_close",this.on_player_close,"Close Player"],
+		["player_minmax",this.on_player_minmax,"Min/Max Player"],
+		["playlist_play",this.on_playlist_play,"Play/Pause"],
+		["playlist_next",this.on_playlist_previous,"Next"],
+		["playlist_previous",this.on_playlist_next,"Previous"],
+		["volume_up",this.on_volume_up,"Volume Up"],
+		["volume_down",this.on_volume_down,"Volume Down"],
+	];
 	$(document)
 	.off("keydown.HotkeyListener keyup.HotkeyListener")
 	.on("keydown.HotkeyListener",{self:this},function(event){
 		if(event.which>=16&&event.which<=17){
 			event.data.self.flags|=(1<<(event.which-16));
 		}
-		else if(
-			script_settings["hotkeys"]["open_player"][0]!=0&&
-			script_settings["hotkeys"]["open_player"][0]==event.which&&
-			script_settings["hotkeys"]["open_player"][1]==event.data.self.flags
-		){
+		else{
 			var t=$(document.activeElement).prop("tagName").toLowerCase();
 			if(t!=="input"&&t!=="textarea"){
-				open_player(true);
-				event.stopPropagation();
-				event.preventDefault();
-				return false;
+				for(var i=0;i<event.data.self.hotkeys.length;++i){
+					var k=event.data.self.hotkeys[i][0];
+					if(
+						script_settings["hotkeys"][k][0]!=0&&
+						script_settings["hotkeys"][k][0]==event.which&&
+						script_settings["hotkeys"][k][1]==event.data.self.flags
+					){
+						event.data.self.hotkeys[i][1].call(event.data.self);
+						event.stopPropagation();
+						event.preventDefault();
+						return false;
+					}
+				}
 			}
 		}
 		return true;
@@ -7741,6 +7815,172 @@ function HotkeyListener(){
 		}
 	});
 }
+HotkeyListener.prototype.settings_update=function(){
+	for(var i=0;i<this.hotkeys.length;++i){
+		script_settings["hotkeys"][this.hotkeys[i][0]]=[0,0];
+	}
+};
+HotkeyListener.prototype.key_to_string=function(keycode,modifiers){
+	var str="";
+	if((modifiers&1)!=0)str+="Shift";
+	if((modifiers&2)!=0)str+=(str.length>0?" + ":"")+"Ctrl";
+	if((modifiers&4)!=0)str+=(str.length>0?" + ":"")+"Alt";
+	if(keycode!=0)str+=(str.length>0?" + ":"")+(
+		keycode in this.keycode_names?
+		this.keycode_names[keycode]:
+		(keycode>=127||keycode<32?keycode:String.fromCharCode(keycode))
+	);
+	return str;
+};
+HotkeyListener.prototype.create_hotkey_setting=function(hotkey_label,hotkey_name){
+	var hotkey_settings={
+		"section":"Hotkeys",
+		"label":hotkey_label,
+		"html":null,
+		"html_input":null,
+		"html_input_clear":null,
+		"value":"",
+		"value_code":script_settings["hotkeys"][hotkey_name][0],
+		"value_modifiers":script_settings["hotkeys"][hotkey_name][1],
+		"value_modifiers_current":0,
+		"update_value":null,
+		"listener":this
+	};
+	hotkey_settings.update_value=function(hotkey_settings){
+		hotkey_settings.value=hotkey_settings.listener.key_to_string(
+			hotkey_settings.value_code,hotkey_settings.value_modifiers
+		);
+		hotkey_settings.html_input.val(hotkey_settings.value);
+	};
+	(hotkey_settings.html=E("div"))
+	.append(
+		E("div")
+		.addClass("SPHelpColorInputDiv2")
+		.append(
+			E("div")
+			.addClass("SPHelpColorInputDiv3")
+			.css({
+				"position":"relative",
+			})
+			.append(
+				(hotkey_settings.html_input=E("input"))
+				.addClass("SPHelpColorInput")
+				.attr("type","text")
+				.val(hotkey_settings.value)
+			)
+			.append(
+				E("div")
+				.css({
+					"position":"absolute",
+					"right":"0",
+					"top":"0",
+					"bottom":"0",
+				})
+				.append(
+					(hotkey_settings.html_input_clear=E("a"))
+					.attr("href","#")
+					.html("Clear")
+				)
+			)
+		)
+	);
+	hotkey_settings.update_value(hotkey_settings);
+	hotkey_settings.html_input_clear.on("click",{"hotkey_settings":hotkey_settings,"hotkey_name":hotkey_name},function(event){
+		event.data.hotkey_settings.value_code=0;
+		event.data.hotkey_settings.value_modifiers=0;
+		event.data.hotkey_settings.value_modifiers_current=0;
+		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+		script_settings["hotkeys"][event.data.hotkey_name][0]=event.data.hotkey_settings.value_code;
+		script_settings["hotkeys"][event.data.hotkey_name][1]=event.data.hotkey_settings.value_modifiers;
+		settings_save();
+		return false;
+	});
+	hotkey_settings.html_input.on("keydown",{"hotkey_settings":hotkey_settings,"hotkey_name":hotkey_name},function(event){
+		if(event.which>=16&&event.which<=17){
+			var v=1<<(event.which-16);
+			event.data.hotkey_settings.value_modifiers_current|=v;
+			event.data.hotkey_settings.value_modifiers=event.data.hotkey_settings.value_modifiers_current;
+			event.data.hotkey_settings.value_code=0;
+		}
+		else{
+			event.data.hotkey_settings.value_modifiers=event.data.hotkey_settings.value_modifiers_current;
+			event.data.hotkey_settings.value_code=event.which;
+		}
+		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+		event.stopPropagation();
+		event.preventDefault();
+		return false;
+	})
+	.on("keyup",{"hotkey_settings":hotkey_settings,"hotkey_name":hotkey_name},function(event){
+		if(event.which>=16&&event.which<=17){
+			var v=1<<(event.which-16);
+			event.data.hotkey_settings.value_modifiers_current&=~v;
+			event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+		}
+		event.stopPropagation();
+		event.preventDefault();
+		return false;
+	})
+	.on("blur",{"hotkey_settings":hotkey_settings,"hotkey_name":hotkey_name},function(event){
+		if(event.data.hotkey_settings.value_code==0){
+			event.data.hotkey_settings.value_modifiers=0;
+		}
+		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+		script_settings["hotkeys"][event.data.hotkey_name][0]=event.data.hotkey_settings.value_code;
+		script_settings["hotkeys"][event.data.hotkey_name][1]=event.data.hotkey_settings.value_modifiers;
+		settings_save();
+	});
+	return hotkey_settings;
+};
+HotkeyListener.prototype.on_player_open=function(){
+	open_player(true);
+};
+HotkeyListener.prototype.on_player_close=function(){
+	if(media_player_instance!==null){
+		media_player_instance.destructor();
+		media_player_instance=null;
+	}
+};
+HotkeyListener.prototype.on_player_minmax=function(){
+	if(media_player_instance!==null){
+		if(media_player_instance.is_maximized()){
+			media_player_instance.minimize();
+		}
+		else{
+			media_player_instance.maximize();
+		}
+	}
+};
+HotkeyListener.prototype.on_playlist_play=function(){
+	if(media_player_instance!==null){
+		if(media_player_instance.is_paused()){
+			media_player_instance.play();
+		}
+		else{
+			media_player_instance.pause();
+		}
+	}
+};
+HotkeyListener.prototype.on_playlist_next=function(){
+	if(media_player_instance!==null){
+		media_player_instance.next(false);
+	}
+};
+HotkeyListener.prototype.on_playlist_previous=function(){
+	if(media_player_instance!==null){
+		media_player_instance.previous();
+	}
+};
+HotkeyListener.prototype.on_volume_up=function(){
+	if(media_player_instance!==null){
+		media_player_instance.set_volume(media_player_instance.get_volume()+0.05);
+	}
+};
+HotkeyListener.prototype.on_volume_down=function(){
+	if(media_player_instance!==null){
+		media_player_instance.set_volume(media_player_instance.get_volume()-0.05);
+	}
+};
 var hotkey_listener=null;
 var media_player_instance=null;
 var media_player_css=null;
@@ -7888,107 +8128,6 @@ function open_player(load_settings){
 	}
 	media_player_css=new MediaPlayerCSS("yotsubab",media_player_css_color_presets,media_player_css_size_presets);
 	if(load_settings)media_player_css.load(script_settings["style"]);
-	var hotkey_settings={
-		"section":"Hotkeys",
-		"label":"Open Player",
-		"html":null,
-		"html_input":null,
-		"html_input_clear":null,
-		"value":"",
-		"value_code":script_settings["hotkeys"]["open_player"][0],
-		"value_modifiers":script_settings["hotkeys"]["open_player"][1],
-		"value_modifiers_current":0,
-		"update_value":null
-	};
-	hotkey_settings.update_value=function(hotkey_settings){
-		var v=hotkey_settings.value_modifiers;
-		var str="";
-		if((v&1)!=0)str+="Shift";
-		if((v&2)!=0)str+=(str.length>0?" + ":"")+"Ctrl";
-		if((v&4)!=0)str+=(str.length>0?" + ":"")+"Alt";
-		v=hotkey_settings.value_code;
-		if(v!=0)str+=(str.length>0?" + ":"")+String.fromCharCode(v);
-		hotkey_settings.value=str;
-		hotkey_settings.html_input.val(hotkey_settings.value);
-	};
-	(hotkey_settings.html=E("div"))
-	.append(
-		E("div")
-		.addClass("SPHelpColorInputDiv2")
-		.append(
-			E("div")
-			.addClass("SPHelpColorInputDiv3")
-			.css({
-				"position":"relative",
-			})
-			.append(
-				(hotkey_settings.html_input=E("input"))
-				.addClass("SPHelpColorInput")
-				.attr("type","text")
-				.val(hotkey_settings.value)
-			)
-			.append(
-				E("div")
-				.css({
-					"position":"absolute",
-					"right":"0",
-					"top":"0",
-					"bottom":"0",
-				})
-				.append(
-					(hotkey_settings.html_input_clear=E("a"))
-					.attr("href","#")
-					.html("Clear")
-				)
-			)
-		)
-	);
-	hotkey_settings.update_value(hotkey_settings);
-	hotkey_settings.html_input_clear.on("click",{"hotkey_settings":hotkey_settings},function(event){
-		event.data.hotkey_settings.value_code=0;
-		event.data.hotkey_settings.value_modifiers=0;
-		event.data.hotkey_settings.value_modifiers_current=0;
-		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
-		script_settings["hotkeys"]["open_player"][0]=event.data.hotkey_settings.value_code;
-		script_settings["hotkeys"]["open_player"][1]=event.data.hotkey_settings.value_modifiers;
-		settings_save();
-		return false;
-	});
-	hotkey_settings.html_input.on("keydown",{"hotkey_settings":hotkey_settings},function(event){
-		if(event.which>=16&&event.which<=17){
-			var v=1<<(event.which-16);
-			event.data.hotkey_settings.value_modifiers_current|=v;
-			event.data.hotkey_settings.value_modifiers=event.data.hotkey_settings.value_modifiers_current;
-			event.data.hotkey_settings.value_code=0;
-		}
-		else{
-			event.data.hotkey_settings.value_modifiers=event.data.hotkey_settings.value_modifiers_current;
-			event.data.hotkey_settings.value_code=event.which;
-		}
-		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
-		event.stopPropagation();
-		event.preventDefault();
-		return false;
-	})
-	.on("keyup",{"hotkey_settings":hotkey_settings},function(event){
-		if(event.which>=16&&event.which<=17){
-			var v=1<<(event.which-16);
-			event.data.hotkey_settings.value_modifiers_current&=~v;
-			event.data.hotkey_settings.update_value(event.data.hotkey_settings);
-		}
-		event.stopPropagation();
-		event.preventDefault();
-		return false;
-	})
-	.on("blur",{"hotkey_settings":hotkey_settings},function(event){
-		if(event.data.hotkey_settings.value_code==0){
-			event.data.hotkey_settings.value_modifiers=0;
-		}
-		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
-		script_settings["hotkeys"]["open_player"][0]=event.data.hotkey_settings.value_code;
-		script_settings["hotkeys"]["open_player"][1]=event.data.hotkey_settings.value_modifiers;
-		settings_save();
-	});
 	var extra_options=[
 		{
 			"current":script_settings["inline"]["url_replace"],
@@ -7999,9 +8138,11 @@ function open_player(load_settings){
 				script_settings["inline"]["url_replace"]=value;
 				settings_save();
 			}
-		},
-		hotkey_settings
+		}
 	];
+	for(var i=0;i<hotkey_listener.hotkeys.length;++i){
+		extra_options.push(hotkey_listener.create_hotkey_setting(hotkey_listener.hotkeys[i][2],hotkey_listener.hotkeys[i][0]));
+	}
 	media_player_instance=new MediaPlayer(
 		media_player_css,
 		[png_load_callback,image_load_callback],
@@ -8027,9 +8168,7 @@ var script_settings={
 		"current_version":"",
 		"update_message":""
 	},
-	"hotkeys":{
-		"open_player":[0,0]
-	},
+	"hotkeys":{},
 	"inline":{
 		"url_replace":true
 	}
@@ -8054,7 +8193,16 @@ function settings_load(){
 			if(s){
 				s=JSON.parse(s);
 				for(var key in script_settings){
-					if(key in s)script_settings[key]=s[key];
+					if(key in s){
+						var len=0;
+						for(var key2 in script_settings[key]){
+							++len;
+							if(key2 in s[key])script_settings[key][key2]=s[key][key2];
+						}
+						if(len==0){
+							script_settings[key]=s[key];
+						}
+					}
 				}
 			}
 		}
@@ -8124,6 +8272,8 @@ function script_update_check(ajax){
 	}
 }
 jQuery(document).ready(function(){
+	hotkey_listener=new HotkeyListener();
+	hotkey_listener.settings_update();
 	settings_load();
 	window._unsafe_exec=function(){
 		if(window._unsafe!==undefined){
@@ -8153,7 +8303,6 @@ jQuery(document).ready(function(){
 	$.getScript("//www.youtube.com/iframe_api",function(script,status,jqXHR){});
 	inline_setup();
 	thread_manager=new ThreadManager();
-	hotkey_listener=new HotkeyListener();
 	var time_update;
 	var version="";
 	try{
