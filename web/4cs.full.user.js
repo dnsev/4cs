@@ -9172,7 +9172,7 @@ function HotkeyListener() {
 		[ "volume_down" , this.on_volume_down , "Volume Down" ],
 	];
 
-	$(document)
+	$(window)
 	.off("keydown.HotkeyListener keyup.HotkeyListener")
 	.on("keydown.HotkeyListener", {self: this}, function (event) {
 		if (event.which >= 16 && event.which <= 17) { // changing 17 to 18 enables "alt" support, but is buggy

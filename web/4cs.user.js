@@ -7783,7 +7783,7 @@ function HotkeyListener(){
 		["volume_up",this.on_volume_up,"Volume Up"],
 		["volume_down",this.on_volume_down,"Volume Down"],
 	];
-	$(document)
+	$(window)
 	.off("keydown.HotkeyListener keyup.HotkeyListener")
 	.on("keydown.HotkeyListener",{self:this},function(event){
 		if(event.which>=16&&event.which<=17){
