@@ -5702,6 +5702,9 @@ MediaPlayer.prototype.on_main_control_click=function(event){
 	switch(event.data.control_id){
 		case 1:
 		{
+			if(!event.data.media_player.is_maximized()){
+				event.data.media_player.maximize();
+			}
 			event.data.media_player.first_run_container.css("display","");
 			for(var i=0;i<event.data.media_player.help_container.length;++i){
 				event.data.media_player.help_container[i].css("display","none");
@@ -5711,6 +5714,9 @@ MediaPlayer.prototype.on_main_control_click=function(event){
 		break;
 		case 0:
 		{
+			if(!event.data.media_player.is_maximized()){
+				event.data.media_player.maximize();
+			}
 			if(event.data.media_player.first_run_container.css("display")=="none"){
 				var open=false;
 				for(var i=0;i<event.data.media_player.help_container.length;++i){
@@ -5741,6 +5747,9 @@ MediaPlayer.prototype.on_main_control_click=function(event){
 		break;
 		case 2:
 		{
+			if(!event.data.media_player.is_maximized()){
+				event.data.media_player.maximize();
+			}
 			var open=(event.data.media_player.downloads_container.css("display")=="none");
 			for(var i=0;i<event.data.media_player.help_container.length;++i){
 				event.data.media_player.help_container[i].css("display","none");

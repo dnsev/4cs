@@ -6643,6 +6643,9 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 	switch (event.data.control_id) {
 		case 1:
 		{
+			if (!event.data.media_player.is_maximized()) {
+				event.data.media_player.maximize();
+			}
 			// Info
 			event.data.media_player.first_run_container.css("display", "");
 			for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
@@ -6653,6 +6656,9 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 		break;
 		case 0:
 		{
+			if (!event.data.media_player.is_maximized()) {
+				event.data.media_player.maximize();
+			}
 			// Options
 			if (event.data.media_player.first_run_container.css("display") == "none") {
 				var open = false;
@@ -6685,6 +6691,9 @@ MediaPlayer.prototype.on_main_control_click = function (event) {
 		break;
 		case 2:
 		{
+			if (!event.data.media_player.is_maximized()) {
+				event.data.media_player.maximize();
+			}
 			// Downloads
 			var open = (event.data.media_player.downloads_container.css("display") == "none");
 			for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
