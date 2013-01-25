@@ -8718,8 +8718,8 @@ function inline_post_parse_for_urls(post_data, redo, post_data_copy) {
 				else {
 					if (
 						(name == "span" && tag.hasClass("quote")) ||
-						name == "s"
-					) return 1;
+						(name == "s")
+					) return (script_settings["inline"]["url_replace_smart"] ? 2 : 1);
 					if (name == "wbr") return 2;
 				}
 
@@ -8819,7 +8819,12 @@ function inline_replace_urls(tags) {
 			full_text += text;
 		}
 		else {
+			/*if (script_settings["inline"]["url_replace_smart"]&&0) {
+				// TODO : do this later rather than using an assumption
+			}
+			else {*/
 			full_text += $('<div>').append(tags[i].clone()).html();
+			// }
 		}
 	}
 
@@ -9404,7 +9409,6 @@ HotkeyListener.prototype.on_volume_down = function () {
 		media_player_instance.set_volume(media_player_instance.get_volume() - 0.05);
 	}
 };
-
 var hotkey_listener = null;
 
 
@@ -9613,7 +9617,17 @@ function open_player(load_settings) {
 				script_settings["inline"]["url_replace"] = value;
 				settings_save();
 			}
-		}
+		},
+		{
+			"current": script_settings["inline"]["url_replace_smart"],
+			"label": "Extended URLs",
+			"values": [ true , false ],
+			"descr": [ "Enabled" , "Disabled" ],
+			"change": function (value) {
+				script_settings["inline"]["url_replace_smart"] = value;
+				settings_save();
+			}
+		},
 	];
 	for (var i = 0; i < hotkey_listener.hotkeys.length; ++i) {
 		extra_options.push(hotkey_listener.create_hotkey_setting(hotkey_listener.hotkeys[i][2], hotkey_listener.hotkeys[i][0]));
@@ -9655,7 +9669,8 @@ var script_settings = {
 	},
 	"hotkeys": {}, // loaded elsewhere
 	"inline": {
-		"url_replace": true
+		"url_replace": true,
+		"url_replace_smart": false,
 	}
 };
 function settings_save() {
