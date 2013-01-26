@@ -1012,7 +1012,7 @@ MediaPlayerCSS.prototype.parse_out_values = function (value) {
 				// Remove []
 				match2 = match2.substr(1, match2.length - 2);
 				// Add to index list
-				if (match2.length > 0 && (match2[0] == '"' || match2[0] == "'")) {
+				if (match2.length > 0 && (match2[0] == "\"" || match2[0] == "'")) {
 					indices.push(match2.substr(1, match2.length - 2));
 				}
 				else {
@@ -1021,7 +1021,7 @@ MediaPlayerCSS.prototype.parse_out_values = function (value) {
 				return "";
 			});
 			// Check if it's a variable name, or a integer literal
-			if (values[v].length > 0 && (values[v].charCodeAt(0) & 0xDF) >= 'A'.charCodeAt(0) && (values[v].charCodeAt(0) & 0xDF) <= 'Z'.charCodeAt(0)) {
+			if (values[v].length > 0 && (values[v].charCodeAt(0) & 0xDF) >= "A".charCodeAt(0) && (values[v].charCodeAt(0) & 0xDF) <= "Z".charCodeAt(0)) {
 				if (values[v] in css.css_color_presets[css.preset]) {
 					values[v] = css.css_color_presets[css.preset][values[v]];
 				}
@@ -1132,7 +1132,7 @@ MediaPlayerCSS.prototype.get_value = function (is_color, name) {
 		// Remove []
 		match = match.substr(1, match.length - 2);
 		// Add to index list
-		if (match.length > 0 && (match[0] == '"' || match[0] == "'")) {
+		if (match.length > 0 && (match[0] == "\"" || match[0] == "'")) {
 			indices.push(match.substr(1, match.length - 2));
 		}
 		else {
@@ -1192,7 +1192,7 @@ MediaPlayerCSS.prototype.modify_value = function (is_color, name, value, compone
 		// Remove []
 		match = match.substr(1, match.length - 2);
 		// Add to index list
-		if (match.length > 0 && (match[0] == '"' || match[0] == "'")) {
+		if (match.length > 0 && (match[0] == "\"" || match[0] == "'")) {
 			indices.push(match.substr(1, match.length - 2));
 		}
 		else {
@@ -1307,7 +1307,7 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 	this.playlist_height = this.playlist_height_default;
 	this.player_width_min = 64;
 	this.playlist_height_min = 0;
-	this.playlist_play_on_load = 1; // 0 = no, 1 = if empty, 2 = if paused, 3 = always
+	this.playlist_play_on_load = 2;
 	this.playlist_play_on_load_settings = [ "Don't Play" , "Play if empty playlist" , "Play if at end of playlist" , "Play if paused" , "Always play" ];
 
 	this.mouse_offset = null;
@@ -1342,7 +1342,7 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 
 	// Playlist
 	this.playlist = [];
-	this.playlist_loop = true;
+	this.playlist_loop = false;
 	this.playlist_randomize = false;
 	this.playlist_scrollto_onload = true;
 	this.playlist_index_timer = null;

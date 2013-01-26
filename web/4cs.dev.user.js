@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.8.2
+// @version        1.8.2.1
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -39,6 +39,8 @@ window.$.prototype.exists = function () {
 ///////////////////////////////////////////////////////////////////////////////
 // Multi-use
 ///////////////////////////////////////////////////////////////////////////////
+var is_archive = ((document.location + "").indexOf("boards.4chan.org") < 0);
+
 function string_to_uint8array(str) {
 	var array = new Uint8Array(new ArrayBuffer(str.length));
 	for (var i = 0; i < str.length; ++i) {
@@ -148,6 +150,42 @@ function html_to_text(str) {
 
 function string_remove_tags(str) {
 	return str.replace(/<[^>]*>?/g, "");
+}
+
+function dom_replace(tag, check_callback, replace_callback) {
+	var c = tag.contents();
+	var sub_tags = [ new Array() ];
+	var check, t;
+
+	var i = 0;
+	for (var j = 0; j < c.length; ++j) {
+		t = $(c[j]);
+		check = check_callback(t, sub_tags[i]);
+
+		// 0: Ignore tag, don't parse into
+		// 1: Parse standalone
+		// 2: Parse in group
+		if (check <= 1 && sub_tags[i].length > 0) {
+			sub_tags.push(new Array());
+			++i;
+		}
+		if (check >= 1) {
+			sub_tags[i].push(t);
+			// Sub-scan
+			if (t.prop("tagName") !== undefined && t.contents().length > 0) {
+				dom_replace(t, check_callback, replace_callback);
+			}
+		}
+	}
+
+	// Replace
+	var found = false;
+	for (i = 0; i < sub_tags.length && sub_tags[i].length > 0; ++i) {
+		found = (replace_callback(sub_tags[i]) || found);
+	}
+
+	// Done
+	return found;
 }
 
 
@@ -705,7 +743,7 @@ function image_check_callback(url_or_filename, raw_ui8_data, callback_data, done
 					// Find the key location
 					tag_pos = i;
 					k = 1;
-					tag = load_tag || "[Name Unknown]";
+					tag = "[Name Unknown]";
 					if (masked) {
 						// Get the tag
 						if (i - tag_start < tag_max_length) {
@@ -745,10 +783,8 @@ function image_check_callback(url_or_filename, raw_ui8_data, callback_data, done
 					}
 					// New sound
 					++sounds[0];
-					sounds[1].push(tag);
+					sounds[1].push(tag + ".ogg");
 					sounds[2].push(-i);
-					// Next
-					//i += magic_strings_ui8[s].length;
 				}
 
 				// Done
@@ -963,9 +999,7 @@ function png_load_callback_find_correct(r, load_tag) {
 ///////////////////////////////////////////////////////////////////////////////
 // Thread Manager
 ///////////////////////////////////////////////////////////////////////////////
-var is_archive = ((document.location + "").indexOf("boards.4chan.org") < 0);
-var thread_manager = null;
-function ThreadManager () {
+function ThreadManager() {
 	// Manager
 	this.posts = {};
 	var self = this;
@@ -1030,7 +1064,7 @@ ThreadManager.prototype.on_dom_mutation = function (target) {
 		// Not tested
 		this.parse_post(target.parent().parent());
 	}
-}
+};
 ThreadManager.prototype.parse_post = function (container) {
 	// Get id
 	var post_id = (container.attr("id") || "0").replace(/(\w+_)?[^0-9]/g, "");
@@ -1107,49 +1141,51 @@ ThreadManager.prototype.parse_post = function (container) {
 	}
 
 	// Auto checking images
-	inline_post_parse(this.posts[post_id], redo, post_data_copy);
-	if (script_settings["inline"]["url_replace"]) inline_post_parse_for_urls(this.posts[post_id], redo, post_data_copy);
-}
+	inline_manager.parse_post(this.posts[post_id], redo, post_data_copy);
+	if (script.settings["inline"]["url_replace"]) {
+		inline_manager.parse_post_for_urls(this.posts[post_id], redo, post_data_copy);
+	}
+};
 ThreadManager.prototype.post = function (index) {
 	index += "";
 	return (index in this.posts ? this.posts[index] : null);
-}
+};
+var thread_manager = null;
 
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Inline text
 ///////////////////////////////////////////////////////////////////////////////
-var inline_settings_span = null;
-var inline_update_span = null;
-var inline_update_link = null;
-function inline_setup() {
-	$ = jQuery;
-
+function InlineManager() {
 	// Insert navigation link
-	var pre, post;
+	var self = this;
+	var pre, post, reload_span;
 	if (is_archive) {
-		$(".letters").append((inline_settings_span = E("span")));
+		$(".letters").append((this.settings_span = E("span")));
 		pre = " [ ";
 		post = " ]";
 	}
 	else {
-		$("#navtopright").prepend((inline_settings_span = E("span")));
+		$("#navtopright").prepend((this.settings_span = E("span")));
 		pre = "[";
 		post = "] ";
 	}
 
-	inline_settings_span
+	this.settings_span
 	.append(T(pre))
-	.append(E("a").html("Media Player").attr("href", "#").on("click", function (event) { open_player(true); return false; }))
+	.append(E("a").html("Media Player").attr("href", "#").on("click", function (event) {
+		media_player_manager.open_player(true);
+		return false;
+	}))
 	.append(
-		(inline_update_span = E("span").css("display", "none"))
+		(this.update_span = E("span").css("display", "none"))
 		.append(T(" / "))
 		.append(
-			(inline_update_link = E("a"))
+			(this.update_link = E("a"))
 			.html("Update")
 			.attr("href", "#")
-			.on("click", function (event) { return script_update(event); })
+			.on("click", function (event) { return script.update(event); })
 		)
 	)
 	.append(
@@ -1161,7 +1197,11 @@ function inline_setup() {
 				E("a")
 				.html("Reload")
 				.attr("href", "#")
-				.on("click", function (event) { open_player(false); settings_save(); return false; })
+				.on("click", function (event) {
+					media_player_manager.open_player(false);
+					self.settings_save();
+					return false;
+				})
 			)
 		)
 		.append(T(post))
@@ -1184,21 +1224,23 @@ function inline_setup() {
 				(sound_auto_checker.link = E("a"))
 				.attr("href", "#")
 				.html("Detect Sounds")
-				.on("click", {}, inline_detect_all_in_thread)
+				.on("click", {}, this.on_detect_all_in_thread_click)
 			)
 			.append(T(" / "))
 			.append(
 				(sound_auto_loader.link = E("a"))
 				.attr("href", "#")
 				.html("Load All Sounds")
-				.on("click", {}, inline_load_all_in_thread)
+				.on("click", {}, this.on_load_all_in_thread_click)
 			)
 			.append(T(" ]"))
 		);
 	}
 }
-function inline_post_parse(post_data, redo, post_data_copy) {
+InlineManager.prototype.parse_post = function (post_data, redo, post_data_copy) {
 	if (post_data.image_url != null) {
+		var self = this;
+
 		if (redo) {
 			// Re-replace
 			post_data_copy.post.find(".SPLoadLink").each(function (index) {
@@ -1207,21 +1249,14 @@ function inline_post_parse(post_data, redo, post_data_copy) {
 				$(this)
 				.html(post_data.sounds[tag_id])
 				.off("click")
-				.on("click", {"post_data": post_data, "tag_id": tag_id}, inline_link_click);
+				.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
 			});
 			post_data_copy.container.find(".SPLoadAllLink").each(function (index) {
-				var tag_id = parseInt($(this).attr("_sp_tag_id"));
-
 				$(this)
 				.attr("href", "#")
 				.html(post_data.sounds.load_all_text)
-				.on("click", {"post_data": post_data}, inline_load_all);
+				.on("click", {"post_data": post_data, "manager": self}, self.on_load_all_click);
 			});
-
-/*
-			post_data_copy.sounds.load_all_link
-			.html(post_data.sounds.load_all_text)
-			.on("click", {"post_data": post_data}, inline_load_all);*/
 		}
 		else {
 			// Sound data
@@ -1265,7 +1300,7 @@ function inline_post_parse(post_data, redo, post_data_copy) {
 					
 					return 0;
 				},
-				inline_replace_tags
+				this.replace_tags
 			);
 
 			// Sounds links
@@ -1276,7 +1311,7 @@ function inline_post_parse(post_data, redo, post_data_copy) {
 				$(this)
 				.attr("href", "#")
 				.attr("_sp_tag_id", tag_id)
-				.on("click", {"post_data": post_data, "tag_id": tag_id}, inline_link_click);
+				.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
 			});
 
 			// Load all
@@ -1293,7 +1328,7 @@ function inline_post_parse(post_data, redo, post_data_copy) {
 			post_data.sounds.load_all_link
 			.attr("href", "#")
 			.html(post_data.sounds.load_all_text)
-			.on("click", {"post_data": post_data}, inline_load_all);
+			.on("click", {"post_data": post_data, "manager": self}, self.on_load_all_click);
 
 			// Status
 			post_data.post
@@ -1328,113 +1363,102 @@ function inline_post_parse(post_data, redo, post_data_copy) {
 			sound_auto_checker.add_to_queue(post_data);
 		}
 	}
-}
-function inline_link_click(event) {
-	// Change status
-	var load_str = "loading...";
-	$(this).html(load_str);
+};
+InlineManager.prototype.parse_post_for_urls = function (post_data, redo, post_data_copy) {
+	var self = this;
+	if (redo) {
+		post_data_copy.post.find(".MPReplacedURL").each(function (index) {
+			var vid_id = $(this).attr("_mp_vid_id");
+			vid_id = vid_id || null;
+			var href = $(this).attr("_mp_original_url");
 
-	// Load sound
-	event.data.post_data.sounds.loaded = true;
-	open_player(true);
-	media_player_instance.attempt_load(
-		event.data.post_data.image_url,
-		event.data.post_data.sounds.post_tags[event.data.tag_id],
-		{ "image_name": event.data.post_data.image_name },
-		{
-			"object": $(this),
-			"post_data": event.data.post_data,
-			"tag_id": event.data.tag_id,
-			"load_str": load_str
-		},
-		function (event, data) {
-			var progress = Math.floor((event.loaded / event.total) * 100);
-			data.object.html(data.load_str + " (" + progress + ")");
-		},
-		function (okay, data) {
-			data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
-		},
-		function (status, data, all_files) {
-			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
-				data.post_data.sounds.sound_names = all_files;
-				inline_update_about_image(data.post_data);
-			}
-		}
-	);
-
-	// Done
-	return false;
-}
-function inline_link_top_click(event) {
-	// Change status
-	var load_str = "loading...";
-	$(this).html(load_str);
-
-	var tag = event.data.post_data.sounds.sound_names[event.data.sound_id];
-	if (tag.substr(tag.length - 4, 4).toLowerCase() == ".ogg") {
-		tag = tag.substr(0, tag.length - 4);
-	}
-
-	// Load sound
-	event.data.post_data.sounds.loaded = true;
-	open_player(true);
-	media_player_instance.attempt_load(
-		event.data.post_data.image_url,
-		tag,
-		{ "image_name": event.data.post_data.image_name },
-		{
-			"object": $(this),
-			"post_data": event.data.post_data,
-			"sound_id": event.data.sound_id,
-			"load_str": load_str,
-			"tag": tag
-		},
-		function (event, data) {
-			var progress = Math.floor((event.loaded / event.total) * 100);
-			data.object.html(data.load_str + " (" + progress + ")");
-		},
-		function (okay, data) {
-			data.object.html(data.tag + (okay ? "" : " (ajax&nbsp;error)"));
-		},
-		function (status, data, all_files) {
-			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
-				data.post_data.sounds.sound_names = all_files;
-				inline_update_about_image(data.post_data);
-			}
-		}
-	);
-
-	// Done
-	return false;
-}
-function inline_load_all(event) {
-	inline_activate_load_all_link(event.data.post_data);
-
-	// Done
-	return false;
-}
-function inline_detect_all_in_thread(event) {
-	if (sound_auto_checker.enabled) {
-		sound_auto_checker.disable();
+			$(this)
+			.off("click")
+			.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, self.on_url_click);
+		});
 	}
 	else {
-		sound_auto_checker.enable();
-	}
+		var links_found = dom_replace(
+			post_data.post,
+			function (tag, old_tags) { // check
+				var name = tag.prop("tagName");
+				if (name === undefined) return 2;
+				name = name.toLowerCase();
 
-	return false;
-}
-function inline_load_all_in_thread(event) {
-	if (sound_auto_loader.enabled) {
-		sound_auto_loader.disable();
-	}
-	else {
-		sound_auto_loader.enable();
-	}
+				if (is_archive) {
+					if (
+						(name == "span" && tag.hasClass("greentext")) ||
+						(name == "span" && tag.hasClass("spoiler"))
+					) return 1;
+				}
+				else {
+					if (
+						(name == "span" && tag.hasClass("quote")) ||
+						(name == "s")
+					) return (script.settings["inline"]["url_replace_smart"] ? 2 : 1);
+					if (name == "wbr") return 2;
+				}
+				
+				return 0;
+			},
+			this.replace_urls
+		);
 
-	return false;
-}
+		if (links_found) {
+			// Sounds links
+			post_data.post.find(".MPReplacedURL").each(function (index) {
+				var href = html_to_text(string_remove_tags($(this).html()));
+				if (href.indexOf(":") < 0) href = "//" + href;
 
-function inline_update_about_image(post_data) {
+				var vid_id = MediaPlayer.prototype.url_get_youtube_video_id(href);
+
+				$(this)
+				.attr("href", href)
+				.attr("_mp_original_url", href)
+				.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, self.on_url_click);
+
+				if (vid_id !== null) {
+					$(this)
+					.attr("_mp_vid_id", vid_id)
+					.html(
+						$(document.createElement("img"))
+						.attr("src", "//youtube.com/favicon.ico")
+						.attr("alt", "")
+						.attr("title", "")
+						.css({"vertical-align": "middle"})
+					)
+					.append(
+						E("span")
+						.css({"padding-left": "8px"})
+						.html("Youtube: " + vid_id)
+					);
+					ajax_get(
+						"//gdata.youtube.com/feeds/api/videos/" + vid_id, true, {a: $(this)}, null,
+						function (okay, data, response) {
+							if (okay) {
+								var xml = $.parseXML(response);
+								var title;
+								try {
+									title = $(xml_find_nodes_by_name(xml, "title")).text();
+								}
+								catch (e) {
+									console.log(e);
+									title = "Unknown Title";
+								}
+
+								data.a.find("span").html(title);
+							}
+							else {
+								data.a.find("span").html("Video not found").css("font-style", "italic");
+							}
+						}
+					);
+				}
+			});
+		}
+	}
+};
+InlineManager.prototype.update_about_image = function (post_data) {
 	// Show container
 	post_data.sounds.about_container.css("display", "");
 	var sound_count = 0;
@@ -1489,7 +1513,7 @@ function inline_update_about_image(post_data) {
 							.attr("href", "#")
 							.addClass("SPLoadLinkTop")
 							.html(text_to_html(post_data.sounds.sound_names[i].substr(0, post_data.sounds.sound_names[i].length - 4))) // remove extension
-							.on("click", {"post_data": post_data, "sound_id": i}, inline_link_top_click)
+							.on("click", {"post_data": post_data, "sound_id": i}, this.on_link_top_click)
 						)
 					);
 				}
@@ -1521,17 +1545,17 @@ function inline_update_about_image(post_data) {
 	}
 
 	post_data.sounds.about_count_label.html(str);
-}
-
-function inline_activate_load_all_link(post_data, done_callback) {
+};
+InlineManager.prototype.activate_load_all_link = function (post_data, done_callback) {
 	// Change status
 	var load_str = "loading";
 	post_data.sounds.load_all_link.html(load_str);
 
 	// Load sound
+	var self = this;
 	post_data.sounds.loaded = true;
-	open_player(true);
-	media_player_instance.attempt_load(
+	media_player_manager.open_player(true);
+	media_player_manager.media_player.attempt_load(
 		post_data.image_url,
 		MediaPlayer.ALL_SOUNDS,
 		{ "image_name": post_data.image_name },
@@ -1555,7 +1579,7 @@ function inline_activate_load_all_link(post_data, done_callback) {
 		function (status, data, all_files) {
 			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
 				data.post_data.sounds.sound_names = all_files;
-				inline_update_about_image(data.post_data);
+				self.update_about_image(data.post_data);
 			}
 			if (typeof(done_callback) == "function") done_callback(false, data.post_data);
 		}
@@ -1563,102 +1587,8 @@ function inline_activate_load_all_link(post_data, done_callback) {
 
 	// Done
 	return false;
-}
-
-function inline_post_parse_for_urls(post_data, redo, post_data_copy) {
-	if (redo) {
-		post_data_copy.post.find(".MPReplacedURL").each(function (index) {
-			var vid_id = $(this).attr("_mp_vid_id");
-			vid_id = vid_id || null;
-			var href = $(this).attr("_mp_original_url");
-
-			$(this)
-			.off("click")
-			.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, inline_on_url_click);
-		});
-	}
-	else {
-		var links_found = dom_replace(
-			post_data.post,
-			function (tag, old_tags) { // check
-				var name = tag.prop("tagName");
-				if (name === undefined) return 2;
-				name = name.toLowerCase();
-
-				if (is_archive) {
-					if (
-						(name == "span" && tag.hasClass("greentext")) ||
-						(name == "span" && tag.hasClass("spoiler"))
-					) return 1;
-				}
-				else {
-					if (
-						(name == "span" && tag.hasClass("quote")) ||
-						(name == "s")
-					) return (script_settings["inline"]["url_replace_smart"] ? 2 : 1);
-					if (name == "wbr") return 2;
-				}
-				
-				return 0;
-			},
-			inline_replace_urls
-		);
-
-		if (links_found) {
-			// Sounds links
-			post_data.post.find(".MPReplacedURL").each(function (index) {
-				var href = html_to_text(string_remove_tags($(this).html()));
-				if (href.indexOf(":") < 0) href = "//" + href;
-
-				var vid_id = MediaPlayer.prototype.url_get_youtube_video_id(href);
-
-				$(this)
-				.attr("href", href)
-				.attr("_mp_original_url", href)
-				.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, inline_on_url_click);
-
-				if (vid_id !== null) {
-					$(this)
-					.attr("_mp_vid_id", vid_id)
-					.html(
-						$(document.createElement("img"))
-						.attr("src", "//youtube.com/favicon.ico")
-						.attr("alt", "")
-						.attr("title", "")
-						.css({"vertical-align": "middle"})
-					)
-					.append(
-						E("span")
-						.css({"padding-left": "8px"})
-						.html("Youtube: " + vid_id)
-					);
-					ajax_get(
-						"//gdata.youtube.com/feeds/api/videos/" + vid_id, true, {a: $(this)}, null,
-						function (okay, data, response) {
-							if (okay) {
-								var xml = $.parseXML(response);
-								var title;
-								try {
-									title = $(xml_find_nodes_by_name(xml, "title")).text();
-								}
-								catch (e) {
-									console.log(e);
-									title = "Unknown Title";
-								}
-
-								data.a.find("span").html(title);
-							}
-							else {
-								data.a.find("span").html("Video not found").css("font-style", "italic");
-							}
-						}
-					);
-				}
-			});
-		}
-	}
-}
-function inline_replace_urls(tags) {
+};
+InlineManager.prototype.replace_urls = function (tags) {
 	var full_text = "";
 	var in_url = false;
 	var any_found = true;
@@ -1695,11 +1625,11 @@ function inline_replace_urls(tags) {
 			full_text += text;
 		}
 		else {
-			/*if (script_settings["inline"]["url_replace_smart"]&&0) {
+			/*if (script.settings["inline"]["url_replace_smart"]&&0) {
 				// TODO : do this later rather than using an assumption
 			}
 			else {*/
-			full_text += $('<div>').append(tags[i].clone()).html();
+			full_text += $("<div>").append(tags[i].clone()).html();
 			// }
 		}
 	}
@@ -1716,8 +1646,8 @@ function inline_replace_urls(tags) {
 	}
 
 	return any_found;
-}
-function inline_replace_tags(tags) {
+};
+InlineManager.prototype.replace_tags = function (tags) {
 	var sounds_found = false;
 	var new_text = text_to_html(tags[0].text()).replace(/\[.+?\]/g, function (match) {
 		sounds_found = true;
@@ -1728,14 +1658,28 @@ function inline_replace_tags(tags) {
 		return true;
 	}
 	return false;
-}
-
-function inline_on_url_click(event) {
+};
+InlineManager.prototype.on_image_drag = function (data) {
+	var url_lower = data.text.toLowerCase();
+	for (var post_id in thread_manager.posts) {
+		if (
+			thread_manager.posts[post_id].image_url !== null &&
+			url_lower.indexOf(thread_manager.posts[post_id].image_url.toLowerCase()) >= 0
+		) {
+			// Found; activate manual load
+			this.activate_load_all_link(thread_manager.posts[post_id]);
+			data.text = "";
+			return false;
+		}
+	}
+	return true;
+};
+InlineManager.prototype.on_url_click = function (event) {
 	// Add to playlist
 	if (!event.originalEvent.which || event.originalEvent.which == 1) {
 		if (event.data.vid_id !== null) {
-			open_player(true);
-			media_player_instance.attempt_load_video(
+			media_player_manager.open_player(true);
+			media_player_manager.media_player.attempt_load_video(
 				event.data.url,
 				null,
 				{},
@@ -1754,59 +1698,114 @@ function inline_on_url_click(event) {
 		return false;
 	}
 	return true;
-}
-function inline_on_image_drag(data) {
-	var url_lower = data.text.toLowerCase();
-	for (var post_id in thread_manager.posts) {
-		if (
-			thread_manager.posts[post_id].image_url !== null &&
-			url_lower.indexOf(thread_manager.posts[post_id].image_url.toLowerCase()) >= 0
-		) {
-			// Found; activate manual load
-			inline_activate_load_all_link(thread_manager.posts[post_id]);
-			data.text = "";
-			return false;
-		}
-	}
-	return true;
-}
+};
+InlineManager.prototype.on_link_click = function (event) {
+	// Change status
+	var load_str = "loading...";
+	$(this).html(load_str);
 
-function dom_replace(tag, check_callback, replace_callback) {
-	var c = tag.contents();
-	var sub_tags = [ new Array() ];
-	var check, t;
-
-	var i = 0;
-	for (var j = 0; j < c.length; ++j) {
-		t = $(c[j]);
-		check = check_callback(t, sub_tags[i]);
-
-		// 0: Ignore tag, don't parse into
-		// 1: Parse standalone
-		// 2: Parse in group
-		if (check <= 1 && sub_tags[i].length > 0) {
-			sub_tags.push(new Array());
-			++i;
-		}
-		if (check >= 1) {
-			sub_tags[i].push(t);
-			// Sub-scan
-			if (t.prop("tagName") !== undefined && t.contents().length > 0) {
-				dom_replace(t, check_callback, replace_callback);
+	// Load sound
+	var self = event.data.manager;
+	event.data.post_data.sounds.loaded = true;
+	media_player_manager.open_player(true);
+	media_player_manager.media_player.attempt_load(
+		event.data.post_data.image_url,
+		event.data.post_data.sounds.post_tags[event.data.tag_id],
+		{ "image_name": event.data.post_data.image_name },
+		{
+			"object": $(this),
+			"post_data": event.data.post_data,
+			"tag_id": event.data.tag_id,
+			"load_str": load_str
+		},
+		function (event, data) {
+			var progress = Math.floor((event.loaded / event.total) * 100);
+			data.object.html(data.load_str + " (" + progress + ")");
+		},
+		function (okay, data) {
+			data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
+		},
+		function (status, data, all_files) {
+			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
+				data.post_data.sounds.sound_names = all_files;
+				self.update_about_image(data.post_data);
 			}
 		}
-	}
-
-	// Replace
-	var found = false;
-	for (i = 0; i < sub_tags.length && sub_tags[i].length > 0; ++i) {
-		found = (replace_callback(sub_tags[i]) || found);
-	}
+	);
 
 	// Done
-	return found;
-}
+	return false;
+};
+InlineManager.prototype.on_link_top_click = function (event) {
+	// Change status
+	var load_str = "loading...";
+	$(this).html(load_str);
 
+	var tag = event.data.post_data.sounds.sound_names[event.data.sound_id];
+	if (tag.substr(tag.length - 4, 4).toLowerCase() == ".ogg") {
+		tag = tag.substr(0, tag.length - 4);
+	}
+
+	// Load sound
+	var self = this;
+	event.data.post_data.sounds.loaded = true;
+	media_player_manager.open_player(true);
+	media_player_manager.media_player.attempt_load(
+		event.data.post_data.image_url,
+		tag,
+		{ "image_name": event.data.post_data.image_name },
+		{
+			"object": $(this),
+			"post_data": event.data.post_data,
+			"sound_id": event.data.sound_id,
+			"load_str": load_str,
+			"tag": tag
+		},
+		function (event, data) {
+			var progress = Math.floor((event.loaded / event.total) * 100);
+			data.object.html(data.load_str + " (" + progress + ")");
+		},
+		function (okay, data) {
+			data.object.html(data.tag + (okay ? "" : " (ajax&nbsp;error)"));
+		},
+		function (status, data, all_files) {
+			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
+				data.post_data.sounds.sound_names = all_files;
+				self.update_about_image(data.post_data);
+			}
+		}
+	);
+
+	// Done
+	return false;
+};
+InlineManager.prototype.on_load_all_click = function (event) {
+	event.data.manager.activate_load_all_link(event.data.post_data);
+
+	// Done
+	return false;
+};
+InlineManager.prototype.on_detect_all_in_thread_click = function (event) {
+	if (sound_auto_checker.enabled) {
+		sound_auto_checker.disable();
+	}
+	else {
+		sound_auto_checker.enable();
+	}
+
+	return false;
+};
+InlineManager.prototype.on_load_all_in_thread_click = function (event) {
+	if (sound_auto_loader.enabled) {
+		sound_auto_loader.disable();
+	}
+	else {
+		sound_auto_loader.enable();
+	}
+
+	return false;
+};
+var inline_manager = null;
 
 
 
@@ -1875,7 +1874,7 @@ SoundAutoLoader.prototype.loop_next = function () {
 }
 SoundAutoLoader.prototype.load_single = function (post_data) {
 	var self = this;
-	inline_activate_load_all_link(post_data, function (okay, post_data) {
+	inline_manager.activate_load_all_link(post_data, function (okay, post_data) {
 		self.load_single_done();
 	});
 }
@@ -1886,7 +1885,7 @@ SoundAutoLoader.prototype.load_single_done = function () {
 		self.loop_next();
 	}, this.delay);
 }
-var sound_auto_loader = new SoundAutoLoader();
+var sound_auto_loader = null;
 
 
 
@@ -2002,7 +2001,7 @@ SoundAutoChecker.prototype.load_single_callbacks = function (post_data, callback
 					post_data.sounds.sound_names = image_data[1];
 
 					// html update
-					inline_update_about_image(post_data);
+					inline_manager.update_about_image(post_data);
 
 					// Done
 					post_data.sounds.auto_check.search_span.css("display", "none");
@@ -2019,7 +2018,7 @@ SoundAutoChecker.prototype.load_single_done = function () {
 		self.loop_next();
 	}, this.delay);
 }
-var sound_auto_checker = new SoundAutoChecker();
+var sound_auto_checker = null;
 
 
 
@@ -2092,9 +2091,9 @@ function HotkeyListener() {
 				for (var i = 0; i < event.data.self.hotkeys.length; ++i) {
 					var k = event.data.self.hotkeys[i][0];
 					if (
-						script_settings["hotkeys"][k][0] != 0 &&
-						script_settings["hotkeys"][k][0] == event.which &&
-						script_settings["hotkeys"][k][1] == event.data.self.flags
+						script.settings["hotkeys"][k][0] != 0 &&
+						script.settings["hotkeys"][k][0] == event.which &&
+						script.settings["hotkeys"][k][1] == event.data.self.flags
 					) {
 						event.data.self.hotkeys[i][1].call(event.data.self);
 						event.stopPropagation();
@@ -2114,7 +2113,7 @@ function HotkeyListener() {
 }
 HotkeyListener.prototype.settings_update = function () {
 	for (var i = 0; i < this.hotkeys.length; ++i) {
-		script_settings["hotkeys"][this.hotkeys[i][0]] = [ 0 , 0 ];
+		script.settings["hotkeys"][this.hotkeys[i][0]] = [ 0 , 0 ];
 	}
 };
 HotkeyListener.prototype.key_to_string = function (keycode, modifiers) {
@@ -2138,8 +2137,8 @@ HotkeyListener.prototype.create_hotkey_setting = function (hotkey_label, hotkey_
 		"html_input": null,
 		"html_input_clear": null,
 		"value": "",
-		"value_code": script_settings["hotkeys"][hotkey_name][0],
-		"value_modifiers": script_settings["hotkeys"][hotkey_name][1],
+		"value_code": script.settings["hotkeys"][hotkey_name][0],
+		"value_modifiers": script.settings["hotkeys"][hotkey_name][1],
 		"value_modifiers_current": 0, // 1 = shift, 2 = ctrl, 4 = alt
 		"update_value": null,
 		"listener": this
@@ -2199,9 +2198,9 @@ HotkeyListener.prototype.create_hotkey_setting = function (hotkey_label, hotkey_
 		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
 
 		// Update
-		script_settings["hotkeys"][event.data.hotkey_name][0] = event.data.hotkey_settings.value_code;
-		script_settings["hotkeys"][event.data.hotkey_name][1] = event.data.hotkey_settings.value_modifiers;
-		settings_save();
+		script.settings["hotkeys"][event.data.hotkey_name][0] = event.data.hotkey_settings.value_code;
+		script.settings["hotkeys"][event.data.hotkey_name][1] = event.data.hotkey_settings.value_modifiers;
+		script.settings_save();
 
 		return false;
 	});
@@ -2245,9 +2244,13 @@ HotkeyListener.prototype.create_hotkey_setting = function (hotkey_label, hotkey_
 		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
 
 		// Update
-		script_settings["hotkeys"][event.data.hotkey_name][0] = event.data.hotkey_settings.value_code;
-		script_settings["hotkeys"][event.data.hotkey_name][1] = event.data.hotkey_settings.value_modifiers;
-		settings_save();
+		script.settings["hotkeys"][event.data.hotkey_name][0] = event.data.hotkey_settings.value_code;
+		script.settings["hotkeys"][event.data.hotkey_name][1] = event.data.hotkey_settings.value_modifiers;
+		script.settings_save();
+	})
+	.on("focus", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
+		// Clear modifiers
+		event.data.hotkey_settings.value_modifiers_current = 0;
 	});
 
 	// Done
@@ -2255,59 +2258,59 @@ HotkeyListener.prototype.create_hotkey_setting = function (hotkey_label, hotkey_
 };
 HotkeyListener.prototype.on_player_open = function () {
 	// Open the player
-	open_player(true);
+	media_player_manager.open_player(true);
 };
 HotkeyListener.prototype.on_player_close = function () {
 	// Close the player
-	if (media_player_instance !== null) {
-		media_player_instance.destructor();
-		media_player_instance = null;
+	if (media_player_manager.media_player !== null) {
+		media_player_manager.media_player.destructor();
+		media_player_manager.media_player = null;
 	}
 };
 HotkeyListener.prototype.on_player_minmax = function () {
 	// Min/maximize the player
-	if (media_player_instance !== null) {
-		if (media_player_instance.is_maximized()) {
-			media_player_instance.minimize();
+	if (media_player_manager.media_player !== null) {
+		if (media_player_manager.media_player.is_maximized()) {
+			media_player_manager.media_player.minimize();
 		}
 		else {
-			media_player_instance.maximize();
+			media_player_manager.media_player.maximize();
 		}
 	}
 };
 HotkeyListener.prototype.on_playlist_play = function () {
 	// Play/pause
-	if (media_player_instance !== null) {
-		if (media_player_instance.is_paused()) {
-			media_player_instance.play();
+	if (media_player_manager.media_player !== null) {
+		if (media_player_manager.media_player.is_paused()) {
+			media_player_manager.media_player.play();
 		}
 		else {
-			media_player_instance.pause();
+			media_player_manager.media_player.pause();
 		}
 	}
 };
 HotkeyListener.prototype.on_playlist_next = function () {
 	// Next
-	if (media_player_instance !== null) {
-		media_player_instance.next(false);
+	if (media_player_manager.media_player !== null) {
+		media_player_manager.media_player.next(false);
 	}
 };
 HotkeyListener.prototype.on_playlist_previous = function () {
 	// Previous
-	if (media_player_instance !== null) {
-		media_player_instance.previous();
+	if (media_player_manager.media_player !== null) {
+		media_player_manager.media_player.previous();
 	}
 };
 HotkeyListener.prototype.on_volume_up = function () {
 	// Previous
-	if (media_player_instance !== null) {
-		media_player_instance.set_volume(media_player_instance.get_volume() + 0.05);
+	if (media_player_manager.media_player !== null) {
+		media_player_manager.media_player.set_volume(media_player_manager.media_player.get_volume() + 0.05);
 	}
 };
 HotkeyListener.prototype.on_volume_down = function () {
 	// Previous
-	if (media_player_instance !== null) {
-		media_player_instance.set_volume(media_player_instance.get_volume() - 0.05);
+	if (media_player_manager.media_player !== null) {
+		media_player_manager.media_player.set_volume(media_player_manager.media_player.get_volume() - 0.05);
 	}
 };
 var hotkey_listener = null;
@@ -2315,296 +2318,303 @@ var hotkey_listener = null;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Sound player control
+// Media player manager
 ///////////////////////////////////////////////////////////////////////////////
-var media_player_instance = null;
-var media_player_css = null;
-var media_player_css_color_presets = {
-	"yotsubab": {
-		"@name": "Yotsuba B",
-		"bg_outer_color": [ 0 , 0 , 0 , 0.25 ],
+function MediaPlayerManager() {
+	this.media_player = null;
+	this.css_color_presets = {
+		"yotsubab": {
+			"@name": "Yotsuba B",
+			"bg_outer_color": [ 0 , 0 , 0 , 0.25 ],
 
-		"bg_color_lightest": [ 255 , 255 , 255 , 1.0 ],
-		"bg_color_light": [ 238 , 242 , 255 , 1.0 ],
-		"bg_color_dark": [ 214 , 218 , 240 , 1.0 ],
-		"bg_color_darker": [ 183 , 197 , 217 , 1.0 ],
-		"bg_color_darkest": [ 0 , 0 , 0 , 1.0 ],
+			"bg_color_lightest": [ 255 , 255 , 255 , 1.0 ],
+			"bg_color_light": [ 238 , 242 , 255 , 1.0 ],
+			"bg_color_dark": [ 214 , 218 , 240 , 1.0 ],
+			"bg_color_darker": [ 183 , 197 , 217 , 1.0 ],
+			"bg_color_darkest": [ 0 , 0 , 0 , 1.0 ],
 
-		"color_special_1": [ 52 , 52 , 92 , 1.0 ],
-		"color_special_2": [ 221 , 0 , 0 , 1.0 ],
+			"color_special_1": [ 52 , 52 , 92 , 1.0 ],
+			"color_special_2": [ 221 , 0 , 0 , 1.0 ],
 
-		"color_standard": [ 0 , 0 , 0 , 1.0 ],
-		"color_disabled": [ 120 , 124 , 128 , 1.0 ],
-		"color_light": [ 120 , 124 , 128 , 1.0 ],
+			"color_standard": [ 0 , 0 , 0 , 1.0 ],
+			"color_disabled": [ 120 , 124 , 128 , 1.0 ],
+			"color_light": [ 120 , 124 , 128 , 1.0 ],
 
-		"color_highlight_light": [ 255 , 255 , 255 , 1.0 ],
+			"color_highlight_light": [ 255 , 255 , 255 , 1.0 ],
 
-		"volume_colors": [ [ 52 , 52 , 92 , 1.0 ] ]
-	},
-	"photon": {
-		"@name": "Photon",
-		"bg_outer_color": [ 51 , 51 , 51 , 0.25 ],
+			"volume_colors": [ [ 52 , 52 , 92 , 1.0 ] ]
+		},
+		"photon": {
+			"@name": "Photon",
+			"bg_outer_color": [ 51 , 51 , 51 , 0.25 ],
 
-		"bg_color_lightest": [ 255 , 255 , 255 , 1.0 ],
-		"bg_color_light": [ 238 , 238 , 238 , 1.0 ],
-		"bg_color_dark": [ 221 , 221 , 221 , 1.0 ],
-		"bg_color_darker": [ 204 , 204 , 204 , 1.0 ],
-		"bg_color_darkest": [ 0 , 0 , 0 , 1.0 ],
+			"bg_color_lightest": [ 255 , 255 , 255 , 1.0 ],
+			"bg_color_light": [ 238 , 238 , 238 , 1.0 ],
+			"bg_color_dark": [ 221 , 221 , 221 , 1.0 ],
+			"bg_color_darker": [ 204 , 204 , 204 , 1.0 ],
+			"bg_color_darkest": [ 0 , 0 , 0 , 1.0 ],
 
-		"color_special_1": [ 0 , 74 , 153 , 1.0 ],
-		"color_special_2": [ 255 , 102 , 0 , 1.0 ],
+			"color_special_1": [ 0 , 74 , 153 , 1.0 ],
+			"color_special_2": [ 255 , 102 , 0 , 1.0 ],
 
-		"color_standard": [ 51 , 51 , 51 , 1.0 ],
-		"color_disabled": [ 128 , 128 , 128 , 1.0 ],
-		"color_light": [ 128 , 128 , 128 , 1.0 ],
+			"color_standard": [ 51 , 51 , 51 , 1.0 ],
+			"color_disabled": [ 128 , 128 , 128 , 1.0 ],
+			"color_light": [ 128 , 128 , 128 , 1.0 ],
 
-		"color_highlight_light": [ 255 , 255 , 255 , 1.0 ],
+			"color_highlight_light": [ 255 , 255 , 255 , 1.0 ],
 
-		"volume_colors": [ [ 255 , 102 , 0 , 1.0 ] ]
-	},
-	"tomorrow": {
-		"@name": "Tomorrow",
-		"bg_outer_color": [ 197 , 200 , 198 , 0.25 ],
+			"volume_colors": [ [ 255 , 102 , 0 , 1.0 ] ]
+		},
+		"tomorrow": {
+			"@name": "Tomorrow",
+			"bg_outer_color": [ 197 , 200 , 198 , 0.25 ],
 
-		"bg_color_lightest": [ 0 , 0 , 0 , 1.0 ],
-		"bg_color_light": [ 29 , 31 , 33 , 1.0 ],
-		"bg_color_dark": [ 40 , 42 , 46 , 1.0 ],
-		"bg_color_darker": [ 54 , 56 , 60 , 1.0 ],
-		"bg_color_darkest": [ 255 , 255 , 255 , 1.0 ],
+			"bg_color_lightest": [ 0 , 0 , 0 , 1.0 ],
+			"bg_color_light": [ 29 , 31 , 33 , 1.0 ],
+			"bg_color_dark": [ 40 , 42 , 46 , 1.0 ],
+			"bg_color_darker": [ 54 , 56 , 60 , 1.0 ],
+			"bg_color_darkest": [ 255 , 255 , 255 , 1.0 ],
 
-		"color_special_1": [ 197 , 200 , 198 , 1.0 ],
-		"color_special_2": [ 129 , 162 , 190 , 1.0 ],
+			"color_special_1": [ 197 , 200 , 198 , 1.0 ],
+			"color_special_2": [ 129 , 162 , 190 , 1.0 ],
 
-		"color_standard": [ 197 , 200 , 198 , 1.0 ],
-		"color_disabled": [ 125 , 128 , 126 , 1.0 ],
-		"color_light": [ 125 , 128 , 126 , 1.0 ],
+			"color_standard": [ 197 , 200 , 198 , 1.0 ],
+			"color_disabled": [ 125 , 128 , 126 , 1.0 ],
+			"color_light": [ 125 , 128 , 126 , 1.0 ],
 
-		"color_highlight_light": [ 0 , 0 , 0 , 1.0 ],
+			"color_highlight_light": [ 0 , 0 , 0 , 1.0 ],
 
-		"volume_colors": [ [ 129 , 162 , 190 , 1.0 ] ]
-	},
-	"foolz": {
-		"@name": "Foolz",
-		"bg_outer_color": [ 0 , 0 , 0 , 0.25 ],
+			"volume_colors": [ [ 129 , 162 , 190 , 1.0 ] ]
+		},
+		"foolz": {
+			"@name": "Foolz",
+			"bg_outer_color": [ 0 , 0 , 0 , 0.25 ],
 
-		"bg_color_lightest": [ 255 , 255 , 255 , 1.0 ],
-		"bg_color_light": [ 238 , 248 , 240 , 1.0 ],
-		"bg_color_dark": [ 214 , 240 , 218 , 1.0 ],
-		"bg_color_darker": [ 183 , 217 , 197 , 1.0 ],
-		"bg_color_darkest": [ 0 , 0 , 0 , 1.0 ],
+			"bg_color_lightest": [ 255 , 255 , 255 , 1.0 ],
+			"bg_color_light": [ 238 , 248 , 240 , 1.0 ],
+			"bg_color_dark": [ 214 , 240 , 218 , 1.0 ],
+			"bg_color_darker": [ 183 , 217 , 197 , 1.0 ],
+			"bg_color_darkest": [ 0 , 0 , 0 , 1.0 ],
 
-		"color_special_1": [ 17 , 119 , 67 , 1.0 ],
-		"color_special_2": [ 0 , 85 , 128 , 1.0 ],
+			"color_special_1": [ 17 , 119 , 67 , 1.0 ],
+			"color_special_2": [ 0 , 85 , 128 , 1.0 ],
 
-		"color_standard": [ 54 , 64 , 65 , 1.0 ],
-		"color_disabled": [ 120 , 128 , 124 , 1.0 ],
-		"color_light": [ 120 , 128 , 124 , 1.0 ],
+			"color_standard": [ 54 , 64 , 65 , 1.0 ],
+			"color_disabled": [ 120 , 128 , 124 , 1.0 ],
+			"color_light": [ 120 , 128 , 124 , 1.0 ],
 
-		"color_highlight_light": [ 255 , 255 , 255 , 1.0 ],
+			"color_highlight_light": [ 255 , 255 , 255 , 1.0 ],
 
-		"volume_colors": [ [ 17 , 119 , 67 , 1.0 ] ]
-	}
-};
-var media_player_css_size_presets = {
-	"yotsubab": {
-		"@name": "Yotsuba B",
+			"volume_colors": [ [ 17 , 119 , 67 , 1.0 ] ]
+		}
+	};
+	this.css_size_presets = {
+		"yotsubab": {
+			"@name": "Yotsuba B",
 
-		"bg_outer_size": 2,
-		"bg_outer_border_radius": 6,
-		"bg_inner_border_radius": 4,
-		"border_radius_normal": 4,
-		"border_radius_small": 2,
+			"bg_outer_size": 2,
+			"bg_outer_border_radius": 6,
+			"bg_inner_border_radius": 4,
+			"border_radius_normal": 4,
+			"border_radius_small": 2,
 
-		"main_font": "arial,helvetica,sans-serif",
-		"controls_font": "Verdana",
+			"main_font": "arial,helvetica,sans-serif",
+			"controls_font": "Verdana",
 
-		"font_size": 12,
-		"font_size_small": 8,
-		"font_size_controls": 12,
+			"font_size": 12,
+			"font_size_small": 8,
+			"font_size_controls": 12,
 
-		"padding_scale": 1.0,
-		"font_scale": 1.0,
-		"border_scale": 1.0
-	},
-	"photon": {
-		"@name": "Photon",
+			"padding_scale": 1.0,
+			"font_scale": 1.0,
+			"border_scale": 1.0
+		},
+		"photon": {
+			"@name": "Photon",
 
-		"bg_outer_size": 2,
-		"bg_outer_border_radius": 6,
-		"bg_inner_border_radius": 4,
-		"border_radius_normal": 4,
-		"border_radius_small": 2,
+			"bg_outer_size": 2,
+			"bg_outer_border_radius": 6,
+			"bg_inner_border_radius": 4,
+			"border_radius_normal": 4,
+			"border_radius_small": 2,
 
-		"main_font": "arial,helvetica,sans-serif",
-		"controls_font": "Verdana",
+			"main_font": "arial,helvetica,sans-serif",
+			"controls_font": "Verdana",
 
-		"font_size": 12,
-		"font_size_small": 8,
-		"font_size_controls": 12,
+			"font_size": 12,
+			"font_size_small": 8,
+			"font_size_controls": 12,
 
-		"padding_scale": 1.0,
-		"font_scale": 1.0,
-		"border_scale": 1.0
-	},
-	"tomorrow": {
-		"@name": "Tomorrow",
+			"padding_scale": 1.0,
+			"font_scale": 1.0,
+			"border_scale": 1.0
+		},
+		"tomorrow": {
+			"@name": "Tomorrow",
 
-		"bg_outer_size": 2,
-		"bg_outer_border_radius": 6,
-		"bg_inner_border_radius": 4,
-		"border_radius_normal": 4,
-		"border_radius_small": 2,
+			"bg_outer_size": 2,
+			"bg_outer_border_radius": 6,
+			"bg_inner_border_radius": 4,
+			"border_radius_normal": 4,
+			"border_radius_small": 2,
 
-		"main_font": "arial,helvetica,sans-serif",
-		"controls_font": "Verdana",
+			"main_font": "arial,helvetica,sans-serif",
+			"controls_font": "Verdana",
 
-		"font_size": 12,
-		"font_size_small": 8,
-		"font_size_controls": 12,
+			"font_size": 12,
+			"font_size_small": 8,
+			"font_size_controls": 12,
 
-		"padding_scale": 1.0,
-		"font_scale": 1.0,
-		"border_scale": 1.0
-	},
-	"foolz": {
-		"@name": "Foolz",
+			"padding_scale": 1.0,
+			"font_scale": 1.0,
+			"border_scale": 1.0
+		},
+		"foolz": {
+			"@name": "Foolz",
 
-		"bg_outer_size": 2,
-		"bg_outer_border_radius": 6,
-		"bg_inner_border_radius": 4,
-		"border_radius_normal": 4,
-		"border_radius_small": 2,
+			"bg_outer_size": 2,
+			"bg_outer_border_radius": 6,
+			"bg_inner_border_radius": 4,
+			"border_radius_normal": 4,
+			"border_radius_small": 2,
 
-		"main_font": "arial,helvetica,sans-serif",
-		"controls_font": "Verdana",
+			"main_font": "arial,helvetica,sans-serif",
+			"controls_font": "Verdana",
 
-		"font_size": 12,
-		"font_size_small": 8,
-		"font_size_controls": 12,
+			"font_size": 12,
+			"font_size_small": 8,
+			"font_size_controls": 12,
 
-		"padding_scale": 1.0,
-		"font_scale": 1.0,
-		"border_scale": 1.0
-	}
-};
-
-function media_player_destruct_callback(sound_player) {
-	// Save settings
-	settings_save();
-	// Nullify
-	media_player_instance = null;
-	media_player_css = null;
+			"padding_scale": 1.0,
+			"font_scale": 1.0,
+			"border_scale": 1.0
+		}
+	};
 }
-
-function open_player(load_settings) {
-	if (media_player_instance != null) {
+MediaPlayerManager.prototype.media_player_destruct_callback = function (media_player) {
+	// Save settings
+	script.settings_save();
+	// Nullify
+	this.media_player = null;
+};
+MediaPlayerManager.prototype.open_player = function (load_settings) {
+	if (this.media_player != null) {
 		// Focus player
-		media_player_instance.focus();
-		return media_player_instance;
+		this.media_player.focus();
+		return this.media_player;
 	}
 
 	// CSS
-	media_player_css = new MediaPlayerCSS("yotsubab", media_player_css_color_presets, media_player_css_size_presets);
+	var media_player_css = new MediaPlayerCSS("yotsubab", this.css_color_presets, this.css_size_presets);
 	// Load CSS settings
-	if (load_settings) media_player_css.load(script_settings["style"]);
+	if (load_settings) media_player_css.load(script.settings["style"]);
 	// Custom settings
 	var extra_options = [
 		{
-			"current": script_settings["inline"]["url_replace"],
+			"current": script.settings["inline"]["url_replace"],
 			"label": "URL Replacing",
 			"values": [ true , false ],
 			"descr": [ "Enabled" , "Disabled" ],
 			"change": function (value) {
-				script_settings["inline"]["url_replace"] = value;
-				settings_save();
+				script.settings["inline"]["url_replace"] = value;
+				script.settings_save();
 			}
 		},
 		{
-			"current": script_settings["inline"]["url_replace_smart"],
+			"current": script.settings["inline"]["url_replace_smart"],
 			"label": "Extended URLs",
 			"values": [ true , false ],
 			"descr": [ "Enabled" , "Disabled" ],
 			"change": function (value) {
-				script_settings["inline"]["url_replace_smart"] = value;
-				settings_save();
+				script.settings["inline"]["url_replace_smart"] = value;
+				script.settings_save();
 			}
 		},
 	];
 	for (var i = 0; i < hotkey_listener.hotkeys.length; ++i) {
-		extra_options.push(hotkey_listener.create_hotkey_setting(hotkey_listener.hotkeys[i][2], hotkey_listener.hotkeys[i][0]));
+		extra_options.push(
+			hotkey_listener.create_hotkey_setting(hotkey_listener.hotkeys[i][2],
+			hotkey_listener.hotkeys[i][0])
+		);
 	}
 	// Player
-	media_player_instance = new MediaPlayer(
+	var self = this;
+	this.media_player = new MediaPlayer(
 		media_player_css,
 		[ png_load_callback , image_load_callback ],
-		inline_on_image_drag,
-		function (media_player) { settings_save(); },
-		media_player_destruct_callback,
+		function (data) { inline_manager.on_image_drag(data); },
+		function (media_player) { script.settings_save(); },
+		function (media_player) { self.media_player_destruct_callback(media_player); },
 		extra_options
 	);
 	// Load settings	
-	if (load_settings) media_player_instance.load(script_settings["player"]);
+	if (load_settings) this.media_player.load(script.settings["player"]);
 	// Display
-	media_player_instance.create();
+	this.media_player.create();
 
-	return media_player_instance;
-}
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Entry
-///////////////////////////////////////////////////////////////////////////////
-var script_settings_loaded = false;
-var script_settings = {
-	"player": {},
-	"style": {},
-	"script": {
-		"last_update": 0,
-		"update_found": false,
-		"update_url": "",
-		"update_version": "",
-		"current_version": "",
-		"update_message": ""
-	},
-	"hotkeys": {}, // loaded elsewhere
-	"inline": {
-		"url_replace": true,
-		"url_replace_smart": false,
-	}
+	return this.media_player;
 };
-function settings_save() {
+var media_player_manager = null;
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Script settings
+///////////////////////////////////////////////////////////////////////////////
+function Script() {
+	this.settings_loaded = false;
+	this.settings = {
+		"player": {},
+		"style": {},
+		"script": {
+			"last_update": 0,
+			"update_found": false,
+			"update_url": "",
+			"update_version": "",
+			"current_version": "",
+			"update_message": ""
+		},
+		"hotkeys": {}, // loaded elsewhere
+		"inline": {
+			"url_replace": true,
+			"url_replace_smart": false,
+		}
+	};
+	this.storage_name = "4cs";
+	this.update_version_url = "https://raw.github.com/dnsev/4cs/master/web/version.txt";
+}
+Script.prototype.settings_save = function () {
 	// Get
-	if (media_player_instance != null) {
-		script_settings["player"] = media_player_instance.save();
-		script_settings["style"] = media_player_instance.css.save();
+	if (media_player_manager.media_player != null) {
+		this.settings["player"] = media_player_manager.media_player.save();
+		this.settings["style"] = media_player_manager.media_player.css.save();
 	}
 	// Save
 	try {
-		localStorage.setItem("4cs", JSON.stringify(script_settings));
+		localStorage.setItem(this.storage_name, JSON.stringify(this.settings));
 	}
 	catch (e) {
 		console.log(e);
 	}
-}
-function settings_load() {
+};
+Script.prototype.settings_load = function () {
 	// Load
-	if (!script_settings_loaded) {
-		script_settings_loaded = true;
+	if (!this.settings_loaded) {
+		this.settings_loaded = true;
 		try {
-			var s = localStorage.getItem("4cs");
+			var s = localStorage.getItem(this.storage_name);
 			if (s) {
 				s = JSON.parse(s);
 				// load based on keys; overwrite if empty, else load on a per-key basis
-				for (var key in script_settings) {
+				for (var key in this.settings) {
 					if (key in s) {
 						var len = 0;
-						for (var key2 in script_settings[key]) {
+						for (var key2 in this.settings[key]) {
 							++len;
-							if (key2 in s[key]) script_settings[key][key2] = s[key][key2];
+							if (key2 in s[key]) this.settings[key][key2] = s[key][key2];
 						}
 						if (len == 0) {
-							script_settings[key] = s[key];
+							this.settings[key] = s[key];
 						}
 					}
 				}
@@ -2614,43 +2624,36 @@ function settings_load() {
 			console.log(e);
 		}
 	}
-}
-
-var script_update_version_url = "https://raw.github.com/dnsev/4cs/master/web/version.txt";
-function script_update(event) {
-	if (!event.originalEvent.which || event.originalEvent.which == 1) {
-		var scr_name = "";
-		var scr_version = "";
-		try {
-			scr_name = GM_info.script.name;
-			scr_version = GM_info.script.version;
-		}
-		catch (e) {
-			scr_name = "userscript.js";
-			scr_version = GM_getMetadata("version").toString();
-		}
-
-		var s = "An update is available to \"" + scr_name + "\".\n\n" +
-			"Current version: " + scr_version + "\n" +
-			"Update Version: " + script_settings["script"]["update_version"] + "\n\n" +
-			"About: " + script_settings["script"]["update_message"] + "\n\n" +
-			"Middle click the link or copy and paste the following url:               ";
-		
-		prompt(s, script_settings["script"]["update_url"]);
-		return false;
+};
+Script.prototype.update_check_interval = function (time) {
+	var time_update;
+	var version = "";
+	try {
+		version = GM_info.script.version;
 	}
-	return true;
-}
-function script_update_check(ajax) {
+	catch (e) {
+		version = GM_getMetadata("version").toString();
+	}
+	if (
+		(time_update = ((new Date()).getTime() - this.settings["script"]["last_update"] >= time)) ||
+		(time_update = (version != this.settings["script"]["current_version"])) ||
+		this.settings["script"]["update_found"]
+	) {	
+		this.settings["script"]["current_version"] = version;
+		this.update_check(time_update);
+	}
+};
+Script.prototype.update_check = function (ajax) {
 	var fn = function () {
-		inline_update_span.css("display", "");
-		inline_update_link.html("UPDATE");
-		inline_update_link.attr("href", script_settings["script"]["update_url"]);
+		inline_manager.update_span.css("display", "");
+		inline_manager.update_link.html("UPDATE");
+		inline_manager.update_link.attr("href", this.settings["script"]["update_url"]);
 	};
 
 	if (ajax) {
+		var self = this;
 		ajax_get(
-			"https://raw.github.com/dnsev/4cs/master/web/version.txt",
+			this.update_version_url,
 			true,
 			{},
 			null,
@@ -2666,14 +2669,14 @@ function script_update_check(ajax) {
 
 					var s = JSON.parse(response);
 					// Settings
-					script_settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
-					script_settings["script"]["update_version"] = s["version"].toString();
-					script_settings["script"]["last_update"] = (new Date()).getTime();
-					script_settings["script"]["update_message"] = (s["message"] || "").toString();
+					this.settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
+					this.settings["script"]["update_version"] = s["version"].toString();
+					this.settings["script"]["last_update"] = (new Date()).getTime();
+					this.settings["script"]["update_message"] = (s["message"] || "").toString();
 					// Version compare
-					script_settings["script"]["update_found"] = false;
+					this.settings["script"]["update_found"] = false;
 					var current_version_split = version.toString().split(".");
-					var new_version_split = script_settings["script"]["update_version"].split(".");
+					var new_version_split = this.settings["script"]["update_version"].split(".");
 					var len = (new_version_split.length > current_version_split.length ? new_version_split.length : current_version_split.length);
 					for (var i = 0; i < len; ++i) {
 						if (
@@ -2681,12 +2684,12 @@ function script_update_check(ajax) {
 							(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
 						) {
 							fn();
-							script_settings["script"]["update_found"] = true;
+							this.settings["script"]["update_found"] = true;
 							break;
 						}
 					}
 					// Update settings
-					settings_save();
+					self.settings_save();
 				}
 			}
 		);
@@ -2694,13 +2697,51 @@ function script_update_check(ajax) {
 	else {
 		fn();
 	}
-}
+};
+Script.prototype.on_update_click = function (event) {
+	if (!event.originalEvent.which || event.originalEvent.which == 1) {
+		var scr_name = "";
+		var scr_version = "";
+		try {
+			scr_name = GM_info.script.name;
+			scr_version = GM_info.script.version;
+		}
+		catch (e) {
+			scr_name = "userscript.js";
+			scr_version = GM_getMetadata("version").toString();
+		}
 
-jQuery(document).ready(function () {
-	// Settings
+		var s = "An update is available to \"" + scr_name + "\".\n\n" +
+			"Current version: " + scr_version + "\n" +
+			"Update Version: " + this.settings["script"]["update_version"] + "\n\n" +
+			"About: " + this.settings["script"]["update_message"] + "\n\n" +
+			"Middle click the link or copy and paste the following url:               ";
+		
+		prompt(s, this.settings["script"]["update_url"]);
+		return false;
+	}
+	return true;
+};
+var script = null;
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Entry
+///////////////////////////////////////////////////////////////////////////////
+$(document).ready(function () {
+	// Object setup
+	script = new Script();
 	hotkey_listener = new HotkeyListener();
+	media_player_manager = new MediaPlayerManager();
+	sound_auto_loader = new SoundAutoLoader();
+	sound_auto_checker = new SoundAutoChecker();
+	inline_manager = new InlineManager();
+	thread_manager = new ThreadManager();
+
+	// Settings
 	hotkey_listener.settings_update();
-	settings_load();
+	script.settings_load();
 
 	// Hack move the scope out of sandbox
 	window._unsafe_exec = function () {
@@ -2711,12 +2752,12 @@ jQuery(document).ready(function () {
 			window._unsafe = undefined;
 		}
 	}
-	tag = document.createElement('script');
+	tag = document.createElement("script");
 	tag.innerHTML = "window._unsafe_exec = " + window._unsafe_exec.toString() + ";";
 	document.body.appendChild(tag);
 	window._unsafe_exec = function (exec_function, data) {
 		// Create script tag
-		var tag = document.createElement('script');
+		var tag = document.createElement("script");
 
 		// Set data to be passed
 		var _unsafe = {
@@ -2741,32 +2782,8 @@ jQuery(document).ready(function () {
 	// Youtube API
 	$.getScript("//www.youtube.com/iframe_api", function (script, status, jqXHR) {});
 
-	// Setup
-	inline_setup();
-	thread_manager = new ThreadManager();
-
 	// Update check once a day
-	var time_update;
-	var version = "";
-	try {
-		version = GM_info.script.version;
-	}
-	catch (e) {
-		version = GM_getMetadata("version").toString();
-	}
-	if (
-		(time_update = ((new Date()).getTime() - script_settings["script"]["last_update"] >= 1000 * 60 * 60 * 24)) ||
-		(time_update = (version != script_settings["script"]["current_version"])) ||
-		script_settings["script"]["update_found"]
-	) {	
-		script_settings["script"]["current_version"] = version;
-		script_update_check(time_update);
-	}
+	script.update_check_interval(1000 * 60 * 60 * 24);
 });
-
-/*unsafeWindow.onYouTubeIframeAPIReady = function () {
-//	window.YT = unsafeWindow.YT;
-}*/
-
 
 
