@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.8
+// @version        1.8.1
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -144,6 +144,10 @@ function html_to_text(str) {
 		.replace(/&gt;/g, ">")
 		.replace(/&lt;/g, "<")
 		.replace(/&quot;/g, "\"");
+}
+
+function string_remove_tags(str) {
+	return str.replace(/<[^>]*>?/g, "");
 }
 
 
@@ -1067,45 +1071,59 @@ ThreadManager.prototype.post = function (index) {
 ///////////////////////////////////////////////////////////////////////////////
 // Inline text
 ///////////////////////////////////////////////////////////////////////////////
+var inline_settings_span = null;
 var inline_update_span = null;
 var inline_update_link = null;
 function inline_setup() {
 	$ = jQuery;
 
 	// Insert navigation link
-	var reload, reload_span, end;
-	if (!is_archive) {
-		$("#navtopright").prepend(reload = E("span"));
-		$("#navtopright").prepend(E("a").html("Media Player").attr("href", "#").on("click", function (event) { open_player(true); return false; }));
-		$("#navtopright").prepend(T("["));
-		end = "] ";
+	var pre, post;
+	if (is_archive) {
+		$(".letters").append((inline_settings_span = E("span")));
+		pre = " [ ";
+		post = " ]";
 	}
 	else {
-		$(".letters").append(T(" [ "));
-		$(".letters").append(E("a").html("Media Player").attr("href", "#").on("click", function (event) { open_player(true); return false; }));
-		$(".letters").append(reload = E("span"));
-		end = " ]";
+		$("#navtopright").prepend((inline_settings_span = E("span")));
+		pre = "[";
+		post = "] ";
 	}
 
-	reload.before(inline_update_span = E("span").css("display", "none"));
-	inline_update_span.append(T(" / "));
-	inline_update_span.append(
-		(inline_update_link = E("a"))
-		.html("Update")
-		.attr("href", "#")
-		.on("click", function (event) { return script_update(event); })
+	inline_settings_span
+	.append(T(pre))
+	.append(E("a").html("Media Player").attr("href", "#").on("click", function (event) { open_player(true); return false; }))
+	.append(
+		(inline_update_span = E("span").css("display", "none"))
+		.append(T(" / "))
+		.append(
+			(inline_update_link = E("a"))
+			.html("Update")
+			.attr("href", "#")
+			.on("click", function (event) { return script_update(event); })
+		)
+	)
+	.append(
+		E("span")
+		.append(
+			(reload_span = E("span").css("display", "none"))
+			.append(T(" / "))
+			.append(
+				E("a")
+				.html("Reload")
+				.attr("href", "#")
+				.on("click", function (event) { open_player(false); settings_save(); return false; })
+			)
+		)
+		.append(T(post))
+		.on("mouseover", {"reload_span": reload_span}, function (event) {
+			$($(this).children()[0]).css("display", "");
+		})
+		.on("mouseout", {"reload_span": reload_span}, function (event) {
+			$($(this).children()[0]).css("display", "none");
+		})
 	);
 
-	reload.append(reload_span = E("span").css("display", "none"));
-	reload_span.append(T(" / "));
-	reload_span.append(E("a").html("Reload").attr("href", "#").on("click", function (event) { open_player(false); settings_save(); return false; }));
-	reload.append(T(end));
-	reload.on("mouseover", {"reload_span": reload_span}, function (event) {
-		reload_span.css("display", "");
-	});
-	reload.on("mouseout", {"reload_span": reload_span}, function (event) {
-		reload_span.css("display", "none");
-	});
 
 	// Load all
 	var threads = $(".thread");
@@ -1364,18 +1382,6 @@ function inline_load_all_in_thread(event) {
 
 	return false;
 }
-function inline_replace_tags(tags) {
-	var sounds_found = false;
-	var new_text = text_to_html(tags[0].text()).replace(/\[.+?\]/g, function (match) {
-		sounds_found = true;
-		return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
-	});
-	if (sounds_found) {
-		tags[0].after(new_text).remove();
-		return true;
-	}
-	return false;
-}
 
 function inline_update_about_image(post_data) {
 	// Show container
@@ -1507,22 +1513,6 @@ function inline_activate_load_all_link(post_data, done_callback) {
 	return false;
 }
 
-function inline_on_image_drag(data) {
-	var url_lower = data.text.toLowerCase();
-	for (var post_id in thread_manager.posts) {
-		if (
-			thread_manager.posts[post_id].image_url !== null &&
-			url_lower.indexOf(thread_manager.posts[post_id].image_url.toLowerCase()) >= 0
-		) {
-			// Found; activate manual load
-			inline_activate_load_all_link(thread_manager.posts[post_id]);
-			data.text = "";
-			return false;
-		}
-	}
-	return true;
-}
-
 function inline_post_parse_for_urls(post_data, redo, post_data_copy) {
 	if (redo) {
 		post_data_copy.post.find(".MPReplacedURL").each(function (index) {
@@ -1532,7 +1522,7 @@ function inline_post_parse_for_urls(post_data, redo, post_data_copy) {
 
 			$(this)
 			.off("click")
-			.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, on_inline_url_click);
+			.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, inline_on_url_click);
 		});
 	}
 	else {
@@ -1573,7 +1563,7 @@ function inline_post_parse_for_urls(post_data, redo, post_data_copy) {
 				$(this)
 				.attr("href", href)
 				.attr("_mp_original_url", href)
-				.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, on_inline_url_click);
+				.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, inline_on_url_click);
 
 				if (vid_id !== null) {
 					$(this)
@@ -1675,8 +1665,20 @@ function inline_replace_urls(tags) {
 
 	return any_found;
 }
+function inline_replace_tags(tags) {
+	var sounds_found = false;
+	var new_text = text_to_html(tags[0].text()).replace(/\[.+?\]/g, function (match) {
+		sounds_found = true;
+		return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
+	});
+	if (sounds_found) {
+		tags[0].after(new_text).remove();
+		return true;
+	}
+	return false;
+}
 
-function on_inline_url_click(event) {
+function inline_on_url_click(event) {
 	// Add to playlist
 	if (!event.originalEvent.which || event.originalEvent.which == 1) {
 		if (event.data.vid_id !== null) {
@@ -1700,11 +1702,22 @@ function on_inline_url_click(event) {
 	}
 	return true;
 }
-
-
-function string_remove_tags(str) {
-	return str.replace(/<[^>]*>?/g, "");
+function inline_on_image_drag(data) {
+	var url_lower = data.text.toLowerCase();
+	for (var post_id in thread_manager.posts) {
+		if (
+			thread_manager.posts[post_id].image_url !== null &&
+			url_lower.indexOf(thread_manager.posts[post_id].image_url.toLowerCase()) >= 0
+		) {
+			// Found; activate manual load
+			inline_activate_load_all_link(thread_manager.posts[post_id]);
+			data.text = "";
+			return false;
+		}
+	}
+	return true;
 }
+
 function dom_replace(tag, check_callback, replace_callback) {
 	var c = tag.contents();
 	var sub_tags = [ new Array() ];
@@ -1740,6 +1753,7 @@ function dom_replace(tag, check_callback, replace_callback) {
 	// Done
 	return found;
 }
+
 
 
 
