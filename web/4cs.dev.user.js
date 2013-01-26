@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.8.1
+// @version        1.8.2
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -974,8 +974,10 @@ function ThreadManager () {
 	if (is_archive) {
 		$(".thread")
 		.each(function (index) {
-			if (index == 0) {
-				self.parse_post($(this));
+			if ($(this).attr("id")) { // needs an id
+				if (index == 0) {
+					self.parse_post($(this));
+				}
 			}
 		});
 	}
@@ -1047,12 +1049,59 @@ ThreadManager.prototype.parse_post = function (container) {
 		}
 	}
 
+	// Original image name
+	var image_name = null;
+	if (image !== null) {
+		if (is_archive) {
+			// Archive method
+			var ft = container.find(".post_file");
+			if (ft.length > 0) {
+				var c;
+				if ((c = $(ft[0]).find(".post_file_filename")) && c.length > 0) {
+					// Shortened filename
+					image_name = c.attr("title");
+				}
+				else {
+					c = $(ft[0]).contents();
+					if (c.length > 2) {
+						// Not OP
+						image_name = $(c[2]).text();
+						if (image_name) {
+							image_name = image_name.trim();
+							image_name = image_name.substr(0, image_name.length - 1);
+						}
+					}
+					else {
+						// OP
+						image_name = $(c[0]).text();
+						if (image_name) image_name = image_name.split(",").splice(2).join(",").trim();
+					}
+				}
+			}
+		}
+		else {
+			var ft = container.find(".fileText");
+			if (!(image_name = ft.attr("data-filename"))) { // 4chan x method
+				// Default method
+				image_name = ft.find("span");
+				if (image_name.length > 0) {
+					image_name = $(image_name[image_name.length - 1]).attr("title");
+				}
+			}
+		}
+		// Deafult
+		if (!image_name) {
+			image_name = image.split("/").pop();
+		}
+	}
+
+	// Data
 	var post_data_copy = {
 		"container": container,
 		"image_url": image,
+		"image_name": image_name,
 		"post": (post.length > 0 ? $(post[0]) : null)
 	};
-
 	if (!redo) {
 		this.posts[post_id] = post_data_copy;
 	}
@@ -1291,6 +1340,7 @@ function inline_link_click(event) {
 	media_player_instance.attempt_load(
 		event.data.post_data.image_url,
 		event.data.post_data.sounds.post_tags[event.data.tag_id],
+		{ "image_name": event.data.post_data.image_name },
 		{
 			"object": $(this),
 			"post_data": event.data.post_data,
@@ -1331,6 +1381,7 @@ function inline_link_top_click(event) {
 	media_player_instance.attempt_load(
 		event.data.post_data.image_url,
 		tag,
+		{ "image_name": event.data.post_data.image_name },
 		{
 			"object": $(this),
 			"post_data": event.data.post_data,
@@ -1483,6 +1534,7 @@ function inline_activate_load_all_link(post_data, done_callback) {
 	media_player_instance.attempt_load(
 		post_data.image_url,
 		MediaPlayer.ALL_SOUNDS,
+		{ "image_name": post_data.image_name },
 		{
 			"object": post_data.sounds.load_all_link,
 			"post_data": post_data,
@@ -1686,7 +1738,8 @@ function inline_on_url_click(event) {
 			media_player_instance.attempt_load_video(
 				event.data.url,
 				null,
-				{"post_data": event.data.post_data, "link": $(this)},
+				{},
+				{ "post_data": event.data.post_data, "link": $(this) },
 				function (event, data) {
 					//var progress = Math.floor((event.loaded / event.total) * 100);
 					//data.object.html(data.load_str + " (" + progress + ")");
@@ -2507,7 +2560,6 @@ var script_settings = {
 	"player": {},
 	"style": {},
 	"script": {
-		"sub_version": 0,
 		"last_update": 0,
 		"update_found": false,
 		"update_url": "",

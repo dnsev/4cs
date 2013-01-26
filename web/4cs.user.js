@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.8.1
+// @version     1.8.2
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -3395,8 +3395,20 @@ MediaPlayer.prototype.create=function(){
 									this.E("a","SPDownloadsLink")
 									.attr("href","#")
 									.html("All loaded images")
+									.on("click."+this.namespace,{media_player:this,type:"images2"},this.on_downloads_generate_click)
+								)
+								.append(" (using original filenames)")
+							)
+							.append(
+								this.D()
+								.append("- ")
+								.append(
+									this.E("a","SPDownloadsLink")
+									.attr("href","#")
+									.html("All loaded images")
 									.on("click."+this.namespace,{media_player:this,type:"images"},this.on_downloads_generate_click)
 								)
+								.append(" (using server filenames)")
 							)
 						)
 						.append(
@@ -4705,7 +4717,7 @@ MediaPlayer.prototype.update_value_fields=function(){
 		}
 	}
 }
-MediaPlayer.prototype.add_to_playlist=function(title,tag,flagged,url,sound_index,raw_data,image_src){
+MediaPlayer.prototype.add_to_playlist=function(title,tag,flagged,url,sound_index,raw_data,image_src,playlist_data){
 	var playlist_item={
 		"type":"image-audio",
 		"title":title,
@@ -4719,7 +4731,12 @@ MediaPlayer.prototype.add_to_playlist=function(title,tag,flagged,url,sound_index
 		"controls":[null,null,null,null,null],
 		"loaded_offset":0.0,
 		"loaded_percent":1.0,
+		"image_url":null,
+		"image_blob":null,
+		"image_blob_url":null,
+		"image_name":((playlist_data?playlist_data.image_name:null)||url.split("/").pop()),
 		"audio_blob":null,
+		"audio_blob_url":null,
 	};
 	playlist_item.audio_blob=new Blob([raw_data],{type:"audio/ogg"});
 	playlist_item.audio_blob_url=(window.webkitURL||window.URL).createObjectURL(playlist_item.audio_blob);
@@ -4834,7 +4851,7 @@ MediaPlayer.prototype.add_to_playlist=function(title,tag,flagged,url,sound_index
 		}
 	}
 }
-MediaPlayer.prototype.add_to_playlist_ytvideo=function(original_url,vid_id,tag,flagged,info_xml){
+MediaPlayer.prototype.add_to_playlist_ytvideo=function(original_url,vid_id,tag,flagged,info_xml,playlist_data){
 	var duration=xml_find_nodes_by_name(info_xml,"yt:duration");
 	if(duration.length>0){
 		duration=duration[0].getAttribute("seconds");
@@ -5008,17 +5025,17 @@ MediaPlayer.prototype.ajax_get=function(url,return_as_string,callback_data,progr
 		GM_xmlhttpRequest(arg);
 	}
 }
-MediaPlayer.prototype.attempt_load=function(url_or_file,load_tag,callback_data,progress_callback,done_callback,status_callback){
+MediaPlayer.prototype.attempt_load=function(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
 	if(typeof(url_or_file)==typeof("")){
 		if(this.url_get_youtube_video_id(url_or_file)){
-			this.attempt_load_video(url_or_file,load_tag,callback_data,progress_callback,done_callback,status_callback);
+			this.attempt_load_video(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback);
 			return;
 		}
 		var media_player=this;
 		var dcb=function(okay,callback_data,response){
 			if(typeof(done_callback)=="function")done_callback(okay,callback_data);
 			if(okay){
-				media_player.attempt_load_raw(false,url_or_file,load_tag,response,0,function(status,files){
+				media_player.attempt_load_raw(false,url_or_file,load_tag,playlist_data,response,0,function(status,files){
 					if(typeof(status_callback)=="function")status_callback(status,callback_data,files);
 				});
 			}
@@ -5027,19 +5044,17 @@ MediaPlayer.prototype.attempt_load=function(url_or_file,load_tag,callback_data,p
 	}
 	else{
 		var reader=new FileReader();
-		reader.file=url_or_file;
-		reader.load_tag=load_tag;
-		reader.media_player=this;
+		var self=this;
 		reader.onload=function(){
 			var ui8_data=new Uint8Array(this.result);
-			this.media_player.attempt_load_raw(true,this.file.name,this.load_tag,ui8_data,0,function(status,files){
+			self.attempt_load_raw(true,url_or_file.name,load_tag,playlist_data,ui8_data,0,function(status,files){
 				if(typeof(status_callback)=="function")status_callback(status,callback_data,files);
 			});
 		}
 		reader.readAsArrayBuffer(url_or_file);
 	}
 }
-MediaPlayer.prototype.attempt_load_raw=function(is_local,url_or_filename,load_tag,raw_ui8_data,callback_id,done_callback){
+MediaPlayer.prototype.attempt_load_raw=function(is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback){
 	callback_id=callback_id||0;
 	if(callback_id>=this.load_callbacks.length){
 		if(typeof(done_callback)=="function")done_callback(false,null);
@@ -5052,17 +5067,26 @@ MediaPlayer.prototype.attempt_load_raw=function(is_local,url_or_filename,load_ta
 			r=r[1];
 			if(r!=null){
 				for(var j=0;j<r.length;++j){
-					self.add_to_playlist(r[j]["title"],load_tag,r[j]["flagged"],url_or_filename,r[j]["index"],r[j]["data"],(is_local?raw_ui8_data:url_or_filename));
+					self.add_to_playlist(
+						r[j]["title"],
+						load_tag,
+						r[j]["flagged"],
+						url_or_filename,
+						r[j]["index"],
+						r[j]["data"],
+						(is_local?raw_ui8_data:url_or_filename),
+						playlist_data
+					);
 				}
 			}
 			if(typeof(done_callback)=="function")done_callback(true,available);
 		}
 		else{
-			self.attempt_load_raw(is_local,url_or_filename,load_tag,raw_ui8_data,callback_id+1,done_callback);
+			self.attempt_load_raw(is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id+1,done_callback);
 		}
 	});
 }
-MediaPlayer.prototype.attempt_load_video=function(url,load_tag,callback_data,progress_callback,done_callback,status_callback){
+MediaPlayer.prototype.attempt_load_video=function(url,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
 	var vid_id=this.url_get_youtube_video_id(url);
 	if(vid_id===null){
 		if(typeof(done_callback)=="function")done_callback(false,callback_data);
@@ -5079,7 +5103,7 @@ MediaPlayer.prototype.attempt_load_video=function(url,load_tag,callback_data,pro
 			if(typeof(done_callback)=="function")done_callback(okay,callback_data);
 			if(okay){
 				var xml=$.parseXML(response);
-				var status=self.add_to_playlist_ytvideo(url,vid_id,null,false,xml);
+				var status=self.add_to_playlist_ytvideo(url,vid_id,null,false,xml,playlist_data);
 				if(typeof(status_callback)=="function")status_callback(status,callback_data,xml);
 			}
 			else{
@@ -5107,23 +5131,23 @@ MediaPlayer.prototype.merge_value_towards=function(value,target,incr){
 		((target-value<incr)?target:value+incr):
 		((value-target<incr)?target:value-incr);
 }
-MediaPlayer.prototype.downloads_generate_image_list=function(files,about,gen_function,index){
+MediaPlayer.prototype.downloads_generate_image_list=function(files,about,gen_function,use_original,index){
 	if(index>=this.playlist.length){
 		gen_function(files,about);
 		return;
 	}
 	if(this.playlist[index].type!="image-audio"){
-		this.downloads_generate_image_list(files,about,gen_function,index+1);
+		this.downloads_generate_image_list(files,about,gen_function,use_original,index+1);
 		return;
 	}
 	var image_url=this.playlist[index].image_url;
 	for(var j=0;j<files.length;++j){
 		if(files[j][2]==image_url){
-			this.downloads_generate_image_list(files,about,gen_function,index+1);
+			this.downloads_generate_image_list(files,about,gen_function,use_original,index+1);
 			return;
 		}
 	}
-	var fn=this.playlist[index].url.split("/").pop().split(".");
+	var fn=(use_original?this.playlist[index].image_name:this.playlist[index].url.split("/").pop()).split(".");
 	var ext="."+fn.pop();
 	fn=fn.join(".")
 	try{
@@ -5144,14 +5168,14 @@ MediaPlayer.prototype.downloads_generate_image_list=function(files,about,gen_fun
 	fn=name;
 	if(this.playlist[index].image_blob!==null){
 		files.push([fn,this.playlist[index].image_blob,image_url]);
-		this.downloads_generate_image_list(files,about,gen_function,index+1);
+		this.downloads_generate_image_list(files,about,gen_function,use_original,index+1);
 	}
 	else{
 		var self=this;
 		this.ajax_get(this.playlist[index].image_url,false,null,null,function(okay,data,response){
 			if(okay){
 				files.push([fn,response,image_url]);
-				self.downloads_generate_image_list(files,about,gen_function,index+1);
+				self.downloads_generate_image_list(files,about,gen_function,use_original,index+1);
 			}
 		});
 	}
@@ -5949,7 +5973,7 @@ MediaPlayer.prototype.on_container_drop=function(event){
 			event.data.media_player.attempt_load(
 				event.originalEvent.dataTransfer.files[i],
 				MediaPlayer.ALL_SOUNDS,
-				null,null,null,null
+				null,null,null,null,null
 			);
 		}
 	}
@@ -5966,6 +5990,7 @@ MediaPlayer.prototype.on_container_drop=function(event){
 			event.data.media_player.attempt_load(
 				data.text,
 				MediaPlayer.ALL_SOUNDS,
+				{},
 				data.callback_data,
 				data.progress_callback,
 				data.done_callback,
@@ -6056,7 +6081,7 @@ MediaPlayer.prototype.on_downloads_generate_click=function(event){
 		about=function(files){
 			return" to download "+files.length+" image"+(files.length==1?"":"s")+" (save as .zip)";
 		};
-		mp.downloads_generate_image_list(files,about,gen_function,0);
+		mp.downloads_generate_image_list(files,about,gen_function,(event.data.type=="images2"),0);
 	}
 	return false;
 }
@@ -6952,8 +6977,10 @@ function ThreadManager(){
 	if(is_archive){
 		$(".thread")
 		.each(function(index){
-			if(index==0){
-				self.parse_post($(this));
+			if($(this).attr("id")){
+				if(index==0){
+					self.parse_post($(this));
+				}
 			}
 		});
 	}
@@ -7014,9 +7041,48 @@ ThreadManager.prototype.parse_post=function(container){
 			image="//images.4chan.org/"+match[1]+"/src/"+match[2];
 		}
 	}
+	var image_name=null;
+	if(image!==null){
+		if(is_archive){
+			var ft=container.find(".post_file");
+			if(ft.length>0){
+				var c;
+				if((c=$(ft[0]).find(".post_file_filename"))&&c.length>0){
+					image_name=c.attr("title");
+				}
+				else{
+					c=$(ft[0]).contents();
+					if(c.length>2){
+						image_name=$(c[2]).text();
+						if(image_name){
+							image_name=image_name.trim();
+							image_name=image_name.substr(0,image_name.length-1);
+						}
+					}
+					else{
+						image_name=$(c[0]).text();
+						if(image_name)image_name=image_name.split(",").splice(2).join(",").trim();
+					}
+				}
+			}
+		}
+		else{
+			var ft=container.find(".fileText");
+			if(!(image_name=ft.attr("data-filename"))){
+				image_name=ft.find("span");
+				if(image_name.length>0){
+					image_name=$(image_name[image_name.length-1]).attr("title");
+				}
+			}
+		}
+		if(!image_name){
+			image_name=image.split("/").pop();
+		}
+	}
 	var post_data_copy={
 		"container":container,
 		"image_url":image,
+		"image_name":image_name,
 		"post":(post.length>0?$(post[0]):null)
 	};
 	if(!redo){
@@ -7216,6 +7282,7 @@ function inline_link_click(event){
 	media_player_instance.attempt_load(
 		event.data.post_data.image_url,
 		event.data.post_data.sounds.post_tags[event.data.tag_id],
+		{"image_name":event.data.post_data.image_name},
 		{
 			"object":$(this),
 			"post_data":event.data.post_data,
@@ -7250,6 +7317,7 @@ function inline_link_top_click(event){
 	media_player_instance.attempt_load(
 		event.data.post_data.image_url,
 		tag,
+		{"image_name":event.data.post_data.image_name},
 		{
 			"object":$(this),
 			"post_data":event.data.post_data,
@@ -7380,6 +7448,7 @@ function inline_activate_load_all_link(post_data,done_callback){
 	media_player_instance.attempt_load(
 		post_data.image_url,
 		MediaPlayer.ALL_SOUNDS,
+		{"image_name":post_data.image_name},
 		{
 			"object":post_data.sounds.load_all_link,
 			"post_data":post_data,
@@ -7552,6 +7621,7 @@ function inline_on_url_click(event){
 			media_player_instance.attempt_load_video(
 				event.data.url,
 				null,
+				{},
 				{"post_data":event.data.post_data,"link":$(this)},
 				function(event,data){
 				},
@@ -8214,7 +8284,6 @@ var script_settings={
 	"player":{},
 	"style":{},
 	"script":{
-		"sub_version":0,
 		"last_update":0,
 		"update_found":false,
 		"update_url":"",
