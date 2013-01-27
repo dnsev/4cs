@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.8.2.1
+// @version     1.8.2.2
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -9954,15 +9954,17 @@ $(document).ready(function () {
 	// Object setup
 	script = new Script();
 	hotkey_listener = new HotkeyListener();
+
+	// Settings
+	hotkey_listener.settings_update();
+	script.settings_load();
+
+	// More object setup
 	media_player_manager = new MediaPlayerManager();
 	sound_auto_loader = new SoundAutoLoader();
 	sound_auto_checker = new SoundAutoChecker();
 	inline_manager = new InlineManager();
 	thread_manager = new ThreadManager();
-
-	// Settings
-	hotkey_listener.settings_update();
-	script.settings_load();
 
 	// Hack move the scope out of sandbox
 	window._unsafe_exec = function () {

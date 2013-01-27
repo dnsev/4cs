@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.8.2.1
+// @version     1.8.2.2
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -8452,13 +8452,13 @@ var script=null;
 $(document).ready(function(){
 	script=new Script();
 	hotkey_listener=new HotkeyListener();
+	hotkey_listener.settings_update();
+	script.settings_load();
 	media_player_manager=new MediaPlayerManager();
 	sound_auto_loader=new SoundAutoLoader();
 	sound_auto_checker=new SoundAutoChecker();
 	inline_manager=new InlineManager();
 	thread_manager=new ThreadManager();
-	hotkey_listener.settings_update();
-	script.settings_load();
 	window._unsafe_exec=function(){
 		if(window._unsafe!==undefined){
 			window._unsafe_return=window[window._unsafe.func].call(window,window._unsafe.data);
