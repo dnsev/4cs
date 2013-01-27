@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.8.2.2
+// @version        1.8.3
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
 // @grant          GM_info
+// @grant          GM_getValue
+// @grant          GM_setValue
 // @include        http://boards.4chan.org/*
 // @include        https://boards.4chan.org/*
 // @include        http://archive.foolz.us/*
@@ -26,7 +28,7 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Bug-fixes for other userscripts
+// Bug-fixes for other userscripts and compatability
 ///////////////////////////////////////////////////////////////////////////////
 window.$.prototype.exists = function () {
 	// Bugfix for 4chan Style Script on Google Chrome in Tampermonkey
@@ -34,6 +36,18 @@ window.$.prototype.exists = function () {
 	return (this.length > 0);
 }
 
+if (!GM_getValue || (GM_getValue.toString && GM_getValue.toString().indexOf("not supported") >= 0)) {
+	// Make sure get/set value functions exist
+	GM_getValue = function (key, def) {
+		return localStorage.getItem(key) || def;
+	};
+	GM_setValue = function (key, value) {
+		return localStorage.setItem(key, value);
+	};
+	GM_deleteValue = function (key) {
+		return localStorage.removeItem(key);
+	};
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1055,101 +1069,104 @@ function ThreadManager() {
 		});
 	}
 }
-ThreadManager.prototype.on_dom_mutation = function (target) {
-	// Updating
-	if (target.hasClass("inline") || target.hasClass("postContainer")) {
-		this.parse_post(target);
-	}
-	else if (target.hasClass("backlinkHr")) {
-		// Not tested
-		this.parse_post(target.parent().parent());
-	}
-};
-ThreadManager.prototype.parse_post = function (container) {
-	// Get id
-	var post_id = (container.attr("id") || "0").replace(/(\w+_)?[^0-9]/g, "");
-	var redo = (post_id in this.posts);
-
-	var image = container.find(is_archive ? ".thread_image_link" : ".fileThumb");
-	var post = container.find(is_archive ? ".text" : ".postMessage");
-
-	image = (image.length > 0 ? (image.attr("href") || "") : null);
-	// Redirect links from the archive
-	if (is_archive && image !== null) {
-		var match;
-		if ((match = /\/(\w+)\/redirect\/(.+)/.exec(image)) !== null) {
-			// match.index
-			image = "//images.4chan.org/" + match[1] + "/src/" + match[2];
+ThreadManager.prototype = {
+	constructor: ThreadManager,
+	on_dom_mutation: function (target) {
+		// Updating
+		if (target.hasClass("inline") || target.hasClass("postContainer")) {
+			this.parse_post(target);
 		}
-	}
+		else if (target.hasClass("backlinkHr")) {
+			// Not tested
+			this.parse_post(target.parent().parent());
+		}
+	},
+	parse_post: function (container) {
+		// Get id
+		var post_id = (container.attr("id") || "0").replace(/(\w+_)?[^0-9]/g, "");
+		var redo = (post_id in this.posts);
 
-	// Original image name
-	var image_name = null;
-	if (image !== null) {
-		if (is_archive) {
-			// Archive method
-			var ft = container.find(".post_file");
-			if (ft.length > 0) {
-				var c;
-				if ((c = $(ft[0]).find(".post_file_filename")) && c.length > 0) {
-					// Shortened filename
-					image_name = c.attr("title");
-				}
-				else {
-					c = $(ft[0]).contents();
-					if (c.length > 2) {
-						// Not OP
-						image_name = $(c[2]).text();
-						if (image_name) {
-							image_name = image_name.trim();
-							image_name = image_name.substr(0, image_name.length - 1);
-						}
+		var image = container.find(is_archive ? ".thread_image_link" : ".fileThumb");
+		var post = container.find(is_archive ? ".text" : ".postMessage");
+
+		image = (image.length > 0 ? (image.attr("href") || "") : null);
+		// Redirect links from the archive
+		if (is_archive && image !== null) {
+			var match;
+			if ((match = /\/(\w+)\/redirect\/(.+)/.exec(image)) !== null) {
+				// match.index
+				image = "//images.4chan.org/" + match[1] + "/src/" + match[2];
+			}
+		}
+
+		// Original image name
+		var image_name = null;
+		if (image !== null) {
+			if (is_archive) {
+				// Archive method
+				var ft = container.find(".post_file");
+				if (ft.length > 0) {
+					var c;
+					if ((c = $(ft[0]).find(".post_file_filename")) && c.length > 0) {
+						// Shortened filename
+						image_name = c.attr("title");
 					}
 					else {
-						// OP
-						image_name = $(c[0]).text();
-						if (image_name) image_name = image_name.split(",").splice(2).join(",").trim();
+						c = $(ft[0]).contents();
+						if (c.length > 2) {
+							// Not OP
+							image_name = $(c[2]).text();
+							if (image_name) {
+								image_name = image_name.trim();
+								image_name = image_name.substr(0, image_name.length - 1);
+							}
+						}
+						else {
+							// OP
+							image_name = $(c[0]).text();
+							if (image_name) image_name = image_name.split(",").splice(2).join(",").trim();
+						}
 					}
 				}
 			}
-		}
-		else {
-			var ft = container.find(".fileText");
-			if (!(image_name = ft.attr("data-filename"))) { // 4chan x method
-				// Default method
-				image_name = ft.find("span");
-				if (image_name.length > 0) {
-					image_name = $(image_name[image_name.length - 1]).attr("title");
+			else {
+				var ft = container.find(".fileText");
+				if (!(image_name = ft.attr("data-filename"))) { // 4chan x method
+					// Default method
+					image_name = ft.find("span");
+					if (image_name.length > 0) {
+						image_name = $(image_name[image_name.length - 1]).attr("title");
+					}
 				}
 			}
+			// Deafult
+			if (!image_name) {
+				image_name = image.split("/").pop();
+			}
 		}
-		// Deafult
-		if (!image_name) {
-			image_name = image.split("/").pop();
+
+		// Data
+		var post_data_copy = {
+			"container": container,
+			"image_url": image,
+			"image_name": image_name,
+			"post": (post.length > 0 ? $(post[0]) : null)
+		};
+		if (!redo) {
+			this.posts[post_id] = post_data_copy;
 		}
-	}
 
-	// Data
-	var post_data_copy = {
-		"container": container,
-		"image_url": image,
-		"image_name": image_name,
-		"post": (post.length > 0 ? $(post[0]) : null)
-	};
-	if (!redo) {
-		this.posts[post_id] = post_data_copy;
+		// Auto checking images
+		inline_manager.parse_post(this.posts[post_id], redo, post_data_copy);
+		if (script.settings["inline"]["url_replace"]) {
+			inline_manager.parse_post_for_urls(this.posts[post_id], redo, post_data_copy);
+		}
+	},
+	post: function (index) {
+		index += "";
+		return (index in this.posts ? this.posts[index] : null);
 	}
-
-	// Auto checking images
-	inline_manager.parse_post(this.posts[post_id], redo, post_data_copy);
-	if (script.settings["inline"]["url_replace"]) {
-		inline_manager.parse_post_for_urls(this.posts[post_id], redo, post_data_copy);
-	}
-};
-ThreadManager.prototype.post = function (index) {
-	index += "";
-	return (index in this.posts ? this.posts[index] : null);
-};
+}
 var thread_manager = null;
 
 
@@ -1237,48 +1254,150 @@ function InlineManager() {
 		);
 	}
 }
-InlineManager.prototype.parse_post = function (post_data, redo, post_data_copy) {
-	if (post_data.image_url != null) {
-		var self = this;
+InlineManager.prototype = {
+	constructor: InlineManager,
+	parse_post: function (post_data, redo, post_data_copy) {
+		if (post_data.image_url != null) {
+			var self = this;
 
-		if (redo) {
-			// Re-replace
-			post_data_copy.post.find(".SPLoadLink").each(function (index) {
-				var tag_id = parseInt($(this).attr("_sp_tag_id"));
+			if (redo) {
+				// Re-replace
+				post_data_copy.post.find(".SPLoadLink").each(function (index) {
+					var tag_id = parseInt($(this).attr("_sp_tag_id"));
 
-				$(this)
-				.html(post_data.sounds[tag_id])
-				.off("click")
-				.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
-			});
-			post_data_copy.container.find(".SPLoadAllLink").each(function (index) {
-				$(this)
+					$(this)
+					.html(post_data.sounds[tag_id])
+					.off("click")
+					.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
+				});
+				post_data_copy.container.find(".SPLoadAllLink").each(function (index) {
+					$(this)
+					.attr("href", "#")
+					.html(post_data.sounds.load_all_text)
+					.on("click", {"post_data": post_data, "manager": self}, self.on_load_all_click);
+				});
+			}
+			else {
+				// Sound data
+				post_data.sounds = {
+					"post_tags": [],
+					"load_all_link": null,
+					"load_all_text": "sounds",
+					"sound_names": [],
+					"loaded": false,
+					"about_container": null,
+					"about_count_label": null,
+					"about_list_container": null,
+					"about_list_container_inner": null,
+					"about_list_container_toggler": null,
+					"auto_check": {
+						"search_span": null,
+						"search_status": null
+					}
+				};
+
+				// Replace tags in post
+				var sounds_found = dom_replace(
+					post_data.post,
+					function (tag, old_tags) { // check
+						var name = tag.prop("tagName");
+						if (name === undefined) return 2;
+						name = name.toLowerCase();
+
+						if (is_archive) {
+							if (
+								(name == "span" && tag.hasClass("greentext")) ||
+								(name == "span" && tag.hasClass("spoiler"))
+							) return 1;
+						}
+						else {
+							if (
+								(name == "span" && tag.hasClass("quote")) ||
+								name == "s"
+							) return 1;
+						}
+						
+						return 0;
+					},
+					this.replace_tags
+				);
+
+				// Sounds links
+				post_data.post.find(".SPLoadLink").each(function (index) {
+					var tag_id = post_data.sounds.post_tags.length;
+					post_data.sounds.post_tags.push($(this).html());
+
+					$(this)
+					.attr("href", "#")
+					.attr("_sp_tag_id", tag_id)
+					.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
+				});
+
+				// Load all
+				if (is_archive) {
+					var file_size_label = post_data.container.find(".post_file_controls").find("a");
+					file_size_label = $(file_size_label[0]);
+					file_size_label.before((post_data.sounds.load_all_link = E("a")).addClass("SPLoadAllLink btnr parent"));
+				}
+				else {
+					var file_size_label = post_data.container.find(".fileText");
+					file_size_label.after((post_data.sounds.load_all_link = E("a")).addClass("SPLoadAllLink"));
+					file_size_label.after(T(" "));
+				}
+				post_data.sounds.load_all_link
 				.attr("href", "#")
 				.html(post_data.sounds.load_all_text)
 				.on("click", {"post_data": post_data, "manager": self}, self.on_load_all_click);
+
+				// Status
+				post_data.post
+				.before(
+					(post_data.sounds.about_container = E("div"))
+					.css("font-size", "10px")
+					.css("padding-top", "10px")
+					.css("display", "none")
+					.append(
+						(post_data.sounds.about_count_label = E("div"))
+					)
+					.append(
+						(post_data.sounds.about_list_container = E("div"))
+					)
+				);
+
+				// DOM update
+				post_data.sounds.load_all_link
+				.after(
+					(post_data.sounds.auto_check.search_span = E("span"))
+					.addClass("SPImageSearchingTextContainer")
+					.css("display", (sound_auto_checker.enabled ? "" :"none"))
+					.html("...")
+					.append(
+						(post_data.sounds.auto_check.search_status = E("span"))
+						.addClass("SPImageSearchingText")
+					)
+				);
+
+				// Queue
+				sound_auto_loader.add_to_queue(post_data);
+				sound_auto_checker.add_to_queue(post_data);
+			}
+		}
+	},
+	parse_post_for_urls: function (post_data, redo, post_data_copy) {
+		var self = this;
+		if (redo) {
+			post_data_copy.post.find(".MPReplacedURL").each(function (index) {
+				var vid_id = $(this).attr("_mp_vid_id");
+				vid_id = vid_id || null;
+				var href = $(this).attr("_mp_original_url");
+
+				$(this)
+				.off("click")
+				.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, self.on_url_click);
 			});
 		}
 		else {
-			// Sound data
-			post_data.sounds = {
-				"post_tags": [],
-				"load_all_link": null,
-				"load_all_text": "sounds",
-				"sound_names": [],
-				"loaded": false,
-				"about_container": null,
-				"about_count_label": null,
-				"about_list_container": null,
-				"about_list_container_inner": null,
-				"about_list_container_toggler": null,
-				"auto_check": {
-					"search_span": null,
-					"search_status": null
-				}
-			};
-
-			// Replace tags in post
-			var sounds_found = dom_replace(
+			var links_found = dom_replace(
 				post_data.post,
 				function (tag, old_tags) { // check
 					var name = tag.prop("tagName");
@@ -1294,516 +1413,417 @@ InlineManager.prototype.parse_post = function (post_data, redo, post_data_copy) 
 					else {
 						if (
 							(name == "span" && tag.hasClass("quote")) ||
-							name == "s"
-						) return 1;
+							(name == "s")
+						) return (script.settings["inline"]["url_replace_smart"] ? 2 : 1);
+						if (name == "wbr") return 2;
 					}
 					
 					return 0;
 				},
-				this.replace_tags
+				this.replace_urls
 			);
 
-			// Sounds links
-			post_data.post.find(".SPLoadLink").each(function (index) {
-				var tag_id = post_data.sounds.post_tags.length;
-				post_data.sounds.post_tags.push($(this).html());
+			if (links_found) {
+				// Sounds links
+				post_data.post.find(".MPReplacedURL").each(function (index) {
+					var href = html_to_text(string_remove_tags($(this).html()));
+					if (href.indexOf(":") < 0) href = "//" + href;
 
-				$(this)
-				.attr("href", "#")
-				.attr("_sp_tag_id", tag_id)
-				.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
-			});
+					var vid_id = MediaPlayer.prototype.url_get_youtube_video_id(href);
 
-			// Load all
-			if (is_archive) {
-				var file_size_label = post_data.container.find(".post_file_controls").find("a");
-				file_size_label = $(file_size_label[0]);
-				file_size_label.before((post_data.sounds.load_all_link = E("a")).addClass("SPLoadAllLink btnr parent"));
-			}
-			else {
-				var file_size_label = post_data.container.find(".fileText");
-				file_size_label.after((post_data.sounds.load_all_link = E("a")).addClass("SPLoadAllLink"));
-				file_size_label.after(T(" "));
-			}
-			post_data.sounds.load_all_link
-			.attr("href", "#")
-			.html(post_data.sounds.load_all_text)
-			.on("click", {"post_data": post_data, "manager": self}, self.on_load_all_click);
-
-			// Status
-			post_data.post
-			.before(
-				(post_data.sounds.about_container = E("div"))
-				.css("font-size", "10px")
-				.css("padding-top", "10px")
-				.css("display", "none")
-				.append(
-					(post_data.sounds.about_count_label = E("div"))
-				)
-				.append(
-					(post_data.sounds.about_list_container = E("div"))
-				)
-			);
-
-			// DOM update
-			post_data.sounds.load_all_link
-			.after(
-				(post_data.sounds.auto_check.search_span = E("span"))
-				.addClass("SPImageSearchingTextContainer")
-				.css("display", (sound_auto_checker.enabled ? "" :"none"))
-				.html("...")
-				.append(
-					(post_data.sounds.auto_check.search_status = E("span"))
-					.addClass("SPImageSearchingText")
-				)
-			);
-
-			// Queue
-			sound_auto_loader.add_to_queue(post_data);
-			sound_auto_checker.add_to_queue(post_data);
-		}
-	}
-};
-InlineManager.prototype.parse_post_for_urls = function (post_data, redo, post_data_copy) {
-	var self = this;
-	if (redo) {
-		post_data_copy.post.find(".MPReplacedURL").each(function (index) {
-			var vid_id = $(this).attr("_mp_vid_id");
-			vid_id = vid_id || null;
-			var href = $(this).attr("_mp_original_url");
-
-			$(this)
-			.off("click")
-			.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, self.on_url_click);
-		});
-	}
-	else {
-		var links_found = dom_replace(
-			post_data.post,
-			function (tag, old_tags) { // check
-				var name = tag.prop("tagName");
-				if (name === undefined) return 2;
-				name = name.toLowerCase();
-
-				if (is_archive) {
-					if (
-						(name == "span" && tag.hasClass("greentext")) ||
-						(name == "span" && tag.hasClass("spoiler"))
-					) return 1;
-				}
-				else {
-					if (
-						(name == "span" && tag.hasClass("quote")) ||
-						(name == "s")
-					) return (script.settings["inline"]["url_replace_smart"] ? 2 : 1);
-					if (name == "wbr") return 2;
-				}
-				
-				return 0;
-			},
-			this.replace_urls
-		);
-
-		if (links_found) {
-			// Sounds links
-			post_data.post.find(".MPReplacedURL").each(function (index) {
-				var href = html_to_text(string_remove_tags($(this).html()));
-				if (href.indexOf(":") < 0) href = "//" + href;
-
-				var vid_id = MediaPlayer.prototype.url_get_youtube_video_id(href);
-
-				$(this)
-				.attr("href", href)
-				.attr("_mp_original_url", href)
-				.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, self.on_url_click);
-
-				if (vid_id !== null) {
 					$(this)
-					.attr("_mp_vid_id", vid_id)
-					.html(
-						$(document.createElement("img"))
-						.attr("src", "//youtube.com/favicon.ico")
-						.attr("alt", "")
-						.attr("title", "")
-						.css({"vertical-align": "middle"})
-					)
-					.append(
-						E("span")
-						.css({"padding-left": "8px"})
-						.html("Youtube: " + vid_id)
-					);
-					ajax_get(
-						"//gdata.youtube.com/feeds/api/videos/" + vid_id, true, {a: $(this)}, null,
-						function (okay, data, response) {
-							if (okay) {
-								var xml = $.parseXML(response);
-								var title;
-								try {
-									title = $(xml_find_nodes_by_name(xml, "title")).text();
-								}
-								catch (e) {
-									console.log(e);
-									title = "Unknown Title";
-								}
+					.attr("href", href)
+					.attr("_mp_original_url", href)
+					.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, self.on_url_click);
 
-								data.a.find("span").html(title);
-							}
-							else {
-								data.a.find("span").html("Video not found").css("font-style", "italic");
-							}
-						}
-					);
-				}
-			});
-		}
-	}
-};
-InlineManager.prototype.update_about_image = function (post_data) {
-	// Show container
-	post_data.sounds.about_container.css("display", "");
-	var sound_count = 0;
-	var file_count = post_data.sounds.sound_names.length;
-
-	// Create a list of sounds (and files)
-	var display_count = 0;
-	var container = post_data.sounds.about_list_container;
-	container.html("");
-	for (var sound = true; ; sound = false) {
-		for (var i = 0; i < post_data.sounds.sound_names.length; ++i) {
-			var is_sound = (post_data.sounds.sound_names[i].split(".").pop().toLowerCase() == "ogg");
-			if (sound == is_sound) {	
-				// Only display 2 without expansion
-				if (display_count++ == 2 && file_count > 3) {
-					container.append(
-						(container = post_data.sounds.about_list_container_inner = E("div"))
-						.css("display", "none")
-					)
-					.append(
-						(post_data.sounds.about_list_container_toggler = E("a"))
-						.attr("href", "#")
-						.css("font-style", "italic")
-					);
-					var label = "And " + file_count + " more...";
-					var hide = "Hide " + file_count + " files";
-					post_data.sounds.about_list_container_toggler
-					.html(label)
-					.on(
-						"click", {"container": container, "label": label, "hide": hide}, function (event) {
-							if (container.css("display") == "none") {
-								container.css("display", "");
-								$(this).html(hide);
-							}
-							else {
-								container.css("display", "none");
-								$(this).html(label);
-							}
-							return false;
-						}
-					);
-				}
-
-				if (sound) {
-					if (is_sound) ++sound_count;
-
-					container.append(
-						E("div")
-						.append(T("- "))
-						.append(
-							E("a")
-							.attr("href", "#")
-							.addClass("SPLoadLinkTop")
-							.html(text_to_html(post_data.sounds.sound_names[i].substr(0, post_data.sounds.sound_names[i].length - 4))) // remove extension
-							.on("click", {"post_data": post_data, "sound_id": i}, this.on_link_top_click)
+					if (vid_id !== null) {
+						$(this)
+						.attr("_mp_vid_id", vid_id)
+						.html(
+							$(document.createElement("img"))
+							.attr("src", "//youtube.com/favicon.ico")
+							.attr("alt", "")
+							.attr("title", "")
+							.css({"vertical-align": "middle"})
 						)
-					);
-				}
-				else {
-					container.append(
-						E("div")
-						.append(T("- "))
 						.append(
 							E("span")
-							.addClass("SPLoadLinkTopFile")
-							.html(text_to_html(post_data.sounds.sound_names[i]))
-						)
-					);
-				}
+							.css({"padding-left": "8px"})
+							.html("Youtube: " + vid_id)
+						);
+						ajax_get(
+							"//gdata.youtube.com/feeds/api/videos/" + vid_id, true, {a: $(this)}, null,
+							function (okay, data, response) {
+								if (okay) {
+									var xml = $.parseXML(response);
+									var title;
+									try {
+										title = $(xml_find_nodes_by_name(xml, "title")).text();
+									}
+									catch (e) {
+										console.log(e);
+										title = "Unknown Title";
+									}
+
+									data.a.find("span").html(title);
+								}
+								else {
+									data.a.find("span").html("Video not found").css("font-style", "italic");
+								}
+							}
+						);
+					}
+				});
 			}
 		}
+	},
+	update_about_image: function (post_data) {
+		// Show container
+		post_data.sounds.about_container.css("display", "");
+		var sound_count = 0;
+		var file_count = post_data.sounds.sound_names.length;
 
-		// Done
-		if (!sound) break;
-	}
+		// Create a list of sounds (and files)
+		var display_count = 0;
+		var container = post_data.sounds.about_list_container;
+		container.html("");
+		for (var sound = true; ; sound = false) {
+			for (var i = 0; i < post_data.sounds.sound_names.length; ++i) {
+				var is_sound = (post_data.sounds.sound_names[i].split(".").pop().toLowerCase() == "ogg");
+				if (sound == is_sound) {	
+					// Only display 2 without expansion
+					if (display_count++ == 2 && file_count > 3) {
+						container.append(
+							(container = post_data.sounds.about_list_container_inner = E("div"))
+							.css("display", "none")
+						)
+						.append(
+							(post_data.sounds.about_list_container_toggler = E("a"))
+							.attr("href", "#")
+							.css("font-style", "italic")
+						);
+						var label = "And " + file_count + " more...";
+						var hide = "Hide " + file_count + " files";
+						post_data.sounds.about_list_container_toggler
+						.html(label)
+						.on(
+							"click", {"container": container, "label": label, "hide": hide}, function (event) {
+								if (container.css("display") == "none") {
+									container.css("display", "");
+									$(this).html(hide);
+								}
+								else {
+									container.css("display", "none");
+									$(this).html(label);
+								}
+								return false;
+							}
+						);
+					}
 
-	// Found string
-	var str = "";
-	if (sound_count > 0) {
-		str += sound_count + " Sound" + (sound_count == 1 ? "" : "s") + " Found";
-	}
-	if (file_count > sound_count) {
-		str += (str.length == 0 ? "" : " / ") + file_count + " File" + (file_count == 1 ? "" : "s") + " Found";
-	}
+					if (sound) {
+						if (is_sound) ++sound_count;
 
-	post_data.sounds.about_count_label.html(str);
-};
-InlineManager.prototype.activate_load_all_link = function (post_data, done_callback) {
-	// Change status
-	var load_str = "loading";
-	post_data.sounds.load_all_link.html(load_str);
+						container.append(
+							E("div")
+							.append(T("- "))
+							.append(
+								E("a")
+								.attr("href", "#")
+								.addClass("SPLoadLinkTop")
+								.html(text_to_html(post_data.sounds.sound_names[i].substr(0, post_data.sounds.sound_names[i].length - 4))) // remove extension
+								.on("click", {"post_data": post_data, "sound_id": i}, this.on_link_top_click)
+							)
+						);
+					}
+					else {
+						container.append(
+							E("div")
+							.append(T("- "))
+							.append(
+								E("span")
+								.addClass("SPLoadLinkTopFile")
+								.html(text_to_html(post_data.sounds.sound_names[i]))
+							)
+						);
+					}
+				}
+			}
 
-	// Load sound
-	var self = this;
-	post_data.sounds.loaded = true;
-	media_player_manager.open_player(true);
-	media_player_manager.media_player.attempt_load(
-		post_data.image_url,
-		MediaPlayer.ALL_SOUNDS,
-		{ "image_name": post_data.image_name },
-		{
-			"object": post_data.sounds.load_all_link,
-			"post_data": post_data,
-			"load_str": load_str
-		},
-		function (event, data) {
-			var progress = Math.floor((event.loaded / event.total) * 100);
-			data.object.html(data.load_str + " (" + progress + ")");
-		},
-		function (okay, data) {
-			data.object.html(
-				data.post_data.sounds.load_all_text + (okay ? "" : " (ajax&nbsp;error)")
-			);
-			if (!okay) {
+			// Done
+			if (!sound) break;
+		}
+
+		// Found string
+		var str = "";
+		if (sound_count > 0) {
+			str += sound_count + " Sound" + (sound_count == 1 ? "" : "s") + " Found";
+		}
+		if (file_count > sound_count) {
+			str += (str.length == 0 ? "" : " / ") + file_count + " File" + (file_count == 1 ? "" : "s") + " Found";
+		}
+
+		post_data.sounds.about_count_label.html(str);
+	},
+	activate_load_all_link: function (post_data, done_callback) {
+		// Change status
+		var load_str = "loading";
+		post_data.sounds.load_all_link.html(load_str);
+
+		// Load sound
+		var self = this;
+		post_data.sounds.loaded = true;
+		media_player_manager.open_player(true);
+		media_player_manager.media_player.attempt_load(
+			post_data.image_url,
+			MediaPlayer.ALL_SOUNDS,
+			{ "image_name": post_data.image_name },
+			{
+				"object": post_data.sounds.load_all_link,
+				"post_data": post_data,
+				"load_str": load_str
+			},
+			function (event, data) {
+				var progress = Math.floor((event.loaded / event.total) * 100);
+				data.object.html(data.load_str + " (" + progress + ")");
+			},
+			function (okay, data) {
+				data.object.html(
+					data.post_data.sounds.load_all_text + (okay ? "" : " (ajax&nbsp;error)")
+				);
+				if (!okay) {
+					if (typeof(done_callback) == "function") done_callback(false, data.post_data);
+				}
+			},
+			function (status, data, all_files) {
+				if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
+					data.post_data.sounds.sound_names = all_files;
+					self.update_about_image(data.post_data);
+				}
 				if (typeof(done_callback) == "function") done_callback(false, data.post_data);
 			}
-		},
-		function (status, data, all_files) {
-			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
-				data.post_data.sounds.sound_names = all_files;
-				self.update_about_image(data.post_data);
-			}
-			if (typeof(done_callback) == "function") done_callback(false, data.post_data);
-		}
-	);
+		);
 
-	// Done
-	return false;
-};
-InlineManager.prototype.replace_urls = function (tags) {
-	var full_text = "";
-	var in_url = false;
-	var any_found = true;
-	var length_add;
-	var link_str = [ "<a class=\"MPReplacedURL\">" , "</a>" ];
+		// Done
+		return false;
+	},
+	replace_urls: function (tags) {
+		var full_text = "";
+		var in_url = false;
+		var any_found = true;
+		var length_add;
+		var link_str = [ "<a class=\"MPReplacedURL\">" , "</a>" ];
 
-	for (var i = 0; i < tags.length; ++i) {
-		if (tags[i].prop("tagName") === undefined) {
-			var text = text_to_html(tags[i].text());
-			var start = 0;
-			// Previous URL
-			if (in_url) {
-				in_url = false;
-				text = text.replace(/^(?:[^\s]*)/im, function (match, offset) {
-					in_url = (text.length == offset + match.length);
-					return match + (in_url ? "" : link_str[1]);
-				});
-			}
-			// New URLs
-			if (!in_url) {
-				length_add = 0;
-				text = text.replace(/(?:(?:\w+):\/\/|www\.)(?:[^\s]+)/im, function (match, offset) {
-					// Interesting note: If all groups have the prefix of "?:", then the callback parameter
-					// order is "match, offset, groups". If you remove one of the "?:" (say the first one)
-					// then the order is changed to "match, groups, offset". (in Nightly)
-					any_found = true;
-					in_url = (offset + match.length == text.length + length_add);
-					length_add += (link_str[0].length + (in_url ? 0 : link_str[1].length));
-					return link_str[0] + match + (in_url ? "" : link_str[1]);
-				});
-			}
-			
-			// Update
-			full_text += text;
-		}
-		else {
-			/*if (script.settings["inline"]["url_replace_smart"]&&0) {
-				// TODO : do this later rather than using an assumption
-			}
-			else {*/
-			full_text += $("<div>").append(tags[i].clone()).html();
-			// }
-		}
-	}
-
-	if (in_url) {
-		in_url = false;
-		full_text += link_str[1];
-	}
-
-	// DOM update
-	if (any_found) {
-		tags[0].before(full_text);
-		for (var i = 0; i < tags.length; ++i) tags[i].remove();
-	}
-
-	return any_found;
-};
-InlineManager.prototype.replace_tags = function (tags) {
-	var sounds_found = false;
-	var new_text = text_to_html(tags[0].text()).replace(/\[.+?\]/g, function (match) {
-		sounds_found = true;
-		return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
-	});
-	if (sounds_found) {
-		tags[0].after(new_text).remove();
-		return true;
-	}
-	return false;
-};
-InlineManager.prototype.on_image_drag = function (data) {
-	var url_lower = data.text.toLowerCase();
-	for (var post_id in thread_manager.posts) {
-		if (
-			thread_manager.posts[post_id].image_url !== null &&
-			url_lower.indexOf(thread_manager.posts[post_id].image_url.toLowerCase()) >= 0
-		) {
-			// Found; activate manual load
-			this.activate_load_all_link(thread_manager.posts[post_id]);
-			data.text = "";
-			return false;
-		}
-	}
-	return true;
-};
-InlineManager.prototype.on_url_click = function (event) {
-	// Add to playlist
-	if (!event.originalEvent.which || event.originalEvent.which == 1) {
-		if (event.data.vid_id !== null) {
-			media_player_manager.open_player(true);
-			media_player_manager.media_player.attempt_load_video(
-				event.data.url,
-				null,
-				{},
-				{ "post_data": event.data.post_data, "link": $(this) },
-				function (event, data) {
-					//var progress = Math.floor((event.loaded / event.total) * 100);
-					//data.object.html(data.load_str + " (" + progress + ")");
-				},
-				function (okay, data) {
-					//data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
-				},
-				function (status, data, xml_info) {
+		for (var i = 0; i < tags.length; ++i) {
+			if (tags[i].prop("tagName") === undefined) {
+				var text = text_to_html(tags[i].text());
+				var start = 0;
+				// Previous URL
+				if (in_url) {
+					in_url = false;
+					text = text.replace(/^(?:[^\s]*)/im, function (match, offset) {
+						in_url = (text.length == offset + match.length);
+						return match + (in_url ? "" : link_str[1]);
+					});
 				}
-			);
+				// New URLs
+				if (!in_url) {
+					length_add = 0;
+					text = text.replace(/(?:(?:\w+):\/\/|www\.)(?:[^\s]+)/im, function (match, offset) {
+						// Interesting note: If all groups have the prefix of "?:", then the callback parameter
+						// order is "match, offset, groups". If you remove one of the "?:" (say the first one)
+						// then the order is changed to "match, groups, offset". (in Nightly)
+						any_found = true;
+						in_url = (offset + match.length == text.length + length_add);
+						length_add += (link_str[0].length + (in_url ? 0 : link_str[1].length));
+						return link_str[0] + match + (in_url ? "" : link_str[1]);
+					});
+				}
+				
+				// Update
+				full_text += text;
+			}
+			else {
+				/*if (script.settings["inline"]["url_replace_smart"]&&0) {
+					// TODO : do this later rather than using an assumption
+				}
+				else {*/
+				full_text += $("<div>").append(tags[i].clone()).html();
+				// }
+			}
+		}
+
+		if (in_url) {
+			in_url = false;
+			full_text += link_str[1];
+		}
+
+		// DOM update
+		if (any_found) {
+			tags[0].before(full_text);
+			for (var i = 0; i < tags.length; ++i) tags[i].remove();
+		}
+
+		return any_found;
+	},
+	replace_tags: function (tags) {
+		var sounds_found = false;
+		var new_text = text_to_html(tags[0].text()).replace(/\[.+?\]/g, function (match) {
+			sounds_found = true;
+			return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
+		});
+		if (sounds_found) {
+			tags[0].after(new_text).remove();
+			return true;
 		}
 		return false;
-	}
-	return true;
-};
-InlineManager.prototype.on_link_click = function (event) {
-	// Change status
-	var load_str = "loading...";
-	$(this).html(load_str);
-
-	// Load sound
-	var self = event.data.manager;
-	event.data.post_data.sounds.loaded = true;
-	media_player_manager.open_player(true);
-	media_player_manager.media_player.attempt_load(
-		event.data.post_data.image_url,
-		event.data.post_data.sounds.post_tags[event.data.tag_id],
-		{ "image_name": event.data.post_data.image_name },
-		{
-			"object": $(this),
-			"post_data": event.data.post_data,
-			"tag_id": event.data.tag_id,
-			"load_str": load_str
-		},
-		function (event, data) {
-			var progress = Math.floor((event.loaded / event.total) * 100);
-			data.object.html(data.load_str + " (" + progress + ")");
-		},
-		function (okay, data) {
-			data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
-		},
-		function (status, data, all_files) {
-			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
-				data.post_data.sounds.sound_names = all_files;
-				self.update_about_image(data.post_data);
+	},
+	on_image_drag: function (data) {
+		var url_lower = data.text.toLowerCase();
+		for (var post_id in thread_manager.posts) {
+			if (
+				thread_manager.posts[post_id].image_url !== null &&
+				url_lower.indexOf(thread_manager.posts[post_id].image_url.toLowerCase()) >= 0
+			) {
+				// Found; activate manual load
+				this.activate_load_all_link(thread_manager.posts[post_id]);
+				data.text = "";
+				return false;
 			}
 		}
-	);
-
-	// Done
-	return false;
-};
-InlineManager.prototype.on_link_top_click = function (event) {
-	// Change status
-	var load_str = "loading...";
-	$(this).html(load_str);
-
-	var tag = event.data.post_data.sounds.sound_names[event.data.sound_id];
-	if (tag.substr(tag.length - 4, 4).toLowerCase() == ".ogg") {
-		tag = tag.substr(0, tag.length - 4);
-	}
-
-	// Load sound
-	var self = this;
-	event.data.post_data.sounds.loaded = true;
-	media_player_manager.open_player(true);
-	media_player_manager.media_player.attempt_load(
-		event.data.post_data.image_url,
-		tag,
-		{ "image_name": event.data.post_data.image_name },
-		{
-			"object": $(this),
-			"post_data": event.data.post_data,
-			"sound_id": event.data.sound_id,
-			"load_str": load_str,
-			"tag": tag
-		},
-		function (event, data) {
-			var progress = Math.floor((event.loaded / event.total) * 100);
-			data.object.html(data.load_str + " (" + progress + ")");
-		},
-		function (okay, data) {
-			data.object.html(data.tag + (okay ? "" : " (ajax&nbsp;error)"));
-		},
-		function (status, data, all_files) {
-			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
-				data.post_data.sounds.sound_names = all_files;
-				self.update_about_image(data.post_data);
+		return true;
+	},
+	on_url_click: function (event) {
+		// Add to playlist
+		if (!event.originalEvent.which || event.originalEvent.which == 1) {
+			if (event.data.vid_id !== null) {
+				media_player_manager.open_player(true);
+				media_player_manager.media_player.attempt_load_video(
+					event.data.url,
+					null,
+					{},
+					{ "post_data": event.data.post_data, "link": $(this) },
+					function (event, data) {
+						//var progress = Math.floor((event.loaded / event.total) * 100);
+						//data.object.html(data.load_str + " (" + progress + ")");
+					},
+					function (okay, data) {
+						//data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
+					},
+					function (status, data, xml_info) {
+					}
+				);
 			}
+			return false;
 		}
-	);
+		return true;
+	},
+	on_link_click: function (event) {
+		// Change status
+		var load_str = "loading...";
+		$(this).html(load_str);
 
-	// Done
-	return false;
-};
-InlineManager.prototype.on_load_all_click = function (event) {
-	event.data.manager.activate_load_all_link(event.data.post_data);
+		// Load sound
+		var self = event.data.manager;
+		event.data.post_data.sounds.loaded = true;
+		media_player_manager.open_player(true);
+		media_player_manager.media_player.attempt_load(
+			event.data.post_data.image_url,
+			event.data.post_data.sounds.post_tags[event.data.tag_id],
+			{ "image_name": event.data.post_data.image_name },
+			{
+				"object": $(this),
+				"post_data": event.data.post_data,
+				"tag_id": event.data.tag_id,
+				"load_str": load_str
+			},
+			function (event, data) {
+				var progress = Math.floor((event.loaded / event.total) * 100);
+				data.object.html(data.load_str + " (" + progress + ")");
+			},
+			function (okay, data) {
+				data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
+			},
+			function (status, data, all_files) {
+				if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
+					data.post_data.sounds.sound_names = all_files;
+					self.update_about_image(data.post_data);
+				}
+			}
+		);
 
-	// Done
-	return false;
-};
-InlineManager.prototype.on_detect_all_in_thread_click = function (event) {
-	if (sound_auto_checker.enabled) {
-		sound_auto_checker.disable();
-	}
-	else {
-		sound_auto_checker.enable();
-	}
+		// Done
+		return false;
+	},
+	on_link_top_click: function (event) {
+		// Change status
+		var load_str = "loading...";
+		$(this).html(load_str);
 
-	return false;
-};
-InlineManager.prototype.on_load_all_in_thread_click = function (event) {
-	if (sound_auto_loader.enabled) {
-		sound_auto_loader.disable();
-	}
-	else {
-		sound_auto_loader.enable();
-	}
+		var tag = event.data.post_data.sounds.sound_names[event.data.sound_id];
+		if (tag.substr(tag.length - 4, 4).toLowerCase() == ".ogg") {
+			tag = tag.substr(0, tag.length - 4);
+		}
 
-	return false;
+		// Load sound
+		var self = this;
+		event.data.post_data.sounds.loaded = true;
+		media_player_manager.open_player(true);
+		media_player_manager.media_player.attempt_load(
+			event.data.post_data.image_url,
+			tag,
+			{ "image_name": event.data.post_data.image_name },
+			{
+				"object": $(this),
+				"post_data": event.data.post_data,
+				"sound_id": event.data.sound_id,
+				"load_str": load_str,
+				"tag": tag
+			},
+			function (event, data) {
+				var progress = Math.floor((event.loaded / event.total) * 100);
+				data.object.html(data.load_str + " (" + progress + ")");
+			},
+			function (okay, data) {
+				data.object.html(data.tag + (okay ? "" : " (ajax&nbsp;error)"));
+			},
+			function (status, data, all_files) {
+				if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
+					data.post_data.sounds.sound_names = all_files;
+					self.update_about_image(data.post_data);
+				}
+			}
+		);
+
+		// Done
+		return false;
+	},
+	on_load_all_click: function (event) {
+		event.data.manager.activate_load_all_link(event.data.post_data);
+
+		// Done
+		return false;
+	},
+	on_detect_all_in_thread_click: function (event) {
+		if (sound_auto_checker.enabled) {
+			sound_auto_checker.disable();
+		}
+		else {
+			sound_auto_checker.enable();
+		}
+
+		return false;
+	},
+	on_load_all_in_thread_click: function (event) {
+		if (sound_auto_loader.enabled) {
+			sound_auto_loader.disable();
+		}
+		else {
+			sound_auto_loader.enable();
+		}
+
+		return false;
+	}
 };
 var inline_manager = null;
 
@@ -1822,69 +1842,72 @@ function SoundAutoLoader() {
 
 	this.link = null;
 }
-SoundAutoLoader.prototype.add_to_queue = function (post_data) {
-	// Set to loaded
-	post_data.loaded = true;
+SoundAutoLoader.prototype = {
+	constructor: SoundAutoLoader,
+	add_to_queue: function (post_data) {
+		// Set to loaded
+		post_data.loaded = true;
 
-	// Add to queue
-	this.queue.push(post_data);
-	this.loop();
-}
-SoundAutoLoader.prototype.enable = function () {
-	if (!this.enabled) {
-		this.link.removeAttr("href");
-		this.link.html("Loading All Sounds");
-
-		this.enabled = true;
+		// Add to queue
+		this.queue.push(post_data);
 		this.loop();
-	}
-}
-SoundAutoLoader.prototype.disable = function () {
-	if (this.enabled) {
-		this.link.attr("href", "#");
-		this.link.html("Load All Sounds");
+	},
+	enable: function () {
+		if (!this.enabled) {
+			this.link.removeAttr("href");
+			this.link.html("Loading All Sounds");
 
-		this.enabled = false;
-		this.looping = false;
-		if (this.timer != null) {
-			clearTimeout(this.timer);
-			this.timer = null;
+			this.enabled = true;
+			this.loop();
 		}
+	},
+	disable: function () {
+		if (this.enabled) {
+			this.link.attr("href", "#");
+			this.link.html("Load All Sounds");
+
+			this.enabled = false;
+			this.looping = false;
+			if (this.timer != null) {
+				clearTimeout(this.timer);
+				this.timer = null;
+			}
+		}
+	},
+	loop: function () {
+		if (!this.enabled || this.looping) return;
+
+		this.looping = true;
+		this.loop_next();
+	},
+	loop_next: function () {
+		if (!this.enabled) return;
+
+		this.looping = (this.queue.length > 0);
+		if (!this.looping) {
+			this.disable();
+			return;
+		}
+
+		while (this.queue.length > 0) {
+			this.load_single(this.queue.shift());
+			if (this.serial) break;
+		}	
+	},
+	load_single: function (post_data) {
+		var self = this;
+		inline_manager.activate_load_all_link(post_data, function (okay, post_data) {
+			self.load_single_done();
+		});
+	},
+	load_single_done: function () {
+		var self = this;
+		this.timer = setTimeout(function () {
+			self.timer = null;
+			self.loop_next();
+		}, this.delay);
 	}
-}
-SoundAutoLoader.prototype.loop = function () {
-	if (!this.enabled || this.looping) return;
-
-	this.looping = true;
-	this.loop_next();
-}
-SoundAutoLoader.prototype.loop_next = function () {
-	if (!this.enabled) return;
-
-	this.looping = (this.queue.length > 0);
-	if (!this.looping) {
-		this.disable();
-		return;
-	}
-
-	while (this.queue.length > 0) {
-		this.load_single(this.queue.shift());
-		if (this.serial) break;
-	}	
-}
-SoundAutoLoader.prototype.load_single = function (post_data) {
-	var self = this;
-	inline_manager.activate_load_all_link(post_data, function (okay, post_data) {
-		self.load_single_done();
-	});
-}
-SoundAutoLoader.prototype.load_single_done = function () {
-	var self = this;
-	this.timer = setTimeout(function () {
-		self.timer = null;
-		self.loop_next();
-	}, this.delay);
-}
+};
 var sound_auto_loader = null;
 
 
@@ -1903,121 +1926,124 @@ function SoundAutoChecker() {
 	this.link = null;
 	this.callbacks = [ image_check_callback , png_check_callback ];
 }
-SoundAutoChecker.prototype.add_to_queue = function (post_data) {
-	// Set to loaded
-	post_data.loaded = true;
+SoundAutoChecker.prototype = {
+	constructor: SoundAutoChecker,
+	add_to_queue: function (post_data) {
+		// Set to loaded
+		post_data.loaded = true;
 
-	// Add to queue
-	this.queue.push(post_data);
-	this.loop();
-}
-SoundAutoChecker.prototype.enable = function () {
-	if (!this.enabled) {
-		for (var i = 0; i < this.queue.length; ++i) {
-			this.queue[i].sounds.auto_check.search_span.css("display", "");
-		}
-		this.link.removeAttr("href");
-		this.link.html("Detecting Sounds");
-
-		this.enabled = true;
+		// Add to queue
+		this.queue.push(post_data);
 		this.loop();
-	}
-}
-SoundAutoChecker.prototype.disable = function () {
-	if (this.enabled) {
-		for (var i = 0; i < this.queue.length; ++i) {
-			this.queue[i].sounds.auto_check.search_span.css("display", "none");
-		}
-		this.link.attr("href", "#");
-		this.link.html("Detect Sounds");
+	},
+	enable: function () {
+		if (!this.enabled) {
+			for (var i = 0; i < this.queue.length; ++i) {
+				this.queue[i].sounds.auto_check.search_span.css("display", "");
+			}
+			this.link.removeAttr("href");
+			this.link.html("Detecting Sounds");
 
-		this.enabled = false;
-		this.looping = false;
-		if (this.timer != null) {
-			clearTimeout(this.timer);
-			this.timer = null;
+			this.enabled = true;
+			this.loop();
 		}
-	}
-}
-SoundAutoChecker.prototype.loop = function () {
-	if (!this.enabled || this.looping) return;
+	},
+	disable: function () {
+		if (this.enabled) {
+			for (var i = 0; i < this.queue.length; ++i) {
+				this.queue[i].sounds.auto_check.search_span.css("display", "none");
+			}
+			this.link.attr("href", "#");
+			this.link.html("Detect Sounds");
 
-	this.looping = true;
-	this.loop_next();
-}
-SoundAutoChecker.prototype.loop_next = function () {
-	if (!this.enabled) return;
-
-	this.looping = (this.queue.length > 0);
-
-	var loaded = false;
-	while (this.queue.length > 0) {
-		var post_data = this.queue.shift();
-		if (post_data.sounds.sound_names.length == 0) {
-			loaded = true;
-			this.load_single(post_data);
-			if (this.serial) break;
+			this.enabled = false;
+			this.looping = false;
+			if (this.timer != null) {
+				clearTimeout(this.timer);
+				this.timer = null;
+			}
 		}
-		else {
-			post_data.sounds.auto_check.search_span.css("display", "none");
-		}
-	}
+	},
+	loop: function () {
+		if (!this.enabled || this.looping) return;
 
-	this.looping = !loaded;
-}
-SoundAutoChecker.prototype.load_single = function (post_data) {
-	var self = this;
-	ajax_get(
-		post_data.image_url,
-		false,
-		post_data,
-		function (event, post_data) {},
-		function (okay, post_data, response) {
-			var callback_id = (okay ? 0 : self.callbacks.length); // this kills the loop (on error)
-			self.load_single_callbacks(post_data, callback_id, response);
+		this.looping = true;
+		this.loop_next();
+	},
+	loop_next: function () {
+		if (!this.enabled) return;
+
+		this.looping = (this.queue.length > 0);
+
+		var loaded = false;
+		while (this.queue.length > 0) {
+			var post_data = this.queue.shift();
+			if (post_data.sounds.sound_names.length == 0) {
+				loaded = true;
+				this.load_single(post_data);
+				if (this.serial) break;
+			}
+			else {
+				post_data.sounds.auto_check.search_span.css("display", "none");
+			}
 		}
-	);
-}
-SoundAutoChecker.prototype.load_single_callbacks = function (post_data, callback_id, response) {
-	if (callback_id >= this.callbacks.length) {
-		// Not found
-		post_data.sounds.auto_check.search_span.css("display", "none");
-		this.load_single_done();
-	}
-	else {
-		// Run a callback
+
+		this.looping = !loaded;
+	},
+	load_single: function (post_data) {
 		var self = this;
-		this.callbacks[callback_id](
+		ajax_get(
 			post_data.image_url,
-			response,
+			false,
 			post_data,
-			function (image_data, post_data) {
-				if (image_data == null || image_data[1].length <= 0) {
-					// Check further
-					self.load_single_callbacks(post_data, callback_id + 1, response);
-				}
-				else {
-					// Found
-					post_data.sounds.sound_names = image_data[1];
-
-					// html update
-					inline_manager.update_about_image(post_data);
-
-					// Done
-					post_data.sounds.auto_check.search_span.css("display", "none");
-					self.load_single_done();
-				}
+			function (event, post_data) {},
+			function (okay, post_data, response) {
+				var callback_id = (okay ? 0 : self.callbacks.length); // this kills the loop (on error)
+				self.load_single_callbacks(post_data, callback_id, response);
 			}
 		);
+	},
+	load_single_callbacks: function (post_data, callback_id, response) {
+		if (callback_id >= this.callbacks.length) {
+			// Not found
+			post_data.sounds.auto_check.search_span.css("display", "none");
+			this.load_single_done();
+		}
+		else {
+			// Run a callback
+			var self = this;
+			this.callbacks[callback_id](
+				post_data.image_url,
+				response,
+				post_data,
+				function (image_data, post_data) {
+					if (image_data == null || image_data[1].length <= 0) {
+						// Check further
+						self.load_single_callbacks(post_data, callback_id + 1, response);
+					}
+					else {
+						// Found
+						post_data.sounds.sound_names = image_data[1];
+
+						// html update
+						inline_manager.update_about_image(post_data);
+
+						// Done
+						post_data.sounds.auto_check.search_span.css("display", "none");
+						self.load_single_done();
+					}
+				}
+			);
+		}
+	},
+	load_single_done: function () {
+		var self = this;
+		this.timer = setTimeout(function () {
+			self.timer = null;
+			self.loop_next();
+		}, this.delay);
 	}
-}
-SoundAutoChecker.prototype.load_single_done = function () {
-	var self = this;
-	this.timer = setTimeout(function () {
-		self.timer = null;
-		self.loop_next();
-	}, this.delay);
-}
+};
 var sound_auto_checker = null;
 
 
@@ -2026,8 +2052,6 @@ var sound_auto_checker = null;
 // Hotkeys
 ///////////////////////////////////////////////////////////////////////////////
 function HotkeyListener() {
-	this.flags = 0;
-
 	this.keycode_names = {
 		8: "BACKSPACE",
 		9: "TAB",
@@ -2078,12 +2102,11 @@ function HotkeyListener() {
 	];
 
 	$(window)
-	.off("keydown.HotkeyListener keyup.HotkeyListener")
+	.off("keydown.HotkeyListener")
 	.on("keydown.HotkeyListener", {self: this}, function (event) {
-		if (event.which >= 16 && event.which <= 17) { // changing 17 to 18 enables "alt" support, but is buggy
-			event.data.self.flags |= (1 << (event.which - 16));
-		}
-		else {
+		if (!(event.which >= 16 && event.which <= 18)) {
+			var flags = (event.shiftKey ? 1 : 0) | (event.ctrlKey ? 2 : 0) | (event.altKey ? 4 : 0);
+
 			// Not typing
 			var t = $(document.activeElement).prop("tagName").toLowerCase();
 			if (t !== "input" && t !== "textarea") {
@@ -2093,7 +2116,7 @@ function HotkeyListener() {
 					if (
 						script.settings["hotkeys"][k][0] != 0 &&
 						script.settings["hotkeys"][k][0] == event.which &&
-						script.settings["hotkeys"][k][1] == event.data.self.flags
+						script.settings["hotkeys"][k][1] == flags
 					) {
 						event.data.self.hotkeys[i][1].call(event.data.self);
 						event.stopPropagation();
@@ -2104,213 +2127,208 @@ function HotkeyListener() {
 			}
 		}
 		return true;
-	})
-	.on("keyup.HotkeyListener", {self: this}, function (event) {
-		if (event.which >= 16 && event.which <= 17) {
-			event.data.self.flags &= ~(1 << (event.which - 16));
-		}
 	});
 }
-HotkeyListener.prototype.settings_update = function () {
-	for (var i = 0; i < this.hotkeys.length; ++i) {
-		script.settings["hotkeys"][this.hotkeys[i][0]] = [ 0 , 0 ];
-	}
-};
-HotkeyListener.prototype.key_to_string = function (keycode, modifiers) {
-	var str = "";
-	if ((modifiers & 1) != 0) str += "Shift";
-	if ((modifiers & 2) != 0) str += (str.length > 0 ? " + " : "") + "Ctrl";
-	if ((modifiers & 4) != 0) str += (str.length > 0 ? " + " : "") + "Alt";
-	if (keycode != 0) str += (str.length > 0 ? " + " : "") + (
-		keycode in this.keycode_names ?
-		this.keycode_names[keycode] :
-		(keycode >= 127 || keycode < 32 ? keycode : String.fromCharCode(keycode))
-	);
-	return str;
-};
-HotkeyListener.prototype.create_hotkey_setting = function (hotkey_label, hotkey_name) {
-	// Settings
-	var hotkey_settings = {
-		"section": "Hotkeys",
-		"label": hotkey_label,
-		"html": null,
-		"html_input": null,
-		"html_input_clear": null,
-		"value": "",
-		"value_code": script.settings["hotkeys"][hotkey_name][0],
-		"value_modifiers": script.settings["hotkeys"][hotkey_name][1],
-		"value_modifiers_current": 0, // 1 = shift, 2 = ctrl, 4 = alt
-		"update_value": null,
-		"listener": this
-	};
-	hotkey_settings.update_value = function (hotkey_settings) {
-		// Update
-		hotkey_settings.value = hotkey_settings.listener.key_to_string(
-			hotkey_settings.value_code, hotkey_settings.value_modifiers
+HotkeyListener.prototype = {
+	constructor: HotkeyListener,
+	settings_update: function () {
+		for (var i = 0; i < this.hotkeys.length; ++i) {
+			script.settings["hotkeys"][this.hotkeys[i][0]] = [ 0 , 0 ];
+		}
+	},
+	key_to_string: function (keycode, modifiers) {
+		var str = "";
+		if ((modifiers & 1) != 0) str += "Shift";
+		if ((modifiers & 2) != 0) str += (str.length > 0 ? " + " : "") + "Ctrl";
+		if ((modifiers & 4) != 0) str += (str.length > 0 ? " + " : "") + "Alt";
+		if (keycode != 0) str += (str.length > 0 ? " + " : "") + (
+			keycode in this.keycode_names ?
+			this.keycode_names[keycode] :
+			(keycode >= 127 || keycode < 32 ? keycode : String.fromCharCode(keycode))
 		);
+		return str;
+	},
+	create_hotkey_setting: function (hotkey_label, hotkey_name) {
+		// Settings
+		var hotkey_settings = {
+			"section": "Hotkeys",
+			"label": hotkey_label,
+			"html": null,
+			"html_input": null,
+			"html_input_clear": null,
+			"value": "",
+			"value_code": script.settings["hotkeys"][hotkey_name][0],
+			"value_modifiers": script.settings["hotkeys"][hotkey_name][1],
+			"value_modifiers_current": 0, // 1 = shift, 2 = ctrl, 4 = alt
+			"update_value": null,
+			"listener": this
+		};
+		hotkey_settings.update_value = function (hotkey_settings) {
+			// Update
+			hotkey_settings.value = hotkey_settings.listener.key_to_string(
+				hotkey_settings.value_code, hotkey_settings.value_modifiers
+			);
 
-		hotkey_settings.html_input.val(hotkey_settings.value);
-	};
+			hotkey_settings.html_input.val(hotkey_settings.value);
+		};
 
-	// HTML
-	(hotkey_settings.html = E("div"))
-	.append( //{ DOM
-		E("div")
-		.addClass("SPHelpColorInputDiv2")
-		.append(
+		// HTML
+		(hotkey_settings.html = E("div"))
+		.append( //{ DOM
 			E("div")
-			.addClass("SPHelpColorInputDiv3")
-			.css({
-				"position": "relative",
-			})
-			.append(
-				(hotkey_settings.html_input = E("input"))
-				.addClass("SPHelpColorInput")
-				.attr("type", "text")
-				.val(hotkey_settings.value)
-			)
+			.addClass("SPHelpColorInputDiv2")
 			.append(
 				E("div")
+				.addClass("SPHelpColorInputDiv3")
 				.css({
-					"position": "absolute",
-					"right": "0",
-					"top": "0",
-					"bottom": "0",
+					"position": "relative",
 				})
 				.append(
-					(hotkey_settings.html_input_clear = E("a"))
-					.attr("href", "#")
-					.html("Clear")
+					(hotkey_settings.html_input = E("input"))
+					.addClass("SPHelpColorInput")
+					.attr("type", "text")
+					.val(hotkey_settings.value)
+				)
+				.append(
+					E("div")
+					.css({
+						"position": "absolute",
+						"right": "0",
+						"top": "0",
+						"bottom": "0",
+					})
+					.append(
+						(hotkey_settings.html_input_clear = E("a"))
+						.attr("href", "#")
+						.html("Clear")
+					)
 				)
 			)
-		)
-	); //}
+		); //}
 
-	// Update value
-	hotkey_settings.update_value(hotkey_settings);
+		// Update value
+		hotkey_settings.update_value(hotkey_settings);
 
-	// Events
-	hotkey_settings.html_input_clear.on("click", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
-		// Clear value
-		event.data.hotkey_settings.value_code = 0;
-		event.data.hotkey_settings.value_modifiers = 0;
-		event.data.hotkey_settings.value_modifiers_current = 0;
-		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
-
-		// Update
-		script.settings["hotkeys"][event.data.hotkey_name][0] = event.data.hotkey_settings.value_code;
-		script.settings["hotkeys"][event.data.hotkey_name][1] = event.data.hotkey_settings.value_modifiers;
-		script.settings_save();
-
-		return false;
-	});
-	hotkey_settings.html_input.on("keydown", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
-		if (event.which >= 16 && event.which <= 17) {
-			var v = 1 << (event.which - 16);
-			event.data.hotkey_settings.value_modifiers_current |= v;
-
-			event.data.hotkey_settings.value_modifiers = event.data.hotkey_settings.value_modifiers_current;
+		// Events
+		hotkey_settings.html_input_clear.on("click", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
+			// Clear value
 			event.data.hotkey_settings.value_code = 0;
-		}
-		else {
-			// Key
+			event.data.hotkey_settings.value_modifiers = 0;
+			event.data.hotkey_settings.value_modifiers_current = 0;
+			event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+
+			// Update
+			script.settings["hotkeys"][event.data.hotkey_name][0] = event.data.hotkey_settings.value_code;
+			script.settings["hotkeys"][event.data.hotkey_name][1] = event.data.hotkey_settings.value_modifiers;
+			script.settings_save();
+
+			return false;
+		});
+		hotkey_settings.html_input.on("keydown", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
+			event.data.hotkey_settings.value_modifiers_current = (event.shiftKey ? 1 : 0) | (event.ctrlKey ? 2 : 0) | (event.altKey ? 4 : 0);
 			event.data.hotkey_settings.value_modifiers = event.data.hotkey_settings.value_modifiers_current;
-			event.data.hotkey_settings.value_code = event.which;
-		}
 
-		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
-
-		event.stopPropagation();
-		event.preventDefault();
-		return false;
-	})
-	.on("keyup", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
-		if (event.which >= 16 && event.which <= 17) {
-			var v = 1 << (event.which - 16);
-			event.data.hotkey_settings.value_modifiers_current &= ~v;
+			if (event.which >= 16 && event.which <= 18) {
+				event.data.hotkey_settings.value_code = 0;
+			}
+			else {
+				event.data.hotkey_settings.value_code = event.which;
+			}
 
 			event.data.hotkey_settings.update_value(event.data.hotkey_settings);
-		}
 
-		event.stopPropagation();
-		event.preventDefault();
-		return false;
-	})
-	.on("blur", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
-		// No key?
-		if (event.data.hotkey_settings.value_code == 0) {
-			event.data.hotkey_settings.value_modifiers = 0;
-		}
-		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+			event.stopPropagation();
+			event.preventDefault();
+			return false;
+		})
+		.on("keyup", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
+			if (event.which >= 16 && event.which <= 18) {
+				var v = 1 << (event.which - 16);
+				event.data.hotkey_settings.value_modifiers_current &= ~v;
 
-		// Update
-		script.settings["hotkeys"][event.data.hotkey_name][0] = event.data.hotkey_settings.value_code;
-		script.settings["hotkeys"][event.data.hotkey_name][1] = event.data.hotkey_settings.value_modifiers;
-		script.settings_save();
-	})
-	.on("focus", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
-		// Clear modifiers
-		event.data.hotkey_settings.value_modifiers_current = 0;
-	});
+				event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+			}
 
-	// Done
-	return hotkey_settings;
-};
-HotkeyListener.prototype.on_player_open = function () {
-	// Open the player
-	media_player_manager.open_player(true);
-};
-HotkeyListener.prototype.on_player_close = function () {
-	// Close the player
-	if (media_player_manager.media_player !== null) {
-		media_player_manager.media_player.destructor();
-		media_player_manager.media_player = null;
-	}
-};
-HotkeyListener.prototype.on_player_minmax = function () {
-	// Min/maximize the player
-	if (media_player_manager.media_player !== null) {
-		if (media_player_manager.media_player.is_maximized()) {
-			media_player_manager.media_player.minimize();
+			event.stopPropagation();
+			event.preventDefault();
+			return false;
+		})
+		.on("blur", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
+			// No key?
+			if (event.data.hotkey_settings.value_code == 0) {
+				event.data.hotkey_settings.value_modifiers = 0;
+			}
+			event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+
+			// Update
+			script.settings["hotkeys"][event.data.hotkey_name][0] = event.data.hotkey_settings.value_code;
+			script.settings["hotkeys"][event.data.hotkey_name][1] = event.data.hotkey_settings.value_modifiers;
+			script.settings_save();
+		})
+		.on("focus", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
+			// Clear modifiers
+			event.data.hotkey_settings.value_modifiers_current = 0;
+		});
+
+		// Done
+		return hotkey_settings;
+	},
+	on_player_open: function () {
+		// Open the player
+		media_player_manager.open_player(true);
+	},
+	on_player_close: function () {
+		// Close the player
+		if (media_player_manager.media_player !== null) {
+			media_player_manager.media_player.destructor();
+			media_player_manager.media_player = null;
 		}
-		else {
-			media_player_manager.media_player.maximize();
+	},
+	on_player_minmax: function () {
+		// Min/maximize the player
+		if (media_player_manager.media_player !== null) {
+			if (media_player_manager.media_player.is_maximized()) {
+				media_player_manager.media_player.minimize();
+			}
+			else {
+				media_player_manager.media_player.maximize();
+			}
 		}
-	}
-};
-HotkeyListener.prototype.on_playlist_play = function () {
-	// Play/pause
-	if (media_player_manager.media_player !== null) {
-		if (media_player_manager.media_player.is_paused()) {
-			media_player_manager.media_player.play();
+	},
+	on_playlist_play: function () {
+		// Play/pause
+		if (media_player_manager.media_player !== null) {
+			if (media_player_manager.media_player.is_paused()) {
+				media_player_manager.media_player.play();
+			}
+			else {
+				media_player_manager.media_player.pause();
+			}
 		}
-		else {
-			media_player_manager.media_player.pause();
+	},
+	on_playlist_next: function () {
+		// Next
+		if (media_player_manager.media_player !== null) {
+			media_player_manager.media_player.next(false);
 		}
-	}
-};
-HotkeyListener.prototype.on_playlist_next = function () {
-	// Next
-	if (media_player_manager.media_player !== null) {
-		media_player_manager.media_player.next(false);
-	}
-};
-HotkeyListener.prototype.on_playlist_previous = function () {
-	// Previous
-	if (media_player_manager.media_player !== null) {
-		media_player_manager.media_player.previous();
-	}
-};
-HotkeyListener.prototype.on_volume_up = function () {
-	// Previous
-	if (media_player_manager.media_player !== null) {
-		media_player_manager.media_player.set_volume(media_player_manager.media_player.get_volume() + 0.05);
-	}
-};
-HotkeyListener.prototype.on_volume_down = function () {
-	// Previous
-	if (media_player_manager.media_player !== null) {
-		media_player_manager.media_player.set_volume(media_player_manager.media_player.get_volume() - 0.05);
+	},
+	on_playlist_previous: function () {
+		// Previous
+		if (media_player_manager.media_player !== null) {
+			media_player_manager.media_player.previous();
+		}
+	},
+	on_volume_up: function () {
+		// Previous
+		if (media_player_manager.media_player !== null) {
+			media_player_manager.media_player.set_volume(media_player_manager.media_player.get_volume() + 0.05);
+		}
+	},
+	on_volume_down: function () {
+		// Previous
+		if (media_player_manager.media_player !== null) {
+			media_player_manager.media_player.set_volume(media_player_manager.media_player.get_volume() - 0.05);
+		}
 	}
 };
 var hotkey_listener = null;
@@ -2491,68 +2509,71 @@ function MediaPlayerManager() {
 		}
 	};
 }
-MediaPlayerManager.prototype.media_player_destruct_callback = function (media_player) {
-	// Save settings
-	script.settings_save();
-	// Nullify
-	this.media_player = null;
-};
-MediaPlayerManager.prototype.open_player = function (load_settings) {
-	if (this.media_player != null) {
-		// Focus player
-		this.media_player.focus();
+MediaPlayerManager.prototype = {
+	constructor: MediaPlayerManager,
+	media_player_destruct_callback: function (media_player) {
+		// Save settings
+		script.settings_save();
+		// Nullify
+		this.media_player = null;
+	},
+	open_player: function (load_settings) {
+		if (this.media_player != null) {
+			// Focus player
+			this.media_player.focus();
+			return this.media_player;
+		}
+
+		// CSS
+		var media_player_css = new MediaPlayerCSS("yotsubab", this.css_color_presets, this.css_size_presets);
+		// Load CSS settings
+		if (load_settings) media_player_css.load(script.settings["style"]);
+		// Custom settings
+		var extra_options = [
+			{
+				"current": script.settings["inline"]["url_replace"],
+				"label": "URL Replacing",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["url_replace"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"current": script.settings["inline"]["url_replace_smart"],
+				"label": "Extended URLs",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["url_replace_smart"] = value;
+					script.settings_save();
+				}
+			},
+		];
+		for (var i = 0; i < hotkey_listener.hotkeys.length; ++i) {
+			extra_options.push(
+				hotkey_listener.create_hotkey_setting(hotkey_listener.hotkeys[i][2],
+				hotkey_listener.hotkeys[i][0])
+			);
+		}
+		// Player
+		var self = this;
+		this.media_player = new MediaPlayer(
+			media_player_css,
+			[ png_load_callback , image_load_callback ],
+			function (data) { inline_manager.on_image_drag(data); },
+			function (media_player) { script.settings_save(); },
+			function (media_player) { self.media_player_destruct_callback(media_player); },
+			extra_options
+		);
+		// Load settings	
+		if (load_settings) this.media_player.load(script.settings["player"]);
+		// Display
+		this.media_player.create();
+
 		return this.media_player;
 	}
-
-	// CSS
-	var media_player_css = new MediaPlayerCSS("yotsubab", this.css_color_presets, this.css_size_presets);
-	// Load CSS settings
-	if (load_settings) media_player_css.load(script.settings["style"]);
-	// Custom settings
-	var extra_options = [
-		{
-			"current": script.settings["inline"]["url_replace"],
-			"label": "URL Replacing",
-			"values": [ true , false ],
-			"descr": [ "Enabled" , "Disabled" ],
-			"change": function (value) {
-				script.settings["inline"]["url_replace"] = value;
-				script.settings_save();
-			}
-		},
-		{
-			"current": script.settings["inline"]["url_replace_smart"],
-			"label": "Extended URLs",
-			"values": [ true , false ],
-			"descr": [ "Enabled" , "Disabled" ],
-			"change": function (value) {
-				script.settings["inline"]["url_replace_smart"] = value;
-				script.settings_save();
-			}
-		},
-	];
-	for (var i = 0; i < hotkey_listener.hotkeys.length; ++i) {
-		extra_options.push(
-			hotkey_listener.create_hotkey_setting(hotkey_listener.hotkeys[i][2],
-			hotkey_listener.hotkeys[i][0])
-		);
-	}
-	// Player
-	var self = this;
-	this.media_player = new MediaPlayer(
-		media_player_css,
-		[ png_load_callback , image_load_callback ],
-		function (data) { inline_manager.on_image_drag(data); },
-		function (media_player) { script.settings_save(); },
-		function (media_player) { self.media_player_destruct_callback(media_player); },
-		extra_options
-	);
-	// Load settings	
-	if (load_settings) this.media_player.load(script.settings["player"]);
-	// Display
-	this.media_player.create();
-
-	return this.media_player;
 };
 var media_player_manager = null;
 
@@ -2583,144 +2604,147 @@ function Script() {
 	this.storage_name = "4cs";
 	this.update_version_url = "https://raw.github.com/dnsev/4cs/master/web/version.txt";
 }
-Script.prototype.settings_save = function () {
-	// Get
-	if (media_player_manager.media_player != null) {
-		this.settings["player"] = media_player_manager.media_player.save();
-		this.settings["style"] = media_player_manager.media_player.css.save();
-	}
-	// Save
-	try {
-		localStorage.setItem(this.storage_name, JSON.stringify(this.settings));
-	}
-	catch (e) {
-		console.log(e);
-	}
-};
-Script.prototype.settings_load = function () {
-	// Load
-	if (!this.settings_loaded) {
-		this.settings_loaded = true;
+Script.prototype = {
+	constructor: Script,
+	settings_save: function () {
+		// Get
+		if (media_player_manager.media_player != null) {
+			this.settings["player"] = media_player_manager.media_player.save();
+			this.settings["style"] = media_player_manager.media_player.css.save();
+		}
+		// Save
 		try {
-			var s = localStorage.getItem(this.storage_name);
-			if (s) {
-				s = JSON.parse(s);
-				// load based on keys; overwrite if empty, else load on a per-key basis
-				for (var key in this.settings) {
-					if (key in s) {
-						var len = 0;
-						for (var key2 in this.settings[key]) {
-							++len;
-							if (key2 in s[key]) this.settings[key][key2] = s[key][key2];
-						}
-						if (len == 0) {
-							this.settings[key] = s[key];
-						}
-					}
-				}
-			}
+			GM_setValue(this.storage_name, JSON.stringify(this.settings));
 		}
 		catch (e) {
 			console.log(e);
 		}
-	}
-};
-Script.prototype.update_check_interval = function (time) {
-	var time_update;
-	var version = "";
-	try {
-		version = GM_info.script.version;
-	}
-	catch (e) {
-		version = GM_getMetadata("version").toString();
-	}
-	if (
-		(time_update = ((new Date()).getTime() - this.settings["script"]["last_update"] >= time)) ||
-		(time_update = (version != this.settings["script"]["current_version"])) ||
-		this.settings["script"]["update_found"]
-	) {	
-		this.settings["script"]["current_version"] = version;
-		this.update_check(time_update);
-	}
-};
-Script.prototype.update_check = function (ajax) {
-	var fn = function () {
-		inline_manager.update_span.css("display", "");
-		inline_manager.update_link.html("UPDATE");
-		inline_manager.update_link.attr("href", this.settings["script"]["update_url"]);
-	};
-
-	if (ajax) {
-		var self = this;
-		ajax_get(
-			this.update_version_url,
-			true,
-			{},
-			null,
-			function (okay, data, response) {
-				if (okay) {
-					var version;
-					try {
-						version = GM_info.script.version;
-					}
-					catch (e) {
-						version = GM_getMetadata("version").toString();
-					}
-
-					var s = JSON.parse(response);
-					// Settings
-					this.settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
-					this.settings["script"]["update_version"] = s["version"].toString();
-					this.settings["script"]["last_update"] = (new Date()).getTime();
-					this.settings["script"]["update_message"] = (s["message"] || "").toString();
-					// Version compare
-					this.settings["script"]["update_found"] = false;
-					var current_version_split = version.toString().split(".");
-					var new_version_split = this.settings["script"]["update_version"].split(".");
-					var len = (new_version_split.length > current_version_split.length ? new_version_split.length : current_version_split.length);
-					for (var i = 0; i < len; ++i) {
-						if (
-							(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) >
-							(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
-						) {
-							fn();
-							this.settings["script"]["update_found"] = true;
-							break;
+	},
+	settings_load: function () {
+		// Load
+		if (!this.settings_loaded) {
+			this.settings_loaded = true;
+			try {
+				var s = GM_getValue(this.storage_name);
+				if (s) {
+					s = JSON.parse(s);
+					// load based on keys; overwrite if empty, else load on a per-key basis
+					for (var key in this.settings) {
+						if (key in s) {
+							var len = 0;
+							for (var key2 in this.settings[key]) {
+								++len;
+								if (key2 in s[key]) this.settings[key][key2] = s[key][key2];
+							}
+							if (len == 0) {
+								this.settings[key] = s[key];
+							}
 						}
 					}
-					// Update settings
-					self.settings_save();
 				}
 			}
-		);
-	}
-	else {
-		fn();
-	}
-};
-Script.prototype.on_update_click = function (event) {
-	if (!event.originalEvent.which || event.originalEvent.which == 1) {
-		var scr_name = "";
-		var scr_version = "";
+			catch (e) {
+				console.log(e);
+			}
+		}
+	},
+	update_check_interval: function (time) {
+		var time_update;
+		var version = "";
 		try {
-			scr_name = GM_info.script.name;
-			scr_version = GM_info.script.version;
+			version = GM_info.script.version;
 		}
 		catch (e) {
-			scr_name = "userscript.js";
-			scr_version = GM_getMetadata("version").toString();
+			version = GM_getMetadata("version").toString();
 		}
+		if (
+			(time_update = ((new Date()).getTime() - this.settings["script"]["last_update"] >= time)) ||
+			(time_update = (version != this.settings["script"]["current_version"])) ||
+			this.settings["script"]["update_found"]
+		) {	
+			this.settings["script"]["current_version"] = version;
+			this.update_check(time_update);
+		}
+	},
+	update_check: function (ajax) {
+		var fn = function () {
+			inline_manager.update_span.css("display", "");
+			inline_manager.update_link.html("UPDATE");
+			inline_manager.update_link.attr("href", this.settings["script"]["update_url"]);
+		};
 
-		var s = "An update is available to \"" + scr_name + "\".\n\n" +
-			"Current version: " + scr_version + "\n" +
-			"Update Version: " + this.settings["script"]["update_version"] + "\n\n" +
-			"About: " + this.settings["script"]["update_message"] + "\n\n" +
-			"Middle click the link or copy and paste the following url:               ";
-		
-		prompt(s, this.settings["script"]["update_url"]);
-		return false;
+		if (ajax) {
+			var self = this;
+			ajax_get(
+				this.update_version_url,
+				true,
+				{},
+				null,
+				function (okay, data, response) {
+					if (okay) {
+						var version;
+						try {
+							version = GM_info.script.version;
+						}
+						catch (e) {
+							version = GM_getMetadata("version").toString();
+						}
+
+						var s = JSON.parse(response);
+						// Settings
+						self.settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
+						self.settings["script"]["update_version"] = s["version"].toString();
+						self.settings["script"]["last_update"] = (new Date()).getTime();
+						self.settings["script"]["update_message"] = (s["message"] || "").toString();
+						// Version compare
+						self.settings["script"]["update_found"] = false;
+						var current_version_split = version.toString().split(".");
+						var new_version_split = self.settings["script"]["update_version"].split(".");
+						var len = (new_version_split.length > current_version_split.length ? new_version_split.length : current_version_split.length);
+						for (var i = 0; i < len; ++i) {
+							if (
+								(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) >
+								(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
+							) {
+								fn();
+								self.settings["script"]["update_found"] = true;
+								break;
+							}
+						}
+						// Update settings
+						self.settings_save();
+					}
+				}
+			);
+		}
+		else {
+			fn();
+		}
+	},
+	on_update_click: function (event) {
+		if (!event.originalEvent.which || event.originalEvent.which == 1) {
+			var scr_name = "";
+			var scr_version = "";
+			try {
+				scr_name = GM_info.script.name;
+				scr_version = GM_info.script.version;
+			}
+			catch (e) {
+				scr_name = "userscript.js";
+				scr_version = GM_getMetadata("version").toString();
+			}
+
+			var s = "An update is available to \"" + scr_name + "\".\n\n" +
+				"Current version: " + scr_version + "\n" +
+				"Update Version: " + this.settings["script"]["update_version"] + "\n\n" +
+				"About: " + this.settings["script"]["update_message"] + "\n\n" +
+				"Middle click the link or copy and paste the following url:               ";
+			
+			prompt(s, this.settings["script"]["update_url"]);
+			return false;
+		}
+		return true;
 	}
-	return true;
 };
 var script = null;
 

@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.8.2.2
+// @version     1.8.3
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
+// @grant       GM_getValue
+// @grant       GM_setValue
 // @include     http://boards.4chan.org/*
 // @include     https://boards.4chan.org/*
 // @include     http://archive.foolz.us/*
@@ -1238,8 +1240,9 @@ var FlateStream = (function() {
 ////////////////////////////////////////////////////////////////////////////////
 //{ Loop.js
 ////////////////////////////////////////////////////////////////////////////////
-
-
+///////////////////////////////////////////////////////////////////////////////
+// Non-freezing loops
+///////////////////////////////////////////////////////////////////////////////
 
 function Loop() {
 	this.loops = new Array();
@@ -1248,156 +1251,159 @@ function Loop() {
 	this.steps = 100;
 	this.special = 0;
 }
-Loop.prototype.for_lt = function (i, limiter, incr, data, body, done) {
-	// Loop
-	this.loops.push(
-		{
-			"compare": function (i, limit) { return i < limit; },
-			"step_limiter": function (i, limit) { return (i > limit ? limit : i); },
-			"i": i,
-			"i_incr": incr,
-			"limiter": limiter,
-			"data": data,
-			"body": body,
-			"done": done,
-			"decrement": false
-		}
-	);
-	this.loop();
-}
-Loop.prototype.for_le = function (i, limiter, incr, data, body, done) {
-	// Loop
-	this.loops.push(
-		{
-			"compare": function (i, limit) { return i <= limit; },
-			"step_limiter": function (i, limit) { return (i > limit ? limit : i); },
-			"i": i,
-			"i_incr": incr,
-			"limiter": limiter,
-			"data": data,
-			"body": body,
-			"done": done,
-			"decrement": false
-		}
-	);
-	this.loop();
-}
-Loop.prototype.for_gt = function (i, limiter, incr, data, body, done) {
-	// Loop
-	this.loops.push(
-		{
-			"compare": function (i, limit) { return i > limit; },
-			"step_limiter": function (i, limit) { return (i < limit ? limit : i); },
-			"i": i,
-			"i_incr": incr,
-			"limiter": limiter,
-			"data": data,
-			"body": body,
-			"done": done,
-			"decrement": false
-		}
-	);
-	this.loop();
-}
-Loop.prototype.for_ge = function (i, limiter, incr, data, body, done) {
-	// Loop
-	this.loops.push(
-		{
-			"compare": function (i, limit) { return i >= limit; },
-			"step_limiter": function (i, limit) { return (i < limit ? limit : i); },
-			"i": i,
-			"i_incr": incr,
-			"limiter": limiter,
-			"data": data,
-			"body": body,
-			"done": done,
-			"decrement": false
-		}
-	);
-	this.loop();
-}
-Loop.prototype.forever = function (data, body, done) {
-	// Loop
-	this.loops.push(
-		{
-			"compare": function (i, limit) { return true; },
-			"step_limiter": function (i, limit) { return 0; },
-			"i": 0,
-			"i_incr": 0,
-			"limiter": 0,
-			"data": data,
-			"body": body,
-			"done": done,
-			"decrement": false
-		}
-	);
-	this.loop();
-}
+Loop.prototype = {
+	constructor: Loop,
 
-Loop.prototype.Break = function () {
-	this.special = 1;
-	return undefined;
-}
-Loop.prototype.Continue = function () {
-	this.special = 2;
-	return undefined;
-}
+	for_lt: function (i, limiter, incr, data, body, done) {
+		// Loop
+		this.loops.push(
+			{
+				"compare": function (i, limit) { return i < limit; },
+				"step_limiter": function (i, limit) { return (i > limit ? limit : i); },
+				"i": i,
+				"i_incr": incr,
+				"limiter": limiter,
+				"data": data,
+				"body": body,
+				"done": done,
+				"decrement": false
+			}
+		);
+		this.loop();
+	},
+	for_le: function (i, limiter, incr, data, body, done) {
+		// Loop
+		this.loops.push(
+			{
+				"compare": function (i, limit) { return i <= limit; },
+				"step_limiter": function (i, limit) { return (i > limit ? limit : i); },
+				"i": i,
+				"i_incr": incr,
+				"limiter": limiter,
+				"data": data,
+				"body": body,
+				"done": done,
+				"decrement": false
+			}
+		);
+		this.loop();
+	},
+	for_gt: function (i, limiter, incr, data, body, done) {
+		// Loop
+		this.loops.push(
+			{
+				"compare": function (i, limit) { return i > limit; },
+				"step_limiter": function (i, limit) { return (i < limit ? limit : i); },
+				"i": i,
+				"i_incr": incr,
+				"limiter": limiter,
+				"data": data,
+				"body": body,
+				"done": done,
+				"decrement": false
+			}
+		);
+		this.loop();
+	},
+	for_ge: function (i, limiter, incr, data, body, done) {
+		// Loop
+		this.loops.push(
+			{
+				"compare": function (i, limit) { return i >= limit; },
+				"step_limiter": function (i, limit) { return (i < limit ? limit : i); },
+				"i": i,
+				"i_incr": incr,
+				"limiter": limiter,
+				"data": data,
+				"body": body,
+				"done": done,
+				"decrement": false
+			}
+		);
+		this.loop();
+	},
+	forever: function (data, body, done) {
+		// Loop
+		this.loops.push(
+			{
+				"compare": function (i, limit) { return true; },
+				"step_limiter": function (i, limit) { return 0; },
+				"i": 0,
+				"i_incr": 0,
+				"limiter": 0,
+				"data": data,
+				"body": body,
+				"done": done,
+				"decrement": false
+			}
+		);
+		this.loop();
+	},
 
-Loop.prototype.loop = function () {
-	this.timer = null;
+	Break: function () {
+		this.special = 1;
+		return undefined;
+	},
+	Continue: function () {
+		this.special = 2;
+		return undefined;
+	},
 
-	var ll = this.loops.length;
-	var loop = this.loops[ll - 1];
+	loop: function () {
+		this.timer = null;
 
-	// Limit
-	var i_max = loop.step_limiter(loop.i + this.steps, loop.limiter);
-	var j;
-	var typeof_number = typeof(1.0);
+		var ll = this.loops.length;
+		var loop = this.loops[ll - 1];
 
-	// Loop
-	while (loop.compare(loop.i, i_max)) {
-		// Body
-		j = loop.body(loop.i, loop.data, this);
-		loop.i = (typeof(j) === typeof_number ? j : loop.i) + loop.i_incr;
-		// New loop was added
-		if (this.loops.length > ll) {
-			this.loops[this.loops.length - 1].decrement = true;
-			return;
+		// Limit
+		var i_max = loop.step_limiter(loop.i + this.steps, loop.limiter);
+		var j;
+		var typeof_number = typeof(1.0);
+
+		// Loop
+		while (loop.compare(loop.i, i_max)) {
+			// Body
+			j = loop.body(loop.i, loop.data, this);
+			loop.i = (typeof(j) === typeof_number ? j : loop.i) + loop.i_incr;
+			// New loop was added
+			if (this.loops.length > ll) {
+				this.loops[this.loops.length - 1].decrement = true;
+				return;
+			}
+			if (this.special == 1) {
+				// Set to 0 later
+				break;
+			}
+			if (this.special == 2) {
+				this.special = 0;
+			}
 		}
-		if (this.special == 1) {
-			// Set to 0 later
-			break;
-		}
-		if (this.special == 2) {
-			this.special = 0;
-		}
-	}
 
-	// Next
-	if (loop.i < loop.limiter && this.special != 1) {
-		var self = this;
-		this.timer = setTimeout(function () { self.loop(); }, this.timeout);
-	}
-	else {
-		// Done
-		this.special = 0;
-		loop.done(loop.i, loop.data, this);
-
-		// Chain into any other loops
-		if (this.loops.pop().decrement) {
+		// Next
+		if (loop.i < loop.limiter && this.special != 1) {
 			var self = this;
 			this.timer = setTimeout(function () { self.loop(); }, this.timeout);
 		}
-	}
-}
-Loop.prototype.stop = function () {
-	if (this.timer !== null) {
-		clearTimeout(this.timer);
-		this.timer = null;
-	}
-	this.loops = new Array();
-}
+		else {
+			// Done
+			this.special = 0;
+			loop.done(loop.i, loop.data, this);
 
+			// Chain into any other loops
+			if (this.loops.pop().decrement) {
+				var self = this;
+				this.timer = setTimeout(function () { self.loop(); }, this.timeout);
+			}
+		}
+	},
+	stop: function () {
+		if (this.timer !== null) {
+			clearTimeout(this.timer);
+			this.timer = null;
+		}
+		this.loops = new Array();
+	}
+};
 
 
 
@@ -1409,8 +1415,9 @@ Loop.prototype.stop = function () {
 ////////////////////////////////////////////////////////////////////////////////
 //{ DataImage.js
 ////////////////////////////////////////////////////////////////////////////////
-
-
+///////////////////////////////////////////////////////////////////////////////
+// Steganographic .png decoder
+///////////////////////////////////////////////////////////////////////////////
 
 function DataImage (source_location, callback_data, load_callback, slow) {
 	this.load_callback = load_callback;
@@ -1473,9 +1480,12 @@ function DataImage (source_location, callback_data, load_callback, slow) {
 		console.log(e);
 	}
 }
-DataImage.prototype.get_pixel = function (x, y, c) {
-	return this.pixels[(x + y * this.width) * this.color_depth + c];
-}
+DataImage.prototype = {
+	constructor: DataImage,
+	get_pixel: function (x, y, c) {
+		return this.pixels[(x + y * this.width) * this.color_depth + c];
+	}
+};
 
 function DataImageReader (image) {
 	this.image = image;
@@ -1498,382 +1508,384 @@ function DataImageReader (image) {
 	this.hashmask_index = 0;
 	this.hashmask_value = null;
 }
-DataImageReader.prototype.decode_title = function (title) {
-	return title;
-}
-DataImageReader.prototype.unpack = function () {
-	try {
-		return this.__unpack();
-	}
-	catch (e) {
-		return "Error extracting data; image file likely doesn't contain data";
-	}
-}
-DataImageReader.prototype.unpack_slow = function (callback) {
-	try {
-		this.__unpack_slow(callback);
-	}
-	catch (e) {
-		callback("Error extracting data; image file likely doesn't contain data");
-	}
-}
-DataImageReader.prototype.unpack_names = function () {
-	try {
-		var r = this.__unpack_start();
+DataImageReader.prototype = {
+	constructor: DataImageReader,
+	decode_title: function (title) {
+		return title;
+	},
+	unpack: function () {
+		try {
+			return this.__unpack();
+		}
+		catch (e) {
+			return "Error extracting data; image file likely doesn't contain data";
+		}
+	},
+	unpack_slow: function (callback) {
+		try {
+			this.__unpack_slow(callback);
+		}
+		catch (e) {
+			callback("Error extracting data; image file likely doesn't contain data");
+		}
+	},
+	unpack_names: function () {
+		try {
+			var r = this.__unpack_start();
+			this.hashmasking = false;
+			this.hashmask_value = null;
+			return r;
+		}
+		catch (e) {
+			return "Error extracting data; image file likely doesn't contain data";
+		}
+	},
+	__unpack_start: function () {
+		// Init
+		this.x = 0;
+		this.y = 0;
+		this.c = 0;
+		this.bit_value = 0;
+		this.bit_count = 0;
+		this.pixel_pos = 0;
+		this.scatter_pos = 0;
+		this.scatter_range = 0;
+		this.scatter_full_range = 0;
+		this.scatter = false;
+		this.channels = 3;
+		this.hashmasking = false;
+		this.hashmask_length = 0;
+		this.hashmask_index = 0;
+		this.hashmask_value = null;
+
+		// Read bitmask
+		this.bitmask = 1 + this.__read_pixel(0x07);
+		this.value_mask = (1 << this.bitmask) - 1;
+		this.pixel_mask = 0xFF - this.value_mask;
+
+		// Flags
+		var flags = this.__read_pixel(0x07);
+		// Bit depth
+		if ((flags & 4) != 0) this.channels = 4;
+
+		// Exflags
+		var metadata = false;
+		if ((flags & 1) != 0) {
+			// Flags
+			var flags2 = this.__data_to_int(this.__extract_data(1));
+			// Evaluate
+			if ((flags2 & 2) != 0) metadata = true;
+			if ((flags2 & 4) != 0) {
+				this.__complete_pixel();
+				this.__init_hashmask();
+			}
+		}
+
+		// Scatter
+		if ((flags & 2) != 0) {
+			// Read
+			this.scatter_range = this.__data_to_int(this.__extract_data(4));
+			this.__complete_pixel();
+
+			// Enable scatter
+			if (this.scatter_range > 0) {
+				this.scatter_pos = 0;
+				this.scatter_full_range = ((this.image.width * this.image.height * this.channels) - this.pixel_pos - 1);
+				this.scatter = true;
+			}
+		}
+
+		// Metadata
+		var size_limit;
+		if (metadata) {
+			var meta_length = this.__data_to_int(this.__extract_data(2));
+
+			// Error checking
+			size_limit = Math.ceil(((((this.image.width * (this.image.height - this.y) - this.x) * this.channels) - this.c) * this.bitmask) / 8);
+			if (meta_length < 0 || meta_length > size_limit) {
+				throw "Data overflow";
+			}
+
+			var meta = this.__extract_data(meta_length);
+		}
+
+		// File count
+		var file_count = this.__data_to_int(this.__extract_data(2));
+
+		// Filename lengths and file lengths
+		var filename_lengths = new Array();
+		var file_sizes = new Array();
+		var v;
+		var total_size = 0;
+		for (var i = 0; i < file_count; ++i) {
+			// Filename length
+			v = this.__data_to_int(this.__extract_data(2));
+			filename_lengths.push(v);
+			total_size += v;
+			if (v < 0 || total_size < 0) throw "Data overflow";
+			// File length
+			v = this.__data_to_int(this.__extract_data(4));
+			file_sizes.push(v);
+			total_size += v;
+			if (v < 0 || total_size < 0) throw "Data overflow";
+
+			// Error checking
+			size_limit = Math.ceil(((((this.image.width * (this.image.height - this.y) - this.x) * this.channels) - this.c) * this.bitmask) / 8);
+			if (total_size > size_limit) throw "Data overflow";
+		}
+
+		// Filenames
+		var filenames = new Array();
+		for (var i = 0; i < file_count; ++i) {
+			// Filename
+			var fn = this.__data_to_string(this.__extract_data(filename_lengths[i]));
+			// TODO : Decode this to utf-8
+			// Add to list
+			filenames.push(this.decode_title(fn));
+		}
+
+		// Return
+		return [ file_count, filenames, file_sizes ];
+	},
+	__unpack: function () {
+		var d = this.__unpack_start();
+		var file_count = d[0];
+		var filenames = d[1];
+		var file_sizes = d[2];
+
+		// Sources
+		var sources = new Array();
+		for (var i = 0; i < file_count; ++i) {
+			// Read source
+			var src = this.__extract_data(file_sizes[i]);
+			sources.push(src);
+		}
+
+		// Done
 		this.hashmasking = false;
 		this.hashmask_value = null;
-		return r;
-	}
-	catch (e) {
-		return "Error extracting data; image file likely doesn't contain data";
-	}
-}
-DataImageReader.prototype.__unpack_start = function () {
-	// Init
-	this.x = 0;
-	this.y = 0;
-	this.c = 0;
-	this.bit_value = 0;
-	this.bit_count = 0;
-	this.pixel_pos = 0;
-	this.scatter_pos = 0;
-	this.scatter_range = 0;
-	this.scatter_full_range = 0;
-	this.scatter = false;
-	this.channels = 3;
-	this.hashmasking = false;
-	this.hashmask_length = 0;
-	this.hashmask_index = 0;
-	this.hashmask_value = null;
-
-	// Read bitmask
-	this.bitmask = 1 + this.__read_pixel(0x07);
-	this.value_mask = (1 << this.bitmask) - 1;
-	this.pixel_mask = 0xFF - this.value_mask;
-
-	// Flags
-	var flags = this.__read_pixel(0x07);
-	// Bit depth
-	if ((flags & 4) != 0) this.channels = 4;
-
-	// Exflags
-	var metadata = false;
-	if ((flags & 1) != 0) {
-		// Flags
-		var flags2 = this.__data_to_int(this.__extract_data(1));
-		// Evaluate
-		if ((flags2 & 2) != 0) metadata = true;
-		if ((flags2 & 4) != 0) {
-			this.__complete_pixel();
-			this.__init_hashmask();
+		return [ filenames , sources ];
+	},
+	__unpack_slow: function (callback) {
+		try {
+			var loop = new Loop();
+			loop.steps = 1024 * 64;
 		}
-	}
-
-	// Scatter
-	if ((flags & 2) != 0) {
-		// Read
-		this.scatter_range = this.__data_to_int(this.__extract_data(4));
-		this.__complete_pixel();
-
-		// Enable scatter
-		if (this.scatter_range > 0) {
-			this.scatter_pos = 0;
-			this.scatter_full_range = ((this.image.width * this.image.height * this.channels) - this.pixel_pos - 1);
-			this.scatter = true;
-		}
-	}
-
-	// Metadata
-	var size_limit;
-	if (metadata) {
-		var meta_length = this.__data_to_int(this.__extract_data(2));
-
-		// Error checking
-		size_limit = Math.ceil(((((this.image.width * (this.image.height - this.y) - this.x) * this.channels) - this.c) * this.bitmask) / 8);
-		if (meta_length < 0 || meta_length > size_limit) {
-			throw "Data overflow";
+		catch (e) {
+			// Error
+			return this.__unpack(callback);
 		}
 
-		var meta = this.__extract_data(meta_length);
-	}
+		var d = this.__unpack_start();
+		var file_count = d[0];
+		var filenames = d[1];
+		var file_sizes = d[2];
 
-	// File count
-	var file_count = this.__data_to_int(this.__extract_data(2));
+		// Sources
+		var self = this;
+		var sources = new Array();
+		loop.for_lt(
+			0, file_count, 1,
+			{},
+			function (i, data, loop) {
+				// Read source
+				self.__extract_data_slow(
+					file_sizes[i],
+					loop,
+					function (src) {
+						sources.push(src);
+					}
+				);
+			},
+			function (i, data, loop) {
+				// Done
+				self.hashmasking = false;
+				self.hashmask_value = null;
+				callback([ filenames , sources ]);
+			}
+		);
+	},
+	next_pixel_component: function (count) {
+		while (count > 0) {
+			count -= 1;
 
-	// Filename lengths and file lengths
-	var filename_lengths = new Array();
-	var file_sizes = new Array();
-	var v;
-	var total_size = 0;
-	for (var i = 0; i < file_count; ++i) {
-		// Filename length
-		v = this.__data_to_int(this.__extract_data(2));
-		filename_lengths.push(v);
-		total_size += v;
-		if (v < 0 || total_size < 0) throw "Data overflow";
-		// File length
-		v = this.__data_to_int(this.__extract_data(4));
-		file_sizes.push(v);
-		total_size += v;
-		if (v < 0 || total_size < 0) throw "Data overflow";
-
-		// Error checking
-		size_limit = Math.ceil(((((this.image.width * (this.image.height - this.y) - this.x) * this.channels) - this.c) * this.bitmask) / 8);
-		if (total_size > size_limit) throw "Data overflow";
-	}
-
-	// Filenames
-	var filenames = new Array();
-	for (var i = 0; i < file_count; ++i) {
-		// Filename
-		var fn = this.__data_to_string(this.__extract_data(filename_lengths[i]));
-		// TODO : Decode this to utf-8
-		// Add to list
-		filenames.push(this.decode_title(fn));
-	}
-
-	// Return
-	return [ file_count, filenames, file_sizes ];
-}
-DataImageReader.prototype.__unpack = function () {
-	var d = this.__unpack_start();
-	var file_count = d[0];
-	var filenames = d[1];
-	var file_sizes = d[2];
-
-	// Sources
-	var sources = new Array();
-	for (var i = 0; i < file_count; ++i) {
-		// Read source
-		var src = this.__extract_data(file_sizes[i]);
-		sources.push(src);
-	}
-
-	// Done
-	this.hashmasking = false;
-	this.hashmask_value = null;
-	return [ filenames , sources ];
-}
-DataImageReader.prototype.__unpack_slow = function (callback) {
-	try {
-		var loop = new Loop();
-		loop.steps = 1024 * 64;
-	}
-	catch (e) {
-		// Error
-		return this.__unpack(callback);
-	}
-
-	var d = this.__unpack_start();
-	var file_count = d[0];
-	var filenames = d[1];
-	var file_sizes = d[2];
-
-	// Sources
-	var self = this;
-	var sources = new Array();
-	loop.for_lt(
-		0, file_count, 1,
-		{},
-		function (i, data, loop) {
-			// Read source
-			self.__extract_data_slow(
-				file_sizes[i],
-				loop,
-				function (src) {
-					sources.push(src);
-				}
-			);
-		},
-		function (i, data, loop) {
-			// Done
-			self.hashmasking = false;
-			self.hashmask_value = null;
-			callback([ filenames , sources ]);
-		}
-	);
-}
-DataImageReader.prototype.next_pixel_component = function (count) {
-	while (count > 0) {
-		count -= 1;
-
-		this.c = (this.c + 1) % this.channels;
-		if (this.c == 0) {
-			this.x = (this.x + 1) % this.image.width;
-			if (this.x == 0) {
-				this.y = (this.y + 1) % this.image.height;
-				if (this.y == 0) {
-					throw "Pixel overflow";
+			this.c = (this.c + 1) % this.channels;
+			if (this.c == 0) {
+				this.x = (this.x + 1) % this.image.width;
+				if (this.x == 0) {
+					this.y = (this.y + 1) % this.image.height;
+					if (this.y == 0) {
+						throw "Pixel overflow";
+					}
 				}
 			}
 		}
-	}
-}
-DataImageReader.prototype.__extract_data = function (byte_length) {
-	var src = new Uint8Array(byte_length);
-	var j = 0;
-	for (var i = this.bit_count; i < byte_length * 8; i += this.bitmask) {
-		this.bit_value = this.bit_value | (this.__read_pixel(this.value_mask) << this.bit_count);
-		this.bit_count += this.bitmask;
-		while (this.bit_count >= 8) {
-			src[j] = (this.bit_value & 0xFF);
-			j += 1;
-			this.bit_value = this.bit_value >> 8;
-			this.bit_count -= 8;
-		}
-	}
-	if (j != byte_length) {
-		throw "Length mismatch";
-	}
-	return src;
-}
-DataImageReader.prototype.__extract_data_slow = function (byte_length, loop, done_callback) {
-	var src = new Uint8Array(byte_length);
-	var j = 0;
-	var self = this;
-	loop.for_lt(
-		this.bit_count, byte_length * 8, this.bitmask,
-		{},
-		function (i, data, loop) {
-			self.bit_value = self.bit_value | (self.__read_pixel(self.value_mask) << self.bit_count);
-			self.bit_count += self.bitmask;
-			while (self.bit_count >= 8) {
-				src[j] = (self.bit_value & 0xFF);
+	},
+	__extract_data: function (byte_length) {
+		var src = new Uint8Array(byte_length);
+		var j = 0;
+		for (var i = this.bit_count; i < byte_length * 8; i += this.bitmask) {
+			this.bit_value = this.bit_value | (this.__read_pixel(this.value_mask) << this.bit_count);
+			this.bit_count += this.bitmask;
+			while (this.bit_count >= 8) {
+				src[j] = (this.bit_value & 0xFF);
 				j += 1;
-				self.bit_value = self.bit_value >> 8;
-				self.bit_count -= 8;
+				this.bit_value = this.bit_value >> 8;
+				this.bit_count -= 8;
 			}
-		},
-		function (i, data, loop) {
-			if (j != byte_length) {
-				throw "Length mismatch (got: " + j + "; expected: " + byte_length + ")";
-			}
-			done_callback(src);
 		}
-	);
-}
-DataImageReader.prototype.__data_to_int = function (data) {
-	var val = 0;
-	for (var i = 0; i < data.length; ++i) {
-		val = (val << 8) + data[i];
-	}
-	return val;
-}
-DataImageReader.prototype.__data_to_string = function (data) {
-	var val = "";
-	for (var i = 0; i < data.length; ++i) {
-		val += String.fromCharCode(data[i]);
-	}
-	return val;
-}
-DataImageReader.prototype.__read_pixel = function (value_mask) {
-	var value = (this.image.get_pixel(this.x, this.y, this.c) & value_mask);
-	if (this.hashmasking) {
-		value = this.__decode_hashmask(value, this.bitmask);
-	}
+		if (j != byte_length) {
+			throw "Length mismatch";
+		}
+		return src;
+	},
+	__extract_data_slow: function (byte_length, loop, done_callback) {
+		var src = new Uint8Array(byte_length);
+		var j = 0;
+		var self = this;
+		loop.for_lt(
+			this.bit_count, byte_length * 8, this.bitmask,
+			{},
+			function (i, data, loop) {
+				self.bit_value = self.bit_value | (self.__read_pixel(self.value_mask) << self.bit_count);
+				self.bit_count += self.bitmask;
+				while (self.bit_count >= 8) {
+					src[j] = (self.bit_value & 0xFF);
+					j += 1;
+					self.bit_value = self.bit_value >> 8;
+					self.bit_count -= 8;
+				}
+			},
+			function (i, data, loop) {
+				if (j != byte_length) {
+					throw "Length mismatch (got: " + j + "; expected: " + byte_length + ")";
+				}
+				done_callback(src);
+			}
+		);
+	},
+	__data_to_int: function (data) {
+		var val = 0;
+		for (var i = 0; i < data.length; ++i) {
+			val = (val << 8) + data[i];
+		}
+		return val;
+	},
+	__data_to_string: function (data) {
+		var val = "";
+		for (var i = 0; i < data.length; ++i) {
+			val += String.fromCharCode(data[i]);
+		}
+		return val;
+	},
+	__read_pixel: function (value_mask) {
+		var value = (this.image.get_pixel(this.x, this.y, this.c) & value_mask);
+		if (this.hashmasking) {
+			value = this.__decode_hashmask(value, this.bitmask);
+		}
 
-	if (this.scatter) {
-		this.scatter_pos += 1;
-		// integer division sure is fun
-		var v = ((Math.floor(this.scatter_pos * this.scatter_full_range / this.scatter_range) - Math.floor((this.scatter_pos - 1) * this.scatter_full_range / this.scatter_range)));
-		this.pixel_pos += v;
-		this.next_pixel_component(v);
-	}
-	else {
-		this.pixel_pos += 1;
-		this.next_pixel_component(1);
-	}
+		if (this.scatter) {
+			this.scatter_pos += 1;
+			// integer division sure is fun
+			var v = ((Math.floor(this.scatter_pos * this.scatter_full_range / this.scatter_range) - Math.floor((this.scatter_pos - 1) * this.scatter_full_range / this.scatter_range)));
+			this.pixel_pos += v;
+			this.next_pixel_component(v);
+		}
+		else {
+			this.pixel_pos += 1;
+			this.next_pixel_component(1);
+		}
 
-	return value;
-}
-DataImageReader.prototype.__complete_pixel = function () {
-	if (this.bit_count > 0) {
-		this.bit_count = 0;
-		this.bit_value = 0;
-	}
-}
-DataImageReader.prototype.__init_hashmask = function () {
-	this.hashmasking = true;
-	this.hashmask_length = 32 * 8;
-	this.hashmask_index = 0;
-	this.hashmask_value = new Uint8Array(this.hashmask_length / 8);
-	for (var i = 0; i < this.hashmask_length / 8; ++i) {
-		this.hashmask_value[i] = (1 << ((i % 8) + 1)) - 1;
-	}
-	this.__calculate_hashmask();
-	this.hashmask_index = 0;
-}
-DataImageReader.prototype.__calculate_hashmask = function () {
-	// Vars
-	var x = 0;
-	var y = 0;
-	var c = 0;
-	var w = this.image.width;
-	var h = this.image.height;
-	var cc = this.channels;
+		return value;
+	},
+	__complete_pixel: function () {
+		if (this.bit_count > 0) {
+			this.bit_count = 0;
+			this.bit_value = 0;
+		}
+	},
+	__init_hashmask: function () {
+		this.hashmasking = true;
+		this.hashmask_length = 32 * 8;
+		this.hashmask_index = 0;
+		this.hashmask_value = new Uint8Array(this.hashmask_length / 8);
+		for (var i = 0; i < this.hashmask_length / 8; ++i) {
+			this.hashmask_value[i] = (1 << ((i % 8) + 1)) - 1;
+		}
+		this.__calculate_hashmask();
+		this.hashmask_index = 0;
+	},
+	__calculate_hashmask: function () {
+		// Vars
+		var x = 0;
+		var y = 0;
+		var c = 0;
+		var w = this.image.width;
+		var h = this.image.height;
+		var cc = this.channels;
 
-	// First 2 flag pixels
-	this.__update_hashmask(this.image.get_pixel(x, y, c) >> 3, 5);
-	if ((c = (c + 1) % cc) == 0 && (x = (x + 1) % w) == 0 && (y = (y + 1) % h) == 0) return;
-	this.__update_hashmask(this.image.get_pixel(x, y, c) >> 3, 5);
-	if ((c = (c + 1) % cc) == 0 && (x = (x + 1) % w) == 0 && (y = (y + 1) % h) == 0) return;
+		// First 2 flag pixels
+		this.__update_hashmask(this.image.get_pixel(x, y, c) >> 3, 5);
+		if ((c = (c + 1) % cc) == 0 && (x = (x + 1) % w) == 0 && (y = (y + 1) % h) == 0) return;
+		this.__update_hashmask(this.image.get_pixel(x, y, c) >> 3, 5);
+		if ((c = (c + 1) % cc) == 0 && (x = (x + 1) % w) == 0 && (y = (y + 1) % h) == 0) return;
 
-	// All other pixels
-	if (this.bitmask != 8) {
+		// All other pixels
+		if (this.bitmask != 8) {
+			while (true) {
+				// Update
+				this.__update_hashmask(this.image.get_pixel(x, y, c) >> this.bitmask, 8 - this.bitmask);
+				// Next
+				if ((c = (c + 1) % cc) == 0 && (x = (x + 1) % w) == 0 && (y = (y + 1) % h) == 0) return;
+			}
+		}
+	},
+	__update_hashmask: function (value, bits) {
+		// First 2 flag pixels
+		var b;
 		while (true) {
-			// Update
-			this.__update_hashmask(this.image.get_pixel(x, y, c) >> this.bitmask, 8 - this.bitmask);
-			// Next
-			if ((c = (c + 1) % cc) == 0 && (x = (x + 1) % w) == 0 && (y = (y + 1) % h) == 0) return;
+			// Number of bits that can be used on this index
+			b = 8 - (this.hashmask_index % 8);
+			if (bits <= b) {
+				// Apply
+				this.hashmask_value[Math.floor(this.hashmask_index / 8)] ^= (value) << (this.hashmask_index % 8);
+				// Done
+				this.hashmask_index = (this.hashmask_index + bits) % (this.hashmask_length);
+				return;
+			}
+			else {
+				// Partial apply
+				this.hashmask_value[Math.floor(this.hashmask_index / 8)] ^= (value & ((1 << b) - 1)) << (this.hashmask_index % 8);
+				// Done
+				this.hashmask_index = (this.hashmask_index + b) % (this.hashmask_length);
+				bits -= b;
+				value >>= b;
+			}
+		}
+	},
+	__decode_hashmask: function (value, bits) {
+		var b;
+		var off = 0;
+		while (true) {
+			b = 8 - (this.hashmask_index % 8);
+			if (bits <= b) {
+				// Apply
+				value ^= (this.hashmask_value[Math.floor(this.hashmask_index / 8)] & ((1 << bits) - 1)) << off;
+				// Done
+				this.hashmask_index = (this.hashmask_index + bits) % (this.hashmask_length);
+				return value;
+			}
+			else {
+				// Partial apply
+				value ^= (this.hashmask_value[Math.floor(this.hashmask_index / 8)] & ((1 << b) - 1)) << off;
+				// Done
+				this.hashmask_index = (this.hashmask_index + b) % (this.hashmask_length);
+				bits -= b;
+				off += b;
+			}
 		}
 	}
-}
-DataImageReader.prototype.__update_hashmask = function (value, bits) {
-	// First 2 flag pixels
-	var b;
-	while (true) {
-		// Number of bits that can be used on this index
-		b = 8 - (this.hashmask_index % 8);
-		if (bits <= b) {
-			// Apply
-			this.hashmask_value[Math.floor(this.hashmask_index / 8)] ^= (value) << (this.hashmask_index % 8);
-			// Done
-			this.hashmask_index = (this.hashmask_index + bits) % (this.hashmask_length);
-			return;
-		}
-		else {
-			// Partial apply
-			this.hashmask_value[Math.floor(this.hashmask_index / 8)] ^= (value & ((1 << b) - 1)) << (this.hashmask_index % 8);
-			// Done
-			this.hashmask_index = (this.hashmask_index + b) % (this.hashmask_length);
-			bits -= b;
-			value >>= b;
-		}
-	}
-}
-DataImageReader.prototype.__decode_hashmask = function (value, bits) {
-	var b;
-	var off = 0;
-	while (true) {
-		b = 8 - (this.hashmask_index % 8);
-		if (bits <= b) {
-			// Apply
-			value ^= (this.hashmask_value[Math.floor(this.hashmask_index / 8)] & ((1 << bits) - 1)) << off;
-			// Done
-			this.hashmask_index = (this.hashmask_index + bits) % (this.hashmask_length);
-			return value;
-		}
-		else {
-			// Partial apply
-			value ^= (this.hashmask_value[Math.floor(this.hashmask_index / 8)] & ((1 << b) - 1)) << off;
-			// Done
-			this.hashmask_index = (this.hashmask_index + b) % (this.hashmask_length);
-			bits -= b;
-			off += b;
-		}
-	}
-}
-
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 //} /DataImage.js
@@ -1883,7 +1895,7 @@ DataImageReader.prototype.__decode_hashmask = function (value, bits) {
 ////////////////////////////////////////////////////////////////////////////////
 //{ MediaPlayer.js
 ////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
+/*/////////////////////////////////////////////////////////////////////////////
 // Image loading callbacks:
 // function (url_or_filename, load_tag, raw_ui8_data, done_callback)
 // url_or_filename : the url of the file
@@ -1914,13 +1926,12 @@ DataImageReader.prototype.__decode_hashmask = function (value, bits) {
 //   flagged : true if the load_tag didn't match the name; false otherwise
 //     index : the index of the sound in the file (0 = first, 1 = second, etc.)
 //      data : an Uint8Array of the sound (.ogg)
+/////////////////////////////////////////////////////////////////////////////*/
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Media Player class
+// Media Player CSS class
 ///////////////////////////////////////////////////////////////////////////////
 function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 	// Stylesheet settings
@@ -2849,301 +2860,306 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 		}
 	};
 }
-MediaPlayerCSS.prototype.create_stylesheet = function () {
-	var stylesheet = "";
-	var key, style, css_key, css_value;
-	for (key in this.css) {
-		// Add the key
-		stylesheet += key + "{";
-		// Iterate over its style elements
-		style = this.css[key];
-		for (css_key in style) {
-			// Value
-			css_value = this.parse_out_values(style[css_key]);
-			// Add the style
-			stylesheet += css_key + this.css_suffix + ":" + css_value + ";";
+MediaPlayerCSS.prototype = {
+	constructor: MediaPlayerCSS,
+	create_stylesheet: function () {
+		var stylesheet = "";
+		var key, style, css_key, css_value;
+		for (key in this.css) {
+			// Add the key
+			stylesheet += key + "{";
+			// Iterate over its style elements
+			style = this.css[key];
+			for (css_key in style) {
+				// Value
+				css_value = this.parse_out_values(style[css_key]);
+				// Add the style
+				stylesheet += css_key + this.css_suffix + ":" + css_value + ";";
+			}
+			// Finish
+			stylesheet += "}";
 		}
-		// Finish
-		stylesheet += "}";
-	}
 
-	// Return
-	return stylesheet;
-}
-MediaPlayerCSS.prototype.parse_out_values = function (value) {
-	var css = this;
-	var a, i, v, values, indices;
-	value = value.replace(/\{.+?\}/g, function (match) {
-		// Remove {}
-		match = match.substr(1, match.length - 2);
-		// Remove formatters
-		format_mode = 0;
-		match = match.replace(/.+?:/g, function (match2) {
-			match2 = match2.toLowerCase();
-			if (match2 == "hex:") format_mode = 1;
-			else if (match2 == "rgb:") format_mode = 2;
-			else if (match2 == "rgba:") format_mode = 3;
-			else if (match2 == "exp:") format_mode = 4;
-			else if (match2 == "iexp:") format_mode = 5;
-			return "";
-		});
-		// Split
-		values = match.split(",");
-		translated = new Array();
-		for (v = 0; v < values.length; ++v) {
-			// Array removal
-			indices = new Array();
-			values[v] = values[v].replace(/\[.+?\]/g, function (match2) {
-				// Remove []
-				match2 = match2.substr(1, match2.length - 2);
-				// Add to index list
-				if (match2.length > 0 && (match2[0] == "\"" || match2[0] == "'")) {
-					indices.push(match2.substr(1, match2.length - 2));
-				}
-				else {
-					indices.push(parseInt(match2));
-				}
+		// Return
+		return stylesheet;
+	},
+	parse_out_values: function (value) {
+		var css = this;
+		var a, i, v, values, indices;
+		value = value.replace(/\{.+?\}/g, function (match) {
+			// Remove {}
+			match = match.substr(1, match.length - 2);
+			// Remove formatters
+			format_mode = 0;
+			match = match.replace(/.+?:/g, function (match2) {
+				match2 = match2.toLowerCase();
+				if (match2 == "hex:") format_mode = 1;
+				else if (match2 == "rgb:") format_mode = 2;
+				else if (match2 == "rgba:") format_mode = 3;
+				else if (match2 == "exp:") format_mode = 4;
+				else if (match2 == "iexp:") format_mode = 5;
 				return "";
 			});
-			// Check if it's a variable name, or a integer literal
-			if (values[v].length > 0 && (values[v].charCodeAt(0) & 0xDF) >= "A".charCodeAt(0) && (values[v].charCodeAt(0) & 0xDF) <= "Z".charCodeAt(0)) {
-				if (values[v] in css.css_color_presets[css.preset]) {
-					values[v] = css.css_color_presets[css.preset][values[v]];
-				}
-				else if (values[v] in css.css_size_presets[css.preset]) {
-					values[v] = css.css_size_presets[css.preset][values[v]];
+			// Split
+			values = match.split(",");
+			translated = new Array();
+			for (v = 0; v < values.length; ++v) {
+				// Array removal
+				indices = new Array();
+				values[v] = values[v].replace(/\[.+?\]/g, function (match2) {
+					// Remove []
+					match2 = match2.substr(1, match2.length - 2);
+					// Add to index list
+					if (match2.length > 0 && (match2[0] == "\"" || match2[0] == "'")) {
+						indices.push(match2.substr(1, match2.length - 2));
+					}
+					else {
+						indices.push(parseInt(match2));
+					}
+					return "";
+				});
+				// Check if it's a variable name, or a integer literal
+				if (values[v].length > 0 && (values[v].charCodeAt(0) & 0xDF) >= "A".charCodeAt(0) && (values[v].charCodeAt(0) & 0xDF) <= "Z".charCodeAt(0)) {
+					if (values[v] in css.css_color_presets[css.preset]) {
+						values[v] = css.css_color_presets[css.preset][values[v]];
+					}
+					else if (values[v] in css.css_size_presets[css.preset]) {
+						values[v] = css.css_size_presets[css.preset][values[v]];
+					}
+					else {
+						// missing
+						return "";
+					}
+					for (i = 0; i < indices.length; ++i) {
+						values[v] = values[v][indices[i]];
+					}
+					translated[v] = true;
 				}
 				else {
-					// missing
-					return "";
+					values[v] = values[v];
+					translated[v] = false;
 				}
-				for (i = 0; i < indices.length; ++i) {
-					values[v] = values[v][indices[i]];
-				}
-				translated[v] = true;
 			}
-			else {
-				values[v] = values[v];
-				translated[v] = false;
+
+			// Format
+			try {
+				switch (format_mode) {
+					case 1: // hex
+					{
+						v = (translated[0] ? values[0] : parseFloat(values[0]));
+						v = (v[0] << 16) | (v[1] << 8) | (v[2]);
+						v = v.toString(16);
+						while (v.length < 6) v = "0" + v;
+						v = "#" + v;
+					}
+					return v;
+					case 2: // rgb
+					case 3: // rgba
+					{
+						if (values.length == 2) {
+							a = (translated[1] ? values[1] : parseFloat(values[1]));
+						}
+						else {
+							a = values[0][3];
+						}
+
+						v = (translated[0] ? values[0] : parseFloat(values[0]));
+						if (a >= 1.0 || format_mode == 2) {
+							v = "rgb(" + v[0] + "," + v[1] + "," + v[2] + ")";
+						}
+						else {
+							v = "rgba(" + v[0] + "," + v[1] + "," + v[2] + "," + a + ")";
+						}
+					}
+					return v;
+					case 4: // exp
+					case 5: // iexp
+					{
+						v = 0.0;
+						op = "+";
+						for (i = 0; i < values.length; ++i) {
+							a = (translated[i] ? values[i] : parseFloat(values[i]));
+							if (op == "+") v += a;
+							else if (op == "-") v -= a;
+							else if (op == "*") v *= a;
+							else if (op == "/") v /= a;
+							else if (op == "%") v %= a;
+							if (++i < values.length) op = values[i].trim();
+						}
+
+						// Round
+						if (format_mode == 4) v = Math.round(v);
+						else v = Math.round(v * 100.0) / 100.0;
+					}
+					return v;
+					default:
+					{
+						// Single value
+						v = (translated[0] ? values[0] : parseFloat(values[0]));
+					}
+					return v;
+				}
+			}
+			catch (e) {
+				return "";
+			}
+		});
+
+		// Done
+		return value;
+	},
+	load_preset: function (preset_name) {
+		this.preset = preset_name.replace(/[^a-zA-Z_]/g, "").toLowerCase();
+
+		if (!(this.preset in this.css_color_presets)) {
+			for (var key in this.css_color_presets) {
+				this.preset = key;
+				break;
 			}
 		}
 
-		// Format
-		try {
-			switch (format_mode) {
-				case 1: // hex
-				{
-					v = (translated[0] ? values[0] : parseFloat(values[0]));
-					v = (v[0] << 16) | (v[1] << 8) | (v[2]);
-					v = v.toString(16);
-					while (v.length < 6) v = "0" + v;
-					v = "#" + v;
-				}
-				return v;
-				case 2: // rgb
-				case 3: // rgba
-				{
-					if (values.length == 2) {
-						a = (translated[1] ? values[1] : parseFloat(values[1]));
-					}
-					else {
-						a = values[0][3];
-					}
-
-					v = (translated[0] ? values[0] : parseFloat(values[0]));
-					if (a >= 1.0 || format_mode == 2) {
-						v = "rgb(" + v[0] + "," + v[1] + "," + v[2] + ")";
-					}
-					else {
-						v = "rgba(" + v[0] + "," + v[1] + "," + v[2] + "," + a + ")";
-					}
-				}
-				return v;
-				case 4: // exp
-				case 5: // iexp
-				{
-					v = 0.0;
-					op = "+";
-					for (i = 0; i < values.length; ++i) {
-						a = (translated[i] ? values[i] : parseFloat(values[i]));
-						if (op == "+") v += a;
-						else if (op == "-") v -= a;
-						else if (op == "*") v *= a;
-						else if (op == "/") v /= a;
-						else if (op == "%") v %= a;
-						if (++i < values.length) op = values[i].trim();
-					}
-
-					// Round
-					if (format_mode == 4) v = Math.round(v);
-					else v = Math.round(v * 100.0) / 100.0;
-				}
-				return v;
-				default:
-				{
-					// Single value
-					v = (translated[0] ? values[0] : parseFloat(values[0]));
-				}
-				return v;
+		if (typeof(this.on_theme_change_callback) == "function") this.on_theme_change_callback(this.on_theme_change_callback_data);
+	},
+	get_volume_colors: function () {
+		return this.css_color_presets[this.preset].volume_colors;
+	},
+	get_value: function (is_color, name) {
+		// Array indices
+		var indices = new Array();
+		name = name.replace(/\[.+?\]/g, function (match) {
+			// Remove []
+			match = match.substr(1, match.length - 2);
+			// Add to index list
+			if (match.length > 0 && (match[0] == "\"" || match[0] == "'")) {
+				indices.push(match.substr(1, match.length - 2));
 			}
+			else {
+				indices.push(parseInt(match));
+			}
+			return "";
+		});
+
+		try {
+			var v = "";
+			if (is_color) {
+				if (name in this.css_color_presets[this.preset]) {
+					v = this.css_color_presets[this.preset][name];
+				}
+			}
+			else {
+				if (name in this.css_size_presets[this.preset]) {
+					v = this.css_size_presets[this.preset][name];
+				}
+			}
+			for (var i = 0; i < indices.length; ++i) {
+				v = v[indices[i]];
+			}
+			return v;
 		}
 		catch (e) {
 			return "";
 		}
-	});
+	},
+	create_custom: function () {
+		// Create
+		var preset = "custom";
+		this.css_color_presets[preset] = {"@name": "Custom"};
+		this.css_size_presets[preset] = {"@name": "Custom"};
 
-	// Done
-	return value;
-}
-MediaPlayerCSS.prototype.load_preset = function (preset_name) {
-	this.preset = preset_name.replace(/[^a-zA-Z_]/g, "").toLowerCase();
-
-	if (!(this.preset in this.css_color_presets)) {
-		for (var key in this.css_color_presets) {
-			this.preset = key;
-			break;
-		}
-	}
-
-	if (typeof(this.on_theme_change_callback) == "function") this.on_theme_change_callback(this.on_theme_change_callback_data);
-}
-MediaPlayerCSS.prototype.get_volume_colors = function () {
-	return this.css_color_presets[this.preset].volume_colors;
-}
-MediaPlayerCSS.prototype.get_value = function (is_color, name) {
-	// Array indices
-	var indices = new Array();
-	name = name.replace(/\[.+?\]/g, function (match) {
-		// Remove []
-		match = match.substr(1, match.length - 2);
-		// Add to index list
-		if (match.length > 0 && (match[0] == "\"" || match[0] == "'")) {
-			indices.push(match.substr(1, match.length - 2));
-		}
-		else {
-			indices.push(parseInt(match));
-		}
-		return "";
-	});
-
-	try {
-		var v = "";
-		if (is_color) {
-			if (name in this.css_color_presets[this.preset]) {
-				v = this.css_color_presets[this.preset][name];
+		// Copy
+		for (var key in this.css_color_presets[this.preset]) {
+			if (key[0] != "@") {
+				this.css_color_presets[preset][key] = this.css_color_presets[this.preset][key];
 			}
 		}
-		else {
-			if (name in this.css_size_presets[this.preset]) {
-				v = this.css_size_presets[this.preset][name];
+		for (var key in this.css_size_presets[this.preset]) {
+			if (key[0] != "@") {
+				this.css_size_presets[preset][key] = this.css_size_presets[this.preset][key];
 			}
 		}
-		for (var i = 0; i < indices.length; ++i) {
+	},
+	modify_value: function (is_color, name, value, component_index) {
+		if (this.preset != "custom") {
+			this.create_custom();
+			this.load_preset("custom");
+		}
+
+		// Array indices
+		var indices = new Array();
+		name = name.replace(/\[.+?\]/g, function (match) {
+			// Remove []
+			match = match.substr(1, match.length - 2);
+			// Add to index list
+			if (match.length > 0 && (match[0] == "\"" || match[0] == "'")) {
+				indices.push(match.substr(1, match.length - 2));
+			}
+			else {
+				indices.push(parseInt(match));
+			}
+			return "";
+		});
+		indices.splice(0, 0, name);
+		if (is_color) indices.push(component_index);
+
+		// Value
+		var v = (is_color ? this.css_color_presets[this.preset] : this.css_size_presets[this.preset]);
+		for (var i = 0; i < indices.length - 1; ++i) {
 			v = v[indices[i]];
 		}
-		return v;
-	}
-	catch (e) {
-		return "";
-	}
-}
-MediaPlayerCSS.prototype.create_custom = function () {
-	// Create
-	var preset = "custom";
-	this.css_color_presets[preset] = {"@name": "Custom"};
-	this.css_size_presets[preset] = {"@name": "Custom"};
 
-	// Copy
-	for (var key in this.css_color_presets[this.preset]) {
-		if (key[0] != "@") {
-			this.css_color_presets[preset][key] = this.css_color_presets[this.preset][key];
+		// Set
+		v[indices[indices.length - 1]] = value;
+	},
+	save: function () {
+		var data = {"key": this.preset, "color": {}, "size": {}};
+
+		// Copy
+		if ("custom" in this.css_color_presets) {
+			for (var key in this.css_color_presets["custom"]) {
+				data["color"][key] = this.css_color_presets["custom"][key];
+			}
 		}
-	}
-	for (var key in this.css_size_presets[this.preset]) {
-		if (key[0] != "@") {
-			this.css_size_presets[preset][key] = this.css_size_presets[this.preset][key];
+		if ("custom" in this.css_size_presets) {
+			for (var key in this.css_size_presets["custom"]) {
+				data["size"][key] = this.css_size_presets["custom"][key];
+			}
 		}
-	}
-}
-MediaPlayerCSS.prototype.modify_value = function (is_color, name, value, component_index) {
-	if (this.preset != "custom") {
-		this.create_custom();
-		this.load_preset("custom");
-	}
 
-	// Array indices
-	var indices = new Array();
-	name = name.replace(/\[.+?\]/g, function (match) {
-		// Remove []
-		match = match.substr(1, match.length - 2);
-		// Add to index list
-		if (match.length > 0 && (match[0] == "\"" || match[0] == "'")) {
-			indices.push(match.substr(1, match.length - 2));
+		// Done
+		return data;
+	},
+	load: function (data) {
+		// Init
+		if ("color" in data || "size" in data) {
+			this.css_color_presets["custom"] = {"@name": "Custom"};
+			this.css_size_presets["custom"] = {"@name": "Custom"};
 		}
-		else {
-			indices.push(parseInt(match));
+
+		// Copy
+		if ("color" in data) {
+			for (var key in data["color"]) {
+				this.css_color_presets["custom"][key] = data["color"][key];
+			}
 		}
-		return "";
-	});
-	indices.splice(0, 0, name);
-	if (is_color) indices.push(component_index);
-
-	// Value
-	var v = (is_color ? this.css_color_presets[this.preset] : this.css_size_presets[this.preset]);
-	for (var i = 0; i < indices.length - 1; ++i) {
-		v = v[indices[i]];
-	}
-
-	// Set
-	v[indices[indices.length - 1]] = value;
-}
-MediaPlayerCSS.prototype.save = function () {
-	var data = {"key": this.preset, "color": {}, "size": {}};
-
-	// Copy
-	if ("custom" in this.css_color_presets) {
-		for (var key in this.css_color_presets["custom"]) {
-			data["color"][key] = this.css_color_presets["custom"][key];
+		if ("size" in data) {
+			for (var key in data["size"]) {
+				this.css_size_presets["custom"][key] = data["size"][key];
+			}
 		}
-	}
-	if ("custom" in this.css_size_presets) {
-		for (var key in this.css_size_presets["custom"]) {
-			data["size"][key] = this.css_size_presets["custom"][key];
+
+		// Load preset
+		if ("key" in data) {
+			this.load_preset(data["key"]);
 		}
+
 	}
-
-	// Done
-	return data;
-}
-MediaPlayerCSS.prototype.load = function (data) {
-	// Init
-	if ("color" in data || "size" in data) {
-		this.css_color_presets["custom"] = {"@name": "Custom"};
-		this.css_size_presets["custom"] = {"@name": "Custom"};
-	}
-
-	// Copy
-	if ("color" in data) {
-		for (var key in data["color"]) {
-			this.css_color_presets["custom"][key] = data["color"][key];
-		}
-	}
-	if ("size" in data) {
-		for (var key in data["size"]) {
-			this.css_size_presets["custom"][key] = data["size"][key];
-		}
-	}
-
-	// Load preset
-	if ("key" in data) {
-		this.load_preset(data["key"]);
-	}
-
-}
+};
 
 
 
-
+///////////////////////////////////////////////////////////////////////////////
+// Media Player class
+///////////////////////////////////////////////////////////////////////////////
 function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, destruct_callback, additional_options) {
 	// Not setup
 	this.created = false;
@@ -3254,3414 +3270,3127 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 	this.css.on_theme_change_callback_data = {media_player: this};
 	$("head").append((this.head_css = this.E("style").html(this.css.create_stylesheet())));
 }
-MediaPlayer.prototype.destructor = function () {
-	// Callback
-	if (typeof(this.destruct_callback) == "function") this.destruct_callback(this);
-	this.destruct_callback = null;
+MediaPlayer.prototype = {
+	constructor: MediaPlayer,
+	destructor: function () {
+		// Callback
+		if (typeof(this.destruct_callback) == "function") this.destruct_callback(this);
+		this.destruct_callback = null;
 
-	// Destroy
-	this.destroy();
-	if (this.head_css !== null) this.head_css.remove();
-	this.head_css = null;
-}
+		// Destroy
+		this.destroy();
+		if (this.head_css !== null) this.head_css.remove();
+		this.head_css = null;
+	},
 
-MediaPlayer.ALL_SOUNDS = true;
+	save: function () {
+		// Save
+		var data = {
+			"volume": this.volume,
+			"playlist_height": this.playlist_height,
+			"player_width": this.player_width,
+			"image_height": this.image_height,
+			"image_height_max": this.image_height_max,
+			"scale_factor": this.scale_factor,
+			"playlist_loop": this.playlist_loop,
+			"playlist_randomize": this.playlist_randomize,
+			"playlist_play_on_load": this.playlist_play_on_load,
+			"playlist_scrollto_onload": this.playlist_scrollto_onload,
+			"position_offset": [ this.position_offset[0] , this.position_offset[1] ],
+			"ytvideo_quality_index": this.ytvideo_quality_index,
+			"first_run": this.first_run,
+			"use_svg": this.use_svg
+		};
 
-MediaPlayer.prototype.save = function () {
-	// Save
-	var data = {
-		"volume": this.volume,
-		"playlist_height": this.playlist_height,
-		"player_width": this.player_width,
-		"image_height": this.image_height,
-		"image_height_max": this.image_height_max,
-		"scale_factor": this.scale_factor,
-		"playlist_loop": this.playlist_loop,
-		"playlist_randomize": this.playlist_randomize,
-		"playlist_play_on_load": this.playlist_play_on_load,
-		"playlist_scrollto_onload": this.playlist_scrollto_onload,
-		"position_offset": [ this.position_offset[0] , this.position_offset[1] ],
-		"ytvideo_quality_index": this.ytvideo_quality_index,
-		"first_run": this.first_run,
-		"use_svg": this.use_svg
-	};
+		// Done
+		return data;
+	},
+	load: function (data) {
+		// Load
+		if ("volume" in data) this.volume = data["volume"];
+		if ("playlist_loop" in data) this.playlist_loop = data["playlist_loop"];
+		if ("playlist_randomize" in data) this.playlist_randomize = data["playlist_randomize"];
+		if ("playlist_play_on_load" in data) this.playlist_play_on_load = data["playlist_play_on_load"];
 
-	// Done
-	return data;
-}
-MediaPlayer.prototype.load = function (data) {
-	// Load
-	if ("volume" in data) this.volume = data["volume"];
-	if ("playlist_loop" in data) this.playlist_loop = data["playlist_loop"];
-	if ("playlist_randomize" in data) this.playlist_randomize = data["playlist_randomize"];
-	if ("playlist_play_on_load" in data) this.playlist_play_on_load = data["playlist_play_on_load"];
+		if ("scale_factor" in data) this.scale_factor = data["scale_factor"];
+		if ("player_width" in data) this.player_width = data["player_width"];
+		if ("image_height" in data) this.image_height = data["image_height"];
+		if ("playlist_height" in data) this.playlist_height = data["playlist_height"];
+		if ("image_height_max" in data) this.image_height_max = data["image_height_max"];
+		if ("ytvideo_quality_index" in data) this.ytvideo_quality_index = data["ytvideo_quality_index"];
+		if ("first_run" in data) this.first_run = data["first_run"];
+		if ("use_svg" in data) this.use_svg = data["use_svg"];
 
-	if ("scale_factor" in data) this.scale_factor = data["scale_factor"];
-	if ("player_width" in data) this.player_width = data["player_width"];
-	if ("image_height" in data) this.image_height = data["image_height"];
-	if ("playlist_height" in data) this.playlist_height = data["playlist_height"];
-	if ("image_height_max" in data) this.image_height_max = data["image_height_max"];
-	if ("ytvideo_quality_index" in data) this.ytvideo_quality_index = data["ytvideo_quality_index"];
-	if ("first_run" in data) this.first_run = data["first_run"];
-	if ("use_svg" in data) this.use_svg = data["use_svg"];
+		if ("playlist_scrollto_onload" in data) this.playlist_scrollto_onload = data["playlist_scrollto_onload"];
 
-	if ("playlist_scrollto_onload" in data) this.playlist_scrollto_onload = data["playlist_scrollto_onload"];
+		if ("position_offset" in data) {
+			this.position_offset[0] = data["position_offset"][0];
+			this.position_offset[1] = data["position_offset"][1];
+		}
+	},
 
-	if ("position_offset" in data) {
-		this.position_offset[0] = data["position_offset"][0];
-		this.position_offset[1] = data["position_offset"][1];
-	}
-}
-
-MediaPlayer.prototype.create = function () {
-	// Destroy if necessary
-	if (this.created) this.destroy();
+	create: function () {
+		// Destroy if necessary
+		if (this.created) this.destroy();
 
 
-	// Events
-	$(window)
-	.on("resize." + this.namespace, {media_player: this}, this.on_window_resize);
-	$(document)
-	.on("mouseup." + this.namespace, {media_player: this}, this.on_document_mouseup)
-	.on("mousemove." + this.namespace, {media_player: this}, this.on_document_mousemove);
+		// Events
+		$(window)
+		.on("resize." + this.namespace, {media_player: this}, this.on_window_resize);
+		$(document)
+		.on("mouseup." + this.namespace, {media_player: this}, this.on_document_mouseup)
+		.on("mousemove." + this.namespace, {media_player: this}, this.on_document_mousemove);
 
-	// Vars
-	var help_custom_div = null;
-	this.title_buttons = new Array();
-	this.help_container = [ null , null , null ];
-	this.help_container_inner1 = [ null , null , null ];
-	this.help_container_footer = [ null , null , null ];
-	this.player_theme_value_updaters = new Array();
-	this.resizing_controls = new Array();
-	this.resizing_texts = new Array();
+		// Vars
+		var help_custom_div = null;
+		this.title_buttons = new Array();
+		this.help_container = [ null , null , null ];
+		this.help_container_inner1 = [ null , null , null ];
+		this.help_container_footer = [ null , null , null ];
+		this.player_theme_value_updaters = new Array();
+		this.resizing_controls = new Array();
+		this.resizing_texts = new Array();
 
-	// Container
-	$("body").append( //{ DOM Source
-		(this.sp_container_main = this.D("SPContainerMain", "SPContainerMainBorders"))
-		.width(this.player_width * this.scale_factor)
-		.css({"right": this.position_offset[0], "bottom": this.position_offset[1]})
-		.on("dragover." + this.namespace, {media_player: this}, this.on_container_dragover)
-		.on("dragenter." + this.namespace, {media_player: this}, this.on_container_dragenter)
-		.on("dragexit." + this.namespace, {media_player: this}, this.on_container_dragexit)
-		.on("drop." + this.namespace, {media_player: this}, this.on_container_drop)
-		.on("mouseover." + this.namespace, {media_player: this}, this.on_main_container_mouseover)
-		.on("mouseout." + this.namespace, {media_player: this}, this.on_main_container_mouseout)
-		.append(
-			(this.sp_container = this.D("SPContainer"))
-			.append( //{ Resizing
-				(this.resizing_container = this.D("SPResizingContainerFull"))
-				.css("display", "none")
-				.append(
-					this.D("SPResizingContainerInner")
-					.append(
-						(this.resizing_controls[0] = this.D("SPResizingContainerTopLeft", "SPResizingContainerControl"))
-						.on("mousedown." + this.namespace, {media_player: this, sides: [0,3]}, this.on_resizer_mousedown)
-						.append(
-							(this.resizing_texts[0] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
-							.html("&#x2196;")
-						)
-					)
-					.append(
-						(this.resizing_controls[1] = this.D("SPResizingContainerTop", "SPResizingContainerControl"))
-						.on("mousedown." + this.namespace, {media_player: this, sides: [0,null]}, this.on_resizer_mousedown)
-						.append(
-							(this.resizing_texts[1] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
-							.html("&#x2191;")
-						)
-					)
-					.append(
-						(this.resizing_controls[2] = this.D("SPResizingContainerTopRight", "SPResizingContainerControl"))
-						.on("mousedown." + this.namespace, {media_player: this, sides: [0,1]}, this.on_resizer_mousedown)
-						.append(
-							(this.resizing_texts[2] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
-							.html("&#x2197;")
-						)
-					)
-					.append(
-						(this.resizing_controls[3] = this.D("SPResizingContainerLeft", "SPResizingContainerControl"))
-						.on("mousedown." + this.namespace, {media_player: this, sides: [null,3]}, this.on_resizer_mousedown)
-						.append(
-							this.D("SPResizingContainerTextContainerOuter")
-							.append(
-								(this.resizing_texts[3] = this.D("SPResizingContainerTextContainerInner", "SPResizingContainerTextContainer", "SPResizingContainerText"))
-								.html("&#x2190;")
-							)
-						)
-					)
-					.append(
-						(this.resizing_controls[4] = this.D("SPResizingContainerRight", "SPResizingContainerControl"))
-						.on("mousedown." + this.namespace, {media_player: this, sides: [null,1]}, this.on_resizer_mousedown)
-						.append(
-							this.D("SPResizingContainerTextContainerOuter")
-							.append(
-								(this.resizing_texts[4] = this.D("SPResizingContainerTextContainerInner", "SPResizingContainerTextContainer", "SPResizingContainerText"))
-								.html("&#x2192;")
-							)
-						)
-					)
-					.append(
-						(this.resizing_controls[5] = this.D("SPResizingContainerBottomLeft", "SPResizingContainerControl"))
-						.on("mousedown." + this.namespace, {media_player: this, sides: [2,3]}, this.on_resizer_mousedown)
-						.append(
-							(this.resizing_texts[5] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
-							.html("&#x2199;")
-						)
-					)
-					.append(
-						(this.resizing_controls[6] = this.D("SPResizingContainerBottom", "SPResizingContainerControl"))
-						.on("mousedown." + this.namespace, {media_player: this, sides: [2,null]}, this.on_resizer_mousedown)
-						.append(
-							(this.resizing_texts[6] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
-							.html("&#x2193;")
-						)
-					)
-					.append(
-						(this.resizing_controls[7] = this.D("SPResizingContainerBottomRight", "SPResizingContainerControl"))
-						.on("mousedown." + this.namespace, {media_player: this, sides: [2,1]}, this.on_resizer_mousedown)
-						.append(
-							(this.resizing_texts[7] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
-							.html("&#x2198;")
-						)
-					)
-				)
-			) //}
-			.append( //{ Title bar
-				this.D("SPTitleBarContainer")
-				.on("mousedown." + this.namespace, {media_player: this}, this.on_titlebar_mousedown)
-				.append(
-					this.D("SPTitleContainer")
-					.append(
-						(this.title = this.D("SPTitle"))
-						.html(this.title_default)
-					)
-				)
-				.append(
-					this.D("SPMainButtonsLeft")
-					.append(
-						(this.title_buttons[0] = this.E("a", "SPMainButtonLeft"))
-						.html("[S]")
-					)
-					.append(
-						(this.title_buttons[1] = this.E("a", "SPMainButtonGeneric"))
-						.html("[D]")
-					)
-					.append(
-						(this.title_buttons[2] = this.E("a", "SPMainButtonGeneric"))
-						.html("[?]")
-					)
-				)
-				.append(
-					this.D("SPMainButtonsRight")
-					.append(
-						(this.title_buttons[3] = this.E("a", "SPMainButtonGeneric"))
-						.html("[&#x2012;]")
-					)
-					.append(
-						(this.title_buttons[4] = this.E("a", "SPMainButtonRight"))
-						.html("[&times;]")
-					)
-				)
-			) //}
-			.append( //{ Content
-				(this.content_container = this.D("SPContentContainer"))
-				.append( //{ Top
-					(this.top_container = this.D("SPTopContainer"))
-					.append(
-						this.D("SPImageContainerMain")
-						.append( //{ Image
-							(this.image_container = this.D("SPImageContainer"))
-							.height(this.image_height_max * this.scale_factor)
-							.append(
-								(this.no_image = this.D("SPNoImage"))
-								.append(
-									this.D("SPNoImageText")
-									.html("[no media]")
-								)
-							)
-							.append(
-								(this.image = this.E("img", "SPImage"))
-								.attr("title", "")
-								.attr("alt", "")
-								.css("display", "none")
-								.on("load." + this.namespace, {media_player: this}, this.on_image_load)
-								.on("mousedown", this.cancel_event)
-							)
-						) //}
-						.append( //{ Video
-							(this.video_container = this.D("SPVideoContainer"))
-						)
-						.append(
-							(this.video_mask = this.D("SPVideoContainerMask"))
-							.on("mousedown", {media_player: this}, this.on_image_resize_mousedown)
-						) //}
-						.append( //{ Playback controls
-							this.D("SPControlContainer")
-							.append(
-								(this.playback_control_container = this.D("SPControlContainerInner"))
-							)
-						) //}
-					)
-					.append( //{ Audio
-						(this.audio = this.E("audio"))
-						.css("display", "none")
-						.on("play." + this.namespace, {media_player: this}, this.on_audio_play)
-						.on("pause." + this.namespace, {media_player: this}, this.on_audio_pause)
-						.on("ended." + this.namespace, {media_player: this}, this.on_audio_ended)
-						.on("timeupdate." + this.namespace, {media_player: this}, this.on_audio_timeupdate)
-						.on("durationchange." + this.namespace, {media_player: this}, this.on_audio_durationchange)
-					) //}
-					.append( //{ Playlist index
-						(this.playlist_index_container = this.D("SPPlaylistIndexContainer"))
-						.on("mousedown", this.cancel_event)
-						.append(
-							this.D("SPPlaylistIndexContainerInner")
-							.append(
-								(this.playlist_index_text1 = this.D("SPPlaylistIndexText1"))
-								.html("-")
-							)
-							.append(
-								this.D("SPPlaylistIndexText2")
-								.html("/")
-							)
-							.append(
-								(this.playlist_index_text2 = this.D("SPPlaylistIndexText3"))
-								.html("-")
-							)
-						)
-					) //}
-					.append( //{ Volume
-						(this.volume_container = this.D("SPVolumeContainer"))
-						.append(
-							(this.volume_bar_container = this.D("SPVolumeBarContainer"))
-							.on("mousedown." + this.namespace, {media_player: this}, this.on_volumebar_mousedown)
-							.append(
-								(this.volume_bar = this.D("SPVolumeBar"))
-							)
-						)
-						.append(
-							this.D("SPVolumeLabelContainer")
-							.append(
-								(this.D("SPVolumeLabel").html("Vol"))
-							)
-							.append(
-								(this.volume_label = this.D("SPVolumeValue").html("100%"))
-							)
-						)
-					) //}
-				) //}
-				.append( //{ Loaded
-					this.D("SPSeekContainerTop")
-					.append(
-						(this.load_percent_bar_container = this.D("SPLoadPercentBarContainer"))
-						.on("mousedown." + this.namespace, this.cancel_event)
-						.append(
-							(this.load_percent_bar_mover = this.D("SPLoadPercentBarMover"))
-							.on("mousedown." + this.namespace, this.cancel_event)
-						)
-						.append(
-							(this.load_percent_bar = this.D("SPLoadPercentBar"))
-							.on("mousedown." + this.namespace, this.cancel_event)
-						)
-					)
-				) //}
-				.append( //{ Seek bar
-					this.D("SPSeekContainer")
-					.append(
-						this.D("SPSeekTimeContainer")
-						.append(
-							(this.seek_time_start_label = this.D("SPSeekTimeLeft"))
-							.html("0:00")
-						)
-						.append(
-							(this.seek_time_end_label = this.D("SPSeekTimeRight"))
-							.html("0:00")
-						)
-						.append(
-							(this.seek_time_current_label = this.D("SPSeekTime"))
-							.html("0:00")
-						)
-					)
-					.append(
-						(this.seek_bar_container = this.D("SPSeekBarContainer"))
-						.on("mousedown." + this.namespace, {media_player: this}, this.on_seekbar_container_mousedown)
-						.append(
-							(this.seek_bar_mover = this.D("SPSeekBarMover"))
-						)
-						.append(
-							(this.seek_bar = this.D("SPSeekBar"))
-							.on("mousedown." + this.namespace, {media_player: this}, this.on_seekbar_mousedown)
-						)
-					)
-				) //}
-				.append( //{ Resize
-					this.D("SPSeekContainerBottom")
-				) //}
-				.append( //{ Playlist
-					(this.playlist_container = this.D("SPPlaylistContainer"))
-					.height(this.playlist_height * this.scale_factor)
-					.on("mousedown", this.cancel_event)
-				) //}
-
-				.append( //{ Help 0
-					(this.help_container[0] = this.D("SPHelpContainer"))
+		// Container
+		$("body").append( //{ DOM Source
+			(this.sp_container_main = this.D("SPContainerMain", "SPContainerMainBorders"))
+			.width(this.player_width * this.scale_factor)
+			.css({"right": this.position_offset[0], "bottom": this.position_offset[1]})
+			.on("dragover." + this.namespace, {media_player: this}, this.on_container_dragover)
+			.on("dragenter." + this.namespace, {media_player: this}, this.on_container_dragenter)
+			.on("dragexit." + this.namespace, {media_player: this}, this.on_container_dragexit)
+			.on("drop." + this.namespace, {media_player: this}, this.on_container_drop)
+			.on("mouseover." + this.namespace, {media_player: this}, this.on_main_container_mouseover)
+			.on("mouseout." + this.namespace, {media_player: this}, this.on_main_container_mouseout)
+			.append(
+				(this.sp_container = this.D("SPContainer"))
+				.append( //{ Resizing
+					(this.resizing_container = this.D("SPResizingContainerFull"))
 					.css("display", "none")
 					.append(
-						this.D("SPHelpContainerInner0")
+						this.D("SPResizingContainerInner")
 						.append(
-							(this.help_container_inner1[0] = this.D("SPHelpContainerInner1"))
-							.append( //{ Playlist Settings
-								this.D("SPHelpLabelDiv")
-								.html("Playlist Settings")
-							)
+							(this.resizing_controls[0] = this.D("SPResizingContainerTopLeft", "SPResizingContainerControl"))
+							.on("mousedown." + this.namespace, {media_player: this, sides: [0,3]}, this.on_resizer_mousedown)
 							.append(
-								this.D("SPHelpSectionDiv")
-								.append(
-									this.D("SPHelpColorInputDiv0")
-									.append(
-										this.D("SPHelpColorInputDiv2b")
-										.append(
-											this.D("SPHelpColorLabelText")
-											.html("Mode")
-										)
-									)
-								)
-								.append(
-									this.D("SPHelpColorInputDiv1Full")
-									.append(
-										this.D("SPHelpColorInputDiv2")
-										.append(
-											this.E("a", "SPHelpModeLink")
-											.html(this.playlist_randomize ? "Randomize" : (this.playlist_loop ? "Loop" : "Play Once"))
-											.on("click." + this.namespace, {media_player: this}, this.on_playlist_mode_change)
-											.on("mousedown", this.cancel_event)
-										)
-									)
-								)
+								(this.resizing_texts[0] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+								.html("&#x2196;")
 							)
+						)
+						.append(
+							(this.resizing_controls[1] = this.D("SPResizingContainerTop", "SPResizingContainerControl"))
+							.on("mousedown." + this.namespace, {media_player: this, sides: [0,null]}, this.on_resizer_mousedown)
 							.append(
-								this.D("SPHelpSectionDiv")
+								(this.resizing_texts[1] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+								.html("&#x2191;")
+							)
+						)
+						.append(
+							(this.resizing_controls[2] = this.D("SPResizingContainerTopRight", "SPResizingContainerControl"))
+							.on("mousedown." + this.namespace, {media_player: this, sides: [0,1]}, this.on_resizer_mousedown)
+							.append(
+								(this.resizing_texts[2] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+								.html("&#x2197;")
+							)
+						)
+						.append(
+							(this.resizing_controls[3] = this.D("SPResizingContainerLeft", "SPResizingContainerControl"))
+							.on("mousedown." + this.namespace, {media_player: this, sides: [null,3]}, this.on_resizer_mousedown)
+							.append(
+								this.D("SPResizingContainerTextContainerOuter")
 								.append(
-									this.D("SPHelpColorInputDiv0")
-									.append(
-										this.D("SPHelpColorInputDiv2b")
-										.append(
-											this.D("SPHelpColorLabelText")
-											.html("On Load")
-										)
-									)
-								)
-								.append(
-									this.D("SPHelpColorInputDiv1Full")
-									.append(
-										this.D("SPHelpColorInputDiv2")
-										.append(
-											this.E("a", "SPHelpModeLink")
-											.html(this.playlist_play_on_load_settings[this.playlist_play_on_load])
-											.on("click." + this.namespace, {media_player: this}, this.on_playlist_onload_change)
-											.on("mousedown", this.cancel_event)
-										)
-									)
+									(this.resizing_texts[3] = this.D("SPResizingContainerTextContainerInner", "SPResizingContainerTextContainer", "SPResizingContainerText"))
+									.html("&#x2190;")
 								)
 							)
+						)
+						.append(
+							(this.resizing_controls[4] = this.D("SPResizingContainerRight", "SPResizingContainerControl"))
+							.on("mousedown." + this.namespace, {media_player: this, sides: [null,1]}, this.on_resizer_mousedown)
 							.append(
-								this.D("SPHelpSectionDiv")
+								this.D("SPResizingContainerTextContainerOuter")
 								.append(
-									this.D("SPHelpColorInputDiv0")
-									.append(
-										this.D("SPHelpColorInputDiv2b")
-										.append(
-											this.D("SPHelpColorLabelText")
-										)
-									)
-								)
-								.append(
-									this.D("SPHelpColorInputDiv1Full")
-									.append(
-										this.D("SPHelpColorInputDiv2")
-										.append(
-											this.E("a", "SPHelpModeLink")
-											.html(this.playlist_scrollto_onload ? "Scroll to in playlist" : "Don't scroll playlist")
-											.on("click." + this.namespace, {media_player: this}, this.on_playlist_scrollto_change)
-											.on("mousedown", this.cancel_event)
-										)
-									)
+									(this.resizing_texts[4] = this.D("SPResizingContainerTextContainerInner", "SPResizingContainerTextContainer", "SPResizingContainerText"))
+									.html("&#x2192;")
 								)
 							)
+						)
+						.append(
+							(this.resizing_controls[5] = this.D("SPResizingContainerBottomLeft", "SPResizingContainerControl"))
+							.on("mousedown." + this.namespace, {media_player: this, sides: [2,3]}, this.on_resizer_mousedown)
 							.append(
-								this.D("SPHelpSectionDiv")
+								(this.resizing_texts[5] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+								.html("&#x2199;")
+							)
+						)
+						.append(
+							(this.resizing_controls[6] = this.D("SPResizingContainerBottom", "SPResizingContainerControl"))
+							.on("mousedown." + this.namespace, {media_player: this, sides: [2,null]}, this.on_resizer_mousedown)
+							.append(
+								(this.resizing_texts[6] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+								.html("&#x2193;")
+							)
+						)
+						.append(
+							(this.resizing_controls[7] = this.D("SPResizingContainerBottomRight", "SPResizingContainerControl"))
+							.on("mousedown." + this.namespace, {media_player: this, sides: [2,1]}, this.on_resizer_mousedown)
+							.append(
+								(this.resizing_texts[7] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+								.html("&#x2198;")
+							)
+						)
+					)
+				) //}
+				.append( //{ Title bar
+					this.D("SPTitleBarContainer")
+					.on("mousedown." + this.namespace, {media_player: this}, this.on_titlebar_mousedown)
+					.append(
+						this.D("SPTitleContainer")
+						.append(
+							(this.title = this.D("SPTitle"))
+							.html(this.title_default)
+						)
+					)
+					.append(
+						this.D("SPMainButtonsLeft")
+						.append(
+							(this.title_buttons[0] = this.E("a", "SPMainButtonLeft"))
+							.html("[S]")
+						)
+						.append(
+							(this.title_buttons[1] = this.E("a", "SPMainButtonGeneric"))
+							.html("[D]")
+						)
+						.append(
+							(this.title_buttons[2] = this.E("a", "SPMainButtonGeneric"))
+							.html("[?]")
+						)
+					)
+					.append(
+						this.D("SPMainButtonsRight")
+						.append(
+							(this.title_buttons[3] = this.E("a", "SPMainButtonGeneric"))
+							.html("[&#x2012;]")
+						)
+						.append(
+							(this.title_buttons[4] = this.E("a", "SPMainButtonRight"))
+							.html("[&times;]")
+						)
+					)
+				) //}
+				.append( //{ Content
+					(this.content_container = this.D("SPContentContainer"))
+					.append( //{ Top
+						(this.top_container = this.D("SPTopContainer"))
+						.append(
+							this.D("SPImageContainerMain")
+							.append( //{ Image
+								(this.image_container = this.D("SPImageContainer"))
+								.height(this.image_height_max * this.scale_factor)
 								.append(
-									this.D("SPHelpColorInputDiv0")
+									(this.no_image = this.D("SPNoImage"))
 									.append(
-										this.D("SPHelpColorInputDiv2b")
-										.append(
-											this.D("SPHelpColorLabelText")
-											.html("YT Quality")
-										)
+										this.D("SPNoImageText")
+										.html("[no media]")
 									)
 								)
 								.append(
-									this.D("SPHelpColorInputDiv1Full")
-									.append(
-										this.D("SPHelpColorInputDiv2")
-										.append(
-											this.E("a", "SPHelpModeLink")
-											.html(this.ytvideo_qualities[this.ytvideo_quality_index])
-											.on("click." + this.namespace, {media_player: this}, this.on_ytquality_change)
-											.on("mousedown", this.cancel_event)
-										)
-									)
+									(this.image = this.E("img", "SPImage"))
+									.attr("title", "")
+									.attr("alt", "")
+									.css("display", "none")
+									.on("load." + this.namespace, {media_player: this}, this.on_image_load)
+									.on("mousedown", this.cancel_event)
 								)
 							) //}
-							.append( //{ Player Settings
-								this.D("SPHelpLabelDiv")
-								.html("Player Settings")
+							.append( //{ Video
+								(this.video_container = this.D("SPVideoContainer"))
 							)
 							.append(
-								(help_custom_div = this.D("SPHelpSectionDiv"))
+								(this.video_mask = this.D("SPVideoContainerMask"))
+								.on("mousedown", {media_player: this}, this.on_image_resize_mousedown)
+							) //}
+							.append( //{ Playback controls
+								this.D("SPControlContainer")
 								.append(
-									this.D("SPHelpColorInputDiv0")
-									.append(
-										this.D("SPHelpColorInputDiv2b")
-										.append(
-											this.D("SPHelpColorLabelText")
-											.html("Theme")
-										)
-									)
-								)
-								.append(
-									this.D("SPHelpColorInputDiv1Full")
-									.append(
-										this.D("SPHelpColorInputDiv2")
-										.append(
-											(this.player_theme_name = this.E("a", "SPHelpModeLink"))
-											.on("click." + this.namespace, {media_player: this}, this.on_player_theme_change)
-											.on("mousedown", this.cancel_event)
-										)
-									)
-								)
-								.append(
-									this.D("SPHelpColorInputDiv0")
-									.append(
-										this.D("SPHelpColorInputDiv2b")
-										.append(
-											this.D("SPHelpColorLabelText")
-											.html("Player Graphics")
-										)
-									)
-								)
-								.append(
-									this.D("SPHelpColorInputDiv1Full")
-									.append(
-										this.D("SPHelpColorInputDiv2")
-										.append(
-											this.E("a", "SPHelpModeLink")
-											.on("click." + this.namespace, {media_player: this}, this.on_player_use_svg_update)
-											.on("mousedown", this.cancel_event)
-											.html(this.use_svg ? "Allowed" : "Disallowed")
-										)
-									)
+									(this.playback_control_container = this.D("SPControlContainerInner"))
 								)
 							) //}
-							.append( //{ Scaling Settings
-								this.D("SPHelpLabelDiv")
-								.html("Scaling Settings")
-							)
-							.append(this.generate_value_editor("Padding", "padding_scale", this.css.css_size_presets[this.css.preset].padding_scale, false))
-							.append(this.generate_value_editor("Text", "font_scale", this.css.css_size_presets[this.css.preset].font_scale, false))
-							.append(this.generate_value_editor("Borders", "border_scale", this.css.css_size_presets[this.css.preset].border_scale, false))
-							.append(this.generate_value_editor("Window", "@scale_factor", this.scale_factor, false))
-							//}
 						)
-						.append( //{ More
-							(this.help_container_footer[0] = this.D("SPHelpLinkDiv"))
-							.append(
-								this.D("SPHelpLabelDiv")
-								.html("More Settings")
-							)
-							.append(
-								this.D("SPHelpSectionDiv")
-								.append(
-									this.E("A", "SPHelpTextLink")
-									.html("Color Settings")
-									.on("click." + this.namespace, {media_player: this, help_page: 1}, this.on_helppage_goto)
-								)
-								.append(
-									this.E("A", "SPHelpTextLink")
-									.html("Other Settings")
-									.on("click." + this.namespace, {media_player: this, help_page: 2}, this.on_helppage_goto)
-								)
-							)
-						) //}
-					)
-				) //}
-				.append( //{ Help 1
-					(this.help_container[1] = this.D("SPHelpContainer"))
-					.css("display", "none")
-					.append(
-						this.D("SPHelpContainerInner0")
-						.append(
-							(this.help_container_inner1[1] = this.D("SPHelpContainerInner1"))
-							.append(this.D("SPHelpLabelDiv").html("Background Colors"))
-							.append(this.generate_color_editor("Outline", "bg_outer_color", this.css.css_color_presets[this.css.preset].bg_outer_color))
-							.append(this.generate_color_editor("Lightest", "bg_color_lightest", this.css.css_color_presets[this.css.preset].bg_color_lightest))
-							.append(this.generate_color_editor("Light", "bg_color_light", this.css.css_color_presets[this.css.preset].bg_color_light))
-							.append(this.generate_color_editor("Medium", "bg_color_dark", this.css.css_color_presets[this.css.preset].bg_color_dark))
-							.append(this.generate_color_editor("Dark", "bg_color_darker", this.css.css_color_presets[this.css.preset].bg_color_darker))
-							.append(this.generate_color_editor("Darkest", "bg_color_darkest", this.css.css_color_presets[this.css.preset].bg_color_darkest))
-							.append(this.D("SPHelpLabelDiv").html("Text Colors"))
-							.append(this.generate_color_editor("Default", "color_standard", this.css.css_color_presets[this.css.preset].color_standard))
-							.append(this.generate_color_editor("Disabled", "color_disabled", this.css.css_color_presets[this.css.preset].color_disabled))
-							.append(this.generate_color_editor("Light", "color_light", this.css.css_color_presets[this.css.preset].color_light))
-							.append(this.generate_color_editor("Special 1", "color_special_1", this.css.css_color_presets[this.css.preset].color_special_1))
-							.append(this.generate_color_editor("Special 2", "color_special_2", this.css.css_color_presets[this.css.preset].color_special_2))
-							.append(this.generate_color_editor("Highlight", "color_highlight_light", this.css.css_color_presets[this.css.preset].color_highlight_light))
-							.append(this.D("SPHelpLabelDiv").html("Other Colors"))
-							.append(this.generate_color_editor("Volume", "volume_colors[0]", this.css.css_color_presets[this.css.preset].volume_colors[0]))
-						)
-					)
-				) //}
-				.append( //{ Help 2
-					(this.help_container[2] = this.D("SPHelpContainer"))
-					.css("display", "none")
-					.append(
-						this.D("SPHelpContainerInner0")
-						.append(
-							(this.help_container_inner1[2] = this.D("SPHelpContainerInner1"))
-							.append(this.D("SPHelpLabelDiv").html("Borders"))
-							.append(this.generate_value_editor("Outer", "bg_outer_size", this.css.css_size_presets[this.css.preset].bg_outer_size, false))
-							.append(this.D("SPHelpLabelDiv").html("Border Radii"))
-							.append(this.generate_value_editor("Outer", "bg_outer_border_radius", this.css.css_size_presets[this.css.preset].bg_outer_border_radius, false))
-							.append(this.generate_value_editor("Inner", "bg_inner_border_radius", this.css.css_size_presets[this.css.preset].bg_inner_border_radius, false))
-							.append(this.generate_value_editor("Major", "border_radius_normal", this.css.css_size_presets[this.css.preset].border_radius_normal, false))
-							.append(this.generate_value_editor("Minor", "border_radius_small", this.css.css_size_presets[this.css.preset].border_radius_small, false))
-							.append(this.D("SPHelpLabelDiv").html("Fonts"))
-							.append(this.generate_value_editor("Font", "main_font", this.css.css_size_presets[this.css.preset].main_font, true))
-							.append(this.generate_value_editor("Controls", "controls_font", this.css.css_size_presets[this.css.preset].controls_font, true))
-							.append(this.D("SPHelpLabelDiv").html("Font Sizes"))
-							.append(this.generate_value_editor("Default", "font_size", this.css.css_size_presets[this.css.preset].font_size, false))
-							.append(this.generate_value_editor("Small", "font_size_small", this.css.css_size_presets[this.css.preset].font_size_small, false))
-							.append(this.generate_value_editor("Controls", "font_size_controls", this.css.css_size_presets[this.css.preset].font_size_controls, false))
-						)
-					)
-				) //}
-
-				.append( //{ Downloads
-					(this.downloads_container = this.D("SPDownloadsContainer"))
-					.css("display", "none")
-					.append(
-						this.D("SPDownloadsLabel")
-						.html("Download Content")
-					)
-					.append(
-						this.D("SPDownloadsContent")
-						.append(
-							this.D()
-							.append(
-								this.D()
-								.html("Generate download link for:")
-							)
-							.append(
-								this.D()
-								.append("- ")
-								.append(
-									this.E("a", "SPDownloadsLink")
-									.attr("href", "#")
-									.html("All loaded sounds")
-									.on("click." + this.namespace, {media_player: this, type: "sounds"}, this.on_downloads_generate_click)
-								)
-							)
-							.append(
-								this.D()
-								.append("- ")
-								.append(
-									this.E("a", "SPDownloadsLink")
-									.attr("href", "#")
-									.html("All loaded images")
-									.on("click." + this.namespace, {media_player: this, type: "images2"}, this.on_downloads_generate_click)
-								)
-								.append(" (using original filenames)")
-							)
-							.append(
-								this.D()
-								.append("- ")
-								.append(
-									this.E("a", "SPDownloadsLink")
-									.attr("href", "#")
-									.html("All loaded images")
-									.on("click." + this.namespace, {media_player: this, type: "images"}, this.on_downloads_generate_click)
-								)
-								.append(" (using server filenames)")
-							)
-						)
-						.append(
-							(this.downloads_ready_container = this.D("SPDownloadsContentReady"))
+						.append( //{ Audio
+							(this.audio = this.E("audio"))
 							.css("display", "none")
-							.append("Click ")
+							.on("play." + this.namespace, {media_player: this}, this.on_audio_play)
+							.on("pause." + this.namespace, {media_player: this}, this.on_audio_pause)
+							.on("ended." + this.namespace, {media_player: this}, this.on_audio_ended)
+							.on("timeupdate." + this.namespace, {media_player: this}, this.on_audio_timeupdate)
+							.on("durationchange." + this.namespace, {media_player: this}, this.on_audio_durationchange)
+						) //}
+						.append( //{ Playlist index
+							(this.playlist_index_container = this.D("SPPlaylistIndexContainer"))
+							.on("mousedown", this.cancel_event)
 							.append(
-								(this.downloads_link = this.E("a", "SPDownloadsLink"))
+								this.D("SPPlaylistIndexContainerInner")
+								.append(
+									(this.playlist_index_text1 = this.D("SPPlaylistIndexText1"))
+									.html("-")
+								)
+								.append(
+									this.D("SPPlaylistIndexText2")
+									.html("/")
+								)
+								.append(
+									(this.playlist_index_text2 = this.D("SPPlaylistIndexText3"))
+									.html("-")
+								)
+							)
+						) //}
+						.append( //{ Volume
+							(this.volume_container = this.D("SPVolumeContainer"))
+							.append(
+								(this.volume_bar_container = this.D("SPVolumeBarContainer"))
+								.on("mousedown." + this.namespace, {media_player: this}, this.on_volumebar_mousedown)
+								.append(
+									(this.volume_bar = this.D("SPVolumeBar"))
+								)
+							)
+							.append(
+								this.D("SPVolumeLabelContainer")
+								.append(
+									(this.D("SPVolumeLabel").html("Vol"))
+								)
+								.append(
+									(this.volume_label = this.D("SPVolumeValue").html("100%"))
+								)
+							)
+						) //}
+					) //}
+					.append( //{ Loaded
+						this.D("SPSeekContainerTop")
+						.append(
+							(this.load_percent_bar_container = this.D("SPLoadPercentBarContainer"))
+							.on("mousedown." + this.namespace, this.cancel_event)
+							.append(
+								(this.load_percent_bar_mover = this.D("SPLoadPercentBarMover"))
+								.on("mousedown." + this.namespace, this.cancel_event)
+							)
+							.append(
+								(this.load_percent_bar = this.D("SPLoadPercentBar"))
+								.on("mousedown." + this.namespace, this.cancel_event)
+							)
+						)
+					) //}
+					.append( //{ Seek bar
+						this.D("SPSeekContainer")
+						.append(
+							this.D("SPSeekTimeContainer")
+							.append(
+								(this.seek_time_start_label = this.D("SPSeekTimeLeft"))
+								.html("0:00")
+							)
+							.append(
+								(this.seek_time_end_label = this.D("SPSeekTimeRight"))
+								.html("0:00")
+							)
+							.append(
+								(this.seek_time_current_label = this.D("SPSeekTime"))
+								.html("0:00")
+							)
+						)
+						.append(
+							(this.seek_bar_container = this.D("SPSeekBarContainer"))
+							.on("mousedown." + this.namespace, {media_player: this}, this.on_seekbar_container_mousedown)
+							.append(
+								(this.seek_bar_mover = this.D("SPSeekBarMover"))
+							)
+							.append(
+								(this.seek_bar = this.D("SPSeekBar"))
+								.on("mousedown." + this.namespace, {media_player: this}, this.on_seekbar_mousedown)
+							)
+						)
+					) //}
+					.append( //{ Resize
+						this.D("SPSeekContainerBottom")
+					) //}
+					.append( //{ Playlist
+						(this.playlist_container = this.D("SPPlaylistContainer"))
+						.height(this.playlist_height * this.scale_factor)
+						.on("mousedown", this.cancel_event)
+					) //}
+
+					.append( //{ Help 0
+						(this.help_container[0] = this.D("SPHelpContainer"))
+						.css("display", "none")
+						.append(
+							this.D("SPHelpContainerInner0")
+							.append(
+								(this.help_container_inner1[0] = this.D("SPHelpContainerInner1"))
+								.append( //{ Playlist Settings
+									this.D("SPHelpLabelDiv")
+									.html("Playlist Settings")
+								)
+								.append(
+									this.D("SPHelpSectionDiv")
+									.append(
+										this.D("SPHelpColorInputDiv0")
+										.append(
+											this.D("SPHelpColorInputDiv2b")
+											.append(
+												this.D("SPHelpColorLabelText")
+												.html("Mode")
+											)
+										)
+									)
+									.append(
+										this.D("SPHelpColorInputDiv1Full")
+										.append(
+											this.D("SPHelpColorInputDiv2")
+											.append(
+												this.E("a", "SPHelpModeLink")
+												.html(this.playlist_randomize ? "Randomize" : (this.playlist_loop ? "Loop" : "Play Once"))
+												.on("click." + this.namespace, {media_player: this}, this.on_playlist_mode_change)
+												.on("mousedown", this.cancel_event)
+											)
+										)
+									)
+								)
+								.append(
+									this.D("SPHelpSectionDiv")
+									.append(
+										this.D("SPHelpColorInputDiv0")
+										.append(
+											this.D("SPHelpColorInputDiv2b")
+											.append(
+												this.D("SPHelpColorLabelText")
+												.html("On Load")
+											)
+										)
+									)
+									.append(
+										this.D("SPHelpColorInputDiv1Full")
+										.append(
+											this.D("SPHelpColorInputDiv2")
+											.append(
+												this.E("a", "SPHelpModeLink")
+												.html(this.playlist_play_on_load_settings[this.playlist_play_on_load])
+												.on("click." + this.namespace, {media_player: this}, this.on_playlist_onload_change)
+												.on("mousedown", this.cancel_event)
+											)
+										)
+									)
+								)
+								.append(
+									this.D("SPHelpSectionDiv")
+									.append(
+										this.D("SPHelpColorInputDiv0")
+										.append(
+											this.D("SPHelpColorInputDiv2b")
+											.append(
+												this.D("SPHelpColorLabelText")
+											)
+										)
+									)
+									.append(
+										this.D("SPHelpColorInputDiv1Full")
+										.append(
+											this.D("SPHelpColorInputDiv2")
+											.append(
+												this.E("a", "SPHelpModeLink")
+												.html(this.playlist_scrollto_onload ? "Scroll to in playlist" : "Don't scroll playlist")
+												.on("click." + this.namespace, {media_player: this}, this.on_playlist_scrollto_change)
+												.on("mousedown", this.cancel_event)
+											)
+										)
+									)
+								)
+								.append(
+									this.D("SPHelpSectionDiv")
+									.append(
+										this.D("SPHelpColorInputDiv0")
+										.append(
+											this.D("SPHelpColorInputDiv2b")
+											.append(
+												this.D("SPHelpColorLabelText")
+												.html("YT Quality")
+											)
+										)
+									)
+									.append(
+										this.D("SPHelpColorInputDiv1Full")
+										.append(
+											this.D("SPHelpColorInputDiv2")
+											.append(
+												this.E("a", "SPHelpModeLink")
+												.html(this.ytvideo_qualities[this.ytvideo_quality_index])
+												.on("click." + this.namespace, {media_player: this}, this.on_ytquality_change)
+												.on("mousedown", this.cancel_event)
+											)
+										)
+									)
+								) //}
+								.append( //{ Player Settings
+									this.D("SPHelpLabelDiv")
+									.html("Player Settings")
+								)
+								.append(
+									(help_custom_div = this.D("SPHelpSectionDiv"))
+									.append(
+										this.D("SPHelpColorInputDiv0")
+										.append(
+											this.D("SPHelpColorInputDiv2b")
+											.append(
+												this.D("SPHelpColorLabelText")
+												.html("Theme")
+											)
+										)
+									)
+									.append(
+										this.D("SPHelpColorInputDiv1Full")
+										.append(
+											this.D("SPHelpColorInputDiv2")
+											.append(
+												(this.player_theme_name = this.E("a", "SPHelpModeLink"))
+												.on("click." + this.namespace, {media_player: this}, this.on_player_theme_change)
+												.on("mousedown", this.cancel_event)
+											)
+										)
+									)
+									.append(
+										this.D("SPHelpColorInputDiv0")
+										.append(
+											this.D("SPHelpColorInputDiv2b")
+											.append(
+												this.D("SPHelpColorLabelText")
+												.html("Player Graphics")
+											)
+										)
+									)
+									.append(
+										this.D("SPHelpColorInputDiv1Full")
+										.append(
+											this.D("SPHelpColorInputDiv2")
+											.append(
+												this.E("a", "SPHelpModeLink")
+												.on("click." + this.namespace, {media_player: this}, this.on_player_use_svg_update)
+												.on("mousedown", this.cancel_event)
+												.html(this.use_svg ? "Allowed" : "Disallowed")
+											)
+										)
+									)
+								) //}
+								.append( //{ Scaling Settings
+									this.D("SPHelpLabelDiv")
+									.html("Scaling Settings")
+								)
+								.append(this.generate_value_editor("Padding", "padding_scale", this.css.css_size_presets[this.css.preset].padding_scale, false))
+								.append(this.generate_value_editor("Text", "font_scale", this.css.css_size_presets[this.css.preset].font_scale, false))
+								.append(this.generate_value_editor("Borders", "border_scale", this.css.css_size_presets[this.css.preset].border_scale, false))
+								.append(this.generate_value_editor("Window", "@scale_factor", this.scale_factor, false))
+								//}
+							)
+							.append( //{ More
+								(this.help_container_footer[0] = this.D("SPHelpLinkDiv"))
+								.append(
+									this.D("SPHelpLabelDiv")
+									.html("More Settings")
+								)
+								.append(
+									this.D("SPHelpSectionDiv")
+									.append(
+										this.E("A", "SPHelpTextLink")
+										.html("Color Settings")
+										.on("click." + this.namespace, {media_player: this, help_page: 1}, this.on_helppage_goto)
+									)
+									.append(
+										this.E("A", "SPHelpTextLink")
+										.html("Other Settings")
+										.on("click." + this.namespace, {media_player: this, help_page: 2}, this.on_helppage_goto)
+									)
+								)
+							) //}
+						)
+					) //}
+					.append( //{ Help 1
+						(this.help_container[1] = this.D("SPHelpContainer"))
+						.css("display", "none")
+						.append(
+							this.D("SPHelpContainerInner0")
+							.append(
+								(this.help_container_inner1[1] = this.D("SPHelpContainerInner1"))
+								.append(this.D("SPHelpLabelDiv").html("Background Colors"))
+								.append(this.generate_color_editor("Outline", "bg_outer_color", this.css.css_color_presets[this.css.preset].bg_outer_color))
+								.append(this.generate_color_editor("Lightest", "bg_color_lightest", this.css.css_color_presets[this.css.preset].bg_color_lightest))
+								.append(this.generate_color_editor("Light", "bg_color_light", this.css.css_color_presets[this.css.preset].bg_color_light))
+								.append(this.generate_color_editor("Medium", "bg_color_dark", this.css.css_color_presets[this.css.preset].bg_color_dark))
+								.append(this.generate_color_editor("Dark", "bg_color_darker", this.css.css_color_presets[this.css.preset].bg_color_darker))
+								.append(this.generate_color_editor("Darkest", "bg_color_darkest", this.css.css_color_presets[this.css.preset].bg_color_darkest))
+								.append(this.D("SPHelpLabelDiv").html("Text Colors"))
+								.append(this.generate_color_editor("Default", "color_standard", this.css.css_color_presets[this.css.preset].color_standard))
+								.append(this.generate_color_editor("Disabled", "color_disabled", this.css.css_color_presets[this.css.preset].color_disabled))
+								.append(this.generate_color_editor("Light", "color_light", this.css.css_color_presets[this.css.preset].color_light))
+								.append(this.generate_color_editor("Special 1", "color_special_1", this.css.css_color_presets[this.css.preset].color_special_1))
+								.append(this.generate_color_editor("Special 2", "color_special_2", this.css.css_color_presets[this.css.preset].color_special_2))
+								.append(this.generate_color_editor("Highlight", "color_highlight_light", this.css.css_color_presets[this.css.preset].color_highlight_light))
+								.append(this.D("SPHelpLabelDiv").html("Other Colors"))
+								.append(this.generate_color_editor("Volume", "volume_colors[0]", this.css.css_color_presets[this.css.preset].volume_colors[0]))
+							)
+						)
+					) //}
+					.append( //{ Help 2
+						(this.help_container[2] = this.D("SPHelpContainer"))
+						.css("display", "none")
+						.append(
+							this.D("SPHelpContainerInner0")
+							.append(
+								(this.help_container_inner1[2] = this.D("SPHelpContainerInner1"))
+								.append(this.D("SPHelpLabelDiv").html("Borders"))
+								.append(this.generate_value_editor("Outer", "bg_outer_size", this.css.css_size_presets[this.css.preset].bg_outer_size, false))
+								.append(this.D("SPHelpLabelDiv").html("Border Radii"))
+								.append(this.generate_value_editor("Outer", "bg_outer_border_radius", this.css.css_size_presets[this.css.preset].bg_outer_border_radius, false))
+								.append(this.generate_value_editor("Inner", "bg_inner_border_radius", this.css.css_size_presets[this.css.preset].bg_inner_border_radius, false))
+								.append(this.generate_value_editor("Major", "border_radius_normal", this.css.css_size_presets[this.css.preset].border_radius_normal, false))
+								.append(this.generate_value_editor("Minor", "border_radius_small", this.css.css_size_presets[this.css.preset].border_radius_small, false))
+								.append(this.D("SPHelpLabelDiv").html("Fonts"))
+								.append(this.generate_value_editor("Font", "main_font", this.css.css_size_presets[this.css.preset].main_font, true))
+								.append(this.generate_value_editor("Controls", "controls_font", this.css.css_size_presets[this.css.preset].controls_font, true))
+								.append(this.D("SPHelpLabelDiv").html("Font Sizes"))
+								.append(this.generate_value_editor("Default", "font_size", this.css.css_size_presets[this.css.preset].font_size, false))
+								.append(this.generate_value_editor("Small", "font_size_small", this.css.css_size_presets[this.css.preset].font_size_small, false))
+								.append(this.generate_value_editor("Controls", "font_size_controls", this.css.css_size_presets[this.css.preset].font_size_controls, false))
+							)
+						)
+					) //}
+
+					.append( //{ Downloads
+						(this.downloads_container = this.D("SPDownloadsContainer"))
+						.css("display", "none")
+						.append(
+							this.D("SPDownloadsLabel")
+							.html("Download Content")
+						)
+						.append(
+							this.D("SPDownloadsContent")
+							.append(
+								this.D()
+								.append(
+									this.D()
+									.html("Generate download link for:")
+								)
+								.append(
+									this.D()
+									.append("- ")
+									.append(
+										this.E("a", "SPDownloadsLink")
+										.attr("href", "#")
+										.html("All loaded sounds")
+										.on("click." + this.namespace, {media_player: this, type: "sounds"}, this.on_downloads_generate_click)
+									)
+								)
+								.append(
+									this.D()
+									.append("- ")
+									.append(
+										this.E("a", "SPDownloadsLink")
+										.attr("href", "#")
+										.html("All loaded images")
+										.on("click." + this.namespace, {media_player: this, type: "images2"}, this.on_downloads_generate_click)
+									)
+									.append(" (using original filenames)")
+								)
+								.append(
+									this.D()
+									.append("- ")
+									.append(
+										this.E("a", "SPDownloadsLink")
+										.attr("href", "#")
+										.html("All loaded images")
+										.on("click." + this.namespace, {media_player: this, type: "images"}, this.on_downloads_generate_click)
+									)
+									.append(" (using server filenames)")
+								)
+							)
+							.append(
+								(this.downloads_ready_container = this.D("SPDownloadsContentReady"))
+								.css("display", "none")
+								.append("Click ")
+								.append(
+									(this.downloads_link = this.E("a", "SPDownloadsLink"))
+									.attr("href", "#")
+									.html("here")
+									.on("click." + this.namespace, {media_player: this}, this.on_downloads_link_click)
+								)
+								.append(
+									(this.downloads_about = this.E("span"))
+								)
+							)
+						)
+					) //}
+
+					.append( //{ First run
+						(this.first_run_container = this.D("SPFirstRunContainer"))
+						.append(
+							this.D("SPFirstRunLabel")
+							.html("Info")
+						)
+						.append(
+							this.D("SPFirstRunTextContainer")
+							.append(
+								"This player can play embedded sound files in images " +
+								"as well as Youtube videos. Scroll to the "
+							)
+							.append(
+								this.E("a", "SPFirstRunLink")
 								.attr("href", "#")
-								.html("here")
-								.on("click." + this.namespace, {media_player: this}, this.on_downloads_link_click)
+								.html("bottom")
+							)
+							.on("click." + this.namespace, {media_player: this}, function (event) {
+								event.data.media_player.first_run_container.scrollTop(
+									(event.data.media_player.first_run_container[0].scrollHeight || 0)
+									- event.data.media_player.first_run_container.outerHeight()
+								);
+								return false;
+							})
+							.append(
+								" for a link to exit this page."
+							)
+						)
+						.append(
+							this.D("SPFirstRunLabel")
+							.html("Player")
+						)
+						.append(
+							this.D("SPFirstRunTextContainer")
+							.append(
+								this.D()
+								.css("padding-bottom", "0.5em")
+								.html("To move, click and drag on the title bar.")
 							)
 							.append(
-								(this.downloads_about = this.E("span"))
+								this.D()
+								.css("padding-bottom", "0.5em")
+								.html("To resize, click and drag any edge.")
+							)
+							.append(
+								this.D()
+								.css("padding-bottom", "0.5em")
+								.html("To resize the image/video, click and drag it.")
+							)
+							.append(
+								this.D()
+								.html("There are additional (hidden) buttons on the right " +
+								"and left sides of the title bar.")
 							)
 						)
-					)
-				) //}
-
-				.append( //{ First run
-					(this.first_run_container = this.D("SPFirstRunContainer"))
-					.append(
-						this.D("SPFirstRunLabel")
-						.html("Info")
-					)
-					.append(
-						this.D("SPFirstRunTextContainer")
 						.append(
-							"This player can play embedded sound files in images " +
-							"as well as Youtube videos. Scroll to the "
+							this.D("SPFirstRunLabel")
+							.html("Playlist")
 						)
 						.append(
-							this.E("a", "SPFirstRunLink")
+							this.D("SPFirstRunTextContainer")
+							.append(
+								this.D()
+								.css("padding-bottom", "0.5em")
+								.html(
+									"You can add media to the player by either " +
+									"clicking on inline media URLs/[tags], or " +
+									"clicking and dragging images/urls into the player " +
+									"from your browser or computer."
+								)
+							)
+							.append(
+								this.D()
+								.html(
+									"Once the media has been loaded, it will appear in " +
+									"the playlist. To remove, change order, or save the source, " +
+									"hover over the right side of the playlist item for controls."
+								)
+							)
+						)
+						.append(
+							this.D("SPFirstRunLabel")
+							.html("Customization")
+						)
+						.append(
+							this.D("SPFirstRunTextContainer")
+							.append(
+								this.D()
+								.css("padding-bottom", "0.5em")
+								.html(
+									"There are 3 settings tabs available for customizing the " +
+									"player. Access them by clicking [S] in the top left."
+								)
+							)
+							.append(
+								this.D()
+								.html(
+									"For simplicity, there are 4 preset stylesheets that you " +
+									"can switch between. If you edit the settings, it will be " +
+									"saved as a new custom stylesheet."
+								)
+							)
+						)
+						.append(
+							this.D("SPFirstRunLabel")
+							.html("Broken?")
+						)
+						.append(
+							this.D("SPFirstRunTextContainer")
+							.append(
+								this.D()
+								.css("padding-bottom", "0.5em")
+								.html(
+									"If you mess up some customization settings such that " +
+									"your player isn't properly useable anymore, close the player, " +
+									"then click the \"Reload\" link next to the [ Media Player ] " +
+									"link at the top of the page."
+								)
+							)
+							.append(
+								this.D()
+								.html(
+									"(By default this option is hidden; hover over the right bracket " +
+									"to make it appear.)"
+								)
+							)
+						)
+						.append(
+							this.D("SPFirstRunLabel")
+							.html("Done")
+						)
+						.append(
+							this.E("a", "SPFirstRunExitLink", "SPFirstRunLink")
 							.attr("href", "#")
-							.html("bottom")
+							.on("click." + this.namespace, {media_player: this}, this.on_firstrun_page_exit_click)
+							.html("Exit Page")
 						)
-						.on("click." + this.namespace, {media_player: this}, function (event) {
-							event.data.media_player.first_run_container.scrollTop(
-								(event.data.media_player.first_run_container[0].scrollHeight || 0)
-								- event.data.media_player.first_run_container.outerHeight()
-							);
-							return false;
-						})
-						.append(
-							" for a link to exit this page."
-						)
-					)
+					) //}
+				) //}
+				.append( //{ Footer
+					(this.footer_container = this.D("SPFooterBarContainer"))
+				) //}
+				.append( //{ Alert page
+					(this.alert_container = this.D("SPAlertContainer"))
+					.css("display", "none")
 					.append(
-						this.D("SPFirstRunLabel")
-						.html("Player")
-					)
-					.append(
-						this.D("SPFirstRunTextContainer")
-						.append(
-							this.D()
-							.css("padding-bottom", "0.5em")
-							.html("To move, click and drag on the title bar.")
-						)
-						.append(
-							this.D()
-							.css("padding-bottom", "0.5em")
-							.html("To resize, click and drag any edge.")
-						)
-						.append(
-							this.D()
-							.css("padding-bottom", "0.5em")
-							.html("To resize the image/video, click and drag it.")
-						)
-						.append(
-							this.D()
-							.html("There are additional (hidden) buttons on the right " +
-							"and left sides of the title bar.")
-						)
-					)
-					.append(
-						this.D("SPFirstRunLabel")
-						.html("Playlist")
-					)
-					.append(
-						this.D("SPFirstRunTextContainer")
-						.append(
-							this.D()
-							.css("padding-bottom", "0.5em")
-							.html(
-								"You can add media to the player by either " +
-								"clicking on inline media URLs/[tags], or " +
-								"clicking and dragging images/urls into the player " +
-								"from your browser or computer."
-							)
-						)
-						.append(
-							this.D()
-							.html(
-								"Once the media has been loaded, it will appear in " +
-								"the playlist. To remove, change order, or save the source, " +
-								"hover over the right side of the playlist item for controls."
-							)
-						)
-					)
-					.append(
-						this.D("SPFirstRunLabel")
-						.html("Customization")
-					)
-					.append(
-						this.D("SPFirstRunTextContainer")
-						.append(
-							this.D()
-							.css("padding-bottom", "0.5em")
-							.html(
-								"There are 3 settings tabs available for customizing the " +
-								"player. Access them by clicking [S] in the top left."
-							)
-						)
-						.append(
-							this.D()
-							.html(
-								"For simplicity, there are 4 preset stylesheets that you " +
-								"can switch between. If you edit the settings, it will be " +
-								"saved as a new custom stylesheet."
-							)
-						)
-					)
-					.append(
-						this.D("SPFirstRunLabel")
-						.html("Broken?")
-					)
-					.append(
-						this.D("SPFirstRunTextContainer")
-						.append(
-							this.D()
-							.css("padding-bottom", "0.5em")
-							.html(
-								"If you mess up some customization settings such that " +
-								"your player isn't properly useable anymore, close the player, " +
-								"then click the \"Reload\" link next to the [ Media Player ] " +
-								"link at the top of the page."
-							)
-						)
-						.append(
-							this.D()
-							.html(
-								"(By default this option is hidden; hover over the right bracket " +
-								"to make it appear.)"
-							)
-						)
-					)
-					.append(
-						this.D("SPFirstRunLabel")
-						.html("Done")
-					)
-					.append(
-						this.E("a", "SPFirstRunExitLink", "SPFirstRunLink")
-						.attr("href", "#")
-						.on("click." + this.namespace, {media_player: this}, this.on_firstrun_page_exit_click)
-						.html("Exit Page")
+						(this.D("SPAlertContentContainer")
+						.html("Drop Files<br />Here"))
 					)
 				) //}
-			) //}
-			.append( //{ Footer
-				(this.footer_container = this.D("SPFooterBarContainer"))
-			) //}
-			.append( //{ Alert page
-				(this.alert_container = this.D("SPAlertContainer"))
-				.css("display", "none")
-				.append(
-					(this.D("SPAlertContentContainer")
-					.html("Drop Files<br />Here"))
-				)
-			) //}
-		)
-	); //}
+			)
+		); //}
 
-	// Playback controls
-	this.create_playback_controls();
+		// Playback controls
+		this.create_playback_controls();
 
-	// Custom settings
-	if (this.additional_options.length > 0) {
-		var section_label_references = [ help_custom_div , help_custom_div ];
-		var section_default = "Other Settings";
-		var sections = {};
-		var default_set = false;
+		// Custom settings
+		if (this.additional_options.length > 0) {
+			var section_label_references = [ help_custom_div , help_custom_div ];
+			var section_default = "Other Settings";
+			var sections = {};
+			var default_set = false;
 
-		// Loop over all options
-		for (var i = 0; i < this.additional_options.length; ++i) {
-			// Section label
-			var s = ("section" in this.additional_options[i] ? this.additional_options[i]["section"] : section_default);
-			var reference;
-			if (!(s in sections)) {
-				// Create a new label (ensure the default is always last)
-				section_label_references[(s == section_default ? 0 : 1)].after(
-					(reference = this.D("SPHelpLabelDiv"))
-					.html(s)
-				);
-				reference.after(
-					(sections[s] = this.D())
-				);
-				if (s == section_default) {
-					default_set = true;
-					section_label_references[0] = sections[s];
-				}
-				else {
-					section_label_references[1] = sections[s];
-					if (!default_set) section_label_references[0] = sections[s];
-				}
-			}
-			reference = sections[s];
-
-			// Value enumeration: find the current value/label
-			var v_id = 0;
-			if ("values" in this.additional_options[i] && "current" in this.additional_options[i]) {
-				for (var j = 0; j < this.additional_options[i]["values"].length; ++j) {
-					if (this.additional_options[i]["current"] == this.additional_options[i]["values"][j]) {
-						v_id = j;
-						break;
+			// Loop over all options
+			for (var i = 0; i < this.additional_options.length; ++i) {
+				// Section label
+				var s = ("section" in this.additional_options[i] ? this.additional_options[i]["section"] : section_default);
+				var reference;
+				if (!(s in sections)) {
+					// Create a new label (ensure the default is always last)
+					section_label_references[(s == section_default ? 0 : 1)].after(
+						(reference = this.D("SPHelpLabelDiv"))
+						.html(s)
+					);
+					reference.after(
+						(sections[s] = this.D())
+					);
+					if (s == section_default) {
+						default_set = true;
+						section_label_references[0] = sections[s];
+					}
+					else {
+						section_label_references[1] = sections[s];
+						if (!default_set) section_label_references[0] = sections[s];
 					}
 				}
-			}
-			var content = null;
-			if ("descr" in this.additional_options[i]) {
-				(content = this.E("a", "SPHelpModeLink"))
-				.html(this.additional_options[i]["descr"][v_id])
-				.on("click." + this.namespace, {media_player: this, custom_data: this.additional_options[i]}, this.on_custom_option_click)
-				.on("mousedown", this.cancel_event);
-			}
-			// Custom HTML
-			else if ("html" in this.additional_options[i]) {
-				content = this.D("SPHelpModeNonLink").html(this.additional_options[i]["html"]);
-			}
-			// Setup DOM
-			reference.append(
-				(sections[s] = this.D("SPHelpSectionDiv"))
-				.append(
-					this.D("SPHelpColorInputDiv0")
+				reference = sections[s];
+
+				// Value enumeration: find the current value/label
+				var v_id = 0;
+				if ("values" in this.additional_options[i] && "current" in this.additional_options[i]) {
+					for (var j = 0; j < this.additional_options[i]["values"].length; ++j) {
+						if (this.additional_options[i]["current"] == this.additional_options[i]["values"][j]) {
+							v_id = j;
+							break;
+						}
+					}
+				}
+				var content = null;
+				if ("descr" in this.additional_options[i]) {
+					(content = this.E("a", "SPHelpModeLink"))
+					.html(this.additional_options[i]["descr"][v_id])
+					.on("click." + this.namespace, {media_player: this, custom_data: this.additional_options[i]}, this.on_custom_option_click)
+					.on("mousedown", this.cancel_event);
+				}
+				// Custom HTML
+				else if ("html" in this.additional_options[i]) {
+					content = this.D("SPHelpModeNonLink").html(this.additional_options[i]["html"]);
+				}
+				// Setup DOM
+				reference.append(
+					(sections[s] = this.D("SPHelpSectionDiv"))
 					.append(
-						this.D("SPHelpColorInputDiv2b")
+						this.D("SPHelpColorInputDiv0")
 						.append(
-							this.D("SPHelpColorLabelText")
-							.html(this.additional_options[i]["label"])
+							this.D("SPHelpColorInputDiv2b")
+							.append(
+								this.D("SPHelpColorLabelText")
+								.html(this.additional_options[i]["label"])
+							)
 						)
 					)
-				)
-				.append(
-					this.D("SPHelpColorInputDiv1Full")
 					.append(
-						this.D("SPHelpColorInputDiv2")
-						.append(content)
+						this.D("SPHelpColorInputDiv1Full")
+						.append(
+							this.D("SPHelpColorInputDiv2")
+							.append(content)
+						)
 					)
-				)
-			);
-		}
-	}
-
-	// Final settings
-	if (!this.first_run) {
-		this.first_run_container.css("display", "none");
-	}
-	for (var i = 0; i < this.title_buttons.length; ++i) {
-		this.title_buttons[i].on("mousedown", this.cancel_event);
-		this.title_buttons[i].on("click." + this.namespace, {media_player: this, control_id: i}, this.on_main_control_click);
-	}
-	for (var i = 0; i < this.resizing_texts.length; ++i) {
-		this.resizing_texts[i].css("display", "none");
-	}
-	this.update_player_theme_name({media_player: this});
-	this.set_volume(this.volume);
-	this.audio[0].volume = this.volume;
-	this.reposition();
-
-	// Done
-	this.created = true;
-}
-MediaPlayer.prototype.destroy = function () {
-	// Playlist clear
-	while (this.playlist.length > 0) {
-		this.remove(0);
-	}
-
-	// Remove html
-	if (this.sp_container_main != null) this.sp_container_main.remove();
-
-	// Events
-	$(window)
-	.off("resize." + this.namespace);
-	$(document)
-	.off("mouseup." + this.namespace)
-	.off("mousemove." + this.namespace);
-
-	// Reset attributes
-	this.nullify();
-
-	// Not created
-	this.created = false;
-}
-
-MediaPlayer.prototype.focus = function () {
-	// Min/max
-	var open = false;
-	this.playlist_container.css("display", (open ? "none" : ""));
-	this.top_container.css("display", (open ? "none" : ""));
-
-	// Close overlays
-	this.downloads_container.css("display", "none");
-	for (var i = 0; i < this.help_container.length; ++i) {
-		this.help_container[i].css("display", "none");
-	}
-
-	// On screen
-	this.reposition();
-}
-
-MediaPlayer.prototype.play = function () {
-	if (this.current_media !== null) {
-		if (this.current_media.type == "image-audio") {
-			this.audio[0].play();
-		}
-		else if (this.current_media.type == "youtube-video") {
-			if (this.ytvideo_player != null) {
-				if (this.ytvideo_unsafe) {
-					_unsafe_exec(function (data) {
-						if (data.media_player.ytvideo_player.playVideo) data.media_player.ytvideo_player.playVideo();
-					}, {media_player: this});
-				}
-				else {
-					if (this.ytvideo_player.playVideo) this.ytvideo_player.playVideo();
-				}
-			}
-
-			// Timer
-			if (this.current_media.progress_timer === null) {
-				var self = this;
-				var playlist_item = this.current_media;
-				this.current_media.progress_timer = setInterval(function () {
-					self.on_ytvideo_time_update(playlist_item, self);
-				}, 500);
-			}
-		}
-		else {
-			console.log(this.current_media.type);
-		}
-	}
-	this.update_playing_status();
-}
-MediaPlayer.prototype.pause = function () {
-	if (this.current_media !== null) {
-		if (this.current_media.type == "image-audio") {
-			this.audio[0].pause();
-		}
-		else if (this.current_media.type == "youtube-video") {
-			if (this.ytvideo_player != null) {
-				if (this.ytvideo_unsafe) {
-					_unsafe_exec(function (data) {
-						if (data.media_player.ytvideo_player.pauseVideo) data.media_player.ytvideo_player.pauseVideo();
-					}, {media_player: this});
-				}
-				else {
-					if (this.ytvideo_player.pauseVideo) this.ytvideo_player.pauseVideo();
-				}
-			}
-
-			// Timer
-			if (this.current_media.progress_timer !== null) {
-				clearInterval(this.current_media.progress_timer);
-				this.current_media.progress_timer = null;
-			}
-			this.on_ytvideo_time_update(this.current_media, this);
-		}
-		else {
-			console.log(this.current_media.type);
-		}
-	}
-	this.update_playing_status();
-}
-MediaPlayer.prototype.is_paused = function () {
-	if (this.current_media !== null) {
-		if (this.current_media.type == "image-audio") {
-			return this.audio[0].paused;
-		}
-		else if (this.current_media.type == "youtube-video") {
-			if (this.ytvideo_player != null) {
-				if (this.ytvideo_unsafe) {
-					return _unsafe_exec(function (data) {
-						return (
-							data.media_player.ytvideo_player.getPlayerState &&
-							(data.media_player.ytvideo_player.getPlayerState() != window.YT.PlayerState.BUFFERING &&
-							data.media_player.ytvideo_player.getPlayerState() != window.YT.PlayerState.PLAYING)
-						);
-					}, { media_player: this }) || false;
-				}
-				else {
-					return (
-						this.ytvideo_player.getPlayerState &&
-						(this.ytvideo_player.getPlayerState() != unsafeWindow.YT.PlayerState.BUFFERING &&
-						this.ytvideo_player.getPlayerState() != unsafeWindow.YT.PlayerState.PLAYING)
-					);
-				}
-			}
-		}
-		else {
-			console.log(this.current_media.type);
-		}
-	}
-	return true;
-}
-MediaPlayer.prototype.get_position = function (seconds) {
-	if (this.current_media !== null) {
-		if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
-			return this.current_media.position;
-		}
-		else {
-			console.log(this.current_media.type);
-		}
-	}
-	return 0.0;
-}
-MediaPlayer.prototype.seek_to = function (seconds, dont_seek_in_media, dragging) {
-	if (this.current_media !== null) {
-		if (this.current_media.type == "image-audio") {
-			if (seconds !== null) {
-				if (seconds < 0.0) seconds = 0.0;
-				else if (seconds > this.current_media.duration) seconds = this.current_media.duration;
-				this.current_media.position = seconds;
-			}
-
-			if (!dont_seek_in_media) {
-				this.audio[0].currentTime = this.current_media.position;
-			}
-
-			// HTML
-			if (this.current_media.duration != 0.0) {
-				this.seek_time_current_label.html(this.duration_to_string(this.current_media.position));
-				this.seek_bar_mover.width((this.current_media.position / this.current_media.duration) * (this.seek_bar_container.outerWidth() - this.seek_bar.outerWidth()));
-			}
-		}
-		else if (this.current_media.type == "youtube-video") {
-			if (seconds !== null) {
-				if (seconds < 0.0) seconds = 0.0;
-				else if (seconds > this.current_media.duration) seconds = this.current_media.duration;
-				this.current_media.position = seconds;
-			}
-
-			if (!dont_seek_in_media && this.ytvideo_player != null) {
-				if (this.ytvideo_unsafe) {
-					_unsafe_exec(function (data) {
-						if (data.media_player.ytvideo_player.seekTo) data.media_player.ytvideo_player.seekTo(data.media_player.current_media.position, data.arg2);
-					}, {media_player: this, arg2: (dragging ? false : true)});
-				}
-				else {
-					if (this.ytvideo_player.seekTo) this.ytvideo_player.seekTo(this.current_media.position, dragging ? false : true);
-				}
-			}
-
-			// HTML
-			if (this.current_media.duration != 0.0) {
-				this.seek_time_current_label.html(this.duration_to_string(this.current_media.position));
-				this.seek_bar_mover.width((this.current_media.position / this.current_media.duration) * (this.seek_bar_container.outerWidth() - this.seek_bar.outerWidth()));
-			}
-		}
-		else {
-			console.log(this.current_media.type);
-		}
-	}
-}
-MediaPlayer.prototype.get_volume = function () {
-	// Value
-	return this.volume;
-}
-MediaPlayer.prototype.set_volume = function (volume) {
-	// Value
-	if (volume < 0.0) volume = 0.0;
-	else if (volume > 1.0) volume = 1.0;
-	this.volume = volume;
-
-	// HTML
-	var vol_str, vol_col;
-	vol_str = Math.round(this.volume * 100) + "%";
-	vol_col = this.get_volume_color(this.volume);
-	this.volume_label.html(vol_str);
-	this.volume_bar.css("height", vol_str);
-	this.volume_bar.css("background", "rgb(" + vol_col[0] + "," + vol_col[1] + "," + vol_col[2] + ")");
-
-	// Media
-	if (this.current_media !== null) {
-		if (this.current_media.type == "image-audio") {
-			// Set volume
-			this.audio[0].volume = this.volume;
-		}
-		else if (this.current_media.type == "youtube-video") {
-			// Set volume
-			if (this.ytvideo_player != null) {
-				if (this.ytvideo_unsafe) {
-					_unsafe_exec(function (data) {
-						if (data.media_player.ytvideo_player.setVolume) data.media_player.ytvideo_player.setVolume(data.vol);
-					}, {media_player: this, vol: this.volume * 100.0});
-				}
-				else {
-					if (this.ytvideo_player.setVolume) this.ytvideo_player.setVolume(this.volume * 100.0);
-				}
-			}
-		}
-		else {
-			console.log(this.current_media.type);
-		}
-	}
-}
-MediaPlayer.prototype.get_duration = function (duration) {
-	if (this.current_media !== null) {
-		if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
-			// Update duration
-			return this.current_media.duration;
-		}
-		else {
-			console.log(this.current_media.type);
-		}
-	}
-}
-MediaPlayer.prototype.set_duration = function (duration) {
-	var length_str = this.duration_to_string(duration);
-	if (this.current_media !== null) {
-		if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
-			// Update duration
-			this.current_media.duration = duration;
-			this.current_media.info_container.html(length_str);
-		}
-		else {
-			console.log(this.current_media.type);
-		}
-	}
-
-	// html
-	this.seek_time_end_label.html(length_str);
-}
-MediaPlayer.prototype.deselect = function (old_type) {
-	if (this.current_media !== null) {
-		this.unC(this.current_media.playlist_item, "SPPlaylistItemActive");
-
-		if (this.current_media.type == "youtube-video") {
-			// Timer
-			if (this.current_media.progress_timer !== null) {
-				clearInterval(this.current_media.progress_timer);
-				this.current_media.progress_timer = null;
+				);
 			}
 		}
 
-		if (this.current_media.type !== old_type) {
-			// Stop
-			this.stop();
+		// Final settings
+		if (!this.first_run) {
+			this.first_run_container.css("display", "none");
+		}
+		for (var i = 0; i < this.title_buttons.length; ++i) {
+			this.title_buttons[i].on("mousedown", this.cancel_event);
+			this.title_buttons[i].on("click." + this.namespace, {media_player: this, control_id: i}, this.on_main_control_click);
+		}
+		for (var i = 0; i < this.resizing_texts.length; ++i) {
+			this.resizing_texts[i].css("display", "none");
+		}
+		this.update_player_theme_name({media_player: this});
+		this.set_volume(this.volume);
+		this.audio[0].volume = this.volume;
+		this.reposition();
 
+		// Done
+		this.created = true;
+	},
+	destroy: function () {
+		// Playlist clear
+		while (this.playlist.length > 0) {
+			this.remove(0);
+		}
+
+		// Remove html
+		if (this.sp_container_main != null) this.sp_container_main.remove();
+
+		// Events
+		$(window)
+		.off("resize." + this.namespace);
+		$(document)
+		.off("mouseup." + this.namespace)
+		.off("mousemove." + this.namespace);
+
+		// Reset attributes
+		this.nullify();
+
+		// Not created
+		this.created = false;
+	},
+
+	focus: function () {
+		// Min/max
+		var open = false;
+		this.playlist_container.css("display", (open ? "none" : ""));
+		this.top_container.css("display", (open ? "none" : ""));
+
+		// Close overlays
+		this.downloads_container.css("display", "none");
+		for (var i = 0; i < this.help_container.length; ++i) {
+			this.help_container[i].css("display", "none");
+		}
+
+		// On screen
+		this.reposition();
+	},
+
+	play: function () {
+		if (this.current_media !== null) {
 			if (this.current_media.type == "image-audio") {
-				this.image.css("display", "none");
-				this.image.removeAttr("src");
-				this.no_image.css("display", "");
-				this.current_image_width = 0;
-				this.current_image_height = 0;
-
-				this.title.html(this.title_default);
+				this.audio[0].play();
 			}
 			else if (this.current_media.type == "youtube-video") {
-				this.video_container.html("");
-				this.ytvideo_player = null;
+				if (this.ytvideo_player != null) {
+					if (this.ytvideo_unsafe) {
+						_unsafe_exec(function (data) {
+							if (data.media_player.ytvideo_player.playVideo) data.media_player.ytvideo_player.playVideo();
+						}, {media_player: this});
+					}
+					else {
+						if (this.ytvideo_player.playVideo) this.ytvideo_player.playVideo();
+					}
+				}
+
+				// Timer
+				if (this.current_media.progress_timer === null) {
+					var self = this;
+					var playlist_item = this.current_media;
+					this.current_media.progress_timer = setInterval(function () {
+						self.on_ytvideo_time_update(playlist_item, self);
+					}, 500);
+				}
 			}
 			else {
 				console.log(this.current_media.type);
 			}
+		}
+		this.update_playing_status();
+	},
+	pause: function () {
+		if (this.current_media !== null) {
+			if (this.current_media.type == "image-audio") {
+				this.audio[0].pause();
+			}
+			else if (this.current_media.type == "youtube-video") {
+				if (this.ytvideo_player != null) {
+					if (this.ytvideo_unsafe) {
+						_unsafe_exec(function (data) {
+							if (data.media_player.ytvideo_player.pauseVideo) data.media_player.ytvideo_player.pauseVideo();
+						}, {media_player: this});
+					}
+					else {
+						if (this.ytvideo_player.pauseVideo) this.ytvideo_player.pauseVideo();
+					}
+				}
 
-			// Global
-			for (var i = 0; i < this.playback_controls.length; ++i) {
-				for (var j = 0; j < this.playback_controls[i].length; ++j) {
-					this.C(this.playback_controls[i][j], "SPControlLinkDisabled");
+				// Timer
+				if (this.current_media.progress_timer !== null) {
+					clearInterval(this.current_media.progress_timer);
+					this.current_media.progress_timer = null;
+				}
+				this.on_ytvideo_time_update(this.current_media, this);
+			}
+			else {
+				console.log(this.current_media.type);
+			}
+		}
+		this.update_playing_status();
+	},
+	is_paused: function () {
+		if (this.current_media !== null) {
+			if (this.current_media.type == "image-audio") {
+				return this.audio[0].paused;
+			}
+			else if (this.current_media.type == "youtube-video") {
+				if (this.ytvideo_player != null) {
+					if (this.ytvideo_unsafe) {
+						return _unsafe_exec(function (data) {
+							return (
+								data.media_player.ytvideo_player.getPlayerState &&
+								(data.media_player.ytvideo_player.getPlayerState() != window.YT.PlayerState.BUFFERING &&
+								data.media_player.ytvideo_player.getPlayerState() != window.YT.PlayerState.PLAYING)
+							);
+						}, { media_player: this }) || false;
+					}
+					else {
+						return (
+							this.ytvideo_player.getPlayerState &&
+							(this.ytvideo_player.getPlayerState() != unsafeWindow.YT.PlayerState.BUFFERING &&
+							this.ytvideo_player.getPlayerState() != unsafeWindow.YT.PlayerState.PLAYING)
+						);
+					}
 				}
 			}
-			this.seek_time_current_label.html(this.duration_to_string(0.0));
-			this.seek_time_end_label.html(this.duration_to_string(0.0));
-			this.current_media = null;
+			else {
+				console.log(this.current_media.type);
+			}
+		}
+		return true;
+	},
+	get_position: function (seconds) {
+		if (this.current_media !== null) {
+			if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
+				return this.current_media.position;
+			}
+			else {
+				console.log(this.current_media.type);
+			}
+		}
+		return 0.0;
+	},
+	seek_to: function (seconds, dont_seek_in_media, dragging) {
+		if (this.current_media !== null) {
+			if (this.current_media.type == "image-audio") {
+				if (seconds !== null) {
+					if (seconds < 0.0) seconds = 0.0;
+					else if (seconds > this.current_media.duration) seconds = this.current_media.duration;
+					this.current_media.position = seconds;
+				}
+
+				if (!dont_seek_in_media) {
+					this.audio[0].currentTime = this.current_media.position;
+				}
+
+				// HTML
+				if (this.current_media.duration != 0.0) {
+					this.seek_time_current_label.html(this.duration_to_string(this.current_media.position));
+					this.seek_bar_mover.width((this.current_media.position / this.current_media.duration) * (this.seek_bar_container.outerWidth() - this.seek_bar.outerWidth()));
+				}
+			}
+			else if (this.current_media.type == "youtube-video") {
+				if (seconds !== null) {
+					if (seconds < 0.0) seconds = 0.0;
+					else if (seconds > this.current_media.duration) seconds = this.current_media.duration;
+					this.current_media.position = seconds;
+				}
+
+				if (!dont_seek_in_media && this.ytvideo_player != null) {
+					if (this.ytvideo_unsafe) {
+						_unsafe_exec(function (data) {
+							if (data.media_player.ytvideo_player.seekTo) data.media_player.ytvideo_player.seekTo(data.media_player.current_media.position, data.arg2);
+						}, {media_player: this, arg2: (dragging ? false : true)});
+					}
+					else {
+						if (this.ytvideo_player.seekTo) this.ytvideo_player.seekTo(this.current_media.position, dragging ? false : true);
+					}
+				}
+
+				// HTML
+				if (this.current_media.duration != 0.0) {
+					this.seek_time_current_label.html(this.duration_to_string(this.current_media.position));
+					this.seek_bar_mover.width((this.current_media.position / this.current_media.duration) * (this.seek_bar_container.outerWidth() - this.seek_bar.outerWidth()));
+				}
+			}
+			else {
+				console.log(this.current_media.type);
+			}
+		}
+	},
+	get_volume: function () {
+		// Value
+		return this.volume;
+	},
+	set_volume: function (volume) {
+		// Value
+		if (volume < 0.0) volume = 0.0;
+		else if (volume > 1.0) volume = 1.0;
+		this.volume = volume;
+
+		// HTML
+		var vol_str, vol_col;
+		vol_str = Math.round(this.volume * 100) + "%";
+		vol_col = this.get_volume_color(this.volume);
+		this.volume_label.html(vol_str);
+		this.volume_bar.css("height", vol_str);
+		this.volume_bar.css("background", "rgb(" + vol_col[0] + "," + vol_col[1] + "," + vol_col[2] + ")");
+
+		// Media
+		if (this.current_media !== null) {
+			if (this.current_media.type == "image-audio") {
+				// Set volume
+				this.audio[0].volume = this.volume;
+			}
+			else if (this.current_media.type == "youtube-video") {
+				// Set volume
+				if (this.ytvideo_player != null) {
+					if (this.ytvideo_unsafe) {
+						_unsafe_exec(function (data) {
+							if (data.media_player.ytvideo_player.setVolume) data.media_player.ytvideo_player.setVolume(data.vol);
+						}, {media_player: this, vol: this.volume * 100.0});
+					}
+					else {
+						if (this.ytvideo_player.setVolume) this.ytvideo_player.setVolume(this.volume * 100.0);
+					}
+				}
+			}
+			else {
+				console.log(this.current_media.type);
+			}
+		}
+	},
+	get_duration: function (duration) {
+		if (this.current_media !== null) {
+			if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
+				// Update duration
+				return this.current_media.duration;
+			}
+			else {
+				console.log(this.current_media.type);
+			}
+		}
+	},
+	set_duration: function (duration) {
+		var length_str = this.duration_to_string(duration);
+		if (this.current_media !== null) {
+			if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
+				// Update duration
+				this.current_media.duration = duration;
+				this.current_media.info_container.html(length_str);
+			}
+			else {
+				console.log(this.current_media.type);
+			}
+		}
+
+		// html
+		this.seek_time_end_label.html(length_str);
+	},
+	deselect: function (old_type) {
+		if (this.current_media !== null) {
+			this.unC(this.current_media.playlist_item, "SPPlaylistItemActive");
+
+			if (this.current_media.type == "youtube-video") {
+				// Timer
+				if (this.current_media.progress_timer !== null) {
+					clearInterval(this.current_media.progress_timer);
+					this.current_media.progress_timer = null;
+				}
+			}
+
+			if (this.current_media.type !== old_type) {
+				// Stop
+				this.stop();
+
+				if (this.current_media.type == "image-audio") {
+					this.image.css("display", "none");
+					this.image.removeAttr("src");
+					this.no_image.css("display", "");
+					this.current_image_width = 0;
+					this.current_image_height = 0;
+
+					this.title.html(this.title_default);
+				}
+				else if (this.current_media.type == "youtube-video") {
+					this.video_container.html("");
+					this.ytvideo_player = null;
+				}
+				else {
+					console.log(this.current_media.type);
+				}
+
+				// Global
+				for (var i = 0; i < this.playback_controls.length; ++i) {
+					for (var j = 0; j < this.playback_controls[i].length; ++j) {
+						this.C(this.playback_controls[i][j], "SPControlLinkDisabled");
+					}
+				}
+				this.seek_time_current_label.html(this.duration_to_string(0.0));
+				this.seek_time_end_label.html(this.duration_to_string(0.0));
+				this.current_media = null;
+				this.set_loaded();
+
+				// Title
+				this.title.html(this.title_default);
+
+				// Index display
+				this.update_index_display(-1, this.playlist.length, true);
+			}
+		}
+	},
+	stop: function () {
+		if (this.current_media !== null) {
+			if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
+				if (!this.is_paused()) this.pause();
+				this.seek_to(0.0);
+			}
+			else {
+				console.log(this.current_media.type);
+			}
+			this.update_playing_status();
+		}
+	},
+	start: function (index) {
+		// Stop old sound
+		this.deselect(this.playlist[index].type);
+
+		// Controls
+		for (var i = 0; i < this.playback_controls.length; ++i) {
+			for (var j = 0; j < this.playback_controls[i].length; ++j) {
+				this.unC(this.playback_controls[i][j], "SPControlLinkDisabled");
+			}
+		}
+
+		// Select
+		this.current_media = this.playlist[index];
+
+		this.C(this.current_media.playlist_item, "SPPlaylistItemActive");
+		this.seek_time_current_label.html(this.duration_to_string(this.current_media.position));
+		this.seek_time_end_label.html(this.duration_to_string(this.current_media.duration));
+
+		// Scroll to
+		this.scroll_to(index);
+
+		if (this.current_media.type == "image-audio") {
+			// Title
+			this.title.html(this.current_media.title);
+
+			// Play this sound
+			this.audio.attr("src", this.current_media.audio_blob_url);
+			this.audio[0].play();
+
+			// Current sound
+			this.current_media.position = 0.0;
+			this.seek_to(this.current_media.position, true);
 			this.set_loaded();
 
-			// Title
-			this.title.html(this.title_default);
-
-			// Index display
-			this.update_index_display(-1, this.playlist.length, true);
+			// Image
+			this.no_image.css("display", "none");
+			this.image.css("display", "none");
+			this.image.removeAttr("src");
+			this.image.attr("src", this.current_media.image_url);
 		}
-	}
-}
-MediaPlayer.prototype.stop = function () {
-	if (this.current_media !== null) {
-		if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
-			if (!this.is_paused()) this.pause();
-			this.seek_to(0.0);
+		else if (this.current_media.type == "youtube-video") {
+			// Title
+			this.title.html(this.current_media.title);
+
+			// Old player
+			if (this.ytvideo_player != null && this.ytvideo_html5) {
+				var params = {
+					mediaContentUrl: "http://www.youtube.com/v/" + this.current_media.vid_id + "?version=3",
+					startSeconds: this.current_media.start,
+					//endSeconds:Number,
+					suggestedQuality: this.ytvideo_qualities[this.ytvideo_quality_index]
+				};
+
+				var okay = false;
+				if (this.ytvideo_unsafe) {
+					okay = _unsafe_exec(function (data) {
+						if (data.media_player.ytvideo_player.cueVideoByUrl) {
+							data.media_player.ytvideo_player.cueVideoByUrl(data.params);
+							return true;
+						}
+						return false;
+					}, { media_player: this, "params": params });
+				}
+				else {
+					// not using loadVideoByUrl because "this.play" resets the timer
+					if (this.ytvideo_player.cueVideoByUrl) {
+						okay = true;
+						this.ytvideo_player.cueVideoByUrl(params);
+					}
+				}
+				if (okay) this.play();
+				else this.ytvideo_player = null;
+			}
+			else {
+				this.ytvideo_player = null;
+			}
+			// Fresh player
+			if (this.ytvideo_player == null) {
+				var fn = function (data) {
+					try {
+						var events = {
+							"onReady": function (event) { data.media_player.on_ytvideo_ready(event, data.media_player); },
+							"onStateChange": function (event) { data.media_player.on_ytvideo_state_change(event, data.media_player); },
+							"onPlaybackQualityChange": function (event) { data.media_player.on_ytvideo_playback_quality_change(event, data.media_player); },
+							"onPlaybackRateChange": function (event) { data.media_player.on_ytvideo_playback_rate_change(event, data.media_player); },
+							"onError": function (event) { data.media_player.on_ytvideo_error(event, data.media_player); },
+							"onApiChange": function (event) { data.media_player.on_ytvideo_api_change(event, data.media_player); }
+						};
+						var playerVars = {
+							controls: 0,
+							showinfo: 0,
+							modestbranding: 1,
+							//wmode: "opaque",
+							html5: 1,
+							disablekb: 1,
+							enablejsapi: 1,
+							rel: 0,
+							showinfo: 0,
+							origin: window.location.href.toString(),
+							start: data.media_player.current_media.start,
+							iv_load_policy: 3,
+							loop: 0
+						};
+
+						data.media_player.ytvideo_player = new data.Player(
+							data.vid_container,
+							{
+								width: data.size[0],
+								height: data.size[1],
+								videoId: data.media_player.current_media.vid_id,
+								"playerVars": playerVars,
+								"events": events
+							}
+						);
+						data.media_player.ytvideo_player.media_player = data.media_player;
+					}
+					catch (e) {
+						data.media_player.ytvideo_player = null;
+						console.log(e);
+					}
+				}
+
+				// Params
+				var vid_container;
+				var div_id = "MediaPlayer_LFfiowjdiofjagh8fwe";
+				this.video_container.html((vid_container = this.D().attr("id", div_id)));
+
+				var params = {
+					"media_player": this,
+					"size": [ this.video_container.outerWidth() , this.video_container.outerHeight() ],
+					"div_id": div_id,
+					"vid_container": vid_container[0],
+					"Player": unsafeWindow.YT.Player
+				};
+
+				this.ytvideo_html5 = true;
+
+				// Call
+				if (this.ytvideo_unsafe) {
+					try {
+						_unsafe_exec(fn, params);
+					}
+					catch (e) {
+						console.log("ytvideo_unsafe");
+						console.log(e);
+					}
+				}
+				else {
+					fn(params);
+				}
+			}
+			// Current sound
+			this.current_media.position = 0.0;//this.current_media.start;
+			this.seek_to(this.current_media.position, true);
+			this.set_loaded(0.0, 0.0);
 		}
 		else {
 			console.log(this.current_media.type);
 		}
-		this.update_playing_status();
-	}
-}
-MediaPlayer.prototype.start = function (index) {
-	// Stop old sound
-	this.deselect(this.playlist[index].type);
 
-	// Controls
-	for (var i = 0; i < this.playback_controls.length; ++i) {
-		for (var j = 0; j < this.playback_controls[i].length; ++j) {
-			this.unC(this.playback_controls[i][j], "SPControlLinkDisabled");
+		// Index display
+		this.update_index_display(index, this.playlist.length, true);
+	},
+	scroll_to: function (index) {
+		var a, b;
+		if (
+			(a = this.playlist[index].playlist_item.offset().top) < (b = this.playlist_container.offset().top) ||
+			(a = this.playlist[index].playlist_item.offset().top + this.playlist[index].playlist_item.outerHeight()) > (b = this.playlist_container.offset().top + this.playlist_container.outerHeight())
+		) {
+			this.playlist_container.scrollTop(this.playlist_container.scrollTop() + (a - b));
 		}
-	}
-
-	// Select
-	this.current_media = this.playlist[index];
-
-	this.C(this.current_media.playlist_item, "SPPlaylistItemActive");
-	this.seek_time_current_label.html(this.duration_to_string(this.current_media.position));
-	this.seek_time_end_label.html(this.duration_to_string(this.current_media.duration));
-
-	// Scroll to
-	this.scroll_to(index);
-
-	if (this.current_media.type == "image-audio") {
-		// Title
-		this.title.html(this.current_media.title);
-
-		// Play this sound
-		this.audio.attr("src", this.current_media.audio_blob_url);
-		this.audio[0].play();
-
-		// Current sound
-		this.current_media.position = 0.0;
-		this.seek_to(this.current_media.position, true);
-		this.set_loaded();
-
-		// Image
-		this.no_image.css("display", "none");
-		this.image.css("display", "none");
-		this.image.removeAttr("src");
-		this.image.attr("src", this.current_media.image_url);
-	}
-	else if (this.current_media.type == "youtube-video") {
-		// Title
-		this.title.html(this.current_media.title);
-
-		// Old player
-		if (this.ytvideo_player != null && this.ytvideo_html5) {
-			var params = {
-				mediaContentUrl: "http://www.youtube.com/v/" + this.current_media.vid_id + "?version=3",
-				startSeconds: this.current_media.start,
-				//endSeconds:Number,
-				suggestedQuality: this.ytvideo_qualities[this.ytvideo_quality_index]
-			};
-
-			var okay = false;
-			if (this.ytvideo_unsafe) {
-				okay = _unsafe_exec(function (data) {
-					if (data.media_player.ytvideo_player.cueVideoByUrl) {
-						data.media_player.ytvideo_player.cueVideoByUrl(data.params);
-						return true;
-					}
-					return false;
-				}, { media_player: this, "params": params });
-			}
-			else {
-				// not using loadVideoByUrl because "this.play" resets the timer
-				if (this.ytvideo_player.cueVideoByUrl) {
-					okay = true;
-					this.ytvideo_player.cueVideoByUrl(params);
-				}
-			}
-			if (okay) this.play();
-			else this.ytvideo_player = null;
-		}
-		else {
-			this.ytvideo_player = null;
-		}
-		// Fresh player
-		if (this.ytvideo_player == null) {
-			var fn = function (data) {
-				try {
-					var events = {
-						"onReady": function (event) { data.media_player.on_ytvideo_ready(event, data.media_player); },
-						"onStateChange": function (event) { data.media_player.on_ytvideo_state_change(event, data.media_player); },
-						"onPlaybackQualityChange": function (event) { data.media_player.on_ytvideo_playback_quality_change(event, data.media_player); },
-						"onPlaybackRateChange": function (event) { data.media_player.on_ytvideo_playback_rate_change(event, data.media_player); },
-						"onError": function (event) { data.media_player.on_ytvideo_error(event, data.media_player); },
-						"onApiChange": function (event) { data.media_player.on_ytvideo_api_change(event, data.media_player); }
-					};
-					var playerVars = {
-						controls: 0,
-						showinfo: 0,
-						modestbranding: 1,
-						//wmode: "opaque",
-						html5: 1,
-						disablekb: 1,
-						enablejsapi: 1,
-						rel: 0,
-						showinfo: 0,
-						origin: window.location.href.toString(),
-						start: data.media_player.current_media.start,
-						iv_load_policy: 3,
-						loop: 0
-					};
-
-					data.media_player.ytvideo_player = new data.Player(
-						data.vid_container,
-						{
-							width: data.size[0],
-							height: data.size[1],
-							videoId: data.media_player.current_media.vid_id,
-							"playerVars": playerVars,
-							"events": events
-						}
-					);
-					data.media_player.ytvideo_player.media_player = data.media_player;
-				}
-				catch (e) {
-					data.media_player.ytvideo_player = null;
-					console.log(e);
-				}
-			}
-
-			// Params
-			var vid_container;
-			var div_id = "MediaPlayer_LFfiowjdiofjagh8fwe";
-			this.video_container.html((vid_container = this.D().attr("id", div_id)));
-
-			var params = {
-				"media_player": this,
-				"size": [ this.video_container.outerWidth() , this.video_container.outerHeight() ],
-				"div_id": div_id,
-				"vid_container": vid_container[0],
-				"Player": unsafeWindow.YT.Player
-			};
-
-			this.ytvideo_html5 = true;
-
-			// Call
-			if (this.ytvideo_unsafe) {
-				try {
-					_unsafe_exec(fn, params);
-				}
-				catch (e) {
-					console.log("ytvideo_unsafe");
-					console.log(e);
-				}
-			}
-			else {
-				fn(params);
-			}
-		}
-		// Current sound
-		this.current_media.position = 0.0;//this.current_media.start;
-		this.seek_to(this.current_media.position, true);
-		this.set_loaded(0.0, 0.0);
-	}
-	else {
-		console.log(this.current_media.type);
-	}
-
-	// Index display
-	this.update_index_display(index, this.playlist.length, true);
-}
-MediaPlayer.prototype.scroll_to = function (index) {
-	var a, b;
-	if (
-		(a = this.playlist[index].playlist_item.offset().top) < (b = this.playlist_container.offset().top) ||
-		(a = this.playlist[index].playlist_item.offset().top + this.playlist[index].playlist_item.outerHeight()) > (b = this.playlist_container.offset().top + this.playlist_container.outerHeight())
-	) {
-		this.playlist_container.scrollTop(this.playlist_container.scrollTop() + (a - b));
-	}
-}
-MediaPlayer.prototype.next = function (follow_policy) {
-	// Next
-	if (this.playlist_randomize && follow_policy) {
-		// Random
-		var i = 0;
-		if (this.playlist.length > 1) {
-			i = Math.floor(Math.random() * (this.playlist.length - 1));
-		}
-		if (i == this.current_media.index) {
-			i = (i + 1) % this.playlist.length;
-		}
-		this.start(i);
-	}
-	else if (!follow_policy || this.playlist_loop || this.current_media.index < this.playlist.length - 1) {
+	},
+	next: function (follow_policy) {
 		// Next
-		this.start((this.current_media.index + 1) % this.playlist.length);
-	}
-}
-MediaPlayer.prototype.previous = function () {
-	// Previous
-	if (this.playlist_randomize) {
-		// Random
-		var i = 0;
-		if (this.playlist.length > 1) {
-			i = Math.floor(Math.random() * (this.playlist.length - 1));
+		if (this.playlist_randomize && follow_policy) {
+			// Random
+			var i = 0;
+			if (this.playlist.length > 1) {
+				i = Math.floor(Math.random() * (this.playlist.length - 1));
+			}
+			if (i == this.current_media.index) {
+				i = (i + 1) % this.playlist.length;
+			}
+			this.start(i);
 		}
-		if (i == this.current_media.index) {
-			i = (i + 1) % this.playlist.length;
+		else if (!follow_policy || this.playlist_loop || this.current_media.index < this.playlist.length - 1) {
+			// Next
+			this.start((this.current_media.index + 1) % this.playlist.length);
 		}
-		this.start(i);
-	}
-	else {
+	},
+	previous: function () {
 		// Previous
-		this.start((this.current_media.index - 1 + this.playlist.length) % this.playlist.length);
-	}
-}
-MediaPlayer.prototype.set_loaded = function (offset, percent) {
-	if (this.current_media !== null) {
-		if (offset !== undefined) {
-			if (offset < 0.0) offset = 0.0;
-			else if (offset > 1.0) offset = 1.0;
+		if (this.playlist_randomize) {
+			// Random
+			var i = 0;
+			if (this.playlist.length > 1) {
+				i = Math.floor(Math.random() * (this.playlist.length - 1));
+			}
+			if (i == this.current_media.index) {
+				i = (i + 1) % this.playlist.length;
+			}
+			this.start(i);
+		}
+		else {
+			// Previous
+			this.start((this.current_media.index - 1 + this.playlist.length) % this.playlist.length);
+		}
+	},
+	set_loaded: function (offset, percent) {
+		if (this.current_media !== null) {
+			if (offset !== undefined) {
+				if (offset < 0.0) offset = 0.0;
+				else if (offset > 1.0) offset = 1.0;
+				if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
+					this.current_media.loaded_offset = offset;
+				}
+				else {
+					console.log(this.current_media);
+				}
+				if (percent === undefined) percent = this.get_loaded_percent();
+			}
+			else {
+				offset = this.get_loaded_offset();
+			}
+			if (percent !== undefined) {
+				if (percent < 0.0) percent = 0.0;
+				else if (percent > 1.0 - offset) percent = 1.0 - offset;
+				if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
+					this.current_media.loaded_percent = percent;
+				}
+				else {
+					console.log(this.current_media);
+				}
+			}
+			else {
+				percent = this.get_loaded_percent();
+			}
+		}
+		else {
+			percent = 0.0;
+			offset = 0.0;
+		}
+		// Update html
+		var w = this.load_percent_bar_container.outerWidth();
+		this.load_percent_bar_mover.width(offset * w);
+		this.load_percent_bar.width(percent * w);
+	},
+	get_loaded_offset: function () {
+		if (this.current_media !== null) {
 			if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
-				this.current_media.loaded_offset = offset;
+				return this.current_media.loaded_offset;
 			}
 			else {
 				console.log(this.current_media);
 			}
-			if (percent === undefined) percent = this.get_loaded_percent();
 		}
-		else {
-			offset = this.get_loaded_offset();
-		}
-		if (percent !== undefined) {
-			if (percent < 0.0) percent = 0.0;
-			else if (percent > 1.0 - offset) percent = 1.0 - offset;
+		return 0.0;
+	},
+	get_loaded_percent: function () {
+		if (this.current_media !== null) {
 			if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
-				this.current_media.loaded_percent = percent;
+				return this.current_media.loaded_percent;
 			}
 			else {
 				console.log(this.current_media);
 			}
 		}
-		else {
-			percent = this.get_loaded_percent();
-		}
-	}
-	else {
-		percent = 0.0;
-		offset = 0.0;
-	}
-	// Update html
-	var w = this.load_percent_bar_container.outerWidth();
-	this.load_percent_bar_mover.width(offset * w);
-	this.load_percent_bar.width(percent * w);
-}
-MediaPlayer.prototype.get_loaded_offset = function () {
-	if (this.current_media !== null) {
-		if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
-			return this.current_media.loaded_offset;
-		}
-		else {
-			console.log(this.current_media);
-		}
-	}
-	return 0.0;
-}
-MediaPlayer.prototype.get_loaded_percent = function () {
-	if (this.current_media !== null) {
-		if (this.current_media.type == "image-audio" || this.current_media.type == "youtube-video") {
-			return this.current_media.loaded_percent;
-		}
-		else {
-			console.log(this.current_media);
-		}
-	}
-	return 0.0;
-}
-MediaPlayer.prototype.remove = function (index) {
-	// Stop
-	if (this.current_media != null && this.current_media.index == index) this.deselect();
+		return 0.0;
+	},
+	remove: function (index) {
+		// Stop
+		if (this.current_media != null && this.current_media.index == index) this.deselect();
 
-	if (this.playlist[index].type == "image-audio") {
-		// Remove temp audio
-		if (this.playlist[index].temp_audio) {
-			this.playlist[index].temp_audio[0].pause();
-			this.playlist[index].temp_audio.removeAttr("src").remove();
-			this.playlist[index].temp_audio = null;
-		}
-
-		// Revoke url
-		(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].audio_blob_url);
-		if (this.playlist[index].image_blob_url != null) {
-			(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].image_blob_url);
-		}
-	}
-	else if (this.playlist[index].type == "youtube-video") {
-		// Nothing to do
-	}
-	else {
-		console.log(this.playlist[index].type);
-	}
-
-	// Remove html
-	this.playlist[index].playlist_item.remove();
-
-	// Remove from list
-	this.playlist.splice(index, 1);
-
-	// Update indices
-	for (var i = 0; i < this.playlist.length; ++i) {
-		this.playlist[i].index = i;
-	}
-
-	// Index display
-	this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
-}
-
-MediaPlayer.prototype.is_maximized = function () {
-	return (this.playlist_container.css("display") != "none");
-};
-MediaPlayer.prototype.maximize = function () {
-	// Min/max
-	this.playlist_container.css("display", "");
-	this.top_container.css("display", "");
-
-	// Close overlays
-	this.downloads_container.css("display", "none");
-	for (var i = 0; i < this.help_container.length; ++i) {
-		this.help_container[i].css("display", "none");
-	}
-
-	// HTML
-	this.title_buttons[this.title_buttons.length - 2].html("[&#x2012;]");
-
-	// On screen
-	this.reposition();
-};
-MediaPlayer.prototype.minimize = function () {
-	// Min/max
-	this.playlist_container.css("display", "none");
-	this.top_container.css("display", "none");
-
-	// Close overlays
-	this.downloads_container.css("display", "none");
-	for (var i = 0; i < this.help_container.length; ++i) {
-		this.help_container[i].css("display", "none");
-	}
-
-	// HTML
-	this.title_buttons[this.title_buttons.length - 2].html("[+]");
-
-	// On screen
-	this.reposition();
-};
-
-
-MediaPlayer.prototype.nullify = function () {
-	this.sp_container_main = null;
-	this.sp_container = null;
-	this.alert_container = null;
-	this.title = null;
-	this.image_container = null;
-	this.image = null;
-	this.no_image = null;
-	this.audio = null;
-	this.volume_bar = null;
-	this.volume_label = null;
-	this.volume_container = null;
-	this.volume_bar_container = null;
-	this.seek_time_start_label = null;
-	this.seek_time_end_label = null;
-	this.seek_time_current_label = null;
-	this.seek_bar_container = null;
-	this.seek_bar_mover = null;
-	this.seek_bar = null;
-	this.playlist_container = null;
-	this.playback_controls = null;
-	this.playback_controls_svg = null;
-	this.help_container = null;
-	this.help_container_inner1 = null;
-	this.help_container_footer = null;
-	this.content_container = null;
-	this.top_container = null;
-	this.footer_container = null;
-	this.playback_control_container = null;
-	this.player_theme_name = null;
-	this.video_container = null;
-	this.video_mask = null;
-	this.ytvideo_player = null;
-	this.load_percent_bar_container = null;
-	this.load_percent_bar_mover = null;
-	this.load_percent_bar = null;
-	this.resizing_container = null;
-	this.resizing_controls = null;
-	this.resizing_texts = null;
-	this.first_run_container = null;
-	this.playlist_index_container = null;
-	this.playlist_index_text1 = null;
-	this.playlist_index_text2 = null;
-	this.downloads_container = null;
-	this.downloads_ready_container = null;
-	this.downloads_link = null;
-	this.downloads_about = null;
-	this.title_buttons = null;
-
-	if (this.playlist_index_timer !== null) {
-		clearTimeout(this.playlist_index_timer);
-		this.playlist_index_timer = null;
-	}
-
-	for (var i = 0; i < this.resize_timers.length; ++i) {
-		if (this.resize_timers[i] !== null) {
-			if (i == 2) {
-				clearInterval(this.resize_timers[i]);
+		if (this.playlist[index].type == "image-audio") {
+			// Remove temp audio
+			if (this.playlist[index].temp_audio) {
+				this.playlist[index].temp_audio[0].pause();
+				this.playlist[index].temp_audio.removeAttr("src").remove();
+				this.playlist[index].temp_audio = null;
 			}
-			else {
-				clearTimeout(this.resize_timers[i]);
+
+			// Revoke url
+			(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].audio_blob_url);
+			if (this.playlist[index].image_blob_url != null) {
+				(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].image_blob_url);
 			}
-			this.resize_timers[i] = null;
 		}
-	}
+		else if (this.playlist[index].type == "youtube-video") {
+			// Nothing to do
+		}
+		else {
+			console.log(this.playlist[index].type);
+		}
 
-	this.player_theme_value_updaters = null;
-}
+		// Remove html
+		this.playlist[index].playlist_item.remove();
 
-MediaPlayer.prototype.create_playback_controls = function () {
-	this.playback_control_container.html("");
-	this.playback_controls = [ [null] , [null] , [null,null] , [null] , [null] ];
-	this.playback_controls_svg = null;
-	if (this.use_svg) {
-		this.playback_controls_svg = [ [null] , [null] , [null,null] , [null] , [null] ]
+		// Remove from list
+		this.playlist.splice(index, 1);
 
-		for (var i = 0; i < this.playback_controls.length; ++i) {
-			// Separator
-			if (i > 0) this.playback_control_container.append(this.D("SPControlLinkSeparator"));
+		// Update indices
+		for (var i = 0; i < this.playlist.length; ++i) {
+			this.playlist[i].index = i;
+		}
 
-			for (var j = 0; j < this.playback_controls[i].length; ++j) {
-				// Create SVG container
-				this.playback_control_container.append(
-					(this.playback_controls[i][j] = this.D("SPControlLinkSvgContainer", "SPControlLinkDisabled"))
-				);
-				if (j > 0) this.playback_controls[i][j].css("display", "none");
+		// Index display
+		this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
+	},
 
-				var svg_finder;
-				this.playback_controls[i][j].append((svg_finder = this.D("SPControlLinkSvg")));
-				var w = svg_finder.outerWidth();
-				var h = svg_finder.outerHeight();
+	is_maximized: function () {
+		return (this.playlist_container.css("display") != "none");
+	},
+	maximize: function () {
+		// Min/max
+		this.playlist_container.css("display", "");
+		this.top_container.css("display", "");
 
-				svg_finder.svg();
-				this.playback_controls_svg[i][j] = svg_finder.svg("get");
-				var html_svg = $(svg_finder.contents()[0]);
+		// Close overlays
+		this.downloads_container.css("display", "none");
+		for (var i = 0; i < this.help_container.length; ++i) {
+			this.help_container[i].css("display", "none");
+		}
 
-				html_svg.attr("width", w);
-				html_svg.attr("height", h);
+		// HTML
+		this.title_buttons[this.title_buttons.length - 2].html("[&#x2012;]");
 
-				// Create contents
-				var g = this.playback_controls_svg[i][j].group({
-					"class": "SPControlLinkSvgMainGroup",
-					"transform": "scale(" + w + "," + h + ")"
-				});
+		// On screen
+		this.reposition();
+	},
+	minimize: function () {
+		// Min/max
+		this.playlist_container.css("display", "none");
+		this.top_container.css("display", "none");
 
-				if (i == 0) {
-					// Back
-					this.playback_controls_svg[i][j].rect(g,
-						0.125, 0.0, 0.25, 1.0,
-						{"class": "SPControlLinkSvgShapeColor"}
-					);
-					this.playback_controls_svg[i][j].polygon(g,
-						[ [0.875 , 0.0] , [0.875 , 1.0] , [0.375 , 0.5] ],
-						{"class": "SPControlLinkSvgShapeColor"}
-					);
+		// Close overlays
+		this.downloads_container.css("display", "none");
+		for (var i = 0; i < this.help_container.length; ++i) {
+			this.help_container[i].css("display", "none");
+		}
+
+		// HTML
+		this.title_buttons[this.title_buttons.length - 2].html("[+]");
+
+		// On screen
+		this.reposition();
+	},
+
+
+	nullify: function () {
+		this.sp_container_main = null;
+		this.sp_container = null;
+		this.alert_container = null;
+		this.title = null;
+		this.image_container = null;
+		this.image = null;
+		this.no_image = null;
+		this.audio = null;
+		this.volume_bar = null;
+		this.volume_label = null;
+		this.volume_container = null;
+		this.volume_bar_container = null;
+		this.seek_time_start_label = null;
+		this.seek_time_end_label = null;
+		this.seek_time_current_label = null;
+		this.seek_bar_container = null;
+		this.seek_bar_mover = null;
+		this.seek_bar = null;
+		this.playlist_container = null;
+		this.playback_controls = null;
+		this.playback_controls_svg = null;
+		this.help_container = null;
+		this.help_container_inner1 = null;
+		this.help_container_footer = null;
+		this.content_container = null;
+		this.top_container = null;
+		this.footer_container = null;
+		this.playback_control_container = null;
+		this.player_theme_name = null;
+		this.video_container = null;
+		this.video_mask = null;
+		this.ytvideo_player = null;
+		this.load_percent_bar_container = null;
+		this.load_percent_bar_mover = null;
+		this.load_percent_bar = null;
+		this.resizing_container = null;
+		this.resizing_controls = null;
+		this.resizing_texts = null;
+		this.first_run_container = null;
+		this.playlist_index_container = null;
+		this.playlist_index_text1 = null;
+		this.playlist_index_text2 = null;
+		this.downloads_container = null;
+		this.downloads_ready_container = null;
+		this.downloads_link = null;
+		this.downloads_about = null;
+		this.title_buttons = null;
+
+		if (this.playlist_index_timer !== null) {
+			clearTimeout(this.playlist_index_timer);
+			this.playlist_index_timer = null;
+		}
+
+		for (var i = 0; i < this.resize_timers.length; ++i) {
+			if (this.resize_timers[i] !== null) {
+				if (i == 2) {
+					clearInterval(this.resize_timers[i]);
 				}
-				else if (i == 1) {
-					// RW
-					this.playback_controls_svg[i][j].polygon(g,
-						[ [0.5 , 0.0] , [0.5 , 1.0] , [0.125 , 0.5] ],
-						{"class": "SPControlLinkSvgShapeColor"}
-					);
-					this.playback_controls_svg[i][j].polygon(g,
-						[ [0.875 , 0.0] , [0.875 , 1.0] , [0.5 , 0.5] ],
-						{"class": "SPControlLinkSvgShapeColor"}
-					);
+				else {
+					clearTimeout(this.resize_timers[i]);
 				}
-				else if (i == 2) {
-					// Play/pause
-					if (j == 1) {
+				this.resize_timers[i] = null;
+			}
+		}
+
+		this.player_theme_value_updaters = null;
+	},
+
+	create_playback_controls: function () {
+		this.playback_control_container.html("");
+		this.playback_controls = [ [null] , [null] , [null,null] , [null] , [null] ];
+		this.playback_controls_svg = null;
+		if (this.use_svg) {
+			this.playback_controls_svg = [ [null] , [null] , [null,null] , [null] , [null] ]
+
+			for (var i = 0; i < this.playback_controls.length; ++i) {
+				// Separator
+				if (i > 0) this.playback_control_container.append(this.D("SPControlLinkSeparator"));
+
+				for (var j = 0; j < this.playback_controls[i].length; ++j) {
+					// Create SVG container
+					this.playback_control_container.append(
+						(this.playback_controls[i][j] = this.D("SPControlLinkSvgContainer", "SPControlLinkDisabled"))
+					);
+					if (j > 0) this.playback_controls[i][j].css("display", "none");
+
+					var svg_finder;
+					this.playback_controls[i][j].append((svg_finder = this.D("SPControlLinkSvg")));
+					var w = svg_finder.outerWidth();
+					var h = svg_finder.outerHeight();
+
+					svg_finder.svg();
+					this.playback_controls_svg[i][j] = svg_finder.svg("get");
+					var html_svg = $(svg_finder.contents()[0]);
+
+					html_svg.attr("width", w);
+					html_svg.attr("height", h);
+
+					// Create contents
+					var g = this.playback_controls_svg[i][j].group({
+						"class": "SPControlLinkSvgMainGroup",
+						"transform": "scale(" + w + "," + h + ")"
+					});
+
+					if (i == 0) {
+						// Back
 						this.playback_controls_svg[i][j].rect(g,
 							0.125, 0.0, 0.25, 1.0,
 							{"class": "SPControlLinkSvgShapeColor"}
 						);
-						this.playback_controls_svg[i][j].rect(g,
-							0.625, 0.0, 0.25, 1.0,
+						this.playback_controls_svg[i][j].polygon(g,
+							[ [0.875 , 0.0] , [0.875 , 1.0] , [0.375 , 0.5] ],
+							{"class": "SPControlLinkSvgShapeColor"}
+						);
+					}
+					else if (i == 1) {
+						// RW
+						this.playback_controls_svg[i][j].polygon(g,
+							[ [0.5 , 0.0] , [0.5 , 1.0] , [0.125 , 0.5] ],
+							{"class": "SPControlLinkSvgShapeColor"}
+						);
+						this.playback_controls_svg[i][j].polygon(g,
+							[ [0.875 , 0.0] , [0.875 , 1.0] , [0.5 , 0.5] ],
+							{"class": "SPControlLinkSvgShapeColor"}
+						);
+					}
+					else if (i == 2) {
+						// Play/pause
+						if (j == 1) {
+							this.playback_controls_svg[i][j].rect(g,
+								0.125, 0.0, 0.25, 1.0,
+								{"class": "SPControlLinkSvgShapeColor"}
+							);
+							this.playback_controls_svg[i][j].rect(g,
+								0.625, 0.0, 0.25, 1.0,
+								{"class": "SPControlLinkSvgShapeColor"}
+							);
+						}
+						else {
+							this.playback_controls_svg[i][j].polygon(g,
+								[ [0.25 , 0.0] , [0.25 , 1.0] , [0.75 , 0.5] ],
+								{"class": "SPControlLinkSvgShapeColor"}
+							);
+						}
+					}
+					else if (i == 3) {
+						// FFW
+						this.playback_controls_svg[i][j].polygon(g,
+							[ [0.125 , 0.0] , [0.125 , 1.0] , [0.5 , 0.5] ],
+							{"class": "SPControlLinkSvgShapeColor"}
+						);
+						this.playback_controls_svg[i][j].polygon(g,
+							[ [0.5 , 0.0] , [0.5 , 1.0] , [0.875 , 0.5] ],
 							{"class": "SPControlLinkSvgShapeColor"}
 						);
 					}
 					else {
+						// Next
+						this.playback_controls_svg[i][j].rect(g,
+							0.625, 0.0, 0.25, 1.0,
+							{"class": "SPControlLinkSvgShapeColor"}
+						);
 						this.playback_controls_svg[i][j].polygon(g,
-							[ [0.25 , 0.0] , [0.25 , 1.0] , [0.75 , 0.5] ],
+							[ [0.125 , 0.0] , [0.125 , 1.0] , [0.625 , 0.5] ],
 							{"class": "SPControlLinkSvgShapeColor"}
 						);
 					}
 				}
-				else if (i == 3) {
-					// FFW
-					this.playback_controls_svg[i][j].polygon(g,
-						[ [0.125 , 0.0] , [0.125 , 1.0] , [0.5 , 0.5] ],
-						{"class": "SPControlLinkSvgShapeColor"}
+			}
+		}
+		else {
+			this.playback_controls_svg = null;
+			var control_texts = [ ["|&lt;"] , ["&lt;&lt"] , ["&gt;","||"] , ["&gt;&gt;"] , ["&gt;|"] ];
+
+			for (var i = 0; i < this.playback_controls.length; ++i) {
+				if (i > 0) this.playback_control_container.append(this.D("SPControlLinkSeparator"));
+				for (var j = 0; j < this.playback_controls[i].length; ++j) {
+					this.playback_control_container.append(
+						(this.playback_controls[i][j] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
+						.html(control_texts[i][j])
 					);
-					this.playback_controls_svg[i][j].polygon(g,
-						[ [0.5 , 0.0] , [0.5 , 1.0] , [0.875 , 0.5] ],
-						{"class": "SPControlLinkSvgShapeColor"}
-					);
-				}
-				else {
-					// Next
-					this.playback_controls_svg[i][j].rect(g,
-						0.625, 0.0, 0.25, 1.0,
-						{"class": "SPControlLinkSvgShapeColor"}
-					);
-					this.playback_controls_svg[i][j].polygon(g,
-						[ [0.125 , 0.0] , [0.125 , 1.0] , [0.625 , 0.5] ],
-						{"class": "SPControlLinkSvgShapeColor"}
-					);
+					if (j > 0) this.playback_controls[i][j].css("display", "none");
 				}
 			}
 		}
-	}
-	else {
-		this.playback_controls_svg = null;
-		var control_texts = [ ["|&lt;"] , ["&lt;&lt"] , ["&gt;","||"] , ["&gt;&gt;"] , ["&gt;|"] ];
-
 		for (var i = 0; i < this.playback_controls.length; ++i) {
-			if (i > 0) this.playback_control_container.append(this.D("SPControlLinkSeparator"));
 			for (var j = 0; j < this.playback_controls[i].length; ++j) {
-				this.playback_control_container.append(
-					(this.playback_controls[i][j] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
-					.html(control_texts[i][j])
-				);
-				if (j > 0) this.playback_controls[i][j].css("display", "none");
+				this.playback_controls[i][j].on("click." + this.namespace, {control_id: i, control_id2: j, media_player: this}, this.on_playback_control_click);
+				this.playback_controls[i][j].on("mousedown", this.cancel_event);
 			}
 		}
-	}
-	for (var i = 0; i < this.playback_controls.length; ++i) {
-		for (var j = 0; j < this.playback_controls[i].length; ++j) {
-			this.playback_controls[i][j].on("click." + this.namespace, {control_id: i, control_id2: j, media_player: this}, this.on_playback_control_click);
-			this.playback_controls[i][j].on("mousedown", this.cancel_event);
+	},
+
+	get_audio_duration: function (audio) {
+		try {
+			var d = (isFinite(audio.duration) ? audio.duration : audio.buffered.end(0));
+			return isFinite(d) ? d : 0;
 		}
-	}
-}
-
-MediaPlayer.prototype.get_audio_duration = function (audio) {
-	try {
-		var d = (isFinite(audio.duration) ? audio.duration : audio.buffered.end(0));
-		return isFinite(d) ? d : 0;
-	}
-	catch (e) {
-		console.log(e);
-	}
-	return 0;
-}
-
-MediaPlayer.prototype.regen_stylesheet = function () {
-	this.head_css.html(this.css.create_stylesheet());
-
-	var vol_col = this.get_volume_color(this.volume);
-	this.volume_bar.css("background", "rgb(" + vol_col[0] + "," + vol_col[1] + "," + vol_col[2] + ")");
-}
-
-MediaPlayer.prototype.update_index_display = function (index, count, activate) {
-	this.playlist_index_text1.html(count == 0 ? "-" : (index >= 0 ? (index + 1).toString() : "-"));
-	this.playlist_index_text2.html(count == 0 ? "-" : count.toString());
-
-	if (!activate) return;
-
-	this.playlist_index_container.addClass("SPPlaylistIndexContainerActive");
-	if (this.playlist_index_timer !== null) {
-		clearTimeout(this.playlist_index_timer);
-		this.playlist_index_timer = null;
-	}
-	var self = this;
-	this.playlist_index_timer = setTimeout(function () {
-		self.playlist_index_timer = null;
-		self.playlist_index_container.removeClass("SPPlaylistIndexContainerActive");
-	}, 1000);
-}
-
-MediaPlayer.prototype.get_volume_color = function (percent) {
-	if (this.css.get_volume_colors().length <= 1) return this.css.get_volume_colors()[0];
-
-	percent *= (this.css.get_volume_colors().length - 1);
-	var i = Math.min((this.css.get_volume_colors().length - 2), Math.floor(percent));
-	percent -= i;
-	var inv = 1.0 - percent;
-
-	return [
-		Math.round(this.css.get_volume_colors()[i][0] * inv + this.css.get_volume_colors()[i + 1][0] * percent) ,
-		Math.round(this.css.get_volume_colors()[i][1] * inv + this.css.get_volume_colors()[i + 1][1] * percent) ,
-		Math.round(this.css.get_volume_colors()[i][2] * inv + this.css.get_volume_colors()[i + 1][2] * percent)
-	];
-}
-MediaPlayer.prototype.reposition = function (left, top) {
-	if (left != undefined) {
-		this.position_offset[0] = $(window).outerWidth() - (left + this.sp_container_main.outerWidth());
-	}
-	if (top != undefined) {
-		this.position_offset[1] = $(window).outerHeight() - (top + this.sp_container_main.outerHeight());
-	}
-	var v;
-	if (this.position_offset[0] > (v = $(window).outerWidth() - this.sp_container_main.outerWidth())) this.position_offset[0] = v;
-	if (this.position_offset[1] > (v = $(window).outerHeight() - this.sp_container_main.outerHeight())) this.position_offset[1] = v;
-	if (this.position_offset[0] < 0) this.position_offset[0] = 0;
-	if (this.position_offset[1] < 0) this.position_offset[1] = 0;
-	this.sp_container_main.css({"right": this.position_offset[0], "bottom": this.position_offset[1]});
-}
-MediaPlayer.prototype.resize_to = function (width, height, is_left, is_top) {
-	// Current size
-	var current_size = [ this.sp_container_main.outerWidth() , this.sp_container_main.outerHeight() ];
-
-	// Height change
-	if (height !== null) {
-		var playlist_size = [ this.playlist_container.outerWidth() , this.playlist_container.outerHeight() ];
-		var image_size = [ this.image_container.outerWidth() , this.image_container.outerHeight() ];
-		var non_height = current_size[1] - playlist_size[1] - image_size[1];
-
-		// Playlist height change
-		var playlist_height_target = height - (non_height + this.image_height_max * this.scale_factor);
-		if (playlist_height_target < this.playlist_height_min * this.scale_factor) {
-			playlist_height_target = this.playlist_height_min * this.scale_factor;
+		catch (e) {
+			console.log(e);
 		}
-		// Image
-		var image_height_target = height - (non_height);
-		if (image_height_target > this.image_height_max * this.scale_factor) {
-			image_height_target = this.image_height_max * this.scale_factor
-		}
-		if (image_height_target < this.image_height_min * this.scale_factor) {
-			image_height_target = this.image_height_min * this.scale_factor;
-		}
+		return 0;
+	},
 
-		// Update height
-		this.playlist_container.outerHeight(playlist_height_target);
-		this.image_container.outerHeight(image_height_target);
-		this.playlist_height = playlist_height_target / this.scale_factor;
-		this.image_height = image_height_target / this.scale_factor;
-		if (!is_top) {
-			this.position_offset[1] -= (playlist_height_target - playlist_size[1]) + (image_height_target - image_size[1]);
-		}
-	}
+	regen_stylesheet: function () {
+		this.head_css.html(this.css.create_stylesheet());
 
-	// Width change
-	if (width !== null) {
-		if (width < this.player_width_min * this.scale_factor) {
-			width = this.player_width_min * this.scale_factor;
+		var vol_col = this.get_volume_color(this.volume);
+		this.volume_bar.css("background", "rgb(" + vol_col[0] + "," + vol_col[1] + "," + vol_col[2] + ")");
+	},
+
+	update_index_display: function (index, count, activate) {
+		this.playlist_index_text1.html(count == 0 ? "-" : (index >= 0 ? (index + 1).toString() : "-"));
+		this.playlist_index_text2.html(count == 0 ? "-" : count.toString());
+
+		if (!activate) return;
+
+		this.playlist_index_container.addClass("SPPlaylistIndexContainerActive");
+		if (this.playlist_index_timer !== null) {
+			clearTimeout(this.playlist_index_timer);
+			this.playlist_index_timer = null;
+		}
+		var self = this;
+		this.playlist_index_timer = setTimeout(function () {
+			self.playlist_index_timer = null;
+			self.playlist_index_container.removeClass("SPPlaylistIndexContainerActive");
+		}, 1000);
+	},
+
+	get_volume_color: function (percent) {
+		if (this.css.get_volume_colors().length <= 1) return this.css.get_volume_colors()[0];
+
+		percent *= (this.css.get_volume_colors().length - 1);
+		var i = Math.min((this.css.get_volume_colors().length - 2), Math.floor(percent));
+		percent -= i;
+		var inv = 1.0 - percent;
+
+		return [
+			Math.round(this.css.get_volume_colors()[i][0] * inv + this.css.get_volume_colors()[i + 1][0] * percent) ,
+			Math.round(this.css.get_volume_colors()[i][1] * inv + this.css.get_volume_colors()[i + 1][1] * percent) ,
+			Math.round(this.css.get_volume_colors()[i][2] * inv + this.css.get_volume_colors()[i + 1][2] * percent)
+		];
+	},
+	reposition: function (left, top) {
+		if (left != undefined) {
+			this.position_offset[0] = $(window).outerWidth() - (left + this.sp_container_main.outerWidth());
+		}
+		if (top != undefined) {
+			this.position_offset[1] = $(window).outerHeight() - (top + this.sp_container_main.outerHeight());
+		}
+		var v;
+		if (this.position_offset[0] > (v = $(window).outerWidth() - this.sp_container_main.outerWidth())) this.position_offset[0] = v;
+		if (this.position_offset[1] > (v = $(window).outerHeight() - this.sp_container_main.outerHeight())) this.position_offset[1] = v;
+		if (this.position_offset[0] < 0) this.position_offset[0] = 0;
+		if (this.position_offset[1] < 0) this.position_offset[1] = 0;
+		this.sp_container_main.css({"right": this.position_offset[0], "bottom": this.position_offset[1]});
+	},
+	resize_to: function (width, height, is_left, is_top) {
+		// Current size
+		var current_size = [ this.sp_container_main.outerWidth() , this.sp_container_main.outerHeight() ];
+
+		// Height change
+		if (height !== null) {
+			var playlist_size = [ this.playlist_container.outerWidth() , this.playlist_container.outerHeight() ];
+			var image_size = [ this.image_container.outerWidth() , this.image_container.outerHeight() ];
+			var non_height = current_size[1] - playlist_size[1] - image_size[1];
+
+			// Playlist height change
+			var playlist_height_target = height - (non_height + this.image_height_max * this.scale_factor);
+			if (playlist_height_target < this.playlist_height_min * this.scale_factor) {
+				playlist_height_target = this.playlist_height_min * this.scale_factor;
+			}
+			// Image
+			var image_height_target = height - (non_height);
+			if (image_height_target > this.image_height_max * this.scale_factor) {
+				image_height_target = this.image_height_max * this.scale_factor
+			}
+			if (image_height_target < this.image_height_min * this.scale_factor) {
+				image_height_target = this.image_height_min * this.scale_factor;
+			}
+
+			// Update height
+			this.playlist_container.outerHeight(playlist_height_target);
+			this.image_container.outerHeight(image_height_target);
+			this.playlist_height = playlist_height_target / this.scale_factor;
+			this.image_height = image_height_target / this.scale_factor;
+			if (!is_top) {
+				this.position_offset[1] -= (playlist_height_target - playlist_size[1]) + (image_height_target - image_size[1]);
+			}
 		}
 
-		// Update width
-		this.player_width = width / this.scale_factor;
-		this.sp_container_main.outerWidth(width);
-		if (!is_left) {
-			this.position_offset[0] -= (width - current_size[0]);
+		// Width change
+		if (width !== null) {
+			if (width < this.player_width_min * this.scale_factor) {
+				width = this.player_width_min * this.scale_factor;
+			}
+
+			// Update width
+			this.player_width = width / this.scale_factor;
+			this.sp_container_main.outerWidth(width);
+			if (!is_left) {
+				this.position_offset[0] -= (width - current_size[0]);
+			}
 		}
-	}
 
-	// Update position
-	this.sp_container_main.css({"right": this.position_offset[0], "bottom": this.position_offset[1]});
-	this.update_image_scale();
+		// Update position
+		this.sp_container_main.css({"right": this.position_offset[0], "bottom": this.position_offset[1]});
+		this.update_image_scale();
 
-	// Update others
-	this.set_loaded();
-	this.seek_to(null, true);
-}
-MediaPlayer.prototype.update_playing_status = function () {
-	if (!this.seek_exacting && !this.seek_dragging) {
-		if (this.is_paused()) {
-			this.playback_controls[2][0].css("display", "");
-			this.playback_controls[2][1].css("display", "none");
+		// Update others
+		this.set_loaded();
+		this.seek_to(null, true);
+	},
+	update_playing_status: function () {
+		if (!this.seek_exacting && !this.seek_dragging) {
+			if (this.is_paused()) {
+				this.playback_controls[2][0].css("display", "");
+				this.playback_controls[2][1].css("display", "none");
+			}
+			else {
+				this.playback_controls[2][0].css("display", "none");
+				this.playback_controls[2][1].css("display", "");
+			}
+		}
+	},
+	update_scale_factor: function (scale_factor) {
+		this.scale_factor = scale_factor;
+
+		this.sp_container_main.outerWidth(this.player_width * this.scale_factor);
+		this.playlist_container.outerHeight(this.playlist_height * this.scale_factor);
+		this.image_container.outerHeight(this.image_height * this.scale_factor);
+		// rescale image
+		this.update_image_scale();
+	},
+	update_image_scale: function () {
+		var xs = (this.image_container.outerWidth() / this.current_image_width);
+		var ys = (this.image_height * this.scale_factor / this.current_image_height);
+		if (ys < xs) xs = ys;
+		//if (xs > 1.0) xs = 1.0;
+
+		ys = Math.floor(this.current_image_height * xs);
+		xs = Math.floor(this.current_image_width * xs);
+
+		// Scale
+		this.image.width(xs);
+		this.image.height(ys);
+
+		// Video
+		if (this.ytvideo_player != null && this.ytvideo_player.setSize) {
+			var size = [ this.video_container.outerWidth() , this.video_container.outerHeight() ];
+			this.ytvideo_player.setSize(size[0], size[1]);
+		}
+	},
+	resize_image_container: function (height) {
+		// New heights
+		var image_height_target = height / this.scale_factor;
+		if (image_height_target < this.image_height_min) image_height_target = this.image_height_min;
+		var playlist_height_target = this.playlist_height - (image_height_target - this.image_height);
+		if (playlist_height_target < 0) {
+			image_height_target += playlist_height_target;
+			playlist_height_target = 0;
+		}
+
+		// Update
+		var update_max = (this.image_height == this.image_height_max || image_height_target >= this.image_height_max);
+
+		this.image_height = image_height_target;
+		this.playlist_height = playlist_height_target;
+		//if (update_max)
+		this.image_height_max = this.image_height;
+
+		// Update
+		this.playlist_container.outerHeight(this.playlist_height * this.scale_factor);
+		this.image_container.outerHeight(this.image_height * this.scale_factor);
+		this.update_image_scale();
+	},
+	update_player_theme_name: function (data) {
+		data.media_player.player_theme_name.html(data.media_player.css.css_color_presets[data.media_player.css.preset]["@name"] || data.media_player.css.preset);
+	},
+
+	E: function (elem) {
+		// Shortcut to create an element, masked with jquery
+		var e = $(document.createElement(elem));
+		for (var i = 1; i < arguments.length; ++i) this.C(e, arguments[i]);
+		return e;
+	},
+	D: function () {
+		// Shortcut to create a div, masked with jquery, appended with some classes
+		var e = $(document.createElement("div"));
+		for (var i = 0; i < arguments.length; ++i) this.C(e, arguments[i]);
+		return e;
+	},
+	C: function (elem, cls) {
+		elem.addClass(cls + this.css.css_suffix);
+	},
+	unC: function (elem, cls) {
+		elem.removeClass(cls + this.css.css_suffix);
+	},
+
+	duration_to_string: function (position) {
+		var seconds_in = Math.round(position);
+		var minutes_in = Math.floor(seconds_in / 60);
+		seconds_in = Math.floor(seconds_in - minutes_in * 60);
+		var s = minutes_in + ":" + (seconds_in >= 10 ? seconds_in : "0" + seconds_in);
+		return s;
+	},
+	youtube_time_to_number: function (str) {
+		var time = 0;
+		while (str.length > 0) {
+			var match = /([0-9]+)([smh$])/.exec(str);
+			if (match != null) {
+				if (match[2] == "h") time += parseInt(match[1]) * 60 * 60;
+				else if (match[2] == "m") time += parseInt(match[1]) * 60;
+				else time += parseInt(match[1]);
+
+				str = str.substr(match.index + match[0].length, str.length - (match.index + match[0].length));
+			}
+			else {
+				break;
+			}
+		}
+		return time;
+	},
+	string_to_uint8array: function (str) {
+		var array = new Uint8Array(new ArrayBuffer(str.length));
+		for (var i = 0; i < str.length; ++i) {
+			array[i] = str.charCodeAt(i);
+		}
+		return array;
+	},
+	arraybuffer_to_uint8array: function (buffer) {
+		return new Uint8Array(buffer);
+	},
+	generate_color_editor: function (label, identifier, value) {
+		var color_edit;
+		var help_input = [ null , null , null , null ];
+
+		var e = this.D("SPHelpSectionDiv") //{ DOM Generation
+			.append(
+				this.D("SPHelpColorInputDiv0")
+				.append(
+					this.D("SPHelpColorInputDiv2b")
+					.append(
+						(color_edit = this.D("SPHelpColorLabelDisplay"))
+					)
+					.append(
+						this.D("SPHelpColorLabelText")
+						.html(label)
+					)
+				)
+			)
+			.append(
+				this.D("SPHelpColorInputDiv1")
+				.append(
+					this.D("SPHelpColorInputDiv2")
+					.attr("title", "Red : [0,255]")
+					.append(
+						this.D("SPHelpColorInputDiv3")
+						.append(
+							(help_input[0] = this.E("input", "SPHelpColorInput"))
+							.attr("type", "text")
+						)
+					)
+				)
+			)
+			.append(
+				this.D("SPHelpColorInputDiv1")
+				.append(
+					this.D("SPHelpColorInputDiv2")
+					.attr("title", "Green : [0,255]")
+					.append(
+						this.D("SPHelpColorInputDiv3")
+						.append(
+							(help_input[1] = this.E("input", "SPHelpColorInput"))
+							.attr("type", "text")
+						)
+					)
+				)
+			)
+			.append(
+				this.D("SPHelpColorInputDiv1")
+				.append(
+					this.D("SPHelpColorInputDiv2")
+					.attr("title", "Blue : [0,255]")
+					.append(
+						this.D("SPHelpColorInputDiv3")
+						.append(
+							(help_input[2] = this.E("input", "SPHelpColorInput"))
+							.attr("type", "text")
+						)
+					)
+				)
+			)
+			.append(
+				this.D("SPHelpColorInputDiv1")
+				.append(
+					this.D("SPHelpColorInputDiv2")
+					.attr("title", "Alpha : [0.0,1.0]")
+					.append(
+						this.D("SPHelpColorInputDiv3")
+						.append(
+							(help_input[3] = this.E("input", "SPHelpColorInput"))
+							.attr("type", "text")
+						)
+					)
+				)
+			) //}
+
+		// Settings
+		for (var i = 0; i < help_input.length; ++i) {
+			help_input[i].val(value[i]);
+			help_input[i].on("change." + this.namespace, {media_player: this, color_id: identifier, component: i, color_display: color_edit}, this.on_settings_color_change);
+		}
+
+		if (value[3] >= 1.0) {
+			color_edit.css("background", "rgb(" + value[0] + "," + value[1] + "," + value[2] + ")");
 		}
 		else {
-			this.playback_controls[2][0].css("display", "none");
-			this.playback_controls[2][1].css("display", "");
+			color_edit.css("background", "rgba(" + value[0] + "," + value[1] + "," + value[2] + "," + value[3] + ")");
 		}
-	}
-}
-MediaPlayer.prototype.update_scale_factor = function (scale_factor) {
-	this.scale_factor = scale_factor;
 
-	this.sp_container_main.outerWidth(this.player_width * this.scale_factor);
-	this.playlist_container.outerHeight(this.playlist_height * this.scale_factor);
-	this.image_container.outerHeight(this.image_height * this.scale_factor);
-	// rescale image
-	this.update_image_scale();
-}
-MediaPlayer.prototype.update_image_scale = function () {
-	var xs = (this.image_container.outerWidth() / this.current_image_width);
-	var ys = (this.image_height * this.scale_factor / this.current_image_height);
-	if (ys < xs) xs = ys;
-	//if (xs > 1.0) xs = 1.0;
-
-	ys = Math.floor(this.current_image_height * xs);
-	xs = Math.floor(this.current_image_width * xs);
-
-	// Scale
-	this.image.width(xs);
-	this.image.height(ys);
-
-	// Video
-	if (this.ytvideo_player != null && this.ytvideo_player.setSize) {
-		var size = [ this.video_container.outerWidth() , this.video_container.outerHeight() ];
-		this.ytvideo_player.setSize(size[0], size[1]);
-	}
-}
-MediaPlayer.prototype.resize_image_container = function (height) {
-	// New heights
-	var image_height_target = height / this.scale_factor;
-	if (image_height_target < this.image_height_min) image_height_target = this.image_height_min;
-	var playlist_height_target = this.playlist_height - (image_height_target - this.image_height);
-	if (playlist_height_target < 0) {
-		image_height_target += playlist_height_target;
-		playlist_height_target = 0;
-	}
-
-	// Update
-	var update_max = (this.image_height == this.image_height_max || image_height_target >= this.image_height_max);
-
-	this.image_height = image_height_target;
-	this.playlist_height = playlist_height_target;
-	//if (update_max)
-	this.image_height_max = this.image_height;
-
-	// Update
-	this.playlist_container.outerHeight(this.playlist_height * this.scale_factor);
-	this.image_container.outerHeight(this.image_height * this.scale_factor);
-	this.update_image_scale();
-}
-MediaPlayer.prototype.update_player_theme_name = function (data) {
-	data.media_player.player_theme_name.html(data.media_player.css.css_color_presets[data.media_player.css.preset]["@name"] || data.media_player.css.preset);
-}
-
-MediaPlayer.prototype.E = function (elem) {
-	// Shortcut to create an element, masked with jquery
-	var e = $(document.createElement(elem));
-	for (var i = 1; i < arguments.length; ++i) this.C(e, arguments[i]);
-	return e;
-}
-MediaPlayer.prototype.D = function () {
-	// Shortcut to create a div, masked with jquery, appended with some classes
-	var e = $(document.createElement("div"));
-	for (var i = 0; i < arguments.length; ++i) this.C(e, arguments[i]);
-	return e;
-}
-MediaPlayer.prototype.C = function (elem, cls) {
-	elem.addClass(cls + this.css.css_suffix);
-}
-MediaPlayer.prototype.unC = function (elem, cls) {
-	elem.removeClass(cls + this.css.css_suffix);
-}
-
-MediaPlayer.prototype.duration_to_string = function (position) {
-	var seconds_in = Math.round(position);
-	var minutes_in = Math.floor(seconds_in / 60);
-	seconds_in = Math.floor(seconds_in - minutes_in * 60);
-	var s = minutes_in + ":" + (seconds_in >= 10 ? seconds_in : "0" + seconds_in);
-	return s;
-}
-MediaPlayer.prototype.youtube_time_to_number = function (str) {
-	var time = 0;
-	while (str.length > 0) {
-		var match = /([0-9]+)([smh$])/.exec(str);
-		if (match != null) {
-			if (match[2] == "h") time += parseInt(match[1]) * 60 * 60;
-			else if (match[2] == "m") time += parseInt(match[1]) * 60;
-			else time += parseInt(match[1]);
-
-			str = str.substr(match.index + match[0].length, str.length - (match.index + match[0].length));
-		}
-		else {
-			break;
-		}
-	}
-	return time;
-}
-MediaPlayer.prototype.string_to_uint8array = function (str) {
-	var array = new Uint8Array(new ArrayBuffer(str.length));
-	for (var i = 0; i < str.length; ++i) {
-		array[i] = str.charCodeAt(i);
-	}
-	return array;
-}
-MediaPlayer.prototype.arraybuffer_to_uint8array = function (buffer) {
-	return new Uint8Array(buffer);
-}
-MediaPlayer.prototype.generate_color_editor = function (label, identifier, value) {
-	var color_edit;
-	var help_input = [ null , null , null , null ];
-
-	var e = this.D("SPHelpSectionDiv") //{ DOM Generation
-		.append(
-			this.D("SPHelpColorInputDiv0")
-			.append(
-				this.D("SPHelpColorInputDiv2b")
-				.append(
-					(color_edit = this.D("SPHelpColorLabelDisplay"))
-				)
-				.append(
-					this.D("SPHelpColorLabelText")
-					.html(label)
-				)
-			)
-		)
-		.append(
-			this.D("SPHelpColorInputDiv1")
-			.append(
-				this.D("SPHelpColorInputDiv2")
-				.attr("title", "Red : [0,255]")
-				.append(
-					this.D("SPHelpColorInputDiv3")
-					.append(
-						(help_input[0] = this.E("input", "SPHelpColorInput"))
-						.attr("type", "text")
-					)
-				)
-			)
-		)
-		.append(
-			this.D("SPHelpColorInputDiv1")
-			.append(
-				this.D("SPHelpColorInputDiv2")
-				.attr("title", "Green : [0,255]")
-				.append(
-					this.D("SPHelpColorInputDiv3")
-					.append(
-						(help_input[1] = this.E("input", "SPHelpColorInput"))
-						.attr("type", "text")
-					)
-				)
-			)
-		)
-		.append(
-			this.D("SPHelpColorInputDiv1")
-			.append(
-				this.D("SPHelpColorInputDiv2")
-				.attr("title", "Blue : [0,255]")
-				.append(
-					this.D("SPHelpColorInputDiv3")
-					.append(
-						(help_input[2] = this.E("input", "SPHelpColorInput"))
-						.attr("type", "text")
-					)
-				)
-			)
-		)
-		.append(
-			this.D("SPHelpColorInputDiv1")
-			.append(
-				this.D("SPHelpColorInputDiv2")
-				.attr("title", "Alpha : [0.0,1.0]")
-				.append(
-					this.D("SPHelpColorInputDiv3")
-					.append(
-						(help_input[3] = this.E("input", "SPHelpColorInput"))
-						.attr("type", "text")
-					)
-				)
-			)
-		) //}
-
-	// Settings
-	for (var i = 0; i < help_input.length; ++i) {
-		help_input[i].val(value[i]);
-		help_input[i].on("change." + this.namespace, {media_player: this, color_id: identifier, component: i, color_display: color_edit}, this.on_settings_color_change);
-	}
-
-	if (value[3] >= 1.0) {
-		color_edit.css("background", "rgb(" + value[0] + "," + value[1] + "," + value[2] + ")");
-	}
-	else {
-		color_edit.css("background", "rgba(" + value[0] + "," + value[1] + "," + value[2] + "," + value[3] + ")");
-	}
-
-	this.player_theme_value_updaters.push([
-		true, identifier, help_input[0], help_input[1], help_input[2], help_input[3], color_edit
-	]);
-
-	// Done
-	return e;
-}
-MediaPlayer.prototype.generate_value_editor = function (label, identifier, value, is_string) {
-	var help_input;
-
-	var  e = this.D("SPHelpSectionDiv") //{ DOM Generation
-		.append(
-			this.D("SPHelpColorInputDiv0")
-			.append(
-				this.D("SPHelpColorInputDiv2b")
-				.append(
-					this.D("SPHelpColorLabelText")
-					.html(label)
-				)
-			)
-		)
-		.append(
-			this.D("SPHelpColorInputDiv1Full")
-			.append(
-				this.D("SPHelpColorInputDiv2")
-				.append(
-					this.D("SPHelpColorInputDiv3")
-					.append(
-						(help_input = this.E("input", "SPHelpColorInput"))
-						.attr("type", "text")
-						.val(value)
-						.on("change." + this.namespace, {media_player: this, value_id: identifier, "is_string": is_string}, this.on_settings_value_change)
-					)
-				)
-			)
-		) //}
-
-	// Add to auto-update list
-	if (identifier[0] != "@") {
 		this.player_theme_value_updaters.push([
-			false, identifier, help_input
+			true, identifier, help_input[0], help_input[1], help_input[2], help_input[3], color_edit
 		]);
-	}
 
-	return e;
-}
-MediaPlayer.prototype.update_value_fields = function () {
-	// Update all
-	for (var i in this.player_theme_value_updaters) {
-		if (this.player_theme_value_updaters[i][0]) {
-			// Color
-			for (var j = 0; j < 4; ++j) {
-				this.player_theme_value_updaters[i][2 + j].val(this.css.get_value(true, this.player_theme_value_updaters[i][1])[j]);
+		// Done
+		return e;
+	},
+	generate_value_editor: function (label, identifier, value, is_string) {
+		var help_input;
+
+		var  e = this.D("SPHelpSectionDiv") //{ DOM Generation
+			.append(
+				this.D("SPHelpColorInputDiv0")
+				.append(
+					this.D("SPHelpColorInputDiv2b")
+					.append(
+						this.D("SPHelpColorLabelText")
+						.html(label)
+					)
+				)
+			)
+			.append(
+				this.D("SPHelpColorInputDiv1Full")
+				.append(
+					this.D("SPHelpColorInputDiv2")
+					.append(
+						this.D("SPHelpColorInputDiv3")
+						.append(
+							(help_input = this.E("input", "SPHelpColorInput"))
+							.attr("type", "text")
+							.val(value)
+							.on("change." + this.namespace, {media_player: this, value_id: identifier, "is_string": is_string}, this.on_settings_value_change)
+						)
+					)
+				)
+			) //}
+
+		// Add to auto-update list
+		if (identifier[0] != "@") {
+			this.player_theme_value_updaters.push([
+				false, identifier, help_input
+			]);
+		}
+
+		return e;
+	},
+	update_value_fields: function () {
+		// Update all
+		for (var i in this.player_theme_value_updaters) {
+			if (this.player_theme_value_updaters[i][0]) {
+				// Color
+				for (var j = 0; j < 4; ++j) {
+					this.player_theme_value_updaters[i][2 + j].val(this.css.get_value(true, this.player_theme_value_updaters[i][1])[j]);
+				}
 			}
+			else {
+				// Value
+				this.player_theme_value_updaters[i][2].val(this.css.get_value(false, this.player_theme_value_updaters[i][1]));
+			}
+		}
+	},
+
+	add_to_playlist: function (title, tag, flagged, url, sound_index, raw_data, image_src, playlist_data) {
+		// Setup playlist settings
+		var playlist_item = {
+			"type": "image-audio",
+			"title": title,
+			"tag": tag,
+			"flagged": flagged,
+			"url": url,
+			"sound_index": sound_index,
+			"index": this.playlist.length,
+			"duration": 0.0,
+			"position": 0.0,
+			"controls": [ null , null , null , null , null ],
+			"loaded_offset": 0.0,
+			"loaded_percent": 1.0,
+			"image_url": null,
+			"image_blob": null,
+			"image_blob_url": null,
+			"image_name": ((playlist_data ? playlist_data.image_name : null) || url.split("/").pop()),
+			"audio_blob": null,
+			"audio_blob_url": null,
+		};
+
+		// Create ogg audio
+		playlist_item.audio_blob = new Blob([raw_data], {type: "audio/ogg"});
+		playlist_item.audio_blob_url = (window.webkitURL || window.URL).createObjectURL(playlist_item.audio_blob);
+
+		// Create/get image url and related settings
+		if (typeof(image_src) == typeof("")) {
+			playlist_item.image_url = image_src;
+			playlist_item.image_blob = null;
+			playlist_item.image_blob_url = null;
 		}
 		else {
-			// Value
-			this.player_theme_value_updaters[i][2].val(this.css.get_value(false, this.player_theme_value_updaters[i][1]));
+			var ext = url.split(".").pop().toLowerCase();
+			var mime = "image/jpeg"
+			if (ext == "png") mime = "image/png";
+			else if (ext == "gif") mime = "image/gif";
+
+			playlist_item.image_blob = new Blob([image_src], {type: mime});
+			playlist_item.image_blob_url = (window.webkitURL || window.URL).createObjectURL(playlist_item.image_blob);
+			playlist_item.image_url = playlist_item.image_blob_url;
 		}
-	}
-}
 
-MediaPlayer.prototype.add_to_playlist = function (title, tag, flagged, url, sound_index, raw_data, image_src, playlist_data) {
-	// Setup playlist settings
-	var playlist_item = {
-		"type": "image-audio",
-		"title": title,
-		"tag": tag,
-		"flagged": flagged,
-		"url": url,
-		"sound_index": sound_index,
-		"index": this.playlist.length,
-		"duration": 0.0,
-		"position": 0.0,
-		"controls": [ null , null , null , null , null ],
-		"loaded_offset": 0.0,
-		"loaded_percent": 1.0,
-		"image_url": null,
-		"image_blob": null,
-		"image_blob_url": null,
-		"image_name": ((playlist_data ? playlist_data.image_name : null) || url.split("/").pop()),
-		"audio_blob": null,
-		"audio_blob_url": null,
-	};
-
-	// Create ogg audio
-	playlist_item.audio_blob = new Blob([raw_data], {type: "audio/ogg"});
-	playlist_item.audio_blob_url = (window.webkitURL || window.URL).createObjectURL(playlist_item.audio_blob);
-
-	// Create/get image url and related settings
-	if (typeof(image_src) == typeof("")) {
-		playlist_item.image_url = image_src;
-		playlist_item.image_blob = null;
-		playlist_item.image_blob_url = null;
-	}
-	else {
-		var ext = url.split(".").pop().toLowerCase();
-		var mime = "image/jpeg"
-		if (ext == "png") mime = "image/png";
-		else if (ext == "gif") mime = "image/gif";
-
-		playlist_item.image_blob = new Blob([image_src], {type: mime});
-		playlist_item.image_blob_url = (window.webkitURL || window.URL).createObjectURL(playlist_item.image_blob);
-		playlist_item.image_url = playlist_item.image_blob_url;
-	}
-
-	// html setup
-	this.playlist_container.append( //{ DOM creation
-		(playlist_item.playlist_item = this.D("SPPlaylistItem"))
-		.on("click." + this.namespace, {media_player: this, playlist_item: playlist_item}, this.on_playlist_item_click)
-		.on("mousedown", this.cancel_event)
-		.attr("title", tag != MediaPlayer.ALL_SOUNDS ? tag : "")
-		.append(
-			this.D("SPPlaylistSoundName")
-			.text(playlist_item.title)
-		)
-		.append(
-			(playlist_item.info_container = this.D("SPPlaylistItemInfo"))
-			.html(this.duration_to_string(playlist_item.duration))
-		)
-		.append(
-			this.D("SPPlaylistControlsContainer")
+		// html setup
+		this.playlist_container.append( //{ DOM creation
+			(playlist_item.playlist_item = this.D("SPPlaylistItem"))
+			.on("click." + this.namespace, {media_player: this, playlist_item: playlist_item}, this.on_playlist_item_click)
 			.on("mousedown", this.cancel_event)
+			.attr("title", tag != MediaPlayer.ALL_SOUNDS ? tag : "")
 			.append(
-				this.D("SPPlaylistControls")
-				.on("click", this.cancel_event)
+				this.D("SPPlaylistSoundName")
+				.text(playlist_item.title)
+			)
+			.append(
+				(playlist_item.info_container = this.D("SPPlaylistItemInfo"))
+				.html(this.duration_to_string(playlist_item.duration))
+			)
+			.append(
+				this.D("SPPlaylistControlsContainer")
+				.on("mousedown", this.cancel_event)
 				.append(
-					(playlist_item.controls[0] = this.E("a", "SPPlaylistControlLink"))
-					.html("&times;")
-					.attr("title", "Delete")
-				)
-				.append(
-					this.D("SPPlaylistControlLinkSeparator")
-				)
-				.append(
-					(playlist_item.controls[1] = this.E("a", "SPPlaylistControlLink"))
-					.html("&uarr;")
-					.attr("title", "Move up")
-				)
-				.append(
-					this.D("SPPlaylistControlLinkSeparator")
-				)
-				.append(
-					(playlist_item.controls[2] = this.E("a", "SPPlaylistControlLink"))
-					.html("&darr;")
-					.attr("title", "Move down")
-				)
-				.append(
-					this.D("SPPlaylistControlLinkSeparator")
-				)
-				.append(
-					(playlist_item.controls[3] = this.E("a", "SPPlaylistControlLink"))
-					.html("S")
-					.attr("title", "Save...")
-					.attr("href", playlist_item.audio_blob_url)
-				)
-				.append(
-					this.D("SPPlaylistControlLinkSeparator")
-				)
-				.append(
-					(playlist_item.controls[4] = this.E("a", "SPPlaylistControlLink"))
-					.html("I")
-					.attr("title", "Image...")
-					.attr("href", playlist_item.image_url)
+					this.D("SPPlaylistControls")
+					.on("click", this.cancel_event)
+					.append(
+						(playlist_item.controls[0] = this.E("a", "SPPlaylistControlLink"))
+						.html("&times;")
+						.attr("title", "Delete")
+					)
+					.append(
+						this.D("SPPlaylistControlLinkSeparator")
+					)
+					.append(
+						(playlist_item.controls[1] = this.E("a", "SPPlaylistControlLink"))
+						.html("&uarr;")
+						.attr("title", "Move up")
+					)
+					.append(
+						this.D("SPPlaylistControlLinkSeparator")
+					)
+					.append(
+						(playlist_item.controls[2] = this.E("a", "SPPlaylistControlLink"))
+						.html("&darr;")
+						.attr("title", "Move down")
+					)
+					.append(
+						this.D("SPPlaylistControlLinkSeparator")
+					)
+					.append(
+						(playlist_item.controls[3] = this.E("a", "SPPlaylistControlLink"))
+						.html("S")
+						.attr("title", "Save...")
+						.attr("href", playlist_item.audio_blob_url)
+					)
+					.append(
+						this.D("SPPlaylistControlLinkSeparator")
+					)
+					.append(
+						(playlist_item.controls[4] = this.E("a", "SPPlaylistControlLink"))
+						.html("I")
+						.attr("title", "Image...")
+						.attr("href", playlist_item.image_url)
+					)
 				)
 			)
-		)
-	); //}
+		); //}
 
-	// Custom
-	for (var i = 0; i < playlist_item.controls.length; ++i) {
-		playlist_item.controls[i].on("click." + this.namespace, {control_id: i, media_player: this, playlist_item: playlist_item}, this.on_playlist_control_click);
-		playlist_item.controls[i].on("mousedown", this.cancel_event);
-	}
-
-	// Automatic length detection
-	playlist_item.temp_audio = this.E("audio")
-		.css("display", "none")
-		.attr("src", playlist_item.audio_blob_url)
-		.on(
-			"durationchange." + this.namespace,
-			{"media_player": this, "playlist_item": playlist_item},
-			this.on_temp_audio_durationchange
-		);
-	playlist_item.temp_audio[0].volume = 0.0;
-	playlist_item.temp_audio[0].play();
-
-	// Add
-	this.playlist.push(playlist_item);
-
-	// Scroll to?
-	if (this.playlist_scrollto_onload) {
-		this.scroll_to(this.playlist.length - 1);
-	}
-
-	// Index display
-	this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
-
-	// Play?
-	if (!this.first_run) {
-		if (
-			(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
-			(this.playlist_play_on_load == 2 &&
-				(this.current_media == null || (
-					this.current_media.index == this.playlist.length - 2 &&
-					this.current_media.position >= this.current_media.duration - 1.0 &&
-					this.is_paused()
-				))
-			) ||
-			(this.playlist_play_on_load == 3 && this.is_paused()) ||
-			(this.playlist_play_on_load == 4)
-		) {
-			this.start(this.playlist.length - 1);
+		// Custom
+		for (var i = 0; i < playlist_item.controls.length; ++i) {
+			playlist_item.controls[i].on("click." + this.namespace, {control_id: i, media_player: this, playlist_item: playlist_item}, this.on_playlist_control_click);
+			playlist_item.controls[i].on("mousedown", this.cancel_event);
 		}
-	}
-}
-MediaPlayer.prototype.add_to_playlist_ytvideo = function (original_url, vid_id, tag, flagged, info_xml, playlist_data) {
-	// Setup playlist settings
-	var duration = xml_find_nodes_by_name(info_xml, "yt:duration");
-	if (duration.length > 0) {
-		duration = duration[0].getAttribute("seconds");
-		duration = parseFloat(duration);
-		duration = isFinite(duration) ? duration : 0.0;
-	}
-	else {
-		duration = 0.0;
-	}
 
-	var start = /[\!\#\?\&]t=[0-9smh]+/.exec(original_url);
-	if (start != null) {
-		start = this.youtube_time_to_number(start[0].substr(3, start[0].length - 3));
-	}
-	else {
-		start = 0.0;
-	}
+		// Automatic length detection
+		playlist_item.temp_audio = this.E("audio")
+			.css("display", "none")
+			.attr("src", playlist_item.audio_blob_url)
+			.on(
+				"durationchange." + this.namespace,
+				{"media_player": this, "playlist_item": playlist_item},
+				this.on_temp_audio_durationchange
+			);
+		playlist_item.temp_audio[0].volume = 0.0;
+		playlist_item.temp_audio[0].play();
 
-	var title;
-	try {
-		title = $(xml_find_nodes_by_name(info_xml, "title")).text();
-	}
-	catch (e) {
-		console.log(e);
-		title = "Unknown Title";
-	}
+		// Add
+		this.playlist.push(playlist_item);
 
-	var playlist_item = {
-		"type": "youtube-video",
-		"title": title,
-		"original_url": original_url,
-		"tag": tag,
-		"flagged": flagged,
-		"vid_id": vid_id,
-		"duration": duration,
-		"start": start,
-		"position": 0.0,
-		"index": this.playlist.length,
-		"controls": [ null , null , null , null ],
-		"progress_timer": null,
-		"loaded_offset": 0.0,
-		"loaded_percent": 0.0
-	};
-
-	// html setup
-	this.playlist_container.append( //{ DOM creation
-		(playlist_item.playlist_item = this.D("SPPlaylistItem"))
-		.on("click." + this.namespace, {media_player: this, playlist_item: playlist_item}, this.on_playlist_item_click)
-		.on("mousedown", this.cancel_event)
-		.append(
-			this.D("SPPlaylistSoundName")
-			.text(playlist_item.title)
-		)
-		.append(
-			(playlist_item.info_container = this.D("SPPlaylistItemInfo"))
-			.html(this.duration_to_string(playlist_item.duration))
-		)
-		.append(
-			this.D("SPPlaylistControlsContainer")
-			.on("mousedown", this.cancel_event)
-			.append(
-				this.D("SPPlaylistControls")
-				.on("click", this.cancel_event)
-				.append(
-					(playlist_item.controls[0] = this.E("a", "SPPlaylistControlLink"))
-					.html("&times;")
-					.attr("title", "Delete")
-				)
-				.append(
-					this.D("SPPlaylistControlLinkSeparator")
-				)
-				.append(
-					(playlist_item.controls[1] = this.E("a", "SPPlaylistControlLink"))
-					.html("&uarr;")
-					.attr("title", "Move up")
-				)
-				.append(
-					this.D("SPPlaylistControlLinkSeparator")
-				)
-				.append(
-					(playlist_item.controls[2] = this.E("a", "SPPlaylistControlLink"))
-					.html("&darr;")
-					.attr("title", "Move down")
-				)
-				.append(
-					this.D("SPPlaylistControlLinkSeparator")
-				)
-				.append(
-					(playlist_item.controls[3] = this.E("a", "SPPlaylistControlLink"))
-					.html("Y")
-					.attr("title", "Youtube Link")
-					.attr("href", "//www.youtube.com/watch?v=" + playlist_item.vid_id + (playlist_item.start == 0.0 ? "" : ("&t=" + Math.floor(playlist_item.start) + "s")))
-				)
-			)
-		)
-	); //}
-
-	// Custom
-	for (var i = 0; i < playlist_item.controls.length; ++i) {
-		playlist_item.controls[i].on("click." + this.namespace, {control_id: i, media_player: this, playlist_item: playlist_item}, this.on_playlist_control_click);
-		playlist_item.controls[i].on("mousedown", this.cancel_event);
-	}
-
-	// Add
-	this.playlist.push(playlist_item);
-
-	// Scroll to?
-	if (this.playlist_scrollto_onload) {
-		this.scroll_to(this.playlist.length - 1);
-	}
-
-	// Index display
-	this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
-
-	// Play?
-	if (!this.first_run) {
-		if (
-			(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
-			(this.playlist_play_on_load == 2 &&
-				(this.current_media == null || (
-					this.current_media.index == this.playlist.length - 2 &&
-					this.current_media.position >= this.current_media.duration - 1.0 &&
-					this.is_paused()
-				))
-			) ||
-			(this.playlist_play_on_load == 3 && this.is_paused()) ||
-			(this.playlist_play_on_load == 4)
-		) {
-			this.start(this.playlist.length - 1);
+		// Scroll to?
+		if (this.playlist_scrollto_onload) {
+			this.scroll_to(this.playlist.length - 1);
 		}
-	}
-}
 
-MediaPlayer.prototype.ajax_get = function (url, return_as_string, callback_data, progress_callback, done_callback) {
-	var media_player = this;
-	if (this.is_chrome) {
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", url, true);
-		if (!return_as_string) xhr.overrideMimeType("text/plain; charset=x-user-defined");
-		xhr.responseType = (return_as_string ? "text" : "arraybuffer");
+		// Index display
+		this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
 
-		xhr.onload = function (event) {
-			if (typeof(done_callback) == "function") {
-				if (this.status == 200) {
-					done_callback(
-						true,
-						callback_data,
-						(return_as_string ? this.response : media_player.arraybuffer_to_uint8array(this.response))
-					);
-				}
-				else {
-					done_callback(false, callback_data, null);
-				}
+		// Play?
+		if (!this.first_run) {
+			if (
+				(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
+				(this.playlist_play_on_load == 2 &&
+					(this.current_media == null || (
+						this.current_media.index == this.playlist.length - 2 &&
+						this.current_media.position >= this.current_media.duration - 1.0 &&
+						this.is_paused()
+					))
+				) ||
+				(this.playlist_play_on_load == 3 && this.is_paused()) ||
+				(this.playlist_play_on_load == 4)
+			) {
+				this.start(this.playlist.length - 1);
 			}
-		};
-		if (typeof(progress_callback) == "function") {
-			xhr.onprogress = function (event) {
-				progress_callback(event, callback_data);
-			};
 		}
-		xhr.send();
-	}
-	else {
-		var arg = {
-			method: "GET",
-			url: url,
-			onload: function (event) {
+	},
+	add_to_playlist_ytvideo: function (original_url, vid_id, tag, flagged, info_xml, playlist_data) {
+		// Setup playlist settings
+		var duration = xml_find_nodes_by_name(info_xml, "yt:duration");
+		if (duration.length > 0) {
+			duration = duration[0].getAttribute("seconds");
+			duration = parseFloat(duration);
+			duration = isFinite(duration) ? duration : 0.0;
+		}
+		else {
+			duration = 0.0;
+		}
+
+		var start = /[\!\#\?\&]t=[0-9smh]+/.exec(original_url);
+		if (start != null) {
+			start = this.youtube_time_to_number(start[0].substr(3, start[0].length - 3));
+		}
+		else {
+			start = 0.0;
+		}
+
+		var title;
+		try {
+			title = $(xml_find_nodes_by_name(info_xml, "title")).text();
+		}
+		catch (e) {
+			console.log(e);
+			title = "Unknown Title";
+		}
+
+		var playlist_item = {
+			"type": "youtube-video",
+			"title": title,
+			"original_url": original_url,
+			"tag": tag,
+			"flagged": flagged,
+			"vid_id": vid_id,
+			"duration": duration,
+			"start": start,
+			"position": 0.0,
+			"index": this.playlist.length,
+			"controls": [ null , null , null , null ],
+			"progress_timer": null,
+			"loaded_offset": 0.0,
+			"loaded_percent": 0.0
+		};
+
+		// html setup
+		this.playlist_container.append( //{ DOM creation
+			(playlist_item.playlist_item = this.D("SPPlaylistItem"))
+			.on("click." + this.namespace, {media_player: this, playlist_item: playlist_item}, this.on_playlist_item_click)
+			.on("mousedown", this.cancel_event)
+			.append(
+				this.D("SPPlaylistSoundName")
+				.text(playlist_item.title)
+			)
+			.append(
+				(playlist_item.info_container = this.D("SPPlaylistItemInfo"))
+				.html(this.duration_to_string(playlist_item.duration))
+			)
+			.append(
+				this.D("SPPlaylistControlsContainer")
+				.on("mousedown", this.cancel_event)
+				.append(
+					this.D("SPPlaylistControls")
+					.on("click", this.cancel_event)
+					.append(
+						(playlist_item.controls[0] = this.E("a", "SPPlaylistControlLink"))
+						.html("&times;")
+						.attr("title", "Delete")
+					)
+					.append(
+						this.D("SPPlaylistControlLinkSeparator")
+					)
+					.append(
+						(playlist_item.controls[1] = this.E("a", "SPPlaylistControlLink"))
+						.html("&uarr;")
+						.attr("title", "Move up")
+					)
+					.append(
+						this.D("SPPlaylistControlLinkSeparator")
+					)
+					.append(
+						(playlist_item.controls[2] = this.E("a", "SPPlaylistControlLink"))
+						.html("&darr;")
+						.attr("title", "Move down")
+					)
+					.append(
+						this.D("SPPlaylistControlLinkSeparator")
+					)
+					.append(
+						(playlist_item.controls[3] = this.E("a", "SPPlaylistControlLink"))
+						.html("Y")
+						.attr("title", "Youtube Link")
+						.attr("href", "//www.youtube.com/watch?v=" + playlist_item.vid_id + (playlist_item.start == 0.0 ? "" : ("&t=" + Math.floor(playlist_item.start) + "s")))
+					)
+				)
+			)
+		); //}
+
+		// Custom
+		for (var i = 0; i < playlist_item.controls.length; ++i) {
+			playlist_item.controls[i].on("click." + this.namespace, {control_id: i, media_player: this, playlist_item: playlist_item}, this.on_playlist_control_click);
+			playlist_item.controls[i].on("mousedown", this.cancel_event);
+		}
+
+		// Add
+		this.playlist.push(playlist_item);
+
+		// Scroll to?
+		if (this.playlist_scrollto_onload) {
+			this.scroll_to(this.playlist.length - 1);
+		}
+
+		// Index display
+		this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
+
+		// Play?
+		if (!this.first_run) {
+			if (
+				(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
+				(this.playlist_play_on_load == 2 &&
+					(this.current_media == null || (
+						this.current_media.index == this.playlist.length - 2 &&
+						this.current_media.position >= this.current_media.duration - 1.0 &&
+						this.is_paused()
+					))
+				) ||
+				(this.playlist_play_on_load == 3 && this.is_paused()) ||
+				(this.playlist_play_on_load == 4)
+			) {
+				this.start(this.playlist.length - 1);
+			}
+		}
+	},
+
+	ajax_get: function (url, return_as_string, callback_data, progress_callback, done_callback) {
+		var media_player = this;
+		if (this.is_chrome) {
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", url, true);
+			if (!return_as_string) xhr.overrideMimeType("text/plain; charset=x-user-defined");
+			xhr.responseType = (return_as_string ? "text" : "arraybuffer");
+
+			xhr.onload = function (event) {
 				if (typeof(done_callback) == "function") {
-					if (event.status == 200) {
+					if (this.status == 200) {
 						done_callback(
 							true,
 							callback_data,
-							(return_as_string ? event.responseText : media_player.string_to_uint8array(event.responseText))
+							(return_as_string ? this.response : media_player.arraybuffer_to_uint8array(this.response))
 						);
 					}
 					else {
 						done_callback(false, callback_data, null);
 					}
 				}
-			}
-		};
-		if (!return_as_string) arg.overrideMimeType = "text/plain; charset=x-user-defined";
-		if (typeof(progress_callback) == "function") {
-			arg.onprogress = function (event) {
-				progress_callback(event, callback_data);
 			};
+			if (typeof(progress_callback) == "function") {
+				xhr.onprogress = function (event) {
+					progress_callback(event, callback_data);
+				};
+			}
+			xhr.send();
 		}
-		GM_xmlhttpRequest(arg);
-	}
-}
-
-MediaPlayer.prototype.attempt_load = function (url_or_file, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback) {
-	// Attempt to load from remote URL or local file
-	if (typeof(url_or_file) == typeof("")) {
-		// Youtube loading
-		if (this.url_get_youtube_video_id(url_or_file)) {
-			this.attempt_load_video(url_or_file, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback);
-			return;
+		else {
+			var arg = {
+				method: "GET",
+				url: url,
+				onload: function (event) {
+					if (typeof(done_callback) == "function") {
+						if (event.status == 200) {
+							done_callback(
+								true,
+								callback_data,
+								(return_as_string ? event.responseText : media_player.string_to_uint8array(event.responseText))
+							);
+						}
+						else {
+							done_callback(false, callback_data, null);
+						}
+					}
+				}
+			};
+			if (!return_as_string) arg.overrideMimeType = "text/plain; charset=x-user-defined";
+			if (typeof(progress_callback) == "function") {
+				arg.onprogress = function (event) {
+					progress_callback(event, callback_data);
+				};
+			}
+			GM_xmlhttpRequest(arg);
 		}
+	},
 
-		// Other
-		var media_player = this;
+	attempt_load: function (url_or_file, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback) {
+		// Attempt to load from remote URL or local file
+		if (typeof(url_or_file) == typeof("")) {
+			// Youtube loading
+			if (this.url_get_youtube_video_id(url_or_file)) {
+				this.attempt_load_video(url_or_file, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback);
+				return;
+			}
 
-		var dcb = function (okay, callback_data, response) {
-			if (typeof(done_callback) == "function") done_callback(okay, callback_data);
+			// Other
+			var media_player = this;
 
-			if (okay) {
-				media_player.attempt_load_raw(false, url_or_file, load_tag, playlist_data, response, 0, function (status, files) {
+			var dcb = function (okay, callback_data, response) {
+				if (typeof(done_callback) == "function") done_callback(okay, callback_data);
+
+				if (okay) {
+					media_player.attempt_load_raw(false, url_or_file, load_tag, playlist_data, response, 0, function (status, files) {
+						if (typeof(status_callback) == "function") status_callback(status, callback_data, files);
+					});
+				}
+			};
+
+			// URL
+			this.ajax_get(url_or_file, false, callback_data, progress_callback, dcb);
+		}
+		else {
+			// Local file
+			var reader = new FileReader();
+			var self = this;
+			// Done function
+			reader.onload = function () {
+				// Convert and call load function
+				var ui8_data = new Uint8Array(this.result);
+				self.attempt_load_raw(true, url_or_file.name, load_tag, playlist_data, ui8_data, 0, function (status, files) {
 					if (typeof(status_callback) == "function") status_callback(status, callback_data, files);
 				});
 			}
-		};
+			// Start
+			reader.readAsArrayBuffer(url_or_file);
+		}
+	},
+	attempt_load_raw: function (is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id, done_callback) {
+		callback_id = callback_id || 0;
+		if (callback_id >= this.load_callbacks.length) {
+			if (typeof(done_callback) == "function") done_callback(false, null);
+			return;
+		}
 
-		// URL
-		this.ajax_get(url_or_file, false, callback_data, progress_callback, dcb);
-	}
-	else {
-		// Local file
-		var reader = new FileReader();
+		// Attempt to load from raw data
 		var self = this;
-		// Done function
-		reader.onload = function () {
-			// Convert and call load function
-			var ui8_data = new Uint8Array(this.result);
-			self.attempt_load_raw(true, url_or_file.name, load_tag, playlist_data, ui8_data, 0, function (status, files) {
-				if (typeof(status_callback) == "function") status_callback(status, callback_data, files);
-			});
-		}
-		// Start
-		reader.readAsArrayBuffer(url_or_file);
-	}
-}
-MediaPlayer.prototype.attempt_load_raw = function (is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id, done_callback) {
-	callback_id = callback_id || 0;
-	if (callback_id >= this.load_callbacks.length) {
-		if (typeof(done_callback) == "function") done_callback(false, null);
-		return;
-	}
-
-	// Attempt to load from raw data
-	var self = this;
-	this.load_callbacks[callback_id](url_or_filename, load_tag, raw_ui8_data, function (r) {
-		if (r != null) {
-			var available = r[0];
-			r = r[1];
+		this.load_callbacks[callback_id](url_or_filename, load_tag, raw_ui8_data, function (r) {
 			if (r != null) {
-				// Load every sound
-				for (var j = 0; j < r.length; ++j) {
-					self.add_to_playlist(
-						r[j]["title"],
-						load_tag,
-						r[j]["flagged"],
-						url_or_filename,
-						r[j]["index"],
-						r[j]["data"],
-						(is_local ? raw_ui8_data : url_or_filename),
-						playlist_data
-					);
+				var available = r[0];
+				r = r[1];
+				if (r != null) {
+					// Load every sound
+					for (var j = 0; j < r.length; ++j) {
+						self.add_to_playlist(
+							r[j]["title"],
+							load_tag,
+							r[j]["flagged"],
+							url_or_filename,
+							r[j]["index"],
+							r[j]["data"],
+							(is_local ? raw_ui8_data : url_or_filename),
+							playlist_data
+						);
+					}
 				}
-			}
-			if (typeof(done_callback) == "function") done_callback(true, available);
-		}
-		else {
-			// Next
-			self.attempt_load_raw(is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id + 1, done_callback);
-		}
-	});
-}
-
-MediaPlayer.prototype.attempt_load_video = function (url, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback) {
-	var vid_id = this.url_get_youtube_video_id(url);
-
-	// Not found
-	if (vid_id === null) {
-		if (typeof(done_callback) == "function") done_callback(false, callback_data);
-		return;
-	}
-	// Info
-	var self = this;
-	var info_url = "//gdata.youtube.com/feeds/api/videos/" + vid_id;
-	this.ajax_get(
-		info_url,
-		true,
-		callback_data,
-		progress_callback,
-		function (okay, data, response) {
-			if (typeof(done_callback) == "function") done_callback(okay, callback_data);
-
-			if (okay) {
-				var xml = $.parseXML(response);
-				var status = self.add_to_playlist_ytvideo(url, vid_id, null, false, xml, playlist_data);
-				if (typeof(status_callback) == "function") status_callback(status, callback_data, xml);
+				if (typeof(done_callback) == "function") done_callback(true, available);
 			}
 			else {
-				// Missing
+				// Next
+				self.attempt_load_raw(is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id + 1, done_callback);
+			}
+		});
+	},
 
+	attempt_load_video: function (url, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback) {
+		var vid_id = this.url_get_youtube_video_id(url);
+
+		// Not found
+		if (vid_id === null) {
+			if (typeof(done_callback) == "function") done_callback(false, callback_data);
+			return;
+		}
+		// Info
+		var self = this;
+		var info_url = "//gdata.youtube.com/feeds/api/videos/" + vid_id;
+		this.ajax_get(
+			info_url,
+			true,
+			callback_data,
+			progress_callback,
+			function (okay, data, response) {
+				if (typeof(done_callback) == "function") done_callback(okay, callback_data);
+
+				if (okay) {
+					var xml = $.parseXML(response);
+					var status = self.add_to_playlist_ytvideo(url, vid_id, null, false, xml, playlist_data);
+					if (typeof(status_callback) == "function") status_callback(status, callback_data, xml);
+				}
+				else {
+					// Missing
+
+				}
+			}
+		);
+	},
+	url_get_youtube_video_id: function (url) {
+		var youtube_url = new Array();
+		youtube_url[0] = /(?:https?:\/\/)?(?:www\.)?youtube.com\/watch\?(?:\S+?)?v=([a-zA-Z0-9_-]{11})(?:[^\s<>]*)/i;
+		youtube_url[1] = /(?:https?:\/\/)?(?:www\.)?y2u.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/i;
+		youtube_url[2] = /(?:https?:\/\/)?(?:www\.)?youtu.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/i;
+
+		var vid_id = null;
+		for (var i = 0; i < youtube_url.length; ++i) {
+			var match;
+			if ((match = youtube_url[i].exec(url)) !== null) {
+				vid_id = match[1];
+				break;
 			}
 		}
-	);
-}
-MediaPlayer.prototype.url_get_youtube_video_id = function (url) {
-	var youtube_url = new Array();
-	youtube_url[0] = /(?:https?:\/\/)?(?:www\.)?youtube.com\/watch\?(?:\S+?)?v=([a-zA-Z0-9_-]{11})(?:[^\s<>]*)/i;
-	youtube_url[1] = /(?:https?:\/\/)?(?:www\.)?y2u.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/i;
-	youtube_url[2] = /(?:https?:\/\/)?(?:www\.)?youtu.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/i;
 
-	var vid_id = null;
-	for (var i = 0; i < youtube_url.length; ++i) {
-		var match;
-		if ((match = youtube_url[i].exec(url)) !== null) {
-			vid_id = match[1];
-			break;
+		return vid_id;
+	},
+
+	merge_value_towards: function (value, target, incr) {
+		return (value < target) ?
+			((target - value < incr) ? target : value + incr) :
+			((value - target < incr) ? target : value - incr);
+	},
+
+	downloads_generate_image_list: function (files, about, gen_function, use_original, index) {
+		if (index >= this.playlist.length) {
+			// Done
+			gen_function(files, about);
+			return;
 		}
-	}
 
-	return vid_id;
-}
-
-MediaPlayer.prototype.merge_value_towards = function (value, target, incr) {
-	return (value < target) ?
-		((target - value < incr) ? target : value + incr) :
-		((value - target < incr) ? target : value - incr);
-}
-
-MediaPlayer.prototype.downloads_generate_image_list = function (files, about, gen_function, use_original, index) {
-	if (index >= this.playlist.length) {
-		// Done
-		gen_function(files, about);
-		return;
-	}
-
-	// Type
-	if (this.playlist[index].type != "image-audio") {
-		// Next
-		this.downloads_generate_image_list(files, about, gen_function, use_original, index + 1);
-		return;
-	}
-
-	// Make sure image is unique
-	var image_url = this.playlist[index].image_url;
-	for (var j = 0; j < files.length; ++j) {
-		if (files[j][2] == image_url) {
+		// Type
+		if (this.playlist[index].type != "image-audio") {
 			// Next
 			this.downloads_generate_image_list(files, about, gen_function, use_original, index + 1);
 			return;
 		}
-	}
 
-	// Filename
-	var fn = (use_original ? this.playlist[index].image_name : this.playlist[index].url.split("/").pop()).split(".");
-	var ext = "." + fn.pop();
-	fn = fn.join(".")
-	try {
-		fn = this.normalize_filename(unescape(encodeURIComponent(fn)));
-	}
-	catch (e) {
-		console.log(e);
-	}
-	// Make sure it's unique
-	var n = 1;
-	var name = fn + ext;
-	for (var j = 0; j < files.length; ++j) {
-		if (name == files[j][0]) {
-			name = fn + " (" + (++n) + ")" + ext;
-			j = -1;
-			continue;
-		}
-	}
-	fn = name;
-
-	// Get file
-	if (this.playlist[index].image_blob !== null) {
-		// Add
-		files.push([fn, this.playlist[index].image_blob, image_url]);
-
-		// Next
-		this.downloads_generate_image_list(files, about, gen_function, use_original, index + 1);
-	}
-	else {
-		// Ajax query
-		var self = this;
-		this.ajax_get(this.playlist[index].image_url, false, null, null, function (okay, data, response) {
-			if (okay) {
-				// Add
-				files.push([fn, response, image_url]);
-
+		// Make sure image is unique
+		var image_url = this.playlist[index].image_url;
+		for (var j = 0; j < files.length; ++j) {
+			if (files[j][2] == image_url) {
 				// Next
-				self.downloads_generate_image_list(files, about, gen_function, use_original, index + 1);
+				this.downloads_generate_image_list(files, about, gen_function, use_original, index + 1);
+				return;
 			}
-		});
-	}
-};
-MediaPlayer.prototype.downloads_generate_link = function (files, zip_writer, about, index) {
-	if (index >= files.length) {
-		// Central directory + footer
-		zip_writer.write_end();
-		// Destroy blob
-		if (this.batch_download_blob !== null) {
-			(window.webkitURL || window.URL).revokeObjectURL(this.batch_download_blob_url);
 		}
-		this.batch_download_blob = null;
-		// Create blob
-		this.batch_download_blob = new Blob([zip_writer.buffer], {type: "application/zip"});
-		this.batch_download_blob_url = (window.webkitURL || window.URL).createObjectURL(this.batch_download_blob);
-		// Display
-		this.downloads_ready_container.css("display", "");
-		this.downloads_about.html(about(files));
-		this.downloads_link.attr("href", this.batch_download_blob_url);
-		// Done
-		return;
-	}
 
-	if  (files[index][1] instanceof Uint8Array) {
-		// Direct
-		zip_writer.write_file(files[index][0], files[index][1]);
-		this.downloads_generate_link(files, zip_writer, about, index + 1);
-	}
-	else {
-		// Blob reading
-		var self = this;
-		var reader = new FileReader();
-		// Done function
-		reader.onload = function () {
-			// Convert and call load function
-			var ui8_data = new Uint8Array(this.result);
-			zip_writer.write_file(files[index][0], ui8_data);
-			self.downloads_generate_link(files, zip_writer, about, index + 1);
-		};
-		// Start
-		reader.readAsArrayBuffer(files[index][1]);
-	}
-};
-MediaPlayer.prototype.normalize_filename = function (fname) {
-	var disallowed = "<>:\"/\\|?*\0";
-	for (var i = 0; i < disallowed.length; ++i) {
-		fname = fname.replace(new RegExp("\\" + disallowed[i], "gi"), "_");
-	}
+		// Filename
+		var fn = (use_original ? this.playlist[index].image_name : this.playlist[index].url.split("/").pop()).split(".");
+		var ext = "." + fn.pop();
+		fn = fn.join(".")
+		try {
+			fn = this.normalize_filename(unescape(encodeURIComponent(fn)));
+		}
+		catch (e) {
+			console.log(e);
+		}
+		// Make sure it's unique
+		var n = 1;
+		var name = fn + ext;
+		for (var j = 0; j < files.length; ++j) {
+			if (name == files[j][0]) {
+				name = fn + " (" + (++n) + ")" + ext;
+				j = -1;
+				continue;
+			}
+		}
+		fn = name;
 
-	return fname;
-};
+		// Get file
+		if (this.playlist[index].image_blob !== null) {
+			// Add
+			files.push([fn, this.playlist[index].image_blob, image_url]);
 
-MediaPlayer.prototype.on_custom_option_click = function (event) {
-	var v_id = 0;
-	for (var j = 0; j < event.data.custom_data["values"].length; ++j) {
-		if (event.data.custom_data["current"] == event.data.custom_data["values"][j]) {
-			v_id = j;
+			// Next
+			this.downloads_generate_image_list(files, about, gen_function, use_original, index + 1);
+		}
+		else {
+			// Ajax query
+			var self = this;
+			this.ajax_get(this.playlist[index].image_url, false, null, null, function (okay, data, response) {
+				if (okay) {
+					// Add
+					files.push([fn, response, image_url]);
+
+					// Next
+					self.downloads_generate_image_list(files, about, gen_function, use_original, index + 1);
+				}
+			});
+		}
+	},
+	downloads_generate_link: function (files, zip_writer, about, index) {
+		if (index >= files.length) {
+			// Central directory + footer
+			zip_writer.write_end();
+			// Destroy blob
+			if (this.batch_download_blob !== null) {
+				(window.webkitURL || window.URL).revokeObjectURL(this.batch_download_blob_url);
+			}
+			this.batch_download_blob = null;
+			// Create blob
+			this.batch_download_blob = new Blob([zip_writer.buffer], {type: "application/zip"});
+			this.batch_download_blob_url = (window.webkitURL || window.URL).createObjectURL(this.batch_download_blob);
+			// Display
+			this.downloads_ready_container.css("display", "");
+			this.downloads_about.html(about(files));
+			this.downloads_link.attr("href", this.batch_download_blob_url);
+			// Done
+			return;
+		}
+
+		if  (files[index][1] instanceof Uint8Array) {
+			// Direct
+			zip_writer.write_file(files[index][0], files[index][1]);
+			this.downloads_generate_link(files, zip_writer, about, index + 1);
+		}
+		else {
+			// Blob reading
+			var self = this;
+			var reader = new FileReader();
+			// Done function
+			reader.onload = function () {
+				// Convert and call load function
+				var ui8_data = new Uint8Array(this.result);
+				zip_writer.write_file(files[index][0], ui8_data);
+				self.downloads_generate_link(files, zip_writer, about, index + 1);
+			};
+			// Start
+			reader.readAsArrayBuffer(files[index][1]);
+		}
+	},
+	normalize_filename: function (fname) {
+		var disallowed = "<>:\"/\\|?*\0";
+		for (var i = 0; i < disallowed.length; ++i) {
+			fname = fname.replace(new RegExp("\\" + disallowed[i], "gi"), "_");
+		}
+
+		return fname;
+	},
+
+	on_custom_option_click: function (event) {
+		var v_id = 0;
+		for (var j = 0; j < event.data.custom_data["values"].length; ++j) {
+			if (event.data.custom_data["current"] == event.data.custom_data["values"][j]) {
+				v_id = j;
+				break;
+			}
+		}
+		v_id = (v_id + 1) % event.data.custom_data["values"].length;
+
+		$(this).html(event.data.custom_data["descr"][v_id]);
+
+		event.data.custom_data["current"] = event.data.custom_data["values"][v_id];
+		event.data.custom_data["change"](event.data.custom_data["values"][v_id]);
+	},
+
+	on_ytvideo_time_update: function (playlist_item, media_player) {
+		if (media_player.ytvideo_player != null) {
+			if (media_player.ytvideo_player.getCurrentTime) {
+				// Seek
+				media_player.seek_to(media_player.ytvideo_player.getCurrentTime(), true);
+			}
+			if (media_player.ytvideo_player.getVideoLoadedFraction) {
+				// Loaded
+				media_player.set_loaded(media_player.get_loaded_offset(), media_player.ytvideo_player.getVideoLoadedFraction());
+			}
+		}
+	},
+	on_ytvideo_ready: function (event, media_player) {
+		// Startup settings
+		event.target.unMute();
+		event.target.setVolume(media_player.get_volume() * 100.0);
+		event.target.setPlaybackQuality(media_player.ytvideo_qualities[media_player.ytvideo_quality_index]);
+
+		// Auto-play
+		//var vid_id = this.url_get_youtube_video_id(event.target.getVideoUrl());
+		media_player.play();
+	},
+	on_ytvideo_state_change: function (event, media_player) {
+		switch (event.data) {
+			case unsafeWindow.YT.PlayerState.ENDED:
+				media_player.update_playing_status();
+				media_player.next(true);
+			break;
+			case unsafeWindow.YT.PlayerState.PLAYING:
+				media_player.update_playing_status();
+			break;
+			case unsafeWindow.YT.PlayerState.PAUSED:
+				media_player.update_playing_status();
+			break;
+			case unsafeWindow.YT.PlayerState.BUFFERING:
+				media_player.update_playing_status();
+			break;
+			case unsafeWindow.YT.PlayerState.CUED:
 			break;
 		}
-	}
-	v_id = (v_id + 1) % event.data.custom_data["values"].length;
-
-	$(this).html(event.data.custom_data["descr"][v_id]);
-
-	event.data.custom_data["current"] = event.data.custom_data["values"][v_id];
-	event.data.custom_data["change"](event.data.custom_data["values"][v_id]);
-}
-
-MediaPlayer.prototype.on_ytvideo_time_update = function (playlist_item, media_player) {
-	if (media_player.ytvideo_player != null) {
-		if (media_player.ytvideo_player.getCurrentTime) {
-			// Seek
-			media_player.seek_to(media_player.ytvideo_player.getCurrentTime(), true);
+	},
+	on_ytvideo_playback_quality_change: function (event, media_player) {
+	},
+	on_ytvideo_playback_rate_change: function (event, media_player) {
+	},
+	on_ytvideo_error: function (event, media_player) {
+		switch (event.data) {
+			case 2:
+				// invalid video id / param
+			break;
+			case 5:
+				// Cannot be html5'd
+				media_player.ytvideo_html5 = false;
+			break;
+			case 100:
+				// Not found
+			break;
+			case 101:
+			case 105:
+				// Cannot embed
+			break;
 		}
-		if (media_player.ytvideo_player.getVideoLoadedFraction) {
-			// Loaded
-			media_player.set_loaded(media_player.get_loaded_offset(), media_player.ytvideo_player.getVideoLoadedFraction());
-		}
-	}
-}
-MediaPlayer.prototype.on_ytvideo_ready = function (event, media_player) {
-	// Startup settings
-	event.target.unMute();
-	event.target.setVolume(media_player.get_volume() * 100.0);
-	event.target.setPlaybackQuality(media_player.ytvideo_qualities[media_player.ytvideo_quality_index]);
+	},
+	on_ytvideo_api_change: function (event, media_player) {
+	},
 
-	// Auto-play
-	//var vid_id = this.url_get_youtube_video_id(event.target.getVideoUrl());
-	media_player.play();
-};
-MediaPlayer.prototype.on_ytvideo_state_change = function (event, media_player) {
-	switch (event.data) {
-		case unsafeWindow.YT.PlayerState.ENDED:
-			media_player.update_playing_status();
-			media_player.next(true);
-		break;
-		case unsafeWindow.YT.PlayerState.PLAYING:
-			media_player.update_playing_status();
-		break;
-		case unsafeWindow.YT.PlayerState.PAUSED:
-			media_player.update_playing_status();
-		break;
-		case unsafeWindow.YT.PlayerState.BUFFERING:
-			media_player.update_playing_status();
-		break;
-		case unsafeWindow.YT.PlayerState.CUED:
-		break;
-	}
-};
-MediaPlayer.prototype.on_ytvideo_playback_quality_change = function (event, media_player) {
-};
-MediaPlayer.prototype.on_ytvideo_playback_rate_change = function (event, media_player) {
-};
-MediaPlayer.prototype.on_ytvideo_error = function (event, media_player) {
-	switch (event.data) {
-		case 2:
-			// invalid video id / param
-		break;
-		case 5:
-			// Cannot be html5'd
-			media_player.ytvideo_html5 = false;
-		break;
-		case 100:
-			// Not found
-		break;
-		case 101:
-		case 105:
-			// Cannot embed
-		break;
-	}
-};
-MediaPlayer.prototype.on_ytvideo_api_change = function (event, media_player) {
-};
-
-MediaPlayer.prototype.on_main_container_mouseover = function (event) {
-	event.data.media_player.resize_container_hovered = true;
-	event.data.media_player.on_resize_mouse_update(null, null);
-}
-MediaPlayer.prototype.on_main_container_mouseout = function (event) {
-	event.data.media_player.resize_container_hovered = false;
-	event.data.media_player.on_resize_mouse_update(null, null);
-}
-
-MediaPlayer.prototype.on_timer_resize_open = function () {
-	this.resize_timers[0] = null;
-	this.resize_should_close = false;
-
-	// Update sizes
-	var d;
-	$("body").append(d = this.D("SPResizingSizeOff"));
-	this.resize_sizes[0] = d.outerWidth();
-	d.remove();
-	$("body").append(d = this.D("SPResizingSizeAvailable"));
-	this.resize_sizes[1] = d.outerWidth();
-	d.remove();
-	$("body").append(d = this.D("SPResizingContainerText").html("I"));
-	this.resize_sizes[2] = d.outerHeight();
-	d.remove();
-	if (this.resize_sizes[1] > this.resize_sizes[2]) this.resize_sizes[1] = this.resize_sizes[2];
-
-	this.resize_side_sizes_target = [ this.resize_sizes[1], this.resize_sizes[1], this.resize_sizes[1], this.resize_sizes[1] ];
-	this.resize_side_sizes_needed = true;
-	this.on_resize_mouse_update(null, null);
-
-	if (this.resize_timers[2] === null) {
-		// Current size
-		this.resize_side_sizes = [ this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0] ];
-
-		// CSS update
-		this.sp_container_main.removeClass("SPContainerMainBorders");
-		this.resizing_container.css("display", "");
-
-		// Size update loop
-		var self = this;
-		this.on_interval_resize_update();
-		this.resize_timers[2] = setInterval(function () {
-			self.on_interval_resize_update();
-		}, Math.floor(this.resize_wait_times[2] * 1000));
-	}
-}
-MediaPlayer.prototype.on_timer_resize_close = function () {
-	this.resize_timers[1] = null;
-	this.resize_should_close = true;
-	this.resize_side_sizes_needed = true;
-	this.resize_side_sizes_target = [ this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0] ];
-	for (var i = 0; i < this.resizing_texts.length; ++i) {
-		this.resizing_texts[i].css("display", "none");
-	}
-}
-MediaPlayer.prototype.on_interval_resize_update = function () {
-	// Stop condition
-	if (this.resize_side_sizes_needed) {
-		this.resize_side_sizes_needed = false;
-		for (var i = 0; i < this.resize_side_sizes.length; ++i) {
-			this.resize_side_sizes[i] = this.merge_value_towards(
-				this.resize_side_sizes[i],
-				this.resize_side_sizes_target[i],
-				this.resize_side_speed * this.resize_wait_times[2]
-			);
-			this.resize_side_sizes_needed = (this.resize_side_sizes_needed || (this.resize_side_sizes[i] != this.resize_side_sizes_target[i]));
-		}
-
-		// CSS update sizes
-		var css = [
-			this.resize_side_sizes[0] + "px",
-			this.resize_side_sizes[1] + "px",
-			this.resize_side_sizes[2] + "px",
-			this.resize_side_sizes[3] + "px"
-		];
-		this.resizing_container.css({"top": "-" + css[0], "right": "-" + css[1], "bottom": "-" + css[2], "left": "-" + css[3]});
-		this.resizing_controls[0].css({"width": css[3], "height": css[0]});
-		this.resizing_controls[1].css({"height": css[0], "left": css[3], "right": css[1]});
-		this.resizing_controls[2].css({"width": css[1], "height": css[0]});
-		this.resizing_controls[3].css({"width": css[3], "top": css[0], "bottom": css[2]});
-		this.resizing_controls[4].css({"width": css[1], "top": css[0], "bottom": css[2]});
-		this.resizing_controls[5].css({"width": css[3], "height": css[2]});
-		this.resizing_controls[6].css({"height": css[2], "left": css[3], "right": css[1]});
-		this.resizing_controls[7].css({"width": css[1], "height": css[2]});
-	}
-	else if (this.resize_should_close) {
-		clearTimeout(this.resize_timers[2]);
-		this.resize_timers[2] = null;
-
-		this.resize_container_border_hovered = false;
-
-		this.sp_container_main.addClass("SPContainerMainBorders");
-		this.resizing_container.css("display", "none");
-
-		return;
-	}
-}
-MediaPlayer.prototype.on_resize_mouse_update = function (rel_x, rel_y) {
-	if (rel_x !== null) this.resize_mouse_offset[0] = rel_x;
-	else rel_x = this.resize_mouse_offset[0];
-	if (rel_y !== null) this.resize_mouse_offset[1] = rel_y;
-	else rel_y = this.resize_mouse_offset[1];
-
-	var size = [ this.sp_container.outerWidth() , this.sp_container.outerHeight() ];
-	var should_open = this.resizing;
-	if (this.resize_container_hovered && !this.resizing) {
-		should_open = (
-			rel_x <= this.resize_distance[0] ||
-			rel_y <= this.resize_distance[0] ||
-			rel_x >= size[0] - this.resize_distance[0] ||
-			rel_y >= size[1] - this.resize_distance[0]
-		);
-
-		// What sides should be expanded
-		if (this.resize_timers[2] !== null) {
-			this.resize_side_sizes_needed = true;
-			var open = [
-				(rel_y <= this.resize_distance[1]),
-				(rel_x >= size[0] - this.resize_distance[1]),
-				(rel_y >= size[1] - this.resize_distance[1]),
-				(rel_x <= this.resize_distance[1])
-			];
-			for (var i = 0; i < 4; ++i) {
-				this.resize_side_sizes_target[i] = this.resize_sizes[open[i] ? 2 : 1];
-			}
-			this.resizing_texts[0].css("display", (open[0] && open[3]) ? "" : "none");
-			this.resizing_texts[1].css("display", (open[0]) ? "" : "none");
-			this.resizing_texts[2].css("display", (open[0] && open[1]) ? "" : "none");
-			this.resizing_texts[3].css("display", (open[3]) ? "" : "none");
-			this.resizing_texts[4].css("display", (open[1]) ? "" : "none");
-			this.resizing_texts[5].css("display", (open[2] && open[3]) ? "" : "none");
-			this.resizing_texts[6].css("display", (open[2]) ? "" : "none");
-			this.resizing_texts[7].css("display", (open[2] && open[1]) ? "" : "none");
-		}
-	}
-
-	if (should_open != this.resize_container_border_hovered) {
-		this.resize_container_border_hovered = should_open;
-		// Clear timers
-		for (var i = 0; i < 2; ++i) {
-			if (this.resize_timers[i] !== null) {
-				clearTimeout(this.resize_timers[i]);
-				this.resize_timers[i] = null;
-			}
-		}
-		// Set timer to close/open
-		var self = this;
-		if (should_open) {
-			if (this.resize_timers[2] === null) {
-				this.resize_timers[0] = setTimeout(function () {
-					self.on_timer_resize_open();
-				}, Math.floor(this.resize_wait_times[0] * 1000));
-			}
-			else {
-				self.on_timer_resize_open();
-			}
-		}
-		else if (this.resize_timers[2] !== null) {
-			this.resize_timers[1] = setTimeout(function () {
-				self.on_timer_resize_close();
-			}, Math.floor(this.resize_wait_times[1] * 1000));
-		}
-	}
-}
-
-MediaPlayer.prototype.on_resizer_mousedown = function (event) {
-	// Cannot be minimized
-	if (event.data.media_player.playlist_container.css("display") != "none") {
-		event.data.media_player.resizing = true;
-		event.data.media_player.resizing_sides = event.data.sides;
-		event.data.media_player.mouse_offset = {
-			"left": (event.pageX - $(document).scrollLeft()),
-			"top": (event.pageY - $(document).scrollTop())
-		};
-		event.data.media_player.resizing_base_size = {
-			//"width": event.data.media_player.sp_container.outerWidth() + event.data.media_player.resize_sizes[0] * 2,
-			//"height": event.data.media_player.sp_container.outerHeight() + event.data.media_player.resize_sizes[0] * 2
-			"width": event.data.media_player.sp_container_main.outerWidth(),
-			"height": event.data.media_player.sp_container_main.outerHeight()
-		};
-	}
-
-	// Done
-	return false;
-}
-
-MediaPlayer.prototype.on_titlebar_mousedown = function (event) {
-	// Mouse offset
-	event.data.media_player.moving = true;
-	event.data.media_player.mouse_offset = event.data.media_player.sp_container_main.offset();
-	event.data.media_player.mouse_offset.left -= event.pageX;
-	event.data.media_player.mouse_offset.top -= event.pageY;
-
-	// Done
-	event.preventDefault();
-	return false;
-}
-MediaPlayer.prototype.on_volumebar_mousedown = function (event) {
-	// Mouse offset
-	event.data.media_player.volume_changing = true;
-	// Visuals
-	event.data.media_player.C(event.data.media_player.volume_container, "SPVolumeContainerActive");
-	// Change volume
-	var volume = 1.0 - ((event.pageY) - event.data.media_player.volume_bar_container.offset().top) / event.data.media_player.volume_bar_container.outerHeight();
-	event.data.media_player.set_volume(volume);
-	// Done
-	event.preventDefault();
-	return false;
-}
-MediaPlayer.prototype.on_seekbar_mousedown = function (event) {
-	// Mouse offset
-	event.data.media_player.C(event.data.media_player.seek_bar, "SPSeekBarActive");
-	event.data.media_player.seek_dragging = true;
-	if ((event.data.media_player.seek_was_playing = !event.data.media_player.is_paused())) {
-		event.data.media_player.pause();
-	}
-	event.data.media_player.mouse_offset = event.data.media_player.seek_bar.offset();
-	event.data.media_player.mouse_offset.left -= event.pageX;
-	event.data.media_player.mouse_offset.top -= event.pageY;
-	// Done
-	event.preventDefault();
-	return false;
-}
-MediaPlayer.prototype.on_seekbar_container_mousedown = function (event) {
-	// Mouse offset
-	event.data.media_player.C(event.data.media_player.seek_bar, "SPSeekBarActive");
-	event.data.media_player.seek_exacting = true;
-	if ((event.data.media_player.seek_was_playing = !event.data.media_player.is_paused())) {
-		event.data.media_player.pause();
-	}
-	// Seeking
-	var offset = (event.pageX - event.data.media_player.seek_bar_container.offset().left) - event.data.media_player.seek_bar.outerWidth() / 2.0;
-	var max_offset = event.data.media_player.seek_bar_container.outerWidth() - event.data.media_player.seek_bar.outerWidth();
-	// Seek
-	if (max_offset > 0.0) offset = offset / max_offset * event.data.media_player.get_duration();
-	event.data.media_player.seek_to(offset);
-	// Done
-	event.preventDefault();
-	return false;
-}
-MediaPlayer.prototype.on_image_resize_mousedown = function (event) {
-	// Mouse offset
-	event.data.media_player.resizing_image = true;
-	event.data.media_player.mouse_offset = event.data.media_player.sp_container_main.offset();
-	event.data.media_player.mouse_offset.left -= event.pageX;
-	event.data.media_player.mouse_offset.top -= event.pageY - (event.data.media_player.image_height * event.data.media_player.scale_factor);
-
-	event.data.media_player.mouse_moved = false;
-
-	// Done
-	event.preventDefault();
-	return false;
-}
-MediaPlayer.prototype.on_document_mouseup = function (event) {
-	// Stop all drag events
-	if (event.data.media_player.moving) {
-		event.data.media_player.moving = false;
-
-		// Callback
-		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-	}
-	else if (event.data.media_player.resizing) {
-		event.data.media_player.resizing = false;
+	on_main_container_mouseover: function (event) {
+		event.data.media_player.resize_container_hovered = true;
 		event.data.media_player.on_resize_mouse_update(null, null);
-		event.data.media_player.reposition();
+	},
+	on_main_container_mouseout: function (event) {
+		event.data.media_player.resize_container_hovered = false;
+		event.data.media_player.on_resize_mouse_update(null, null);
+	},
 
-		// Callback
-		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-	}
-	else if (event.data.media_player.resizing_image) {
-		event.data.media_player.resizing_image = false;
+	on_timer_resize_open: function () {
+		this.resize_timers[0] = null;
+		this.resize_should_close = false;
 
-		if (event.data.media_player.mouse_moved) {
+		// Update sizes
+		var d;
+		$("body").append(d = this.D("SPResizingSizeOff"));
+		this.resize_sizes[0] = d.outerWidth();
+		d.remove();
+		$("body").append(d = this.D("SPResizingSizeAvailable"));
+		this.resize_sizes[1] = d.outerWidth();
+		d.remove();
+		$("body").append(d = this.D("SPResizingContainerText").html("I"));
+		this.resize_sizes[2] = d.outerHeight();
+		d.remove();
+		if (this.resize_sizes[1] > this.resize_sizes[2]) this.resize_sizes[1] = this.resize_sizes[2];
+
+		this.resize_side_sizes_target = [ this.resize_sizes[1], this.resize_sizes[1], this.resize_sizes[1], this.resize_sizes[1] ];
+		this.resize_side_sizes_needed = true;
+		this.on_resize_mouse_update(null, null);
+
+		if (this.resize_timers[2] === null) {
+			// Current size
+			this.resize_side_sizes = [ this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0] ];
+
+			// CSS update
+			this.sp_container_main.removeClass("SPContainerMainBorders");
+			this.resizing_container.css("display", "");
+
+			// Size update loop
+			var self = this;
+			this.on_interval_resize_update();
+			this.resize_timers[2] = setInterval(function () {
+				self.on_interval_resize_update();
+			}, Math.floor(this.resize_wait_times[2] * 1000));
+		}
+	},
+	on_timer_resize_close: function () {
+		this.resize_timers[1] = null;
+		this.resize_should_close = true;
+		this.resize_side_sizes_needed = true;
+		this.resize_side_sizes_target = [ this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0] ];
+		for (var i = 0; i < this.resizing_texts.length; ++i) {
+			this.resizing_texts[i].css("display", "none");
+		}
+	},
+	on_interval_resize_update: function () {
+		// Stop condition
+		if (this.resize_side_sizes_needed) {
+			this.resize_side_sizes_needed = false;
+			for (var i = 0; i < this.resize_side_sizes.length; ++i) {
+				this.resize_side_sizes[i] = this.merge_value_towards(
+					this.resize_side_sizes[i],
+					this.resize_side_sizes_target[i],
+					this.resize_side_speed * this.resize_wait_times[2]
+				);
+				this.resize_side_sizes_needed = (this.resize_side_sizes_needed || (this.resize_side_sizes[i] != this.resize_side_sizes_target[i]));
+			}
+
+			// CSS update sizes
+			var css = [
+				this.resize_side_sizes[0] + "px",
+				this.resize_side_sizes[1] + "px",
+				this.resize_side_sizes[2] + "px",
+				this.resize_side_sizes[3] + "px"
+			];
+			this.resizing_container.css({"top": "-" + css[0], "right": "-" + css[1], "bottom": "-" + css[2], "left": "-" + css[3]});
+			this.resizing_controls[0].css({"width": css[3], "height": css[0]});
+			this.resizing_controls[1].css({"height": css[0], "left": css[3], "right": css[1]});
+			this.resizing_controls[2].css({"width": css[1], "height": css[0]});
+			this.resizing_controls[3].css({"width": css[3], "top": css[0], "bottom": css[2]});
+			this.resizing_controls[4].css({"width": css[1], "top": css[0], "bottom": css[2]});
+			this.resizing_controls[5].css({"width": css[3], "height": css[2]});
+			this.resizing_controls[6].css({"height": css[2], "left": css[3], "right": css[1]});
+			this.resizing_controls[7].css({"width": css[1], "height": css[2]});
+		}
+		else if (this.resize_should_close) {
+			clearTimeout(this.resize_timers[2]);
+			this.resize_timers[2] = null;
+
+			this.resize_container_border_hovered = false;
+
+			this.sp_container_main.addClass("SPContainerMainBorders");
+			this.resizing_container.css("display", "none");
+
+			return;
+		}
+	},
+	on_resize_mouse_update: function (rel_x, rel_y) {
+		if (rel_x !== null) this.resize_mouse_offset[0] = rel_x;
+		else rel_x = this.resize_mouse_offset[0];
+		if (rel_y !== null) this.resize_mouse_offset[1] = rel_y;
+		else rel_y = this.resize_mouse_offset[1];
+
+		var size = [ this.sp_container.outerWidth() , this.sp_container.outerHeight() ];
+		var should_open = this.resizing;
+		if (this.resize_container_hovered && !this.resizing) {
+			should_open = (
+				rel_x <= this.resize_distance[0] ||
+				rel_y <= this.resize_distance[0] ||
+				rel_x >= size[0] - this.resize_distance[0] ||
+				rel_y >= size[1] - this.resize_distance[0]
+			);
+
+			// What sides should be expanded
+			if (this.resize_timers[2] !== null) {
+				this.resize_side_sizes_needed = true;
+				var open = [
+					(rel_y <= this.resize_distance[1]),
+					(rel_x >= size[0] - this.resize_distance[1]),
+					(rel_y >= size[1] - this.resize_distance[1]),
+					(rel_x <= this.resize_distance[1])
+				];
+				for (var i = 0; i < 4; ++i) {
+					this.resize_side_sizes_target[i] = this.resize_sizes[open[i] ? 2 : 1];
+				}
+				this.resizing_texts[0].css("display", (open[0] && open[3]) ? "" : "none");
+				this.resizing_texts[1].css("display", (open[0]) ? "" : "none");
+				this.resizing_texts[2].css("display", (open[0] && open[1]) ? "" : "none");
+				this.resizing_texts[3].css("display", (open[3]) ? "" : "none");
+				this.resizing_texts[4].css("display", (open[1]) ? "" : "none");
+				this.resizing_texts[5].css("display", (open[2] && open[3]) ? "" : "none");
+				this.resizing_texts[6].css("display", (open[2]) ? "" : "none");
+				this.resizing_texts[7].css("display", (open[2] && open[1]) ? "" : "none");
+			}
+		}
+
+		if (should_open != this.resize_container_border_hovered) {
+			this.resize_container_border_hovered = should_open;
+			// Clear timers
+			for (var i = 0; i < 2; ++i) {
+				if (this.resize_timers[i] !== null) {
+					clearTimeout(this.resize_timers[i]);
+					this.resize_timers[i] = null;
+				}
+			}
+			// Set timer to close/open
+			var self = this;
+			if (should_open) {
+				if (this.resize_timers[2] === null) {
+					this.resize_timers[0] = setTimeout(function () {
+						self.on_timer_resize_open();
+					}, Math.floor(this.resize_wait_times[0] * 1000));
+				}
+				else {
+					self.on_timer_resize_open();
+				}
+			}
+			else if (this.resize_timers[2] !== null) {
+				this.resize_timers[1] = setTimeout(function () {
+					self.on_timer_resize_close();
+				}, Math.floor(this.resize_wait_times[1] * 1000));
+			}
+		}
+	},
+
+	on_resizer_mousedown: function (event) {
+		// Cannot be minimized
+		if (event.data.media_player.playlist_container.css("display") != "none") {
+			event.data.media_player.resizing = true;
+			event.data.media_player.resizing_sides = event.data.sides;
+			event.data.media_player.mouse_offset = {
+				"left": (event.pageX - $(document).scrollLeft()),
+				"top": (event.pageY - $(document).scrollTop())
+			};
+			event.data.media_player.resizing_base_size = {
+				//"width": event.data.media_player.sp_container.outerWidth() + event.data.media_player.resize_sizes[0] * 2,
+				//"height": event.data.media_player.sp_container.outerHeight() + event.data.media_player.resize_sizes[0] * 2
+				"width": event.data.media_player.sp_container_main.outerWidth(),
+				"height": event.data.media_player.sp_container_main.outerHeight()
+			};
+		}
+
+		// Done
+		return false;
+	},
+
+	on_titlebar_mousedown: function (event) {
+		// Mouse offset
+		event.data.media_player.moving = true;
+		event.data.media_player.mouse_offset = event.data.media_player.sp_container_main.offset();
+		event.data.media_player.mouse_offset.left -= event.pageX;
+		event.data.media_player.mouse_offset.top -= event.pageY;
+
+		// Done
+		event.preventDefault();
+		return false;
+	},
+	on_volumebar_mousedown: function (event) {
+		// Mouse offset
+		event.data.media_player.volume_changing = true;
+		// Visuals
+		event.data.media_player.C(event.data.media_player.volume_container, "SPVolumeContainerActive");
+		// Change volume
+		var volume = 1.0 - ((event.pageY) - event.data.media_player.volume_bar_container.offset().top) / event.data.media_player.volume_bar_container.outerHeight();
+		event.data.media_player.set_volume(volume);
+		// Done
+		event.preventDefault();
+		return false;
+	},
+	on_seekbar_mousedown: function (event) {
+		// Mouse offset
+		event.data.media_player.C(event.data.media_player.seek_bar, "SPSeekBarActive");
+		event.data.media_player.seek_dragging = true;
+		if ((event.data.media_player.seek_was_playing = !event.data.media_player.is_paused())) {
+			event.data.media_player.pause();
+		}
+		event.data.media_player.mouse_offset = event.data.media_player.seek_bar.offset();
+		event.data.media_player.mouse_offset.left -= event.pageX;
+		event.data.media_player.mouse_offset.top -= event.pageY;
+		// Done
+		event.preventDefault();
+		return false;
+	},
+	on_seekbar_container_mousedown: function (event) {
+		// Mouse offset
+		event.data.media_player.C(event.data.media_player.seek_bar, "SPSeekBarActive");
+		event.data.media_player.seek_exacting = true;
+		if ((event.data.media_player.seek_was_playing = !event.data.media_player.is_paused())) {
+			event.data.media_player.pause();
+		}
+		// Seeking
+		var offset = (event.pageX - event.data.media_player.seek_bar_container.offset().left) - event.data.media_player.seek_bar.outerWidth() / 2.0;
+		var max_offset = event.data.media_player.seek_bar_container.outerWidth() - event.data.media_player.seek_bar.outerWidth();
+		// Seek
+		if (max_offset > 0.0) offset = offset / max_offset * event.data.media_player.get_duration();
+		event.data.media_player.seek_to(offset);
+		// Done
+		event.preventDefault();
+		return false;
+	},
+	on_image_resize_mousedown: function (event) {
+		// Mouse offset
+		event.data.media_player.resizing_image = true;
+		event.data.media_player.mouse_offset = event.data.media_player.sp_container_main.offset();
+		event.data.media_player.mouse_offset.left -= event.pageX;
+		event.data.media_player.mouse_offset.top -= event.pageY - (event.data.media_player.image_height * event.data.media_player.scale_factor);
+
+		event.data.media_player.mouse_moved = false;
+
+		// Done
+		event.preventDefault();
+		return false;
+	},
+	on_document_mouseup: function (event) {
+		// Stop all drag events
+		if (event.data.media_player.moving) {
+			event.data.media_player.moving = false;
+
 			// Callback
 			if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
 		}
-		else {
-			// Pause/play
-			if (event.data.media_player.is_paused()) {
-				event.data.media_player.play();
+		else if (event.data.media_player.resizing) {
+			event.data.media_player.resizing = false;
+			event.data.media_player.on_resize_mouse_update(null, null);
+			event.data.media_player.reposition();
+
+			// Callback
+			if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+		}
+		else if (event.data.media_player.resizing_image) {
+			event.data.media_player.resizing_image = false;
+
+			if (event.data.media_player.mouse_moved) {
+				// Callback
+				if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
 			}
 			else {
-				event.data.media_player.pause();
-			}
-		}
-	}
-	else if (event.data.media_player.volume_changing) {
-		event.data.media_player.volume_changing = false;
-		event.data.media_player.unC(event.data.media_player.volume_container, "SPVolumeContainerActive");
-	}
-	else if (event.data.media_player.seek_dragging) {
-		event.data.media_player.seek_dragging = false;
-		event.data.media_player.unC(event.data.media_player.seek_bar, "SPSeekBarActive");
-
-		event.data.media_player.seek_to(null, false, false);
-
-		if (event.data.media_player.seek_was_playing) {
-			event.data.media_player.play();
-		}
-	}
-	else if (event.data.media_player.seek_exacting) {
-		event.data.media_player.seek_exacting = false;
-		event.data.media_player.unC(event.data.media_player.seek_bar, "SPSeekBarActive");
-
-		event.data.media_player.seek_to(null, false, false);
-
-		if (event.data.media_player.seek_was_playing) {
-			event.data.media_player.play();
-		}
-	}
-	return true;
-}
-MediaPlayer.prototype.on_document_mousemove = function (event) {
-	if (event.data.media_player.moving) {
-		// Dragging window
-		var left = (event.pageX - $(document).scrollLeft()) + event.data.media_player.mouse_offset.left;
-		var top = (event.pageY - $(document).scrollTop()) + event.data.media_player.mouse_offset.top;
-		event.data.media_player.reposition(left, top);
-	}
-	else if (event.data.media_player.resizing) {
-		var size = {width: null, height: null};
-
-		var is_top, is_left;
-		if ((is_top = (event.data.media_player.resizing_sides[0] === 0))) { // top
-			size.height = event.data.media_player.mouse_offset.top
-				- (event.pageY - $(document).scrollTop())
-				+ event.data.media_player.resizing_base_size.height;
-		}
-		else if (event.data.media_player.resizing_sides[0] === 2) { // bottom
-			size.height = (event.pageY - $(document).scrollTop())
-				- event.data.media_player.mouse_offset.top
-				+ event.data.media_player.resizing_base_size.height;
-		}
-		if ((is_left = (event.data.media_player.resizing_sides[1] === 3))) { // left
-			size.width = event.data.media_player.mouse_offset.left
-				- (event.pageX - $(document).scrollLeft())
-				+ event.data.media_player.resizing_base_size.width;
-		}
-		else if (event.data.media_player.resizing_sides[1] === 1) { // right
-			size.width = (event.pageX - $(document).scrollLeft())
-				- event.data.media_player.mouse_offset.left
-				+ event.data.media_player.resizing_base_size.width;
-		}
-
-		event.data.media_player.resize_to(size.width, size.height, is_left, is_top);
-	}
-	else if (event.data.media_player.resizing_image) {
-		var size = event.data.media_player.sp_container_main.offset();
-		size.left = (event.pageX - size.left) + event.data.media_player.mouse_offset.left;
-		size.top = (event.pageY - size.top) + event.data.media_player.mouse_offset.top;
-
-		event.data.media_player.resize_image_container(size.top);
-
-		event.data.media_player.mouse_moved = true;
-	}
-	else if (event.data.media_player.volume_changing) {
-		// Changing volume
-		var volume = 1.0 - ((event.pageY) - event.data.media_player.volume_bar_container.offset().top) / event.data.media_player.volume_bar_container.outerHeight();
-		event.data.media_player.set_volume(volume);
-
-		// Callback
-		if (typeof(event.data.media_player.settings_callback) == "function")event.data.media_player.settings_callback(event.data.media_player);
-	}
-	else if (event.data.media_player.seek_dragging) {
-		// Seeking
-		var offset = ((event.pageX) - event.data.media_player.seek_bar_container.offset().left) + event.data.media_player.mouse_offset.left;
-		var max_offset = event.data.media_player.seek_bar_container.outerWidth() - event.data.media_player.seek_bar.outerWidth();
-		// Seek
-		if (max_offset > 0.0) offset = offset / max_offset * event.data.media_player.get_duration();
-		event.data.media_player.seek_to(offset, false, true);
-	}
-	else if (event.data.media_player.seek_exacting) {
-		// Seeking
-		var offset = ((event.pageX) - event.data.media_player.seek_bar_container.offset().left) - event.data.media_player.seek_bar.outerWidth() / 2.0;
-		var max_offset = event.data.media_player.seek_bar_container.outerWidth() - event.data.media_player.seek_bar.outerWidth();
-		// Seek
-		if (max_offset > 0.0) offset = offset / max_offset * event.data.media_player.get_duration();
-		event.data.media_player.seek_to(offset, false, true);
-	}
-
-	if (event.data.media_player.resize_container_hovered) {
-		var rel = event.data.media_player.sp_container.offset();
-		rel.left -= event.pageX;
-		rel.top -= event.pageY;
-
-		event.data.media_player.on_resize_mouse_update(-rel.left, -rel.top);
-	}
-
-	return true;
-}
-MediaPlayer.prototype.on_window_resize = function (event) {
-	// Keep on screen
-	event.data.media_player.reposition();
-}
-
-MediaPlayer.prototype.on_audio_play = function (event) {
-	// Update playing status
-	event.data.media_player.update_playing_status();
-}
-MediaPlayer.prototype.on_audio_pause = function (event) {
-	// Update playing status
-	event.data.media_player.update_playing_status();
-}
-MediaPlayer.prototype.on_audio_ended = function (event) {
-	if (!event.data.media_player.seek_exacting && !event.data.media_player.seek_dragging) {
-		// Update playing status
-		event.data.media_player.update_playing_status();
-		// Next
-		event.data.media_player.next(true);
-	}
-}
-MediaPlayer.prototype.on_audio_timeupdate = function (event) {
-	// Update seek bar
-	event.data.media_player.seek_to(this.currentTime, true);
-}
-MediaPlayer.prototype.on_audio_durationchange = function (event) {
-	// Update item
-	var duration = event.data.media_player.get_audio_duration(event.data.media_player.audio[0]);
-
-	// Seek
-	event.data.media_player.set_duration(duration);
-	event.data.media_player.seek_to(null, true);
-}
-MediaPlayer.prototype.on_temp_audio_durationchange = function (event) {
-	// Get duration
-	var duration = event.data.media_player.get_audio_duration(event.data.playlist_item.temp_audio[0]);
-	event.data.playlist_item.duration = duration;
-
-	// Stop, remove, and nullify
-	event.data.playlist_item.temp_audio[0].pause();
-	event.data.playlist_item.temp_audio.removeAttr("src").remove();
-	event.data.playlist_item.temp_audio = null;
-
-	var length_str = event.data.media_player.duration_to_string(duration);
-	event.data.playlist_item.info_container.html(length_str);
-}
-
-MediaPlayer.prototype.on_image_load = function (event) {
-	var attr = $(this).attr("src");
-	if (typeof(attr) !== "undefined" && attr !== false) {
-		// Loaded; scale
-		event.data.media_player.current_image_width = this.width;
-		event.data.media_player.current_image_height = this.height;
-
-		event.data.media_player.update_image_scale();
-		$(this).css("display", "");
-	}
-}
-
-MediaPlayer.prototype.on_playlist_mode_change = function (event) {
-	// Change mode
-	if (event.data.media_player.playlist_randomize) {
-		event.data.media_player.playlist_randomize = false;
-		event.data.media_player.playlist_loop = false;
-	}
-	else if (event.data.media_player.playlist_loop) {
-		event.data.media_player.playlist_randomize = true;
-	}
-	else {
-		event.data.media_player.playlist_loop = true;
-	}
-
-	// Label
-	$(this).html(event.data.media_player.playlist_randomize ? "Randomize" : (event.data.media_player.playlist_loop ? "Loop" : "Play Once"));
-
-	// Callback
-	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-}
-MediaPlayer.prototype.on_playlist_onload_change = function (event) {
-	// Change mode
-	var v = (event.data.media_player.playlist_play_on_load + 1) % event.data.media_player.playlist_play_on_load_settings.length;
-	event.data.media_player.playlist_play_on_load = v;
-
-	// Label
-	$(this).html(event.data.media_player.playlist_play_on_load_settings[event.data.media_player.playlist_play_on_load]);
-
-	// Callback
-	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-}
-MediaPlayer.prototype.on_playlist_scrollto_change = function (event) {
-	// Change mode
-	event.data.media_player.playlist_scrollto_onload = !event.data.media_player.playlist_scrollto_onload;
-
-	// Label
-	$(this).html(event.data.media_player.playlist_scrollto_onload ? "Scroll to in playlist" : "Don't scroll playlist");
-
-	// Callback
-	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-}
-
-MediaPlayer.prototype.on_ytquality_change = function (event) {
-	// Change mode
-	event.data.media_player.ytvideo_quality_index = (event.data.media_player.ytvideo_quality_index + 1) % event.data.media_player.ytvideo_qualities.length;
-
-	if (event.data.media_player.ytvideo_player != null && event.data.media_player.ytvideo_player.setPlaybackQuality) {
-		event.data.media_player.ytvideo_player.setPlaybackQuality(event.data.media_player.ytvideo_qualities[event.data.media_player.ytvideo_quality_index]);
-	}
-
-	// Label
-	$(this).html(event.data.media_player.ytvideo_qualities[event.data.media_player.ytvideo_quality_index]);
-
-	// Callback
-	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-}
-MediaPlayer.prototype.on_player_theme_change = function (event) {
-	// Change mode
-	var first = null;
-	var find = false;
-	for (var theme in event.data.media_player.css.css_color_presets) {
-		if (theme == "default") continue;
-		if (first === null) first = theme;
-		if (theme == event.data.media_player.css.preset && !find) find = true;
-		else if (find) {
-			find = null;
-			event.data.media_player.css.load_preset(theme);
-			break;
-		}
-	}
-	if (find !== null) {
-		event.data.media_player.css.load_preset(first);
-	}
-
-	// Update value editors
-	event.data.media_player.update_value_fields();
-
-	// Update stylesheet
-	event.data.media_player.regen_stylesheet();
-
-	// Label
-	event.data.media_player.update_player_theme_name({media_player: event.data.media_player});
-
-	// Callback
-	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-}
-MediaPlayer.prototype.on_player_use_svg_update = function (event) {
-	// Change mode
-	event.data.media_player.use_svg = !event.data.media_player.use_svg;
-
-	$(this).html(event.data.media_player.use_svg ? "Allowed" : "Disallowed");
-
-	event.data.media_player.create_playback_controls();
-
-	// Callback
-	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-}
-
-MediaPlayer.prototype.on_playback_control_click = function (event) {
-	if (event.data.media_player.current_media != null) {
-		var time_offset = 5.0;
-		switch (event.data.control_id) {
-			case 0:
-			{
-				if (event.data.media_player.get_position() - time_offset < 0.0) event.data.media_player.previous();
-				else event.data.media_player.seek_to(0.0);
-			}
-			break;
-			case 1:
-			{
-				var t = event.data.media_player.get_position() - time_offset;
-				if (t < 0.0) event.data.media_player.previous();
-				else event.data.media_player.seek_to(t);
-			}
-			break;
-			case 2:
-			{
+				// Pause/play
 				if (event.data.media_player.is_paused()) {
 					event.data.media_player.play();
 				}
@@ -6669,454 +6398,746 @@ MediaPlayer.prototype.on_playback_control_click = function (event) {
 					event.data.media_player.pause();
 				}
 			}
+		}
+		else if (event.data.media_player.volume_changing) {
+			event.data.media_player.volume_changing = false;
+			event.data.media_player.unC(event.data.media_player.volume_container, "SPVolumeContainerActive");
+		}
+		else if (event.data.media_player.seek_dragging) {
+			event.data.media_player.seek_dragging = false;
+			event.data.media_player.unC(event.data.media_player.seek_bar, "SPSeekBarActive");
+
+			event.data.media_player.seek_to(null, false, false);
+
+			if (event.data.media_player.seek_was_playing) {
+				event.data.media_player.play();
+			}
+		}
+		else if (event.data.media_player.seek_exacting) {
+			event.data.media_player.seek_exacting = false;
+			event.data.media_player.unC(event.data.media_player.seek_bar, "SPSeekBarActive");
+
+			event.data.media_player.seek_to(null, false, false);
+
+			if (event.data.media_player.seek_was_playing) {
+				event.data.media_player.play();
+			}
+		}
+		return true;
+	},
+	on_document_mousemove: function (event) {
+		if (event.data.media_player.moving) {
+			// Dragging window
+			var left = (event.pageX - $(document).scrollLeft()) + event.data.media_player.mouse_offset.left;
+			var top = (event.pageY - $(document).scrollTop()) + event.data.media_player.mouse_offset.top;
+			event.data.media_player.reposition(left, top);
+		}
+		else if (event.data.media_player.resizing) {
+			var size = {width: null, height: null};
+
+			var is_top, is_left;
+			if ((is_top = (event.data.media_player.resizing_sides[0] === 0))) { // top
+				size.height = event.data.media_player.mouse_offset.top
+					- (event.pageY - $(document).scrollTop())
+					+ event.data.media_player.resizing_base_size.height;
+			}
+			else if (event.data.media_player.resizing_sides[0] === 2) { // bottom
+				size.height = (event.pageY - $(document).scrollTop())
+					- event.data.media_player.mouse_offset.top
+					+ event.data.media_player.resizing_base_size.height;
+			}
+			if ((is_left = (event.data.media_player.resizing_sides[1] === 3))) { // left
+				size.width = event.data.media_player.mouse_offset.left
+					- (event.pageX - $(document).scrollLeft())
+					+ event.data.media_player.resizing_base_size.width;
+			}
+			else if (event.data.media_player.resizing_sides[1] === 1) { // right
+				size.width = (event.pageX - $(document).scrollLeft())
+					- event.data.media_player.mouse_offset.left
+					+ event.data.media_player.resizing_base_size.width;
+			}
+
+			event.data.media_player.resize_to(size.width, size.height, is_left, is_top);
+		}
+		else if (event.data.media_player.resizing_image) {
+			var size = event.data.media_player.sp_container_main.offset();
+			size.left = (event.pageX - size.left) + event.data.media_player.mouse_offset.left;
+			size.top = (event.pageY - size.top) + event.data.media_player.mouse_offset.top;
+
+			event.data.media_player.resize_image_container(size.top);
+
+			event.data.media_player.mouse_moved = true;
+		}
+		else if (event.data.media_player.volume_changing) {
+			// Changing volume
+			var volume = 1.0 - ((event.pageY) - event.data.media_player.volume_bar_container.offset().top) / event.data.media_player.volume_bar_container.outerHeight();
+			event.data.media_player.set_volume(volume);
+
+			// Callback
+			if (typeof(event.data.media_player.settings_callback) == "function")event.data.media_player.settings_callback(event.data.media_player);
+		}
+		else if (event.data.media_player.seek_dragging) {
+			// Seeking
+			var offset = ((event.pageX) - event.data.media_player.seek_bar_container.offset().left) + event.data.media_player.mouse_offset.left;
+			var max_offset = event.data.media_player.seek_bar_container.outerWidth() - event.data.media_player.seek_bar.outerWidth();
+			// Seek
+			if (max_offset > 0.0) offset = offset / max_offset * event.data.media_player.get_duration();
+			event.data.media_player.seek_to(offset, false, true);
+		}
+		else if (event.data.media_player.seek_exacting) {
+			// Seeking
+			var offset = ((event.pageX) - event.data.media_player.seek_bar_container.offset().left) - event.data.media_player.seek_bar.outerWidth() / 2.0;
+			var max_offset = event.data.media_player.seek_bar_container.outerWidth() - event.data.media_player.seek_bar.outerWidth();
+			// Seek
+			if (max_offset > 0.0) offset = offset / max_offset * event.data.media_player.get_duration();
+			event.data.media_player.seek_to(offset, false, true);
+		}
+
+		if (event.data.media_player.resize_container_hovered) {
+			var rel = event.data.media_player.sp_container.offset();
+			rel.left -= event.pageX;
+			rel.top -= event.pageY;
+
+			event.data.media_player.on_resize_mouse_update(-rel.left, -rel.top);
+		}
+
+		return true;
+	},
+	on_window_resize: function (event) {
+		// Keep on screen
+		event.data.media_player.reposition();
+	},
+
+	on_audio_play: function (event) {
+		// Update playing status
+		event.data.media_player.update_playing_status();
+	},
+	on_audio_pause: function (event) {
+		// Update playing status
+		event.data.media_player.update_playing_status();
+	},
+	on_audio_ended: function (event) {
+		if (!event.data.media_player.seek_exacting && !event.data.media_player.seek_dragging) {
+			// Update playing status
+			event.data.media_player.update_playing_status();
+			// Next
+			event.data.media_player.next(true);
+		}
+	},
+	on_audio_timeupdate: function (event) {
+		// Update seek bar
+		event.data.media_player.seek_to(this.currentTime, true);
+	},
+	on_audio_durationchange: function (event) {
+		// Update item
+		var duration = event.data.media_player.get_audio_duration(event.data.media_player.audio[0]);
+
+		// Seek
+		event.data.media_player.set_duration(duration);
+		event.data.media_player.seek_to(null, true);
+	},
+	on_temp_audio_durationchange: function (event) {
+		// Get duration
+		var duration = event.data.media_player.get_audio_duration(event.data.playlist_item.temp_audio[0]);
+		event.data.playlist_item.duration = duration;
+
+		// Stop, remove, and nullify
+		event.data.playlist_item.temp_audio[0].pause();
+		event.data.playlist_item.temp_audio.removeAttr("src").remove();
+		event.data.playlist_item.temp_audio = null;
+
+		var length_str = event.data.media_player.duration_to_string(duration);
+		event.data.playlist_item.info_container.html(length_str);
+	},
+
+	on_image_load: function (event) {
+		var attr = $(this).attr("src");
+		if (typeof(attr) !== "undefined" && attr !== false) {
+			// Loaded; scale
+			event.data.media_player.current_image_width = this.width;
+			event.data.media_player.current_image_height = this.height;
+
+			event.data.media_player.update_image_scale();
+			$(this).css("display", "");
+		}
+	},
+
+	on_playlist_mode_change: function (event) {
+		// Change mode
+		if (event.data.media_player.playlist_randomize) {
+			event.data.media_player.playlist_randomize = false;
+			event.data.media_player.playlist_loop = false;
+		}
+		else if (event.data.media_player.playlist_loop) {
+			event.data.media_player.playlist_randomize = true;
+		}
+		else {
+			event.data.media_player.playlist_loop = true;
+		}
+
+		// Label
+		$(this).html(event.data.media_player.playlist_randomize ? "Randomize" : (event.data.media_player.playlist_loop ? "Loop" : "Play Once"));
+
+		// Callback
+		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+	},
+	on_playlist_onload_change: function (event) {
+		// Change mode
+		var v = (event.data.media_player.playlist_play_on_load + 1) % event.data.media_player.playlist_play_on_load_settings.length;
+		event.data.media_player.playlist_play_on_load = v;
+
+		// Label
+		$(this).html(event.data.media_player.playlist_play_on_load_settings[event.data.media_player.playlist_play_on_load]);
+
+		// Callback
+		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+	},
+	on_playlist_scrollto_change: function (event) {
+		// Change mode
+		event.data.media_player.playlist_scrollto_onload = !event.data.media_player.playlist_scrollto_onload;
+
+		// Label
+		$(this).html(event.data.media_player.playlist_scrollto_onload ? "Scroll to in playlist" : "Don't scroll playlist");
+
+		// Callback
+		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+	},
+
+	on_ytquality_change: function (event) {
+		// Change mode
+		event.data.media_player.ytvideo_quality_index = (event.data.media_player.ytvideo_quality_index + 1) % event.data.media_player.ytvideo_qualities.length;
+
+		if (event.data.media_player.ytvideo_player != null && event.data.media_player.ytvideo_player.setPlaybackQuality) {
+			event.data.media_player.ytvideo_player.setPlaybackQuality(event.data.media_player.ytvideo_qualities[event.data.media_player.ytvideo_quality_index]);
+		}
+
+		// Label
+		$(this).html(event.data.media_player.ytvideo_qualities[event.data.media_player.ytvideo_quality_index]);
+
+		// Callback
+		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+	},
+	on_player_theme_change: function (event) {
+		// Change mode
+		var first = null;
+		var find = false;
+		for (var theme in event.data.media_player.css.css_color_presets) {
+			if (theme == "default") continue;
+			if (first === null) first = theme;
+			if (theme == event.data.media_player.css.preset && !find) find = true;
+			else if (find) {
+				find = null;
+				event.data.media_player.css.load_preset(theme);
+				break;
+			}
+		}
+		if (find !== null) {
+			event.data.media_player.css.load_preset(first);
+		}
+
+		// Update value editors
+		event.data.media_player.update_value_fields();
+
+		// Update stylesheet
+		event.data.media_player.regen_stylesheet();
+
+		// Label
+		event.data.media_player.update_player_theme_name({media_player: event.data.media_player});
+
+		// Callback
+		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+	},
+	on_player_use_svg_update: function (event) {
+		// Change mode
+		event.data.media_player.use_svg = !event.data.media_player.use_svg;
+
+		$(this).html(event.data.media_player.use_svg ? "Allowed" : "Disallowed");
+
+		event.data.media_player.create_playback_controls();
+
+		// Callback
+		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+	},
+
+	on_playback_control_click: function (event) {
+		if (event.data.media_player.current_media != null) {
+			var time_offset = 5.0;
+			switch (event.data.control_id) {
+				case 0:
+				{
+					if (event.data.media_player.get_position() - time_offset < 0.0) event.data.media_player.previous();
+					else event.data.media_player.seek_to(0.0);
+				}
+				break;
+				case 1:
+				{
+					var t = event.data.media_player.get_position() - time_offset;
+					if (t < 0.0) event.data.media_player.previous();
+					else event.data.media_player.seek_to(t);
+				}
+				break;
+				case 2:
+				{
+					if (event.data.media_player.is_paused()) {
+						event.data.media_player.play();
+					}
+					else {
+						event.data.media_player.pause();
+					}
+				}
+				break;
+				case 3:
+				{
+					event.data.media_player.seek_to(event.data.media_player.get_position() + time_offset);
+				}
+				break;
+				case 4:
+				{
+					event.data.media_player.next();
+				}
+				break;
+			}
+		}
+	},
+	on_main_control_click: function (event) {
+		switch (event.data.control_id) {
+			case 2:
+			{
+				if (!event.data.media_player.is_maximized()) {
+					event.data.media_player.maximize();
+				}
+				// Info
+				event.data.media_player.first_run_container.css("display", "");
+				for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+					event.data.media_player.help_container[i].css("display", "none");
+				}
+				event.data.media_player.downloads_container.css("display", "none");
+				event.data.media_player.first_run_container.scrollTop(0);
+			}
+			break;
+			case 0:
+			{
+				if (!event.data.media_player.is_maximized()) {
+					event.data.media_player.maximize();
+				}
+				// Options
+				if (event.data.media_player.first_run_container.css("display") == "none") {
+					var open = false;
+					for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+						if (event.data.media_player.help_container[i].css("display") != "none") {
+							open = true;
+							break;
+						}
+					}
+					event.data.media_player.downloads_container.css("display", "none");
+					if (open) {
+						for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+							event.data.media_player.help_container[i].css("display", "none");
+						}
+					}
+					else {
+						event.data.media_player.help_container[0].css("display", "");
+						// Bottom offset (so not to be obscured by the footer)
+						if (
+							event.data.media_player.help_container_footer[0] &&
+							event.data.media_player.help_container_inner1[0]
+						) {
+							event.data.media_player.help_container_inner1[0].css(
+								"bottom", (event.data.media_player.help_container_footer[0].height()) + "px"
+							);
+						}
+					}
+				}
+			}
+			break;
+			case 1:
+			{
+				if (!event.data.media_player.is_maximized()) {
+					event.data.media_player.maximize();
+				}
+				// Downloads
+				var open = (event.data.media_player.downloads_container.css("display") == "none");
+				for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+					event.data.media_player.help_container[i].css("display", "none");
+				}
+				event.data.media_player.downloads_container.css("display", open ? "" : "none");
+			}
 			break;
 			case 3:
 			{
-				event.data.media_player.seek_to(event.data.media_player.get_position() + time_offset);
+				if (event.data.media_player.is_maximized()) {
+					event.data.media_player.minimize();
+				}
+				else {
+					event.data.media_player.maximize();
+				}
 			}
 			break;
 			case 4:
 			{
-				event.data.media_player.next();
+				// Close
+				event.data.media_player.destructor();
 			}
 			break;
 		}
-	}
-}
-MediaPlayer.prototype.on_main_control_click = function (event) {
-	switch (event.data.control_id) {
-		case 2:
-		{
-			if (!event.data.media_player.is_maximized()) {
-				event.data.media_player.maximize();
-			}
-			// Info
-			event.data.media_player.first_run_container.css("display", "");
-			for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-				event.data.media_player.help_container[i].css("display", "none");
-			}
-			event.data.media_player.downloads_container.css("display", "none");
-			event.data.media_player.first_run_container.scrollTop(0);
+	},
+	on_helppage_goto: function (event) {
+		for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+			event.data.media_player.help_container[i].css("display", (event.data.help_page == i ? "" : "none"));
 		}
-		break;
-		case 0:
-		{
-			if (!event.data.media_player.is_maximized()) {
-				event.data.media_player.maximize();
+	},
+	on_firstrun_page_exit_click: function (event) {
+		event.data.media_player.first_run_container.css("display", "none");
+		event.data.media_player.first_run = false;
+
+		// Callback
+		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+
+		return false;
+	},
+
+	on_playlist_item_click: function (event) {
+		// Play
+		event.data.media_player.start(event.data.playlist_item.index);
+	},
+
+	on_playlist_control_click: function (event) {
+		switch (event.data.control_id) {
+			case 0:
+			{
+				// Delete
+				event.data.media_player.remove(event.data.playlist_item.index);
 			}
-			// Options
-			if (event.data.media_player.first_run_container.css("display") == "none") {
-				var open = false;
-				for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-					if (event.data.media_player.help_container[i].css("display") != "none") {
-						open = true;
-						break;
-					}
+			return false;
+			case 1:
+			{
+				// Move up
+				var i = event.data.playlist_item.index;
+				if (i > 0) {
+					// Update html
+					var i1 = event.data.media_player.playlist[i - 1];
+					var i2 = event.data.media_player.playlist[i];
+					i1.playlist_item.before(i2.playlist_item);
+
+					// Update list order and indices
+					event.data.media_player.playlist[i] = i1;
+					event.data.media_player.playlist[i - 1] = i2;
+					i1.index = i;
+					i2.index = i - 1;
 				}
-				event.data.media_player.downloads_container.css("display", "none");
-				if (open) {
-					for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-						event.data.media_player.help_container[i].css("display", "none");
+			}
+			break;
+			case 2:
+			{
+				// Move down
+				var i = event.data.playlist_item.index;
+				if (i < event.data.media_player.playlist.length - 1) {
+					// Update html
+					var i1 = event.data.media_player.playlist[i];
+					var i2 = event.data.media_player.playlist[i + 1];
+					i1.playlist_item.before(i2.playlist_item);
+
+					// Update list order and indices
+					event.data.media_player.playlist[i + 1] = i1;
+					event.data.media_player.playlist[i] = i2;
+					i1.index = i + 1;
+					i2.index = i;
+				}
+			}
+			break;
+			case 3:
+			{
+				// URL
+				if (!event.originalEvent.which || event.originalEvent.which == 1) {
+					if (event.data.playlist_item.type == "image-audio") {
+						alert("Right click and save as, or open in a new tab.");
+					}
+					else if (event.data.playlist_item.type == "youtube-video") {
+						prompt("Right click/middle click to open. Original:", event.data.playlist_item.original_url);
+					}
+					else {
+						console.log(event.data.playlist_item.type);
 					}
 				}
 				else {
-					event.data.media_player.help_container[0].css("display", "");
-					// Bottom offset (so not to be obscured by the footer)
-					if (
-						event.data.media_player.help_container_footer[0] &&
-						event.data.media_player.help_container_inner1[0]
-					) {
-						event.data.media_player.help_container_inner1[0].css(
-							"bottom", (event.data.media_player.help_container_footer[0].height()) + "px"
-						);
+					return true;
+				}
+			}
+			return false;
+			case 4:
+			{
+				// URL
+				if (!event.originalEvent.which || event.originalEvent.which == 1) {
+					if (event.data.playlist_item.type == "image-audio") {
+						alert("Right click and save as, or open in a new tab.");
+					}
+					else {
+						console.log(event.data.playlist_item.type);
 					}
 				}
-			}
-		}
-		break;
-		case 1:
-		{
-			if (!event.data.media_player.is_maximized()) {
-				event.data.media_player.maximize();
-			}
-			// Downloads
-			var open = (event.data.media_player.downloads_container.css("display") == "none");
-			for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-				event.data.media_player.help_container[i].css("display", "none");
-			}
-			event.data.media_player.downloads_container.css("display", open ? "" : "none");
-		}
-		break;
-		case 3:
-		{
-			if (event.data.media_player.is_maximized()) {
-				event.data.media_player.minimize();
-			}
-			else {
-				event.data.media_player.maximize();
-			}
-		}
-		break;
-		case 4:
-		{
-			// Close
-			event.data.media_player.destructor();
-		}
-		break;
-	}
-}
-MediaPlayer.prototype.on_helppage_goto = function (event) {
-	for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-		event.data.media_player.help_container[i].css("display", (event.data.help_page == i ? "" : "none"));
-	}
-}
-MediaPlayer.prototype.on_firstrun_page_exit_click = function (event) {
-	event.data.media_player.first_run_container.css("display", "none");
-	event.data.media_player.first_run = false;
-
-	// Callback
-	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-
-	return false;
-}
-
-MediaPlayer.prototype.on_playlist_item_click = function (event) {
-	// Play
-	event.data.media_player.start(event.data.playlist_item.index);
-}
-
-MediaPlayer.prototype.on_playlist_control_click = function (event) {
-	switch (event.data.control_id) {
-		case 0:
-		{
-			// Delete
-			event.data.media_player.remove(event.data.playlist_item.index);
-		}
-		return false;
-		case 1:
-		{
-			// Move up
-			var i = event.data.playlist_item.index;
-			if (i > 0) {
-				// Update html
-				var i1 = event.data.media_player.playlist[i - 1];
-				var i2 = event.data.media_player.playlist[i];
-				i1.playlist_item.before(i2.playlist_item);
-
-				// Update list order and indices
-				event.data.media_player.playlist[i] = i1;
-				event.data.media_player.playlist[i - 1] = i2;
-				i1.index = i;
-				i2.index = i - 1;
-			}
-		}
-		break;
-		case 2:
-		{
-			// Move down
-			var i = event.data.playlist_item.index;
-			if (i < event.data.media_player.playlist.length - 1) {
-				// Update html
-				var i1 = event.data.media_player.playlist[i];
-				var i2 = event.data.media_player.playlist[i + 1];
-				i1.playlist_item.before(i2.playlist_item);
-
-				// Update list order and indices
-				event.data.media_player.playlist[i + 1] = i1;
-				event.data.media_player.playlist[i] = i2;
-				i1.index = i + 1;
-				i2.index = i;
-			}
-		}
-		break;
-		case 3:
-		{
-			// URL
-			if (!event.originalEvent.which || event.originalEvent.which == 1) {
-				if (event.data.playlist_item.type == "image-audio") {
-					alert("Right click and save as, or open in a new tab.");
-				}
-				else if (event.data.playlist_item.type == "youtube-video") {
-					prompt("Right click/middle click to open. Original:", event.data.playlist_item.original_url);
-				}
 				else {
-					console.log(event.data.playlist_item.type);
+					return true;
 				}
 			}
-			else {
-				return true;
-			}
-		}
-		return false;
-		case 4:
-		{
-			// URL
-			if (!event.originalEvent.which || event.originalEvent.which == 1) {
-				if (event.data.playlist_item.type == "image-audio") {
-					alert("Right click and save as, or open in a new tab.");
-				}
-				else {
-					console.log(event.data.playlist_item.type);
-				}
-			}
-			else {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	// Done
-	return true;
-}
-
-MediaPlayer.prototype.on_settings_color_change = function (event) {
-	// Parse value
-	var value = 0;
-
-	try {
-		if (event.data.component < 3) {
-			value = parseInt($(this).val());
-
-			if (value != value) value = 0;
-			else if (value < 0) value = 0;
-			else if (value > 255) value = 255;
-		}
-		else {
-			value = parseFloat($(this).val());
-
-			if (value != value) value = 0.0;
-			else if (value < 0.0) value = 0.0;
-			else if (value > 1.0) value = 1.0;
-		}
-	}
-	catch (e) {
-		// not a number
-	}
-
-	// Update display
-	$(this).val(value);
-
-	// Set value
-	event.data.media_player.css.modify_value(true, event.data.color_id, value, event.data.component);
-
-	// Display value
-	value = event.data.media_player.css.get_value(true, event.data.color_id);
-	if (value[3] >= 1.0) {
-		event.data.color_display.css("background", "rgb(" + value[0] + "," + value[1] + "," + value[2] + ")");
-	}
-	else {
-		event.data.color_display.css("background", "rgba(" + value[0] + "," + value[1] + "," + value[2] + "," + value[3] + ")");
-	}
-
-	// Update stylesheet
-	if (/volume_colors/.test(event.data.color_id)) {
-		event.data.media_player.set_volume(event.data.media_player.volume);
-	}
-	else {
-		event.data.media_player.regen_stylesheet();
-	}
-
-	// Callback
-	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-}
-MediaPlayer.prototype.on_settings_value_change = function (event) {
-	var value = $(this).val();
-	if (!event.data.is_string) {
-		value = parseFloat(value);
-		if (value != value) value = 0.0;
-		$(this).val(value);
-	}
-
-	// Set value
-	if (event.data.value_id[0] == "@") {
-		var name = event.data.value_id.substr(1, event.data.value_id.length - 1);
-		if (name == "scale_factor") {
-			if (value <= 0.25) value = 0.25;
-			if (value >= 4.0) value = 4.0;
-			$(this).val(value);
-			event.data.media_player.update_scale_factor(value);
-		}
-	}
-	else {
-		event.data.media_player.css.modify_value(false, event.data.value_id, value);
-	}
-
-	// Update stylesheet
-	event.data.media_player.regen_stylesheet();
-	event.data.media_player.reposition();
-
-	// Callback
-	if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-}
-
-MediaPlayer.prototype.on_container_drop = function (event) {
-	// Close overlays
-	event.data.media_player.alert_container.css("display", "none");
-	event.data.media_player.downloads_container.css("display", "none");
-	for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-		event.data.media_player.help_container[i].css("display", "none")
-	}
-
-	// Load
-	if (event.originalEvent.dataTransfer.files.length > 0) {
-		for (var i = 0; i < event.originalEvent.dataTransfer.files.length; ++i) {
-			event.data.media_player.attempt_load(
-				event.originalEvent.dataTransfer.files[i],
-				MediaPlayer.ALL_SOUNDS,
-				null, null, null, null, null
-			);
-		}
-	}
-	else {
-		// URL
-		var data = {
-			text: event.originalEvent.dataTransfer.getData("text/plain"),
-			callback_data: null,
-			progress_callback: null,
-			done_callback: null,
-			status_callback: null,
-		};
-		event.data.media_player.drag_callback(data);
-		if (data.text) {
-			event.data.media_player.attempt_load(
-				data.text,
-				MediaPlayer.ALL_SOUNDS,
-				{},
-				data.callback_data,
-				data.progress_callback,
-				data.done_callback,
-				data.status_callback
-			);
-		}
-	}
-
-	// Done
-	event.preventDefault();
-	event.stopPropagation();
-	return false;
-}
-MediaPlayer.prototype.on_container_dragover = function (event) {
-	event.originalEvent.dataTransfer.dropEffect = "move";
-	// Done
-	event.preventDefault();
-	event.stopPropagation();
-	return false;
-}
-MediaPlayer.prototype.on_container_dragenter = function (event) {
-	event.data.media_player.alert_container.css("display", "");
-	// Done
-	event.preventDefault();
-	event.stopPropagation();
-	return false;
-}
-MediaPlayer.prototype.on_container_dragexit = function (event) {
-	event.data.media_player.alert_container.css("display", "none");
-	// Done
-	event.preventDefault();
-	event.stopPropagation();
-	return false;
-}
-
-MediaPlayer.prototype.on_downloads_generate_click = function (event) {
-	var mp = event.data.media_player;
-	if (mp.batch_download_blob !== null) {
-		(window.webkitURL || window.URL).revokeObjectURL(mp.batch_download_blob_url);
-	}
-	mp.batch_download_blob = null;
-	mp.downloads_ready_container.css("display", "none");
-
-	// Generation function
-	var gen_function = function (files, about) {
-		// Get required size
-		var total_length = 0;
-		var comment = "";
-		for (var i = 0; i < files.length; ++i) {
-			total_length += 30 + files[i][0].length + (files[i][1].size || files[i][1].length || 0);
-			total_length += 46 + files[i][0].length;
-		}
-		total_length += 22 + comment.length;
-
-		// Attempt buffer create
-		var buffer = null;
-		try {
-			buffer = new Uint8Array(new ArrayBuffer(total_length));
-		}
-		catch (e) {
-			console.log(e);
 			return false;
 		}
 
-		// Create
-		var zw = new ZipWriter(buffer, comment);
-		mp.downloads_generate_link(files, zw, about, 0);
-	};
+		// Done
+		return true;
+	},
 
-	// Generate filename list
-	var files = [];
-	var about = "";
-	if (event.data.type == "sounds") {
-		for (var i = 0; i < mp.playlist.length; ++i) {
-			if (mp.playlist[i].type == "image-audio") {
-				// Get the filename
-				var fn = mp.playlist[i].title;
-				var ext = ".ogg";
-				try {
-					fn = mp.normalize_filename(unescape(encodeURIComponent(fn)));
-				}
-				catch (e) {
-					console.log(e);
-				}
-				// Make sure it's unique
-				var n = 1;
-				var name = fn + ext;
-				for (var j = 0; j < files.length; ++j) {
-					if (name == files[j][0]) {
-						name = fn + " (" + (++n) + ")" + ext;
-						j = -1;
-						continue;
-					}
-				}
-				fn = name;
-				// Add
-				files.push([fn, mp.playlist[i].audio_blob]);
+	on_settings_color_change: function (event) {
+		// Parse value
+		var value = 0;
+
+		try {
+			if (event.data.component < 3) {
+				value = parseInt($(this).val());
+
+				if (value != value) value = 0;
+				else if (value < 0) value = 0;
+				else if (value > 255) value = 255;
+			}
+			else {
+				value = parseFloat($(this).val());
+
+				if (value != value) value = 0.0;
+				else if (value < 0.0) value = 0.0;
+				else if (value > 1.0) value = 1.0;
+			}
+		}
+		catch (e) {
+			// not a number
+		}
+
+		// Update display
+		$(this).val(value);
+
+		// Set value
+		event.data.media_player.css.modify_value(true, event.data.color_id, value, event.data.component);
+
+		// Display value
+		value = event.data.media_player.css.get_value(true, event.data.color_id);
+		if (value[3] >= 1.0) {
+			event.data.color_display.css("background", "rgb(" + value[0] + "," + value[1] + "," + value[2] + ")");
+		}
+		else {
+			event.data.color_display.css("background", "rgba(" + value[0] + "," + value[1] + "," + value[2] + "," + value[3] + ")");
+		}
+
+		// Update stylesheet
+		if (/volume_colors/.test(event.data.color_id)) {
+			event.data.media_player.set_volume(event.data.media_player.volume);
+		}
+		else {
+			event.data.media_player.regen_stylesheet();
+		}
+
+		// Callback
+		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+	},
+	on_settings_value_change: function (event) {
+		var value = $(this).val();
+		if (!event.data.is_string) {
+			value = parseFloat(value);
+			if (value != value) value = 0.0;
+			$(this).val(value);
+		}
+
+		// Set value
+		if (event.data.value_id[0] == "@") {
+			var name = event.data.value_id.substr(1, event.data.value_id.length - 1);
+			if (name == "scale_factor") {
+				if (value <= 0.25) value = 0.25;
+				if (value >= 4.0) value = 4.0;
+				$(this).val(value);
+				event.data.media_player.update_scale_factor(value);
+			}
+		}
+		else {
+			event.data.media_player.css.modify_value(false, event.data.value_id, value);
+		}
+
+		// Update stylesheet
+		event.data.media_player.regen_stylesheet();
+		event.data.media_player.reposition();
+
+		// Callback
+		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
+	},
+
+	on_container_drop: function (event) {
+		// Close overlays
+		event.data.media_player.alert_container.css("display", "none");
+		event.data.media_player.downloads_container.css("display", "none");
+		for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+			event.data.media_player.help_container[i].css("display", "none")
+		}
+
+		// Load
+		if (event.originalEvent.dataTransfer.files.length > 0) {
+			for (var i = 0; i < event.originalEvent.dataTransfer.files.length; ++i) {
+				event.data.media_player.attempt_load(
+					event.originalEvent.dataTransfer.files[i],
+					MediaPlayer.ALL_SOUNDS,
+					null, null, null, null, null
+				);
+			}
+		}
+		else {
+			// URL
+			var data = {
+				text: event.originalEvent.dataTransfer.getData("text/plain"),
+				callback_data: null,
+				progress_callback: null,
+				done_callback: null,
+				status_callback: null,
+			};
+			event.data.media_player.drag_callback(data);
+			if (data.text) {
+				event.data.media_player.attempt_load(
+					data.text,
+					MediaPlayer.ALL_SOUNDS,
+					{},
+					data.callback_data,
+					data.progress_callback,
+					data.done_callback,
+					data.status_callback
+				);
 			}
 		}
 
-		about = function (files) {
-			return " to download " + files.length + " sound" + (files.length == 1 ? "" : "s") + " (save as .zip)";
+		// Done
+		event.preventDefault();
+		event.stopPropagation();
+		return false;
+	},
+	on_container_dragover: function (event) {
+		event.originalEvent.dataTransfer.dropEffect = "move";
+		// Done
+		event.preventDefault();
+		event.stopPropagation();
+		return false;
+	},
+	on_container_dragenter: function (event) {
+		event.data.media_player.alert_container.css("display", "");
+		// Done
+		event.preventDefault();
+		event.stopPropagation();
+		return false;
+	},
+	on_container_dragexit: function (event) {
+		event.data.media_player.alert_container.css("display", "none");
+		// Done
+		event.preventDefault();
+		event.stopPropagation();
+		return false;
+	},
+
+	on_downloads_generate_click: function (event) {
+		var mp = event.data.media_player;
+		if (mp.batch_download_blob !== null) {
+			(window.webkitURL || window.URL).revokeObjectURL(mp.batch_download_blob_url);
+		}
+		mp.batch_download_blob = null;
+		mp.downloads_ready_container.css("display", "none");
+
+		// Generation function
+		var gen_function = function (files, about) {
+			// Get required size
+			var total_length = 0;
+			var comment = "";
+			for (var i = 0; i < files.length; ++i) {
+				total_length += 30 + files[i][0].length + (files[i][1].size || files[i][1].length || 0);
+				total_length += 46 + files[i][0].length;
+			}
+			total_length += 22 + comment.length;
+
+			// Attempt buffer create
+			var buffer = null;
+			try {
+				buffer = new Uint8Array(new ArrayBuffer(total_length));
+			}
+			catch (e) {
+				console.log(e);
+				return false;
+			}
+
+			// Create
+			var zw = new ZipWriter(buffer, comment);
+			mp.downloads_generate_link(files, zw, about, 0);
 		};
 
-		gen_function(files, about);
-	}
-	else { // images, images2
-		about = function (files) {
-			return " to download " + files.length + " image" + (files.length == 1 ? "" : "s") + " (save as .zip)";
-		};
+		// Generate filename list
+		var files = [];
+		var about = "";
+		if (event.data.type == "sounds") {
+			for (var i = 0; i < mp.playlist.length; ++i) {
+				if (mp.playlist[i].type == "image-audio") {
+					// Get the filename
+					var fn = mp.playlist[i].title;
+					var ext = ".ogg";
+					try {
+						fn = mp.normalize_filename(unescape(encodeURIComponent(fn)));
+					}
+					catch (e) {
+						console.log(e);
+					}
+					// Make sure it's unique
+					var n = 1;
+					var name = fn + ext;
+					for (var j = 0; j < files.length; ++j) {
+						if (name == files[j][0]) {
+							name = fn + " (" + (++n) + ")" + ext;
+							j = -1;
+							continue;
+						}
+					}
+					fn = name;
+					// Add
+					files.push([fn, mp.playlist[i].audio_blob]);
+				}
+			}
 
-		mp.downloads_generate_image_list(files, about, gen_function, (event.data.type == "images2"), 0);
-	}
+			about = function (files) {
+				return " to download " + files.length + " sound" + (files.length == 1 ? "" : "s") + " (save as .zip)";
+			};
 
-	// Done
-	return false;
-}
-MediaPlayer.prototype.on_downloads_link_click = function (event) {
-	if (event.which == 1) {
-		prompt("Right click -> save as, middle click, or visit this URL:", event.data.media_player.batch_download_blob_url);
+			gen_function(files, about);
+		}
+		else { // images, images2
+			about = function (files) {
+				return " to download " + files.length + " image" + (files.length == 1 ? "" : "s") + " (save as .zip)";
+			};
+
+			mp.downloads_generate_image_list(files, about, gen_function, (event.data.type == "images2"), 0);
+		}
+
+		// Done
+		return false;
+	},
+	on_downloads_link_click: function (event) {
+		if (event.which == 1) {
+			prompt("Right click -> save as, middle click, or visit this URL:", event.data.media_player.batch_download_blob_url);
+			return false;
+		}
+		return true;
+	},
+
+	cancel_event: function (event) {
+		// Done
+		event.preventDefault();
+		event.stopPropagation();
 		return false;
 	}
-	return true;
-}
-
-MediaPlayer.prototype.cancel_event = function (event) {
-	// Done
-	event.preventDefault();
-	event.stopPropagation();
-	return false;
-}
+};
+MediaPlayer.ALL_SOUNDS = true;
 
 
 
+///////////////////////////////////////////////////////////////////////////////
+// .zip archive writer
+///////////////////////////////////////////////////////////////////////////////
 function ZipWriter (buffer, comment) {
 	this.buffer = buffer;
 	this.comment = comment || "";
@@ -7127,113 +7148,117 @@ function ZipWriter (buffer, comment) {
 	this.sizes = new Array();
 	this.fnames = new Array();
 };
-ZipWriter.prototype.date_convert = function (date) {
-	var mod_time = (Math.floor(date.getSeconds() / 2) | (date.getMinutes() << 5) | (date.getHours() << 11));
-	var mod_date = ((date.getDate()) | ((date.getMonth() + 1) << 5) | ((date.getFullYear() - 1980) << 9));
+ZipWriter.prototype = {
+	constructor: ZipWriter,
+	date_convert: function (date) {
+		var mod_time = (Math.floor(date.getSeconds() / 2) | (date.getMinutes() << 5) | (date.getHours() << 11));
+		var mod_date = ((date.getDate()) | ((date.getMonth() + 1) << 5) | ((date.getFullYear() - 1980) << 9));
 
-	return [ mod_time , mod_date ];
-};
-ZipWriter.prototype.write_end = function () {
-	var date = this.date_convert(this.date);
-	var cd_pos = this.pos;
+		return [ mod_time , mod_date ];
+	},
+	write_end: function () {
+		var date = this.date_convert(this.date);
+		var cd_pos = this.pos;
 
-	for (var i = 0; i < this.fnames.length; ++i) {
-		this.write_data(0x02014b50, 4); // Signature
+		for (var i = 0; i < this.fnames.length; ++i) {
+			this.write_data(0x02014b50, 4); // Signature
+			this.write_data(20, 2); // Version
+			this.write_data(20, 2); // Version required
+			this.write_data(0, 2); // Flags
+			this.write_data(0, 2); // Compression
+			this.write_data(date[0], 2); // Mod time
+			this.write_data(date[1], 2); // Mod date
+			this.write_data(this.crc32s[i], 4); // CRC
+			this.write_data(this.sizes[i], 4); // Compressed size
+			this.write_data(this.sizes[i], 4); // Uncompressed size
+			this.write_data(this.fnames[i].length, 2); // File name length
+			this.write_data(0, 2); // Extra field length
+			this.write_data(0, 2); // Comment length
+			this.write_data(0, 2); // Disk number start
+			this.write_data(0, 2); // Internal attr
+			this.write_data(32, 4); // External attr
+			this.write_data(this.offsets[i], 4); // Offset
+			this.write_data(this.fnames[i]); // File name
+		}
+
+		// End
+		var cd_end_pos = this.pos;
+		this.write_data(0x06054b50, 4); // Signature
+		this.write_data(0, 2); // Disk number
+		this.write_data(0, 2); // Disk number with cd
+		this.write_data(this.fnames.length, 2); // Disk entries
+		this.write_data(this.fnames.length, 2); // Total entries
+		this.write_data(cd_end_pos - cd_pos, 4); // cd size
+		this.write_data(cd_pos, 4); // cd size
+		this.write_data(this.comment.length, 2); // comment
+		this.write_data(this.comment); // comment
+	},
+	write_file: function (filename, filedata) {
+		var crc = this.crc32(filedata);
+		this.offsets.push(this.pos);
+		this.crc32s.push(crc);
+		this.sizes.push(filedata.length);
+		this.fnames.push(filename);
+
+		var date = this.date_convert(this.date);
+
+		this.write_data(0x04034b50, 4); // Signature
 		this.write_data(20, 2); // Version
-		this.write_data(20, 2); // Version required
 		this.write_data(0, 2); // Flags
 		this.write_data(0, 2); // Compression
 		this.write_data(date[0], 2); // Mod time
 		this.write_data(date[1], 2); // Mod date
-		this.write_data(this.crc32s[i], 4); // CRC
-		this.write_data(this.sizes[i], 4); // Compressed size
-		this.write_data(this.sizes[i], 4); // Uncompressed size
-		this.write_data(this.fnames[i].length, 2); // File name length
-		this.write_data(0, 2); // Extra field length
+		this.write_data(crc, 4); // CRC
+		this.write_data(filedata.length, 4); // Compressed size
+		this.write_data(filedata.length, 4); // Uncompressed size
+		this.write_data(filename.length, 2); // Filename length
 		this.write_data(0, 2); // Comment length
-		this.write_data(0, 2); // Disk number start
-		this.write_data(0, 2); // Internal attr
-		this.write_data(32, 4); // External attr
-		this.write_data(this.offsets[i], 4); // Offset
-		this.write_data(this.fnames[i]); // File name
-	}
-
-	// End
-	var cd_end_pos = this.pos;
-	this.write_data(0x06054b50, 4); // Signature
-	this.write_data(0, 2); // Disk number
-	this.write_data(0, 2); // Disk number with cd
-	this.write_data(this.fnames.length, 2); // Disk entries
-	this.write_data(this.fnames.length, 2); // Total entries
-	this.write_data(cd_end_pos - cd_pos, 4); // cd size
-	this.write_data(cd_pos, 4); // cd size
-	this.write_data(this.comment.length, 2); // comment
-	this.write_data(this.comment); // comment
-};
-ZipWriter.prototype.write_file = function (filename, filedata) {
-	var crc = this.crc32(filedata);
-	this.offsets.push(this.pos);
-	this.crc32s.push(crc);
-	this.sizes.push(filedata.length);
-	this.fnames.push(filename);
-
-	var date = this.date_convert(this.date);
-
-	this.write_data(0x04034b50, 4); // Signature
-	this.write_data(20, 2); // Version
-	this.write_data(0, 2); // Flags
-	this.write_data(0, 2); // Compression
-	this.write_data(date[0], 2); // Mod time
-	this.write_data(date[1], 2); // Mod date
-	this.write_data(crc, 4); // CRC
-	this.write_data(filedata.length, 4); // Compressed size
-	this.write_data(filedata.length, 4); // Uncompressed size
-	this.write_data(filename.length, 2); // Filename length
-	this.write_data(0, 2); // Comment length
-	this.write_data(filename); // Filename
-	this.write_data(filedata); // File data
-};
-ZipWriter.prototype.write_data = function (data, bytes) {
-	if (typeof(data) === typeof(0)) {
-		data = data & 0xFFFFFFFF;
-		for (var i = 0; i < bytes; ++i) {
-			this.buffer[this.pos] = data & 0xFF;
-			++this.pos;
-			data = data >>> 8;
+		this.write_data(filename); // Filename
+		this.write_data(filedata); // File data
+	},
+	write_data: function (data, bytes) {
+		if (typeof(data) === typeof(0)) {
+			data = data & 0xFFFFFFFF;
+			for (var i = 0; i < bytes; ++i) {
+				this.buffer[this.pos] = data & 0xFF;
+				++this.pos;
+				data = data >>> 8;
+			}
 		}
-	}
-	else if (typeof(data) === typeof("")) {
-		for (var i = 0; i < data.length; ++i) {
-			this.buffer[this.pos] = data.charCodeAt(i);
-			++this.pos;
+		else if (typeof(data) === typeof("")) {
+			for (var i = 0; i < data.length; ++i) {
+				this.buffer[this.pos] = data.charCodeAt(i);
+				++this.pos;
+			}
 		}
-	}
-	else {
-		for (var i = 0; i < data.length; ++i) {
-			this.buffer[this.pos] = data[i];
-			++this.pos;
+		else {
+			for (var i = 0; i < data.length; ++i) {
+				this.buffer[this.pos] = data[i];
+				++this.pos;
+			}
 		}
+	},
+	crc32: function (value) {
+		var table = "00000000 77073096 EE0E612C 990951BA 076DC419 706AF48F E963A535 9E6495A3 0EDB8832 79DCB8A4 E0D5E91E 97D2D988 09B64C2B 7EB17CBD E7B82D07 90BF1D91 1DB71064 6AB020F2 F3B97148 84BE41DE 1ADAD47D 6DDDE4EB F4D4B551 83D385C7 136C9856 646BA8C0 FD62F97A 8A65C9EC 14015C4F 63066CD9 FA0F3D63 8D080DF5 3B6E20C8 4C69105E D56041E4 A2677172 3C03E4D1 4B04D447 D20D85FD A50AB56B 35B5A8FA 42B2986C DBBBC9D6 ACBCF940 32D86CE3 45DF5C75 DCD60DCF ABD13D59 26D930AC 51DE003A C8D75180 BFD06116 21B4F4B5 56B3C423 CFBA9599 B8BDA50F 2802B89E 5F058808 C60CD9B2 B10BE924 2F6F7C87 58684C11 C1611DAB B6662D3D 76DC4190 01DB7106 98D220BC EFD5102A 71B18589 06B6B51F 9FBFE4A5 E8B8D433 7807C9A2 0F00F934 9609A88E E10E9818 7F6A0DBB 086D3D2D 91646C97 E6635C01 6B6B51F4 1C6C6162 856530D8 F262004E 6C0695ED 1B01A57B 8208F4C1 F50FC457 65B0D9C6 12B7E950 8BBEB8EA FCB9887C 62DD1DDF 15DA2D49 8CD37CF3 FBD44C65 4DB26158 3AB551CE A3BC0074 D4BB30E2 4ADFA541 3DD895D7 A4D1C46D D3D6F4FB 4369E96A 346ED9FC AD678846 DA60B8D0 44042D73 33031DE5 AA0A4C5F DD0D7CC9 5005713C 270241AA BE0B1010 C90C2086 5768B525 206F85B3 B966D409 CE61E49F 5EDEF90E 29D9C998 B0D09822 C7D7A8B4 59B33D17 2EB40D81 B7BD5C3B C0BA6CAD EDB88320 9ABFB3B6 03B6E20C 74B1D29A EAD54739 9DD277AF 04DB2615 73DC1683 E3630B12 94643B84 0D6D6A3E 7A6A5AA8 E40ECF0B 9309FF9D 0A00AE27 7D079EB1 F00F9344 8708A3D2 1E01F268 6906C2FE F762575D 806567CB 196C3671 6E6B06E7 FED41B76 89D32BE0 10DA7A5A 67DD4ACC F9B9DF6F 8EBEEFF9 17B7BE43 60B08ED5 D6D6A3E8 A1D1937E 38D8C2C4 4FDFF252 D1BB67F1 A6BC5767 3FB506DD 48B2364B D80D2BDA AF0A1B4C 36034AF6 41047A60 DF60EFC3 A867DF55 316E8EEF 4669BE79 CB61B38C BC66831A 256FD2A0 5268E236 CC0C7795 BB0B4703 220216B9 5505262F C5BA3BBE B2BD0B28 2BB45A92 5CB36A04 C2D7FFA7 B5D0CF31 2CD99E8B 5BDEAE1D 9B64C2B0 EC63F226 756AA39C 026D930A 9C0906A9 EB0E363F 72076785 05005713 95BF4A82 E2B87A14 7BB12BAE 0CB61B38 92D28E9B E5D5BE0D 7CDCEFB7 0BDBDF21 86D3D2D4 F1D4E242 68DDB3F8 1FDA836E 81BE16CD F6B9265B 6FB077E1 18B74777 88085AE6 FF0F6A70 66063BCA 11010B5C 8F659EFF F862AE69 616BFFD3 166CCF45 A00AE278 D70DD2EE 4E048354 3903B3C2 A7672661 D06016F7 4969474D 3E6E77DB AED16A4A D9D65ADC 40DF0B66 37D83BF0 A9BCAE53 DEBB9EC5 47B2CF7F 30B5FFE9 BDBDF21C CABAC28A 53B39330 24B4A3A6 BAD03605 CDD70693 54DE5729 23D967BF B3667A2E C4614AB8 5D681B02 2A6F2B94 B40BBE37 C30C8EA1 5A05DF1B 2D02EF8D";
+		var crc = 0;
+		var y;
+
+		var t = [];
+		for (var i = 0; i < table.length; i += 9) {
+			t.push(0 ^ ("0x" + table.substr(i, 8)));
+		}
+
+		crc = crc ^ (-1);
+		var iMax = value.length;
+		for (var i = 0; i < iMax; ++i) {
+			y = (crc ^ value[i]) & 0xFF;
+			crc = (crc >>> 8) ^ t[((crc ^ value[i]) & 0xFF)];
+		}
+
+		return (crc ^ (-1)) >>> 0;
 	}
 };
-ZipWriter.prototype.crc32 = function (value) {
-	var table = "00000000 77073096 EE0E612C 990951BA 076DC419 706AF48F E963A535 9E6495A3 0EDB8832 79DCB8A4 E0D5E91E 97D2D988 09B64C2B 7EB17CBD E7B82D07 90BF1D91 1DB71064 6AB020F2 F3B97148 84BE41DE 1ADAD47D 6DDDE4EB F4D4B551 83D385C7 136C9856 646BA8C0 FD62F97A 8A65C9EC 14015C4F 63066CD9 FA0F3D63 8D080DF5 3B6E20C8 4C69105E D56041E4 A2677172 3C03E4D1 4B04D447 D20D85FD A50AB56B 35B5A8FA 42B2986C DBBBC9D6 ACBCF940 32D86CE3 45DF5C75 DCD60DCF ABD13D59 26D930AC 51DE003A C8D75180 BFD06116 21B4F4B5 56B3C423 CFBA9599 B8BDA50F 2802B89E 5F058808 C60CD9B2 B10BE924 2F6F7C87 58684C11 C1611DAB B6662D3D 76DC4190 01DB7106 98D220BC EFD5102A 71B18589 06B6B51F 9FBFE4A5 E8B8D433 7807C9A2 0F00F934 9609A88E E10E9818 7F6A0DBB 086D3D2D 91646C97 E6635C01 6B6B51F4 1C6C6162 856530D8 F262004E 6C0695ED 1B01A57B 8208F4C1 F50FC457 65B0D9C6 12B7E950 8BBEB8EA FCB9887C 62DD1DDF 15DA2D49 8CD37CF3 FBD44C65 4DB26158 3AB551CE A3BC0074 D4BB30E2 4ADFA541 3DD895D7 A4D1C46D D3D6F4FB 4369E96A 346ED9FC AD678846 DA60B8D0 44042D73 33031DE5 AA0A4C5F DD0D7CC9 5005713C 270241AA BE0B1010 C90C2086 5768B525 206F85B3 B966D409 CE61E49F 5EDEF90E 29D9C998 B0D09822 C7D7A8B4 59B33D17 2EB40D81 B7BD5C3B C0BA6CAD EDB88320 9ABFB3B6 03B6E20C 74B1D29A EAD54739 9DD277AF 04DB2615 73DC1683 E3630B12 94643B84 0D6D6A3E 7A6A5AA8 E40ECF0B 9309FF9D 0A00AE27 7D079EB1 F00F9344 8708A3D2 1E01F268 6906C2FE F762575D 806567CB 196C3671 6E6B06E7 FED41B76 89D32BE0 10DA7A5A 67DD4ACC F9B9DF6F 8EBEEFF9 17B7BE43 60B08ED5 D6D6A3E8 A1D1937E 38D8C2C4 4FDFF252 D1BB67F1 A6BC5767 3FB506DD 48B2364B D80D2BDA AF0A1B4C 36034AF6 41047A60 DF60EFC3 A867DF55 316E8EEF 4669BE79 CB61B38C BC66831A 256FD2A0 5268E236 CC0C7795 BB0B4703 220216B9 5505262F C5BA3BBE B2BD0B28 2BB45A92 5CB36A04 C2D7FFA7 B5D0CF31 2CD99E8B 5BDEAE1D 9B64C2B0 EC63F226 756AA39C 026D930A 9C0906A9 EB0E363F 72076785 05005713 95BF4A82 E2B87A14 7BB12BAE 0CB61B38 92D28E9B E5D5BE0D 7CDCEFB7 0BDBDF21 86D3D2D4 F1D4E242 68DDB3F8 1FDA836E 81BE16CD F6B9265B 6FB077E1 18B74777 88085AE6 FF0F6A70 66063BCA 11010B5C 8F659EFF F862AE69 616BFFD3 166CCF45 A00AE278 D70DD2EE 4E048354 3903B3C2 A7672661 D06016F7 4969474D 3E6E77DB AED16A4A D9D65ADC 40DF0B66 37D83BF0 A9BCAE53 DEBB9EC5 47B2CF7F 30B5FFE9 BDBDF21C CABAC28A 53B39330 24B4A3A6 BAD03605 CDD70693 54DE5729 23D967BF B3667A2E C4614AB8 5D681B02 2A6F2B94 B40BBE37 C30C8EA1 5A05DF1B 2D02EF8D";
-	var crc = 0;
-	var y;
 
-	var t = [];
-	for (var i = 0; i < table.length; i += 9) {
-		t.push(0 ^ ("0x" + table.substr(i, 8)));
-	}
-
-	crc = crc ^ (-1);
-	var iMax = value.length;
-	for (var i = 0; i < iMax; ++i) {
-		y = (crc ^ value[i]) & 0xFF;
-		crc = (crc >>> 8) ^ t[((crc ^ value[i]) & 0xFF)];
-	}
-
-	return (crc ^ (-1)) >>> 0;
-};
 
 ////////////////////////////////////////////////////////////////////////////////
 //} /MediaPlayer.js
@@ -7247,7 +7272,7 @@ ZipWriter.prototype.crc32 = function (value) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Bug-fixes for other userscripts
+// Bug-fixes for other userscripts and compatability
 ///////////////////////////////////////////////////////////////////////////////
 window.$.prototype.exists = function () {
 	// Bugfix for 4chan Style Script on Google Chrome in Tampermonkey
@@ -7255,6 +7280,18 @@ window.$.prototype.exists = function () {
 	return (this.length > 0);
 }
 
+if (!GM_getValue || (GM_getValue.toString && GM_getValue.toString().indexOf("not supported") >= 0)) {
+	// Make sure get/set value functions exist
+	GM_getValue = function (key, def) {
+		return localStorage.getItem(key) || def;
+	};
+	GM_setValue = function (key, value) {
+		return localStorage.setItem(key, value);
+	};
+	GM_deleteValue = function (key) {
+		return localStorage.removeItem(key);
+	};
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -8276,101 +8313,104 @@ function ThreadManager() {
 		});
 	}
 }
-ThreadManager.prototype.on_dom_mutation = function (target) {
-	// Updating
-	if (target.hasClass("inline") || target.hasClass("postContainer")) {
-		this.parse_post(target);
-	}
-	else if (target.hasClass("backlinkHr")) {
-		// Not tested
-		this.parse_post(target.parent().parent());
-	}
-};
-ThreadManager.prototype.parse_post = function (container) {
-	// Get id
-	var post_id = (container.attr("id") || "0").replace(/(\w+_)?[^0-9]/g, "");
-	var redo = (post_id in this.posts);
-
-	var image = container.find(is_archive ? ".thread_image_link" : ".fileThumb");
-	var post = container.find(is_archive ? ".text" : ".postMessage");
-
-	image = (image.length > 0 ? (image.attr("href") || "") : null);
-	// Redirect links from the archive
-	if (is_archive && image !== null) {
-		var match;
-		if ((match = /\/(\w+)\/redirect\/(.+)/.exec(image)) !== null) {
-			// match.index
-			image = "//images.4chan.org/" + match[1] + "/src/" + match[2];
+ThreadManager.prototype = {
+	constructor: ThreadManager,
+	on_dom_mutation: function (target) {
+		// Updating
+		if (target.hasClass("inline") || target.hasClass("postContainer")) {
+			this.parse_post(target);
 		}
-	}
+		else if (target.hasClass("backlinkHr")) {
+			// Not tested
+			this.parse_post(target.parent().parent());
+		}
+	},
+	parse_post: function (container) {
+		// Get id
+		var post_id = (container.attr("id") || "0").replace(/(\w+_)?[^0-9]/g, "");
+		var redo = (post_id in this.posts);
 
-	// Original image name
-	var image_name = null;
-	if (image !== null) {
-		if (is_archive) {
-			// Archive method
-			var ft = container.find(".post_file");
-			if (ft.length > 0) {
-				var c;
-				if ((c = $(ft[0]).find(".post_file_filename")) && c.length > 0) {
-					// Shortened filename
-					image_name = c.attr("title");
-				}
-				else {
-					c = $(ft[0]).contents();
-					if (c.length > 2) {
-						// Not OP
-						image_name = $(c[2]).text();
-						if (image_name) {
-							image_name = image_name.trim();
-							image_name = image_name.substr(0, image_name.length - 1);
-						}
+		var image = container.find(is_archive ? ".thread_image_link" : ".fileThumb");
+		var post = container.find(is_archive ? ".text" : ".postMessage");
+
+		image = (image.length > 0 ? (image.attr("href") || "") : null);
+		// Redirect links from the archive
+		if (is_archive && image !== null) {
+			var match;
+			if ((match = /\/(\w+)\/redirect\/(.+)/.exec(image)) !== null) {
+				// match.index
+				image = "//images.4chan.org/" + match[1] + "/src/" + match[2];
+			}
+		}
+
+		// Original image name
+		var image_name = null;
+		if (image !== null) {
+			if (is_archive) {
+				// Archive method
+				var ft = container.find(".post_file");
+				if (ft.length > 0) {
+					var c;
+					if ((c = $(ft[0]).find(".post_file_filename")) && c.length > 0) {
+						// Shortened filename
+						image_name = c.attr("title");
 					}
 					else {
-						// OP
-						image_name = $(c[0]).text();
-						if (image_name) image_name = image_name.split(",").splice(2).join(",").trim();
+						c = $(ft[0]).contents();
+						if (c.length > 2) {
+							// Not OP
+							image_name = $(c[2]).text();
+							if (image_name) {
+								image_name = image_name.trim();
+								image_name = image_name.substr(0, image_name.length - 1);
+							}
+						}
+						else {
+							// OP
+							image_name = $(c[0]).text();
+							if (image_name) image_name = image_name.split(",").splice(2).join(",").trim();
+						}
 					}
 				}
 			}
-		}
-		else {
-			var ft = container.find(".fileText");
-			if (!(image_name = ft.attr("data-filename"))) { // 4chan x method
-				// Default method
-				image_name = ft.find("span");
-				if (image_name.length > 0) {
-					image_name = $(image_name[image_name.length - 1]).attr("title");
+			else {
+				var ft = container.find(".fileText");
+				if (!(image_name = ft.attr("data-filename"))) { // 4chan x method
+					// Default method
+					image_name = ft.find("span");
+					if (image_name.length > 0) {
+						image_name = $(image_name[image_name.length - 1]).attr("title");
+					}
 				}
 			}
+			// Deafult
+			if (!image_name) {
+				image_name = image.split("/").pop();
+			}
 		}
-		// Deafult
-		if (!image_name) {
-			image_name = image.split("/").pop();
+
+		// Data
+		var post_data_copy = {
+			"container": container,
+			"image_url": image,
+			"image_name": image_name,
+			"post": (post.length > 0 ? $(post[0]) : null)
+		};
+		if (!redo) {
+			this.posts[post_id] = post_data_copy;
 		}
-	}
 
-	// Data
-	var post_data_copy = {
-		"container": container,
-		"image_url": image,
-		"image_name": image_name,
-		"post": (post.length > 0 ? $(post[0]) : null)
-	};
-	if (!redo) {
-		this.posts[post_id] = post_data_copy;
+		// Auto checking images
+		inline_manager.parse_post(this.posts[post_id], redo, post_data_copy);
+		if (script.settings["inline"]["url_replace"]) {
+			inline_manager.parse_post_for_urls(this.posts[post_id], redo, post_data_copy);
+		}
+	},
+	post: function (index) {
+		index += "";
+		return (index in this.posts ? this.posts[index] : null);
 	}
-
-	// Auto checking images
-	inline_manager.parse_post(this.posts[post_id], redo, post_data_copy);
-	if (script.settings["inline"]["url_replace"]) {
-		inline_manager.parse_post_for_urls(this.posts[post_id], redo, post_data_copy);
-	}
-};
-ThreadManager.prototype.post = function (index) {
-	index += "";
-	return (index in this.posts ? this.posts[index] : null);
-};
+}
 var thread_manager = null;
 
 
@@ -8458,48 +8498,150 @@ function InlineManager() {
 		);
 	}
 }
-InlineManager.prototype.parse_post = function (post_data, redo, post_data_copy) {
-	if (post_data.image_url != null) {
-		var self = this;
+InlineManager.prototype = {
+	constructor: InlineManager,
+	parse_post: function (post_data, redo, post_data_copy) {
+		if (post_data.image_url != null) {
+			var self = this;
 
-		if (redo) {
-			// Re-replace
-			post_data_copy.post.find(".SPLoadLink").each(function (index) {
-				var tag_id = parseInt($(this).attr("_sp_tag_id"));
+			if (redo) {
+				// Re-replace
+				post_data_copy.post.find(".SPLoadLink").each(function (index) {
+					var tag_id = parseInt($(this).attr("_sp_tag_id"));
 
-				$(this)
-				.html(post_data.sounds[tag_id])
-				.off("click")
-				.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
-			});
-			post_data_copy.container.find(".SPLoadAllLink").each(function (index) {
-				$(this)
+					$(this)
+					.html(post_data.sounds[tag_id])
+					.off("click")
+					.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
+				});
+				post_data_copy.container.find(".SPLoadAllLink").each(function (index) {
+					$(this)
+					.attr("href", "#")
+					.html(post_data.sounds.load_all_text)
+					.on("click", {"post_data": post_data, "manager": self}, self.on_load_all_click);
+				});
+			}
+			else {
+				// Sound data
+				post_data.sounds = {
+					"post_tags": [],
+					"load_all_link": null,
+					"load_all_text": "sounds",
+					"sound_names": [],
+					"loaded": false,
+					"about_container": null,
+					"about_count_label": null,
+					"about_list_container": null,
+					"about_list_container_inner": null,
+					"about_list_container_toggler": null,
+					"auto_check": {
+						"search_span": null,
+						"search_status": null
+					}
+				};
+
+				// Replace tags in post
+				var sounds_found = dom_replace(
+					post_data.post,
+					function (tag, old_tags) { // check
+						var name = tag.prop("tagName");
+						if (name === undefined) return 2;
+						name = name.toLowerCase();
+
+						if (is_archive) {
+							if (
+								(name == "span" && tag.hasClass("greentext")) ||
+								(name == "span" && tag.hasClass("spoiler"))
+							) return 1;
+						}
+						else {
+							if (
+								(name == "span" && tag.hasClass("quote")) ||
+								name == "s"
+							) return 1;
+						}
+
+						return 0;
+					},
+					this.replace_tags
+				);
+
+				// Sounds links
+				post_data.post.find(".SPLoadLink").each(function (index) {
+					var tag_id = post_data.sounds.post_tags.length;
+					post_data.sounds.post_tags.push($(this).html());
+
+					$(this)
+					.attr("href", "#")
+					.attr("_sp_tag_id", tag_id)
+					.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
+				});
+
+				// Load all
+				if (is_archive) {
+					var file_size_label = post_data.container.find(".post_file_controls").find("a");
+					file_size_label = $(file_size_label[0]);
+					file_size_label.before((post_data.sounds.load_all_link = E("a")).addClass("SPLoadAllLink btnr parent"));
+				}
+				else {
+					var file_size_label = post_data.container.find(".fileText");
+					file_size_label.after((post_data.sounds.load_all_link = E("a")).addClass("SPLoadAllLink"));
+					file_size_label.after(T(" "));
+				}
+				post_data.sounds.load_all_link
 				.attr("href", "#")
 				.html(post_data.sounds.load_all_text)
 				.on("click", {"post_data": post_data, "manager": self}, self.on_load_all_click);
+
+				// Status
+				post_data.post
+				.before(
+					(post_data.sounds.about_container = E("div"))
+					.css("font-size", "10px")
+					.css("padding-top", "10px")
+					.css("display", "none")
+					.append(
+						(post_data.sounds.about_count_label = E("div"))
+					)
+					.append(
+						(post_data.sounds.about_list_container = E("div"))
+					)
+				);
+
+				// DOM update
+				post_data.sounds.load_all_link
+				.after(
+					(post_data.sounds.auto_check.search_span = E("span"))
+					.addClass("SPImageSearchingTextContainer")
+					.css("display", (sound_auto_checker.enabled ? "" :"none"))
+					.html("...")
+					.append(
+						(post_data.sounds.auto_check.search_status = E("span"))
+						.addClass("SPImageSearchingText")
+					)
+				);
+
+				// Queue
+				sound_auto_loader.add_to_queue(post_data);
+				sound_auto_checker.add_to_queue(post_data);
+			}
+		}
+	},
+	parse_post_for_urls: function (post_data, redo, post_data_copy) {
+		var self = this;
+		if (redo) {
+			post_data_copy.post.find(".MPReplacedURL").each(function (index) {
+				var vid_id = $(this).attr("_mp_vid_id");
+				vid_id = vid_id || null;
+				var href = $(this).attr("_mp_original_url");
+
+				$(this)
+				.off("click")
+				.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, self.on_url_click);
 			});
 		}
 		else {
-			// Sound data
-			post_data.sounds = {
-				"post_tags": [],
-				"load_all_link": null,
-				"load_all_text": "sounds",
-				"sound_names": [],
-				"loaded": false,
-				"about_container": null,
-				"about_count_label": null,
-				"about_list_container": null,
-				"about_list_container_inner": null,
-				"about_list_container_toggler": null,
-				"auto_check": {
-					"search_span": null,
-					"search_status": null
-				}
-			};
-
-			// Replace tags in post
-			var sounds_found = dom_replace(
+			var links_found = dom_replace(
 				post_data.post,
 				function (tag, old_tags) { // check
 					var name = tag.prop("tagName");
@@ -8515,516 +8657,417 @@ InlineManager.prototype.parse_post = function (post_data, redo, post_data_copy) 
 					else {
 						if (
 							(name == "span" && tag.hasClass("quote")) ||
-							name == "s"
-						) return 1;
+							(name == "s")
+						) return (script.settings["inline"]["url_replace_smart"] ? 2 : 1);
+						if (name == "wbr") return 2;
 					}
 
 					return 0;
 				},
-				this.replace_tags
+				this.replace_urls
 			);
 
-			// Sounds links
-			post_data.post.find(".SPLoadLink").each(function (index) {
-				var tag_id = post_data.sounds.post_tags.length;
-				post_data.sounds.post_tags.push($(this).html());
+			if (links_found) {
+				// Sounds links
+				post_data.post.find(".MPReplacedURL").each(function (index) {
+					var href = html_to_text(string_remove_tags($(this).html()));
+					if (href.indexOf(":") < 0) href = "//" + href;
 
-				$(this)
-				.attr("href", "#")
-				.attr("_sp_tag_id", tag_id)
-				.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
-			});
+					var vid_id = MediaPlayer.prototype.url_get_youtube_video_id(href);
 
-			// Load all
-			if (is_archive) {
-				var file_size_label = post_data.container.find(".post_file_controls").find("a");
-				file_size_label = $(file_size_label[0]);
-				file_size_label.before((post_data.sounds.load_all_link = E("a")).addClass("SPLoadAllLink btnr parent"));
-			}
-			else {
-				var file_size_label = post_data.container.find(".fileText");
-				file_size_label.after((post_data.sounds.load_all_link = E("a")).addClass("SPLoadAllLink"));
-				file_size_label.after(T(" "));
-			}
-			post_data.sounds.load_all_link
-			.attr("href", "#")
-			.html(post_data.sounds.load_all_text)
-			.on("click", {"post_data": post_data, "manager": self}, self.on_load_all_click);
-
-			// Status
-			post_data.post
-			.before(
-				(post_data.sounds.about_container = E("div"))
-				.css("font-size", "10px")
-				.css("padding-top", "10px")
-				.css("display", "none")
-				.append(
-					(post_data.sounds.about_count_label = E("div"))
-				)
-				.append(
-					(post_data.sounds.about_list_container = E("div"))
-				)
-			);
-
-			// DOM update
-			post_data.sounds.load_all_link
-			.after(
-				(post_data.sounds.auto_check.search_span = E("span"))
-				.addClass("SPImageSearchingTextContainer")
-				.css("display", (sound_auto_checker.enabled ? "" :"none"))
-				.html("...")
-				.append(
-					(post_data.sounds.auto_check.search_status = E("span"))
-					.addClass("SPImageSearchingText")
-				)
-			);
-
-			// Queue
-			sound_auto_loader.add_to_queue(post_data);
-			sound_auto_checker.add_to_queue(post_data);
-		}
-	}
-};
-InlineManager.prototype.parse_post_for_urls = function (post_data, redo, post_data_copy) {
-	var self = this;
-	if (redo) {
-		post_data_copy.post.find(".MPReplacedURL").each(function (index) {
-			var vid_id = $(this).attr("_mp_vid_id");
-			vid_id = vid_id || null;
-			var href = $(this).attr("_mp_original_url");
-
-			$(this)
-			.off("click")
-			.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, self.on_url_click);
-		});
-	}
-	else {
-		var links_found = dom_replace(
-			post_data.post,
-			function (tag, old_tags) { // check
-				var name = tag.prop("tagName");
-				if (name === undefined) return 2;
-				name = name.toLowerCase();
-
-				if (is_archive) {
-					if (
-						(name == "span" && tag.hasClass("greentext")) ||
-						(name == "span" && tag.hasClass("spoiler"))
-					) return 1;
-				}
-				else {
-					if (
-						(name == "span" && tag.hasClass("quote")) ||
-						(name == "s")
-					) return (script.settings["inline"]["url_replace_smart"] ? 2 : 1);
-					if (name == "wbr") return 2;
-				}
-
-				return 0;
-			},
-			this.replace_urls
-		);
-
-		if (links_found) {
-			// Sounds links
-			post_data.post.find(".MPReplacedURL").each(function (index) {
-				var href = html_to_text(string_remove_tags($(this).html()));
-				if (href.indexOf(":") < 0) href = "//" + href;
-
-				var vid_id = MediaPlayer.prototype.url_get_youtube_video_id(href);
-
-				$(this)
-				.attr("href", href)
-				.attr("_mp_original_url", href)
-				.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, self.on_url_click);
-
-				if (vid_id !== null) {
 					$(this)
-					.attr("_mp_vid_id", vid_id)
-					.html(
-						$(document.createElement("img"))
-						.attr("src", "//youtube.com/favicon.ico")
-						.attr("alt", "")
-						.attr("title", "")
-						.css({"vertical-align": "middle"})
-					)
-					.append(
-						E("span")
-						.css({"padding-left": "8px"})
-						.html("Youtube: " + vid_id)
-					);
-					ajax_get(
-						"//gdata.youtube.com/feeds/api/videos/" + vid_id, true, {a: $(this)}, null,
-						function (okay, data, response) {
-							if (okay) {
-								var xml = $.parseXML(response);
-								var title;
-								try {
-									title = $(xml_find_nodes_by_name(xml, "title")).text();
-								}
-								catch (e) {
-									console.log(e);
-									title = "Unknown Title";
-								}
+					.attr("href", href)
+					.attr("_mp_original_url", href)
+					.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, self.on_url_click);
 
-								data.a.find("span").html(title);
-							}
-							else {
-								data.a.find("span").html("Video not found").css("font-style", "italic");
-							}
-						}
-					);
-				}
-			});
-		}
-	}
-};
-InlineManager.prototype.update_about_image = function (post_data) {
-	// Show container
-	post_data.sounds.about_container.css("display", "");
-	var sound_count = 0;
-	var file_count = post_data.sounds.sound_names.length;
-
-	// Create a list of sounds (and files)
-	var display_count = 0;
-	var container = post_data.sounds.about_list_container;
-	container.html("");
-	for (var sound = true; ; sound = false) {
-		for (var i = 0; i < post_data.sounds.sound_names.length; ++i) {
-			var is_sound = (post_data.sounds.sound_names[i].split(".").pop().toLowerCase() == "ogg");
-			if (sound == is_sound) {
-				// Only display 2 without expansion
-				if (display_count++ == 2 && file_count > 3) {
-					container.append(
-						(container = post_data.sounds.about_list_container_inner = E("div"))
-						.css("display", "none")
-					)
-					.append(
-						(post_data.sounds.about_list_container_toggler = E("a"))
-						.attr("href", "#")
-						.css("font-style", "italic")
-					);
-					var label = "And " + file_count + " more...";
-					var hide = "Hide " + file_count + " files";
-					post_data.sounds.about_list_container_toggler
-					.html(label)
-					.on(
-						"click", {"container": container, "label": label, "hide": hide}, function (event) {
-							if (container.css("display") == "none") {
-								container.css("display", "");
-								$(this).html(hide);
-							}
-							else {
-								container.css("display", "none");
-								$(this).html(label);
-							}
-							return false;
-						}
-					);
-				}
-
-				if (sound) {
-					if (is_sound) ++sound_count;
-
-					container.append(
-						E("div")
-						.append(T("- "))
-						.append(
-							E("a")
-							.attr("href", "#")
-							.addClass("SPLoadLinkTop")
-							.html(text_to_html(post_data.sounds.sound_names[i].substr(0, post_data.sounds.sound_names[i].length - 4))) // remove extension
-							.on("click", {"post_data": post_data, "sound_id": i}, this.on_link_top_click)
+					if (vid_id !== null) {
+						$(this)
+						.attr("_mp_vid_id", vid_id)
+						.html(
+							$(document.createElement("img"))
+							.attr("src", "//youtube.com/favicon.ico")
+							.attr("alt", "")
+							.attr("title", "")
+							.css({"vertical-align": "middle"})
 						)
-					);
-				}
-				else {
-					container.append(
-						E("div")
-						.append(T("- "))
 						.append(
 							E("span")
-							.addClass("SPLoadLinkTopFile")
-							.html(text_to_html(post_data.sounds.sound_names[i]))
-						)
-					);
-				}
+							.css({"padding-left": "8px"})
+							.html("Youtube: " + vid_id)
+						);
+						ajax_get(
+							"//gdata.youtube.com/feeds/api/videos/" + vid_id, true, {a: $(this)}, null,
+							function (okay, data, response) {
+								if (okay) {
+									var xml = $.parseXML(response);
+									var title;
+									try {
+										title = $(xml_find_nodes_by_name(xml, "title")).text();
+									}
+									catch (e) {
+										console.log(e);
+										title = "Unknown Title";
+									}
+
+									data.a.find("span").html(title);
+								}
+								else {
+									data.a.find("span").html("Video not found").css("font-style", "italic");
+								}
+							}
+						);
+					}
+				});
 			}
 		}
+	},
+	update_about_image: function (post_data) {
+		// Show container
+		post_data.sounds.about_container.css("display", "");
+		var sound_count = 0;
+		var file_count = post_data.sounds.sound_names.length;
 
-		// Done
-		if (!sound) break;
-	}
+		// Create a list of sounds (and files)
+		var display_count = 0;
+		var container = post_data.sounds.about_list_container;
+		container.html("");
+		for (var sound = true; ; sound = false) {
+			for (var i = 0; i < post_data.sounds.sound_names.length; ++i) {
+				var is_sound = (post_data.sounds.sound_names[i].split(".").pop().toLowerCase() == "ogg");
+				if (sound == is_sound) {
+					// Only display 2 without expansion
+					if (display_count++ == 2 && file_count > 3) {
+						container.append(
+							(container = post_data.sounds.about_list_container_inner = E("div"))
+							.css("display", "none")
+						)
+						.append(
+							(post_data.sounds.about_list_container_toggler = E("a"))
+							.attr("href", "#")
+							.css("font-style", "italic")
+						);
+						var label = "And " + file_count + " more...";
+						var hide = "Hide " + file_count + " files";
+						post_data.sounds.about_list_container_toggler
+						.html(label)
+						.on(
+							"click", {"container": container, "label": label, "hide": hide}, function (event) {
+								if (container.css("display") == "none") {
+									container.css("display", "");
+									$(this).html(hide);
+								}
+								else {
+									container.css("display", "none");
+									$(this).html(label);
+								}
+								return false;
+							}
+						);
+					}
 
-	// Found string
-	var str = "";
-	if (sound_count > 0) {
-		str += sound_count + " Sound" + (sound_count == 1 ? "" : "s") + " Found";
-	}
-	if (file_count > sound_count) {
-		str += (str.length == 0 ? "" : " / ") + file_count + " File" + (file_count == 1 ? "" : "s") + " Found";
-	}
+					if (sound) {
+						if (is_sound) ++sound_count;
 
-	post_data.sounds.about_count_label.html(str);
-};
-InlineManager.prototype.activate_load_all_link = function (post_data, done_callback) {
-	// Change status
-	var load_str = "loading";
-	post_data.sounds.load_all_link.html(load_str);
+						container.append(
+							E("div")
+							.append(T("- "))
+							.append(
+								E("a")
+								.attr("href", "#")
+								.addClass("SPLoadLinkTop")
+								.html(text_to_html(post_data.sounds.sound_names[i].substr(0, post_data.sounds.sound_names[i].length - 4))) // remove extension
+								.on("click", {"post_data": post_data, "sound_id": i}, this.on_link_top_click)
+							)
+						);
+					}
+					else {
+						container.append(
+							E("div")
+							.append(T("- "))
+							.append(
+								E("span")
+								.addClass("SPLoadLinkTopFile")
+								.html(text_to_html(post_data.sounds.sound_names[i]))
+							)
+						);
+					}
+				}
+			}
 
-	// Load sound
-	var self = this;
-	post_data.sounds.loaded = true;
-	media_player_manager.open_player(true);
-	media_player_manager.media_player.attempt_load(
-		post_data.image_url,
-		MediaPlayer.ALL_SOUNDS,
-		{ "image_name": post_data.image_name },
-		{
-			"object": post_data.sounds.load_all_link,
-			"post_data": post_data,
-			"load_str": load_str
-		},
-		function (event, data) {
-			var progress = Math.floor((event.loaded / event.total) * 100);
-			data.object.html(data.load_str + " (" + progress + ")");
-		},
-		function (okay, data) {
-			data.object.html(
-				data.post_data.sounds.load_all_text + (okay ? "" : " (ajax&nbsp;error)")
-			);
-			if (!okay) {
+			// Done
+			if (!sound) break;
+		}
+
+		// Found string
+		var str = "";
+		if (sound_count > 0) {
+			str += sound_count + " Sound" + (sound_count == 1 ? "" : "s") + " Found";
+		}
+		if (file_count > sound_count) {
+			str += (str.length == 0 ? "" : " / ") + file_count + " File" + (file_count == 1 ? "" : "s") + " Found";
+		}
+
+		post_data.sounds.about_count_label.html(str);
+	},
+	activate_load_all_link: function (post_data, done_callback) {
+		// Change status
+		var load_str = "loading";
+		post_data.sounds.load_all_link.html(load_str);
+
+		// Load sound
+		var self = this;
+		post_data.sounds.loaded = true;
+		media_player_manager.open_player(true);
+		media_player_manager.media_player.attempt_load(
+			post_data.image_url,
+			MediaPlayer.ALL_SOUNDS,
+			{ "image_name": post_data.image_name },
+			{
+				"object": post_data.sounds.load_all_link,
+				"post_data": post_data,
+				"load_str": load_str
+			},
+			function (event, data) {
+				var progress = Math.floor((event.loaded / event.total) * 100);
+				data.object.html(data.load_str + " (" + progress + ")");
+			},
+			function (okay, data) {
+				data.object.html(
+					data.post_data.sounds.load_all_text + (okay ? "" : " (ajax&nbsp;error)")
+				);
+				if (!okay) {
+					if (typeof(done_callback) == "function") done_callback(false, data.post_data);
+				}
+			},
+			function (status, data, all_files) {
+				if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
+					data.post_data.sounds.sound_names = all_files;
+					self.update_about_image(data.post_data);
+				}
 				if (typeof(done_callback) == "function") done_callback(false, data.post_data);
 			}
-		},
-		function (status, data, all_files) {
-			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
-				data.post_data.sounds.sound_names = all_files;
-				self.update_about_image(data.post_data);
-			}
-			if (typeof(done_callback) == "function") done_callback(false, data.post_data);
-		}
-	);
+		);
 
-	// Done
-	return false;
-};
-InlineManager.prototype.replace_urls = function (tags) {
-	var full_text = "";
-	var in_url = false;
-	var any_found = true;
-	var length_add;
-	var link_str = [ "<a class=\"MPReplacedURL\">" , "</a>" ];
+		// Done
+		return false;
+	},
+	replace_urls: function (tags) {
+		var full_text = "";
+		var in_url = false;
+		var any_found = true;
+		var length_add;
+		var link_str = [ "<a class=\"MPReplacedURL\">" , "</a>" ];
 
-	for (var i = 0; i < tags.length; ++i) {
-		if (tags[i].prop("tagName") === undefined) {
-			var text = text_to_html(tags[i].text());
-			var start = 0;
-			// Previous URL
-			if (in_url) {
-				in_url = false;
-				text = text.replace(/^(?:[^\s]*)/im, function (match, offset) {
-					in_url = (text.length == offset + match.length);
-					return match + (in_url ? "" : link_str[1]);
-				});
-			}
-			// New URLs
-			if (!in_url) {
-				length_add = 0;
-				text = text.replace(/(?:(?:\w+):\/\/|www\.)(?:[^\s]+)/im, function (match, offset) {
-					// Interesting note: If all groups have the prefix of "?:", then the callback parameter
-					// order is "match, offset, groups". If you remove one of the "?:" (say the first one)
-					// then the order is changed to "match, groups, offset". (in Nightly)
-					any_found = true;
-					in_url = (offset + match.length == text.length + length_add);
-					length_add += (link_str[0].length + (in_url ? 0 : link_str[1].length));
-					return link_str[0] + match + (in_url ? "" : link_str[1]);
-				});
-			}
-
-			// Update
-			full_text += text;
-		}
-		else {
-			/*if (script.settings["inline"]["url_replace_smart"]&&0) {
-				// TODO : do this later rather than using an assumption
-			}
-			else {*/
-			full_text += $("<div>").append(tags[i].clone()).html();
-			// }
-		}
-	}
-
-	if (in_url) {
-		in_url = false;
-		full_text += link_str[1];
-	}
-
-	// DOM update
-	if (any_found) {
-		tags[0].before(full_text);
-		for (var i = 0; i < tags.length; ++i) tags[i].remove();
-	}
-
-	return any_found;
-};
-InlineManager.prototype.replace_tags = function (tags) {
-	var sounds_found = false;
-	var new_text = text_to_html(tags[0].text()).replace(/\[.+?\]/g, function (match) {
-		sounds_found = true;
-		return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
-	});
-	if (sounds_found) {
-		tags[0].after(new_text).remove();
-		return true;
-	}
-	return false;
-};
-InlineManager.prototype.on_image_drag = function (data) {
-	var url_lower = data.text.toLowerCase();
-	for (var post_id in thread_manager.posts) {
-		if (
-			thread_manager.posts[post_id].image_url !== null &&
-			url_lower.indexOf(thread_manager.posts[post_id].image_url.toLowerCase()) >= 0
-		) {
-			// Found; activate manual load
-			this.activate_load_all_link(thread_manager.posts[post_id]);
-			data.text = "";
-			return false;
-		}
-	}
-	return true;
-};
-InlineManager.prototype.on_url_click = function (event) {
-	// Add to playlist
-	if (!event.originalEvent.which || event.originalEvent.which == 1) {
-		if (event.data.vid_id !== null) {
-			media_player_manager.open_player(true);
-			media_player_manager.media_player.attempt_load_video(
-				event.data.url,
-				null,
-				{},
-				{ "post_data": event.data.post_data, "link": $(this) },
-				function (event, data) {
-					//var progress = Math.floor((event.loaded / event.total) * 100);
-					//data.object.html(data.load_str + " (" + progress + ")");
-				},
-				function (okay, data) {
-					//data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
-				},
-				function (status, data, xml_info) {
+		for (var i = 0; i < tags.length; ++i) {
+			if (tags[i].prop("tagName") === undefined) {
+				var text = text_to_html(tags[i].text());
+				var start = 0;
+				// Previous URL
+				if (in_url) {
+					in_url = false;
+					text = text.replace(/^(?:[^\s]*)/im, function (match, offset) {
+						in_url = (text.length == offset + match.length);
+						return match + (in_url ? "" : link_str[1]);
+					});
 				}
-			);
+				// New URLs
+				if (!in_url) {
+					length_add = 0;
+					text = text.replace(/(?:(?:\w+):\/\/|www\.)(?:[^\s]+)/im, function (match, offset) {
+						// Interesting note: If all groups have the prefix of "?:", then the callback parameter
+						// order is "match, offset, groups". If you remove one of the "?:" (say the first one)
+						// then the order is changed to "match, groups, offset". (in Nightly)
+						any_found = true;
+						in_url = (offset + match.length == text.length + length_add);
+						length_add += (link_str[0].length + (in_url ? 0 : link_str[1].length));
+						return link_str[0] + match + (in_url ? "" : link_str[1]);
+					});
+				}
+
+				// Update
+				full_text += text;
+			}
+			else {
+				/*if (script.settings["inline"]["url_replace_smart"]&&0) {
+					// TODO : do this later rather than using an assumption
+				}
+				else {*/
+				full_text += $("<div>").append(tags[i].clone()).html();
+				// }
+			}
+		}
+
+		if (in_url) {
+			in_url = false;
+			full_text += link_str[1];
+		}
+
+		// DOM update
+		if (any_found) {
+			tags[0].before(full_text);
+			for (var i = 0; i < tags.length; ++i) tags[i].remove();
+		}
+
+		return any_found;
+	},
+	replace_tags: function (tags) {
+		var sounds_found = false;
+		var new_text = text_to_html(tags[0].text()).replace(/\[.+?\]/g, function (match) {
+			sounds_found = true;
+			return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
+		});
+		if (sounds_found) {
+			tags[0].after(new_text).remove();
+			return true;
 		}
 		return false;
-	}
-	return true;
-};
-InlineManager.prototype.on_link_click = function (event) {
-	// Change status
-	var load_str = "loading...";
-	$(this).html(load_str);
-
-	// Load sound
-	var self = event.data.manager;
-	event.data.post_data.sounds.loaded = true;
-	media_player_manager.open_player(true);
-	media_player_manager.media_player.attempt_load(
-		event.data.post_data.image_url,
-		event.data.post_data.sounds.post_tags[event.data.tag_id],
-		{ "image_name": event.data.post_data.image_name },
-		{
-			"object": $(this),
-			"post_data": event.data.post_data,
-			"tag_id": event.data.tag_id,
-			"load_str": load_str
-		},
-		function (event, data) {
-			var progress = Math.floor((event.loaded / event.total) * 100);
-			data.object.html(data.load_str + " (" + progress + ")");
-		},
-		function (okay, data) {
-			data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
-		},
-		function (status, data, all_files) {
-			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
-				data.post_data.sounds.sound_names = all_files;
-				self.update_about_image(data.post_data);
+	},
+	on_image_drag: function (data) {
+		var url_lower = data.text.toLowerCase();
+		for (var post_id in thread_manager.posts) {
+			if (
+				thread_manager.posts[post_id].image_url !== null &&
+				url_lower.indexOf(thread_manager.posts[post_id].image_url.toLowerCase()) >= 0
+			) {
+				// Found; activate manual load
+				this.activate_load_all_link(thread_manager.posts[post_id]);
+				data.text = "";
+				return false;
 			}
 		}
-	);
-
-	// Done
-	return false;
-};
-InlineManager.prototype.on_link_top_click = function (event) {
-	// Change status
-	var load_str = "loading...";
-	$(this).html(load_str);
-
-	var tag = event.data.post_data.sounds.sound_names[event.data.sound_id];
-	if (tag.substr(tag.length - 4, 4).toLowerCase() == ".ogg") {
-		tag = tag.substr(0, tag.length - 4);
-	}
-
-	// Load sound
-	var self = this;
-	event.data.post_data.sounds.loaded = true;
-	media_player_manager.open_player(true);
-	media_player_manager.media_player.attempt_load(
-		event.data.post_data.image_url,
-		tag,
-		{ "image_name": event.data.post_data.image_name },
-		{
-			"object": $(this),
-			"post_data": event.data.post_data,
-			"sound_id": event.data.sound_id,
-			"load_str": load_str,
-			"tag": tag
-		},
-		function (event, data) {
-			var progress = Math.floor((event.loaded / event.total) * 100);
-			data.object.html(data.load_str + " (" + progress + ")");
-		},
-		function (okay, data) {
-			data.object.html(data.tag + (okay ? "" : " (ajax&nbsp;error)"));
-		},
-		function (status, data, all_files) {
-			if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
-				data.post_data.sounds.sound_names = all_files;
-				self.update_about_image(data.post_data);
+		return true;
+	},
+	on_url_click: function (event) {
+		// Add to playlist
+		if (!event.originalEvent.which || event.originalEvent.which == 1) {
+			if (event.data.vid_id !== null) {
+				media_player_manager.open_player(true);
+				media_player_manager.media_player.attempt_load_video(
+					event.data.url,
+					null,
+					{},
+					{ "post_data": event.data.post_data, "link": $(this) },
+					function (event, data) {
+						//var progress = Math.floor((event.loaded / event.total) * 100);
+						//data.object.html(data.load_str + " (" + progress + ")");
+					},
+					function (okay, data) {
+						//data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
+					},
+					function (status, data, xml_info) {
+					}
+				);
 			}
+			return false;
 		}
-	);
+		return true;
+	},
+	on_link_click: function (event) {
+		// Change status
+		var load_str = "loading...";
+		$(this).html(load_str);
 
-	// Done
-	return false;
-};
-InlineManager.prototype.on_load_all_click = function (event) {
-	event.data.manager.activate_load_all_link(event.data.post_data);
+		// Load sound
+		var self = event.data.manager;
+		event.data.post_data.sounds.loaded = true;
+		media_player_manager.open_player(true);
+		media_player_manager.media_player.attempt_load(
+			event.data.post_data.image_url,
+			event.data.post_data.sounds.post_tags[event.data.tag_id],
+			{ "image_name": event.data.post_data.image_name },
+			{
+				"object": $(this),
+				"post_data": event.data.post_data,
+				"tag_id": event.data.tag_id,
+				"load_str": load_str
+			},
+			function (event, data) {
+				var progress = Math.floor((event.loaded / event.total) * 100);
+				data.object.html(data.load_str + " (" + progress + ")");
+			},
+			function (okay, data) {
+				data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
+			},
+			function (status, data, all_files) {
+				if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
+					data.post_data.sounds.sound_names = all_files;
+					self.update_about_image(data.post_data);
+				}
+			}
+		);
 
-	// Done
-	return false;
-};
-InlineManager.prototype.on_detect_all_in_thread_click = function (event) {
-	if (sound_auto_checker.enabled) {
-		sound_auto_checker.disable();
-	}
-	else {
-		sound_auto_checker.enable();
-	}
+		// Done
+		return false;
+	},
+	on_link_top_click: function (event) {
+		// Change status
+		var load_str = "loading...";
+		$(this).html(load_str);
 
-	return false;
-};
-InlineManager.prototype.on_load_all_in_thread_click = function (event) {
-	if (sound_auto_loader.enabled) {
-		sound_auto_loader.disable();
-	}
-	else {
-		sound_auto_loader.enable();
-	}
+		var tag = event.data.post_data.sounds.sound_names[event.data.sound_id];
+		if (tag.substr(tag.length - 4, 4).toLowerCase() == ".ogg") {
+			tag = tag.substr(0, tag.length - 4);
+		}
 
-	return false;
+		// Load sound
+		var self = this;
+		event.data.post_data.sounds.loaded = true;
+		media_player_manager.open_player(true);
+		media_player_manager.media_player.attempt_load(
+			event.data.post_data.image_url,
+			tag,
+			{ "image_name": event.data.post_data.image_name },
+			{
+				"object": $(this),
+				"post_data": event.data.post_data,
+				"sound_id": event.data.sound_id,
+				"load_str": load_str,
+				"tag": tag
+			},
+			function (event, data) {
+				var progress = Math.floor((event.loaded / event.total) * 100);
+				data.object.html(data.load_str + " (" + progress + ")");
+			},
+			function (okay, data) {
+				data.object.html(data.tag + (okay ? "" : " (ajax&nbsp;error)"));
+			},
+			function (status, data, all_files) {
+				if (all_files !== null && data.post_data.sounds.sound_names.length == 0 && all_files.length > 0) {
+					data.post_data.sounds.sound_names = all_files;
+					self.update_about_image(data.post_data);
+				}
+			}
+		);
+
+		// Done
+		return false;
+	},
+	on_load_all_click: function (event) {
+		event.data.manager.activate_load_all_link(event.data.post_data);
+
+		// Done
+		return false;
+	},
+	on_detect_all_in_thread_click: function (event) {
+		if (sound_auto_checker.enabled) {
+			sound_auto_checker.disable();
+		}
+		else {
+			sound_auto_checker.enable();
+		}
+
+		return false;
+	},
+	on_load_all_in_thread_click: function (event) {
+		if (sound_auto_loader.enabled) {
+			sound_auto_loader.disable();
+		}
+		else {
+			sound_auto_loader.enable();
+		}
+
+		return false;
+	}
 };
 var inline_manager = null;
 
@@ -9043,69 +9086,72 @@ function SoundAutoLoader() {
 
 	this.link = null;
 }
-SoundAutoLoader.prototype.add_to_queue = function (post_data) {
-	// Set to loaded
-	post_data.loaded = true;
+SoundAutoLoader.prototype = {
+	constructor: SoundAutoLoader,
+	add_to_queue: function (post_data) {
+		// Set to loaded
+		post_data.loaded = true;
 
-	// Add to queue
-	this.queue.push(post_data);
-	this.loop();
-}
-SoundAutoLoader.prototype.enable = function () {
-	if (!this.enabled) {
-		this.link.removeAttr("href");
-		this.link.html("Loading All Sounds");
-
-		this.enabled = true;
+		// Add to queue
+		this.queue.push(post_data);
 		this.loop();
-	}
-}
-SoundAutoLoader.prototype.disable = function () {
-	if (this.enabled) {
-		this.link.attr("href", "#");
-		this.link.html("Load All Sounds");
+	},
+	enable: function () {
+		if (!this.enabled) {
+			this.link.removeAttr("href");
+			this.link.html("Loading All Sounds");
 
-		this.enabled = false;
-		this.looping = false;
-		if (this.timer != null) {
-			clearTimeout(this.timer);
-			this.timer = null;
+			this.enabled = true;
+			this.loop();
 		}
-	}
-}
-SoundAutoLoader.prototype.loop = function () {
-	if (!this.enabled || this.looping) return;
+	},
+	disable: function () {
+		if (this.enabled) {
+			this.link.attr("href", "#");
+			this.link.html("Load All Sounds");
 
-	this.looping = true;
-	this.loop_next();
-}
-SoundAutoLoader.prototype.loop_next = function () {
-	if (!this.enabled) return;
+			this.enabled = false;
+			this.looping = false;
+			if (this.timer != null) {
+				clearTimeout(this.timer);
+				this.timer = null;
+			}
+		}
+	},
+	loop: function () {
+		if (!this.enabled || this.looping) return;
 
-	this.looping = (this.queue.length > 0);
-	if (!this.looping) {
-		this.disable();
-		return;
-	}
+		this.looping = true;
+		this.loop_next();
+	},
+	loop_next: function () {
+		if (!this.enabled) return;
 
-	while (this.queue.length > 0) {
-		this.load_single(this.queue.shift());
-		if (this.serial) break;
+		this.looping = (this.queue.length > 0);
+		if (!this.looping) {
+			this.disable();
+			return;
+		}
+
+		while (this.queue.length > 0) {
+			this.load_single(this.queue.shift());
+			if (this.serial) break;
+		}
+	},
+	load_single: function (post_data) {
+		var self = this;
+		inline_manager.activate_load_all_link(post_data, function (okay, post_data) {
+			self.load_single_done();
+		});
+	},
+	load_single_done: function () {
+		var self = this;
+		this.timer = setTimeout(function () {
+			self.timer = null;
+			self.loop_next();
+		}, this.delay);
 	}
-}
-SoundAutoLoader.prototype.load_single = function (post_data) {
-	var self = this;
-	inline_manager.activate_load_all_link(post_data, function (okay, post_data) {
-		self.load_single_done();
-	});
-}
-SoundAutoLoader.prototype.load_single_done = function () {
-	var self = this;
-	this.timer = setTimeout(function () {
-		self.timer = null;
-		self.loop_next();
-	}, this.delay);
-}
+};
 var sound_auto_loader = null;
 
 
@@ -9124,121 +9170,124 @@ function SoundAutoChecker() {
 	this.link = null;
 	this.callbacks = [ image_check_callback , png_check_callback ];
 }
-SoundAutoChecker.prototype.add_to_queue = function (post_data) {
-	// Set to loaded
-	post_data.loaded = true;
+SoundAutoChecker.prototype = {
+	constructor: SoundAutoChecker,
+	add_to_queue: function (post_data) {
+		// Set to loaded
+		post_data.loaded = true;
 
-	// Add to queue
-	this.queue.push(post_data);
-	this.loop();
-}
-SoundAutoChecker.prototype.enable = function () {
-	if (!this.enabled) {
-		for (var i = 0; i < this.queue.length; ++i) {
-			this.queue[i].sounds.auto_check.search_span.css("display", "");
-		}
-		this.link.removeAttr("href");
-		this.link.html("Detecting Sounds");
-
-		this.enabled = true;
+		// Add to queue
+		this.queue.push(post_data);
 		this.loop();
-	}
-}
-SoundAutoChecker.prototype.disable = function () {
-	if (this.enabled) {
-		for (var i = 0; i < this.queue.length; ++i) {
-			this.queue[i].sounds.auto_check.search_span.css("display", "none");
-		}
-		this.link.attr("href", "#");
-		this.link.html("Detect Sounds");
+	},
+	enable: function () {
+		if (!this.enabled) {
+			for (var i = 0; i < this.queue.length; ++i) {
+				this.queue[i].sounds.auto_check.search_span.css("display", "");
+			}
+			this.link.removeAttr("href");
+			this.link.html("Detecting Sounds");
 
-		this.enabled = false;
-		this.looping = false;
-		if (this.timer != null) {
-			clearTimeout(this.timer);
-			this.timer = null;
+			this.enabled = true;
+			this.loop();
 		}
-	}
-}
-SoundAutoChecker.prototype.loop = function () {
-	if (!this.enabled || this.looping) return;
+	},
+	disable: function () {
+		if (this.enabled) {
+			for (var i = 0; i < this.queue.length; ++i) {
+				this.queue[i].sounds.auto_check.search_span.css("display", "none");
+			}
+			this.link.attr("href", "#");
+			this.link.html("Detect Sounds");
 
-	this.looping = true;
-	this.loop_next();
-}
-SoundAutoChecker.prototype.loop_next = function () {
-	if (!this.enabled) return;
-
-	this.looping = (this.queue.length > 0);
-
-	var loaded = false;
-	while (this.queue.length > 0) {
-		var post_data = this.queue.shift();
-		if (post_data.sounds.sound_names.length == 0) {
-			loaded = true;
-			this.load_single(post_data);
-			if (this.serial) break;
+			this.enabled = false;
+			this.looping = false;
+			if (this.timer != null) {
+				clearTimeout(this.timer);
+				this.timer = null;
+			}
 		}
-		else {
-			post_data.sounds.auto_check.search_span.css("display", "none");
-		}
-	}
+	},
+	loop: function () {
+		if (!this.enabled || this.looping) return;
 
-	this.looping = !loaded;
-}
-SoundAutoChecker.prototype.load_single = function (post_data) {
-	var self = this;
-	ajax_get(
-		post_data.image_url,
-		false,
-		post_data,
-		function (event, post_data) {},
-		function (okay, post_data, response) {
-			var callback_id = (okay ? 0 : self.callbacks.length); // this kills the loop (on error)
-			self.load_single_callbacks(post_data, callback_id, response);
+		this.looping = true;
+		this.loop_next();
+	},
+	loop_next: function () {
+		if (!this.enabled) return;
+
+		this.looping = (this.queue.length > 0);
+
+		var loaded = false;
+		while (this.queue.length > 0) {
+			var post_data = this.queue.shift();
+			if (post_data.sounds.sound_names.length == 0) {
+				loaded = true;
+				this.load_single(post_data);
+				if (this.serial) break;
+			}
+			else {
+				post_data.sounds.auto_check.search_span.css("display", "none");
+			}
 		}
-	);
-}
-SoundAutoChecker.prototype.load_single_callbacks = function (post_data, callback_id, response) {
-	if (callback_id >= this.callbacks.length) {
-		// Not found
-		post_data.sounds.auto_check.search_span.css("display", "none");
-		this.load_single_done();
-	}
-	else {
-		// Run a callback
+
+		this.looping = !loaded;
+	},
+	load_single: function (post_data) {
 		var self = this;
-		this.callbacks[callback_id](
+		ajax_get(
 			post_data.image_url,
-			response,
+			false,
 			post_data,
-			function (image_data, post_data) {
-				if (image_data == null || image_data[1].length <= 0) {
-					// Check further
-					self.load_single_callbacks(post_data, callback_id + 1, response);
-				}
-				else {
-					// Found
-					post_data.sounds.sound_names = image_data[1];
-
-					// html update
-					inline_manager.update_about_image(post_data);
-
-					// Done
-					post_data.sounds.auto_check.search_span.css("display", "none");
-					self.load_single_done();
-				}
+			function (event, post_data) {},
+			function (okay, post_data, response) {
+				var callback_id = (okay ? 0 : self.callbacks.length); // this kills the loop (on error)
+				self.load_single_callbacks(post_data, callback_id, response);
 			}
 		);
+	},
+	load_single_callbacks: function (post_data, callback_id, response) {
+		if (callback_id >= this.callbacks.length) {
+			// Not found
+			post_data.sounds.auto_check.search_span.css("display", "none");
+			this.load_single_done();
+		}
+		else {
+			// Run a callback
+			var self = this;
+			this.callbacks[callback_id](
+				post_data.image_url,
+				response,
+				post_data,
+				function (image_data, post_data) {
+					if (image_data == null || image_data[1].length <= 0) {
+						// Check further
+						self.load_single_callbacks(post_data, callback_id + 1, response);
+					}
+					else {
+						// Found
+						post_data.sounds.sound_names = image_data[1];
+
+						// html update
+						inline_manager.update_about_image(post_data);
+
+						// Done
+						post_data.sounds.auto_check.search_span.css("display", "none");
+						self.load_single_done();
+					}
+				}
+			);
+		}
+	},
+	load_single_done: function () {
+		var self = this;
+		this.timer = setTimeout(function () {
+			self.timer = null;
+			self.loop_next();
+		}, this.delay);
 	}
-}
-SoundAutoChecker.prototype.load_single_done = function () {
-	var self = this;
-	this.timer = setTimeout(function () {
-		self.timer = null;
-		self.loop_next();
-	}, this.delay);
-}
+};
 var sound_auto_checker = null;
 
 
@@ -9247,8 +9296,6 @@ var sound_auto_checker = null;
 // Hotkeys
 ///////////////////////////////////////////////////////////////////////////////
 function HotkeyListener() {
-	this.flags = 0;
-
 	this.keycode_names = {
 		8: "BACKSPACE",
 		9: "TAB",
@@ -9299,12 +9346,11 @@ function HotkeyListener() {
 	];
 
 	$(window)
-	.off("keydown.HotkeyListener keyup.HotkeyListener")
+	.off("keydown.HotkeyListener")
 	.on("keydown.HotkeyListener", {self: this}, function (event) {
-		if (event.which >= 16 && event.which <= 17) { // changing 17 to 18 enables "alt" support, but is buggy
-			event.data.self.flags |= (1 << (event.which - 16));
-		}
-		else {
+		if (!(event.which >= 16 && event.which <= 18)) {
+			var flags = (event.shiftKey ? 1 : 0) | (event.ctrlKey ? 2 : 0) | (event.altKey ? 4 : 0);
+
 			// Not typing
 			var t = $(document.activeElement).prop("tagName").toLowerCase();
 			if (t !== "input" && t !== "textarea") {
@@ -9314,7 +9360,7 @@ function HotkeyListener() {
 					if (
 						script.settings["hotkeys"][k][0] != 0 &&
 						script.settings["hotkeys"][k][0] == event.which &&
-						script.settings["hotkeys"][k][1] == event.data.self.flags
+						script.settings["hotkeys"][k][1] == flags
 					) {
 						event.data.self.hotkeys[i][1].call(event.data.self);
 						event.stopPropagation();
@@ -9325,213 +9371,208 @@ function HotkeyListener() {
 			}
 		}
 		return true;
-	})
-	.on("keyup.HotkeyListener", {self: this}, function (event) {
-		if (event.which >= 16 && event.which <= 17) {
-			event.data.self.flags &= ~(1 << (event.which - 16));
-		}
 	});
 }
-HotkeyListener.prototype.settings_update = function () {
-	for (var i = 0; i < this.hotkeys.length; ++i) {
-		script.settings["hotkeys"][this.hotkeys[i][0]] = [ 0 , 0 ];
-	}
-};
-HotkeyListener.prototype.key_to_string = function (keycode, modifiers) {
-	var str = "";
-	if ((modifiers & 1) != 0) str += "Shift";
-	if ((modifiers & 2) != 0) str += (str.length > 0 ? " + " : "") + "Ctrl";
-	if ((modifiers & 4) != 0) str += (str.length > 0 ? " + " : "") + "Alt";
-	if (keycode != 0) str += (str.length > 0 ? " + " : "") + (
-		keycode in this.keycode_names ?
-		this.keycode_names[keycode] :
-		(keycode >= 127 || keycode < 32 ? keycode : String.fromCharCode(keycode))
-	);
-	return str;
-};
-HotkeyListener.prototype.create_hotkey_setting = function (hotkey_label, hotkey_name) {
-	// Settings
-	var hotkey_settings = {
-		"section": "Hotkeys",
-		"label": hotkey_label,
-		"html": null,
-		"html_input": null,
-		"html_input_clear": null,
-		"value": "",
-		"value_code": script.settings["hotkeys"][hotkey_name][0],
-		"value_modifiers": script.settings["hotkeys"][hotkey_name][1],
-		"value_modifiers_current": 0, // 1 = shift, 2 = ctrl, 4 = alt
-		"update_value": null,
-		"listener": this
-	};
-	hotkey_settings.update_value = function (hotkey_settings) {
-		// Update
-		hotkey_settings.value = hotkey_settings.listener.key_to_string(
-			hotkey_settings.value_code, hotkey_settings.value_modifiers
+HotkeyListener.prototype = {
+	constructor: HotkeyListener,
+	settings_update: function () {
+		for (var i = 0; i < this.hotkeys.length; ++i) {
+			script.settings["hotkeys"][this.hotkeys[i][0]] = [ 0 , 0 ];
+		}
+	},
+	key_to_string: function (keycode, modifiers) {
+		var str = "";
+		if ((modifiers & 1) != 0) str += "Shift";
+		if ((modifiers & 2) != 0) str += (str.length > 0 ? " + " : "") + "Ctrl";
+		if ((modifiers & 4) != 0) str += (str.length > 0 ? " + " : "") + "Alt";
+		if (keycode != 0) str += (str.length > 0 ? " + " : "") + (
+			keycode in this.keycode_names ?
+			this.keycode_names[keycode] :
+			(keycode >= 127 || keycode < 32 ? keycode : String.fromCharCode(keycode))
 		);
+		return str;
+	},
+	create_hotkey_setting: function (hotkey_label, hotkey_name) {
+		// Settings
+		var hotkey_settings = {
+			"section": "Hotkeys",
+			"label": hotkey_label,
+			"html": null,
+			"html_input": null,
+			"html_input_clear": null,
+			"value": "",
+			"value_code": script.settings["hotkeys"][hotkey_name][0],
+			"value_modifiers": script.settings["hotkeys"][hotkey_name][1],
+			"value_modifiers_current": 0, // 1 = shift, 2 = ctrl, 4 = alt
+			"update_value": null,
+			"listener": this
+		};
+		hotkey_settings.update_value = function (hotkey_settings) {
+			// Update
+			hotkey_settings.value = hotkey_settings.listener.key_to_string(
+				hotkey_settings.value_code, hotkey_settings.value_modifiers
+			);
 
-		hotkey_settings.html_input.val(hotkey_settings.value);
-	};
+			hotkey_settings.html_input.val(hotkey_settings.value);
+		};
 
-	// HTML
-	(hotkey_settings.html = E("div"))
-	.append( //{ DOM
-		E("div")
-		.addClass("SPHelpColorInputDiv2")
-		.append(
+		// HTML
+		(hotkey_settings.html = E("div"))
+		.append( //{ DOM
 			E("div")
-			.addClass("SPHelpColorInputDiv3")
-			.css({
-				"position": "relative",
-			})
-			.append(
-				(hotkey_settings.html_input = E("input"))
-				.addClass("SPHelpColorInput")
-				.attr("type", "text")
-				.val(hotkey_settings.value)
-			)
+			.addClass("SPHelpColorInputDiv2")
 			.append(
 				E("div")
+				.addClass("SPHelpColorInputDiv3")
 				.css({
-					"position": "absolute",
-					"right": "0",
-					"top": "0",
-					"bottom": "0",
+					"position": "relative",
 				})
 				.append(
-					(hotkey_settings.html_input_clear = E("a"))
-					.attr("href", "#")
-					.html("Clear")
+					(hotkey_settings.html_input = E("input"))
+					.addClass("SPHelpColorInput")
+					.attr("type", "text")
+					.val(hotkey_settings.value)
+				)
+				.append(
+					E("div")
+					.css({
+						"position": "absolute",
+						"right": "0",
+						"top": "0",
+						"bottom": "0",
+					})
+					.append(
+						(hotkey_settings.html_input_clear = E("a"))
+						.attr("href", "#")
+						.html("Clear")
+					)
 				)
 			)
-		)
-	); //}
+		); //}
 
-	// Update value
-	hotkey_settings.update_value(hotkey_settings);
+		// Update value
+		hotkey_settings.update_value(hotkey_settings);
 
-	// Events
-	hotkey_settings.html_input_clear.on("click", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
-		// Clear value
-		event.data.hotkey_settings.value_code = 0;
-		event.data.hotkey_settings.value_modifiers = 0;
-		event.data.hotkey_settings.value_modifiers_current = 0;
-		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
-
-		// Update
-		script.settings["hotkeys"][event.data.hotkey_name][0] = event.data.hotkey_settings.value_code;
-		script.settings["hotkeys"][event.data.hotkey_name][1] = event.data.hotkey_settings.value_modifiers;
-		script.settings_save();
-
-		return false;
-	});
-	hotkey_settings.html_input.on("keydown", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
-		if (event.which >= 16 && event.which <= 17) {
-			var v = 1 << (event.which - 16);
-			event.data.hotkey_settings.value_modifiers_current |= v;
-
-			event.data.hotkey_settings.value_modifiers = event.data.hotkey_settings.value_modifiers_current;
+		// Events
+		hotkey_settings.html_input_clear.on("click", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
+			// Clear value
 			event.data.hotkey_settings.value_code = 0;
-		}
-		else {
-			// Key
+			event.data.hotkey_settings.value_modifiers = 0;
+			event.data.hotkey_settings.value_modifiers_current = 0;
+			event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+
+			// Update
+			script.settings["hotkeys"][event.data.hotkey_name][0] = event.data.hotkey_settings.value_code;
+			script.settings["hotkeys"][event.data.hotkey_name][1] = event.data.hotkey_settings.value_modifiers;
+			script.settings_save();
+
+			return false;
+		});
+		hotkey_settings.html_input.on("keydown", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
+			event.data.hotkey_settings.value_modifiers_current = (event.shiftKey ? 1 : 0) | (event.ctrlKey ? 2 : 0) | (event.altKey ? 4 : 0);
 			event.data.hotkey_settings.value_modifiers = event.data.hotkey_settings.value_modifiers_current;
-			event.data.hotkey_settings.value_code = event.which;
-		}
 
-		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
-
-		event.stopPropagation();
-		event.preventDefault();
-		return false;
-	})
-	.on("keyup", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
-		if (event.which >= 16 && event.which <= 17) {
-			var v = 1 << (event.which - 16);
-			event.data.hotkey_settings.value_modifiers_current &= ~v;
+			if (event.which >= 16 && event.which <= 18) {
+				event.data.hotkey_settings.value_code = 0;
+			}
+			else {
+				event.data.hotkey_settings.value_code = event.which;
+			}
 
 			event.data.hotkey_settings.update_value(event.data.hotkey_settings);
-		}
 
-		event.stopPropagation();
-		event.preventDefault();
-		return false;
-	})
-	.on("blur", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
-		// No key?
-		if (event.data.hotkey_settings.value_code == 0) {
-			event.data.hotkey_settings.value_modifiers = 0;
-		}
-		event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+			event.stopPropagation();
+			event.preventDefault();
+			return false;
+		})
+		.on("keyup", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
+			if (event.which >= 16 && event.which <= 18) {
+				var v = 1 << (event.which - 16);
+				event.data.hotkey_settings.value_modifiers_current &= ~v;
 
-		// Update
-		script.settings["hotkeys"][event.data.hotkey_name][0] = event.data.hotkey_settings.value_code;
-		script.settings["hotkeys"][event.data.hotkey_name][1] = event.data.hotkey_settings.value_modifiers;
-		script.settings_save();
-	})
-	.on("focus", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
-		// Clear modifiers
-		event.data.hotkey_settings.value_modifiers_current = 0;
-	});
+				event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+			}
 
-	// Done
-	return hotkey_settings;
-};
-HotkeyListener.prototype.on_player_open = function () {
-	// Open the player
-	media_player_manager.open_player(true);
-};
-HotkeyListener.prototype.on_player_close = function () {
-	// Close the player
-	if (media_player_manager.media_player !== null) {
-		media_player_manager.media_player.destructor();
-		media_player_manager.media_player = null;
-	}
-};
-HotkeyListener.prototype.on_player_minmax = function () {
-	// Min/maximize the player
-	if (media_player_manager.media_player !== null) {
-		if (media_player_manager.media_player.is_maximized()) {
-			media_player_manager.media_player.minimize();
+			event.stopPropagation();
+			event.preventDefault();
+			return false;
+		})
+		.on("blur", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
+			// No key?
+			if (event.data.hotkey_settings.value_code == 0) {
+				event.data.hotkey_settings.value_modifiers = 0;
+			}
+			event.data.hotkey_settings.update_value(event.data.hotkey_settings);
+
+			// Update
+			script.settings["hotkeys"][event.data.hotkey_name][0] = event.data.hotkey_settings.value_code;
+			script.settings["hotkeys"][event.data.hotkey_name][1] = event.data.hotkey_settings.value_modifiers;
+			script.settings_save();
+		})
+		.on("focus", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
+			// Clear modifiers
+			event.data.hotkey_settings.value_modifiers_current = 0;
+		});
+
+		// Done
+		return hotkey_settings;
+	},
+	on_player_open: function () {
+		// Open the player
+		media_player_manager.open_player(true);
+	},
+	on_player_close: function () {
+		// Close the player
+		if (media_player_manager.media_player !== null) {
+			media_player_manager.media_player.destructor();
+			media_player_manager.media_player = null;
 		}
-		else {
-			media_player_manager.media_player.maximize();
+	},
+	on_player_minmax: function () {
+		// Min/maximize the player
+		if (media_player_manager.media_player !== null) {
+			if (media_player_manager.media_player.is_maximized()) {
+				media_player_manager.media_player.minimize();
+			}
+			else {
+				media_player_manager.media_player.maximize();
+			}
 		}
-	}
-};
-HotkeyListener.prototype.on_playlist_play = function () {
-	// Play/pause
-	if (media_player_manager.media_player !== null) {
-		if (media_player_manager.media_player.is_paused()) {
-			media_player_manager.media_player.play();
+	},
+	on_playlist_play: function () {
+		// Play/pause
+		if (media_player_manager.media_player !== null) {
+			if (media_player_manager.media_player.is_paused()) {
+				media_player_manager.media_player.play();
+			}
+			else {
+				media_player_manager.media_player.pause();
+			}
 		}
-		else {
-			media_player_manager.media_player.pause();
+	},
+	on_playlist_next: function () {
+		// Next
+		if (media_player_manager.media_player !== null) {
+			media_player_manager.media_player.next(false);
 		}
-	}
-};
-HotkeyListener.prototype.on_playlist_next = function () {
-	// Next
-	if (media_player_manager.media_player !== null) {
-		media_player_manager.media_player.next(false);
-	}
-};
-HotkeyListener.prototype.on_playlist_previous = function () {
-	// Previous
-	if (media_player_manager.media_player !== null) {
-		media_player_manager.media_player.previous();
-	}
-};
-HotkeyListener.prototype.on_volume_up = function () {
-	// Previous
-	if (media_player_manager.media_player !== null) {
-		media_player_manager.media_player.set_volume(media_player_manager.media_player.get_volume() + 0.05);
-	}
-};
-HotkeyListener.prototype.on_volume_down = function () {
-	// Previous
-	if (media_player_manager.media_player !== null) {
-		media_player_manager.media_player.set_volume(media_player_manager.media_player.get_volume() - 0.05);
+	},
+	on_playlist_previous: function () {
+		// Previous
+		if (media_player_manager.media_player !== null) {
+			media_player_manager.media_player.previous();
+		}
+	},
+	on_volume_up: function () {
+		// Previous
+		if (media_player_manager.media_player !== null) {
+			media_player_manager.media_player.set_volume(media_player_manager.media_player.get_volume() + 0.05);
+		}
+	},
+	on_volume_down: function () {
+		// Previous
+		if (media_player_manager.media_player !== null) {
+			media_player_manager.media_player.set_volume(media_player_manager.media_player.get_volume() - 0.05);
+		}
 	}
 };
 var hotkey_listener = null;
@@ -9712,68 +9753,71 @@ function MediaPlayerManager() {
 		}
 	};
 }
-MediaPlayerManager.prototype.media_player_destruct_callback = function (media_player) {
-	// Save settings
-	script.settings_save();
-	// Nullify
-	this.media_player = null;
-};
-MediaPlayerManager.prototype.open_player = function (load_settings) {
-	if (this.media_player != null) {
-		// Focus player
-		this.media_player.focus();
+MediaPlayerManager.prototype = {
+	constructor: MediaPlayerManager,
+	media_player_destruct_callback: function (media_player) {
+		// Save settings
+		script.settings_save();
+		// Nullify
+		this.media_player = null;
+	},
+	open_player: function (load_settings) {
+		if (this.media_player != null) {
+			// Focus player
+			this.media_player.focus();
+			return this.media_player;
+		}
+
+		// CSS
+		var media_player_css = new MediaPlayerCSS("yotsubab", this.css_color_presets, this.css_size_presets);
+		// Load CSS settings
+		if (load_settings) media_player_css.load(script.settings["style"]);
+		// Custom settings
+		var extra_options = [
+			{
+				"current": script.settings["inline"]["url_replace"],
+				"label": "URL Replacing",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["url_replace"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"current": script.settings["inline"]["url_replace_smart"],
+				"label": "Extended URLs",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["url_replace_smart"] = value;
+					script.settings_save();
+				}
+			},
+		];
+		for (var i = 0; i < hotkey_listener.hotkeys.length; ++i) {
+			extra_options.push(
+				hotkey_listener.create_hotkey_setting(hotkey_listener.hotkeys[i][2],
+				hotkey_listener.hotkeys[i][0])
+			);
+		}
+		// Player
+		var self = this;
+		this.media_player = new MediaPlayer(
+			media_player_css,
+			[ png_load_callback , image_load_callback ],
+			function (data) { inline_manager.on_image_drag(data); },
+			function (media_player) { script.settings_save(); },
+			function (media_player) { self.media_player_destruct_callback(media_player); },
+			extra_options
+		);
+		// Load settings
+		if (load_settings) this.media_player.load(script.settings["player"]);
+		// Display
+		this.media_player.create();
+
 		return this.media_player;
 	}
-
-	// CSS
-	var media_player_css = new MediaPlayerCSS("yotsubab", this.css_color_presets, this.css_size_presets);
-	// Load CSS settings
-	if (load_settings) media_player_css.load(script.settings["style"]);
-	// Custom settings
-	var extra_options = [
-		{
-			"current": script.settings["inline"]["url_replace"],
-			"label": "URL Replacing",
-			"values": [ true , false ],
-			"descr": [ "Enabled" , "Disabled" ],
-			"change": function (value) {
-				script.settings["inline"]["url_replace"] = value;
-				script.settings_save();
-			}
-		},
-		{
-			"current": script.settings["inline"]["url_replace_smart"],
-			"label": "Extended URLs",
-			"values": [ true , false ],
-			"descr": [ "Enabled" , "Disabled" ],
-			"change": function (value) {
-				script.settings["inline"]["url_replace_smart"] = value;
-				script.settings_save();
-			}
-		},
-	];
-	for (var i = 0; i < hotkey_listener.hotkeys.length; ++i) {
-		extra_options.push(
-			hotkey_listener.create_hotkey_setting(hotkey_listener.hotkeys[i][2],
-			hotkey_listener.hotkeys[i][0])
-		);
-	}
-	// Player
-	var self = this;
-	this.media_player = new MediaPlayer(
-		media_player_css,
-		[ png_load_callback , image_load_callback ],
-		function (data) { inline_manager.on_image_drag(data); },
-		function (media_player) { script.settings_save(); },
-		function (media_player) { self.media_player_destruct_callback(media_player); },
-		extra_options
-	);
-	// Load settings
-	if (load_settings) this.media_player.load(script.settings["player"]);
-	// Display
-	this.media_player.create();
-
-	return this.media_player;
 };
 var media_player_manager = null;
 
@@ -9804,144 +9848,147 @@ function Script() {
 	this.storage_name = "4cs";
 	this.update_version_url = "https://raw.github.com/dnsev/4cs/master/web/version.txt";
 }
-Script.prototype.settings_save = function () {
-	// Get
-	if (media_player_manager.media_player != null) {
-		this.settings["player"] = media_player_manager.media_player.save();
-		this.settings["style"] = media_player_manager.media_player.css.save();
-	}
-	// Save
-	try {
-		localStorage.setItem(this.storage_name, JSON.stringify(this.settings));
-	}
-	catch (e) {
-		console.log(e);
-	}
-};
-Script.prototype.settings_load = function () {
-	// Load
-	if (!this.settings_loaded) {
-		this.settings_loaded = true;
+Script.prototype = {
+	constructor: Script,
+	settings_save: function () {
+		// Get
+		if (media_player_manager.media_player != null) {
+			this.settings["player"] = media_player_manager.media_player.save();
+			this.settings["style"] = media_player_manager.media_player.css.save();
+		}
+		// Save
 		try {
-			var s = localStorage.getItem(this.storage_name);
-			if (s) {
-				s = JSON.parse(s);
-				// load based on keys; overwrite if empty, else load on a per-key basis
-				for (var key in this.settings) {
-					if (key in s) {
-						var len = 0;
-						for (var key2 in this.settings[key]) {
-							++len;
-							if (key2 in s[key]) this.settings[key][key2] = s[key][key2];
-						}
-						if (len == 0) {
-							this.settings[key] = s[key];
-						}
-					}
-				}
-			}
+			GM_setValue(this.storage_name, JSON.stringify(this.settings));
 		}
 		catch (e) {
 			console.log(e);
 		}
-	}
-};
-Script.prototype.update_check_interval = function (time) {
-	var time_update;
-	var version = "";
-	try {
-		version = GM_info.script.version;
-	}
-	catch (e) {
-		version = GM_getMetadata("version").toString();
-	}
-	if (
-		(time_update = ((new Date()).getTime() - this.settings["script"]["last_update"] >= time)) ||
-		(time_update = (version != this.settings["script"]["current_version"])) ||
-		this.settings["script"]["update_found"]
-	) {
-		this.settings["script"]["current_version"] = version;
-		this.update_check(time_update);
-	}
-};
-Script.prototype.update_check = function (ajax) {
-	var fn = function () {
-		inline_manager.update_span.css("display", "");
-		inline_manager.update_link.html("UPDATE");
-		inline_manager.update_link.attr("href", this.settings["script"]["update_url"]);
-	};
-
-	if (ajax) {
-		var self = this;
-		ajax_get(
-			this.update_version_url,
-			true,
-			{},
-			null,
-			function (okay, data, response) {
-				if (okay) {
-					var version;
-					try {
-						version = GM_info.script.version;
-					}
-					catch (e) {
-						version = GM_getMetadata("version").toString();
-					}
-
-					var s = JSON.parse(response);
-					// Settings
-					this.settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
-					this.settings["script"]["update_version"] = s["version"].toString();
-					this.settings["script"]["last_update"] = (new Date()).getTime();
-					this.settings["script"]["update_message"] = (s["message"] || "").toString();
-					// Version compare
-					this.settings["script"]["update_found"] = false;
-					var current_version_split = version.toString().split(".");
-					var new_version_split = this.settings["script"]["update_version"].split(".");
-					var len = (new_version_split.length > current_version_split.length ? new_version_split.length : current_version_split.length);
-					for (var i = 0; i < len; ++i) {
-						if (
-							(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) >
-							(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
-						) {
-							fn();
-							this.settings["script"]["update_found"] = true;
-							break;
+	},
+	settings_load: function () {
+		// Load
+		if (!this.settings_loaded) {
+			this.settings_loaded = true;
+			try {
+				var s = GM_getValue(this.storage_name);
+				if (s) {
+					s = JSON.parse(s);
+					// load based on keys; overwrite if empty, else load on a per-key basis
+					for (var key in this.settings) {
+						if (key in s) {
+							var len = 0;
+							for (var key2 in this.settings[key]) {
+								++len;
+								if (key2 in s[key]) this.settings[key][key2] = s[key][key2];
+							}
+							if (len == 0) {
+								this.settings[key] = s[key];
+							}
 						}
 					}
-					// Update settings
-					self.settings_save();
 				}
 			}
-		);
-	}
-	else {
-		fn();
-	}
-};
-Script.prototype.on_update_click = function (event) {
-	if (!event.originalEvent.which || event.originalEvent.which == 1) {
-		var scr_name = "";
-		var scr_version = "";
+			catch (e) {
+				console.log(e);
+			}
+		}
+	},
+	update_check_interval: function (time) {
+		var time_update;
+		var version = "";
 		try {
-			scr_name = GM_info.script.name;
-			scr_version = GM_info.script.version;
+			version = GM_info.script.version;
 		}
 		catch (e) {
-			scr_name = "userscript.js";
-			scr_version = GM_getMetadata("version").toString();
+			version = GM_getMetadata("version").toString();
 		}
+		if (
+			(time_update = ((new Date()).getTime() - this.settings["script"]["last_update"] >= time)) ||
+			(time_update = (version != this.settings["script"]["current_version"])) ||
+			this.settings["script"]["update_found"]
+		) {
+			this.settings["script"]["current_version"] = version;
+			this.update_check(time_update);
+		}
+	},
+	update_check: function (ajax) {
+		var fn = function () {
+			inline_manager.update_span.css("display", "");
+			inline_manager.update_link.html("UPDATE");
+			inline_manager.update_link.attr("href", this.settings["script"]["update_url"]);
+		};
 
-		var s = "An update is available to \"" + scr_name + "\".\n\n" +
-			"Current version: " + scr_version + "\n" +
-			"Update Version: " + this.settings["script"]["update_version"] + "\n\n" +
-			"About: " + this.settings["script"]["update_message"] + "\n\n" +
-			"Middle click the link or copy and paste the following url:               ";
+		if (ajax) {
+			var self = this;
+			ajax_get(
+				this.update_version_url,
+				true,
+				{},
+				null,
+				function (okay, data, response) {
+					if (okay) {
+						var version;
+						try {
+							version = GM_info.script.version;
+						}
+						catch (e) {
+							version = GM_getMetadata("version").toString();
+						}
 
-		prompt(s, this.settings["script"]["update_url"]);
-		return false;
+						var s = JSON.parse(response);
+						// Settings
+						self.settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
+						self.settings["script"]["update_version"] = s["version"].toString();
+						self.settings["script"]["last_update"] = (new Date()).getTime();
+						self.settings["script"]["update_message"] = (s["message"] || "").toString();
+						// Version compare
+						self.settings["script"]["update_found"] = false;
+						var current_version_split = version.toString().split(".");
+						var new_version_split = self.settings["script"]["update_version"].split(".");
+						var len = (new_version_split.length > current_version_split.length ? new_version_split.length : current_version_split.length);
+						for (var i = 0; i < len; ++i) {
+							if (
+								(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) >
+								(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
+							) {
+								fn();
+								self.settings["script"]["update_found"] = true;
+								break;
+							}
+						}
+						// Update settings
+						self.settings_save();
+					}
+				}
+			);
+		}
+		else {
+			fn();
+		}
+	},
+	on_update_click: function (event) {
+		if (!event.originalEvent.which || event.originalEvent.which == 1) {
+			var scr_name = "";
+			var scr_version = "";
+			try {
+				scr_name = GM_info.script.name;
+				scr_version = GM_info.script.version;
+			}
+			catch (e) {
+				scr_name = "userscript.js";
+				scr_version = GM_getMetadata("version").toString();
+			}
+
+			var s = "An update is available to \"" + scr_name + "\".\n\n" +
+				"Current version: " + scr_version + "\n" +
+				"Update Version: " + this.settings["script"]["update_version"] + "\n\n" +
+				"About: " + this.settings["script"]["update_message"] + "\n\n" +
+				"Middle click the link or copy and paste the following url:               ";
+
+			prompt(s, this.settings["script"]["update_url"]);
+			return false;
+		}
+		return true;
 	}
-	return true;
 };
 var script = null;
 
