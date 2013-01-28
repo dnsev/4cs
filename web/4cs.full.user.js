@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.8.4.1
+// @version     1.8.4.2
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -7416,6 +7416,7 @@ function dom_replace(tag, check_callback, replace_callback) {
 	var sub_tags = [ new Array() ];
 	var check, t;
 
+	var f, found = false;
 	var i = 0;
 	for (var j = 0; j < c.length; ++j) {
 		t = $(c[j]);
@@ -7430,18 +7431,21 @@ function dom_replace(tag, check_callback, replace_callback) {
 		}
 		if (check >= 1) {
 			// Sub-scan
+			f = false;
 			if (
 				t.prop("tagName") === undefined ||
 				t.contents().length <= 0 ||
-				!dom_replace(t, check_callback, replace_callback)
+				!(f = dom_replace(t, check_callback, replace_callback))
 			) {
 				sub_tags[i].push(t);
+			}
+			else if (!found && f) {
+				found = true;
 			}
 		}
 	}
 
 	// Replace
-	var found = false;
 	for (i = 0; i < sub_tags.length && sub_tags[i].length > 0; ++i) {
 		found = (replace_callback(sub_tags[i]) || found);
 	}

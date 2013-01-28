@@ -1,3 +1,6 @@
+1.8.4.2
+- Fixed a bug with DOM replacement, manifested in URL replacement within quotes.
+
 1.8.4.1
 - Fixed smart URL replacement. (always returned true)
 
