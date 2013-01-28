@@ -1,3 +1,6 @@
+1.8.4
+- Fixed a bug where sounds with headers that aren't OggS won't play.
+
 1.8.3.2
 - Fixed [tags] in quotes for real.
 

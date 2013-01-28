@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.8.3.2
+// @version     1.8.4
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -6425,20 +6425,22 @@ function image_load_callback(url_or_filename,load_tag,raw_ui8_data,done_callback
 				if(found)break;
 			}
 			if(!found){
-				s=0;
-				ms=magic_strings_ui8[s];
-				unmask_state_temp=unmask_state;
-				mask_temp=mask;
-				for(j=0;true;){
-					if((raw_ui8_data[i+j]^mask_temp)!=ms[j])break;
-					if(++j>=ms.length)break;
-					unmask_state_temp=(1664525*unmask_state_temp+1013904223)&0xFFFFFFFF;
-					mask_temp=unmask_state_temp>>>24;
-					unmask_state_temp+=(raw_ui8_data[i+j]^mask_temp);
-				}
-				if(j==ms.length){
-					found=true;
-					masked=true;
+				for(s=0;s<magic_strings_ui8.length;++s){
+					ms=magic_strings_ui8[s];
+					unmask_state_temp=unmask_state;
+					mask_temp=mask;
+					for(j=0;true;){
+						if((raw_ui8_data[i+j]^mask_temp)!=ms[j])break;
+						if(++j>=ms.length)break;
+						unmask_state_temp=(1664525*unmask_state_temp+1013904223)&0xFFFFFFFF;
+						mask_temp=unmask_state_temp>>>24;
+						unmask_state_temp+=(raw_ui8_data[i+j]^mask_temp);
+					}
+					if(j==ms.length){
+						found=true;
+						masked=true;
+						break;
+					}
 				}
 			}
 			if(found){
@@ -6650,20 +6652,22 @@ function image_load_callback_slow(url_or_filename,load_tag,raw_ui8_data,done_cal
 					if(found)break;
 				}
 				if(!found){
-					s=0;
-					ms=magic_strings_ui8[s];
-					unmask_state_temp=unmask_state;
-					mask_temp=mask;
-					for(j=0;true;){
-						if((raw_ui8_data[i+j]^mask_temp)!=ms[j])break;
-						if(++j>=ms.length)break;
-						unmask_state_temp=(1664525*unmask_state_temp+1013904223)&0xFFFFFFFF;
-						mask_temp=unmask_state_temp>>>24;
-						unmask_state_temp+=(raw_ui8_data[i+j]^mask_temp);
-					}
-					if(j==ms.length){
-						found=true;
-						masked=true;
+					for(s=0;s<magic_strings_ui8.length;++s){
+						ms=magic_strings_ui8[s];
+						unmask_state_temp=unmask_state;
+						mask_temp=mask;
+						for(j=0;true;){
+							if((raw_ui8_data[i+j]^mask_temp)!=ms[j])break;
+							if(++j>=ms.length)break;
+							unmask_state_temp=(1664525*unmask_state_temp+1013904223)&0xFFFFFFFF;
+							mask_temp=unmask_state_temp>>>24;
+							unmask_state_temp+=(raw_ui8_data[i+j]^mask_temp);
+						}
+						if(j==ms.length){
+							found=true;
+							masked=true;
+							break;
+						}
 					}
 				}
 				if(found){
@@ -6810,20 +6814,22 @@ function image_check_callback(url_or_filename,raw_ui8_data,callback_data,done_ca
 					if(found)break;
 				}
 				if(!found){
-					s=0;
-					ms=magic_strings_ui8[s];
-					unmask_state_temp=unmask_state;
-					mask_temp=mask;
-					for(j=0;true;){
-						if((raw_ui8_data[i+j]^mask_temp)!=ms[j])break;
-						if(++j>=ms.length)break;
-						unmask_state_temp=(1664525*unmask_state_temp+1013904223)&0xFFFFFFFF;
-						mask_temp=unmask_state_temp>>>24;
-						unmask_state_temp+=(raw_ui8_data[i+j]^mask_temp);
-					}
-					if(j==ms.length){
-						found=true;
-						masked=true;
+					for(s=0;s<magic_strings_ui8.length;++s){
+						ms=magic_strings_ui8[s];
+						unmask_state_temp=unmask_state;
+						mask_temp=mask;
+						for(j=0;true;){
+							if((raw_ui8_data[i+j]^mask_temp)!=ms[j])break;
+							if(++j>=ms.length)break;
+							unmask_state_temp=(1664525*unmask_state_temp+1013904223)&0xFFFFFFFF;
+							mask_temp=unmask_state_temp>>>24;
+							unmask_state_temp+=(raw_ui8_data[i+j]^mask_temp);
+						}
+						if(j==ms.length){
+							found=true;
+							masked=true;
+							break;
+						}
 					}
 				}
 				if(found){
@@ -6894,7 +6900,7 @@ function image_load_callback_complete_sound(sounds,raw_ui8_data,sound_start_offs
 			sound_masked_state+=(sounds[id].data[i]^sound_masked_mask);
 		}
 	}
-	else if(sound_magic_string_index!=0){
+	if(sound_magic_string_index!=0){
 		var len=sounds[id].data.length-magic_strings_fix_size;
 		for(j=0;j<len;++j){
 			for(k=0;k<magic_strings_fix_size;++k){

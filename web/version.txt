@@ -1,8 +1,9 @@
 {
-	"version": "1.8.3",
+	"version": "1.8.4",
 	"update_url_ff": "https://raw.github.com/dnsev/4cs/master/web/4cs.user.js",
 	"update_url_gc": "https://raw.github.com/dnsev/4cs/master/web/4cs.user.js",
-	"message": "Code organization and bugfixes",
+	"message": "Fixed a bug loading masked sounds",
+	"message[1.8.3]": "Code organization and bugfixes",
 	"message[1.8.2]": "Batch download images with original filenames, version.txt fix, and bugfixes",
 	"message[1.8.1]": "Style fixes, some code organization, and bugfixes",
 	"message[1.8]": "Better versioning, more hotkeys, URL replacement through spoilers, and bugfixes",
