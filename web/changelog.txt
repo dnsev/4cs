@@ -1,3 +1,6 @@
+1.8.4.1
+- Fixed smart URL replacement. (always returned true)
+
 1.8.4
 - Fixed a bug where sounds with headers that aren't OggS won't play.
 

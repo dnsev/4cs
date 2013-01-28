@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.8.4
+// @version     1.8.4.1
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -8864,7 +8864,7 @@ InlineManager.prototype = {
 	replace_urls: function (tags) {
 		var full_text = "";
 		var in_url = false;
-		var any_found = true;
+		var any_found = false;
 		var length_add;
 		var link_str = [ "<a class=\"MPReplacedURL\">" , "</a>" ];
 
