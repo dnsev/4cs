@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.8.3
+// @version        1.8.3.1
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -48,6 +48,7 @@ if (!GM_getValue || (GM_getValue.toString && GM_getValue.toString().indexOf("not
 		return localStorage.removeItem(key);
 	};
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1673,7 +1674,12 @@ InlineManager.prototype = {
 			return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
 		});
 		if (sounds_found) {
-			tags[0].after(new_text).remove();
+			if (tags[0].prop("tagName")) {
+				tags[0].html(new_text);
+			}
+			else {
+				tags[0].after(new_text).remove();
+			}
 			return true;
 		}
 		return false;
