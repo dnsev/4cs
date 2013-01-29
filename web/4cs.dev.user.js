@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.8.4.2
+// @version        1.8.4.3
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -317,7 +317,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 							tag_state = (1664525 * tag_state + 1013904223) & 0xFFFFFFFF;
 							tag_mask = tag_state >>> 24;
 							tag_state += (raw_ui8_data[j] ^ tag_mask);
-							
+
 							if ((raw_ui8_data[j] ^ tag_mask) == tag_indicators[1]) break;
 							temp_tag += String.fromCharCode(raw_ui8_data[j] ^ tag_mask);
 						}
@@ -590,7 +590,7 @@ function image_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_
 								tag_state = (1664525 * tag_state + 1013904223) & 0xFFFFFFFF;
 								tag_mask = tag_state >>> 24;
 								tag_state += (raw_ui8_data[j] ^ tag_mask);
-								
+
 								if ((raw_ui8_data[j] ^ tag_mask) == tag_indicators[1]) break;
 								temp_tag += String.fromCharCode(raw_ui8_data[j] ^ tag_mask);
 							}
@@ -780,7 +780,7 @@ function image_check_callback(url_or_filename, raw_ui8_data, callback_data, done
 								tag_state = (1664525 * tag_state + 1013904223) & 0xFFFFFFFF;
 								tag_mask = tag_state >>> 24;
 								tag_state += (raw_ui8_data[j] ^ tag_mask);
-								
+
 								if ((raw_ui8_data[j] ^ tag_mask) == tag_indicators[1]) break;
 								temp_tag += String.fromCharCode(raw_ui8_data[j] ^ tag_mask);
 							}
@@ -842,7 +842,7 @@ function image_load_callback_complete_sound(sounds, raw_ui8_data, sound_start_of
 	if (sound_masked_state !== null) {
 		for (i = 0; true; ) {
 			sounds[id].data[i] = (sounds[id].data[i] ^ sound_masked_mask);
-		
+
 			// Done/next
 			if (++i >= sounds[id].data.length) break;
 			sound_masked_state = (1664525 * sound_masked_state + 1013904223) & 0xFFFFFFFF;
@@ -1230,7 +1230,7 @@ function InlineManager() {
 				.attr("href", "#")
 				.on("click", function (event) {
 					media_player_manager.open_player(false);
-					self.settings_save();
+					script.settings_save();
 					return false;
 				})
 			)
@@ -1330,7 +1330,7 @@ InlineManager.prototype = {
 								name == "s"
 							) return 1;
 						}
-						
+
 						return 0;
 					},
 					this.replace_tags
@@ -1431,7 +1431,7 @@ InlineManager.prototype = {
 						) return (script.settings["inline"]["url_replace_smart"] ? 2 : 1);
 						if (name == "wbr") return 2;
 					}
-					
+
 					return 0;
 				},
 				this.replace_urls
@@ -1504,7 +1504,7 @@ InlineManager.prototype = {
 		for (var sound = true; ; sound = false) {
 			for (var i = 0; i < post_data.sounds.sound_names.length; ++i) {
 				var is_sound = (post_data.sounds.sound_names[i].split(".").pop().toLowerCase() == "ogg");
-				if (sound == is_sound) {	
+				if (sound == is_sound) {
 					// Only display 2 without expansion
 					if (display_count++ == 2 && file_count > 3) {
 						container.append(
@@ -1653,7 +1653,7 @@ InlineManager.prototype = {
 						return link_str[0] + match + (in_url ? "" : link_str[1]);
 					});
 				}
-				
+
 				// Update
 				full_text += text;
 			}
@@ -1911,7 +1911,7 @@ SoundAutoLoader.prototype = {
 		while (this.queue.length > 0) {
 			this.load_single(this.queue.shift());
 			if (this.serial) break;
-		}	
+		}
 	},
 	load_single: function (post_data) {
 		var self = this;
@@ -2586,7 +2586,7 @@ MediaPlayerManager.prototype = {
 			function (media_player) { self.media_player_destruct_callback(media_player); },
 			extra_options
 		);
-		// Load settings	
+		// Load settings
 		if (load_settings) this.media_player.load(script.settings["player"]);
 		// Display
 		this.media_player.create();
@@ -2674,13 +2674,20 @@ Script.prototype = {
 			version = GM_info.script.version;
 		}
 		catch (e) {
-			version = GM_getMetadata("version").toString();
+			try {
+				version = GM_getMetadata("version").toString();
+			}
+			catch (e) {
+				version = null;
+			}
 		}
 		if (
-			(time_update = ((new Date()).getTime() - this.settings["script"]["last_update"] >= time)) ||
-			(time_update = (version != this.settings["script"]["current_version"])) ||
-			this.settings["script"]["update_found"]
-		) {	
+			version !== null && (
+				(time_update = ((new Date()).getTime() - this.settings["script"]["last_update"] >= time)) ||
+				(time_update = (version != this.settings["script"]["current_version"])) ||
+				this.settings["script"]["update_found"]
+			)
+		) {
 			this.settings["script"]["current_version"] = version;
 			this.update_check(time_update);
 		}
@@ -2706,32 +2713,39 @@ Script.prototype = {
 							version = GM_info.script.version;
 						}
 						catch (e) {
-							version = GM_getMetadata("version").toString();
-						}
-
-						var s = JSON.parse(response);
-						// Settings
-						self.settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
-						self.settings["script"]["update_version"] = s["version"].toString();
-						self.settings["script"]["last_update"] = (new Date()).getTime();
-						self.settings["script"]["update_message"] = (s["message"] || "").toString();
-						// Version compare
-						self.settings["script"]["update_found"] = false;
-						var current_version_split = version.toString().split(".");
-						var new_version_split = self.settings["script"]["update_version"].split(".");
-						var len = (new_version_split.length > current_version_split.length ? new_version_split.length : current_version_split.length);
-						for (var i = 0; i < len; ++i) {
-							if (
-								(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) >
-								(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
-							) {
-								fn();
-								self.settings["script"]["update_found"] = true;
-								break;
+							try {
+								version = GM_getMetadata("version").toString();
+							}
+							catch (e) {
+								version = null;
 							}
 						}
-						// Update settings
-						self.settings_save();
+
+						if (version !== null) {
+							var s = JSON.parse(response);
+							// Settings
+							self.settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
+							self.settings["script"]["update_version"] = s["version"].toString();
+							self.settings["script"]["last_update"] = (new Date()).getTime();
+							self.settings["script"]["update_message"] = (s["message"] || "").toString();
+							// Version compare
+							self.settings["script"]["update_found"] = false;
+							var current_version_split = version.toString().split(".");
+							var new_version_split = self.settings["script"]["update_version"].split(".");
+							var len = (new_version_split.length > current_version_split.length ? new_version_split.length : current_version_split.length);
+							for (var i = 0; i < len; ++i) {
+								if (
+									(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) >
+									(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
+								) {
+									fn();
+									self.settings["script"]["update_found"] = true;
+									break;
+								}
+							}
+							// Update settings
+							self.settings_save();
+						}
 					}
 				}
 			);
@@ -2758,7 +2772,7 @@ Script.prototype = {
 				"Update Version: " + this.settings["script"]["update_version"] + "\n\n" +
 				"About: " + this.settings["script"]["update_message"] + "\n\n" +
 				"Middle click the link or copy and paste the following url:               ";
-			
+
 			prompt(s, this.settings["script"]["update_url"]);
 			return false;
 		}
@@ -2797,7 +2811,7 @@ $(document).ready(function () {
 			window._unsafe = undefined;
 		}
 	}
-	tag = document.createElement("script");
+	var tag = document.createElement("script");
 	tag.innerHTML = "window._unsafe_exec = " + window._unsafe_exec.toString() + ";";
 	document.body.appendChild(tag);
 	window._unsafe_exec = function (exec_function, data) {

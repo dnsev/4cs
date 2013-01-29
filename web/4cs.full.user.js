@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.8.4.2
+// @version     1.8.4.3
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -8474,7 +8474,7 @@ function InlineManager() {
 				.attr("href", "#")
 				.on("click", function (event) {
 					media_player_manager.open_player(false);
-					self.settings_save();
+					script.settings_save();
 					return false;
 				})
 			)
@@ -9918,12 +9918,19 @@ Script.prototype = {
 			version = GM_info.script.version;
 		}
 		catch (e) {
-			version = GM_getMetadata("version").toString();
+			try {
+				version = GM_getMetadata("version").toString();
+			}
+			catch (e) {
+				version = null;
+			}
 		}
 		if (
-			(time_update = ((new Date()).getTime() - this.settings["script"]["last_update"] >= time)) ||
-			(time_update = (version != this.settings["script"]["current_version"])) ||
-			this.settings["script"]["update_found"]
+			version !== null && (
+				(time_update = ((new Date()).getTime() - this.settings["script"]["last_update"] >= time)) ||
+				(time_update = (version != this.settings["script"]["current_version"])) ||
+				this.settings["script"]["update_found"]
+			)
 		) {
 			this.settings["script"]["current_version"] = version;
 			this.update_check(time_update);
@@ -9950,32 +9957,39 @@ Script.prototype = {
 							version = GM_info.script.version;
 						}
 						catch (e) {
-							version = GM_getMetadata("version").toString();
-						}
-
-						var s = JSON.parse(response);
-						// Settings
-						self.settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
-						self.settings["script"]["update_version"] = s["version"].toString();
-						self.settings["script"]["last_update"] = (new Date()).getTime();
-						self.settings["script"]["update_message"] = (s["message"] || "").toString();
-						// Version compare
-						self.settings["script"]["update_found"] = false;
-						var current_version_split = version.toString().split(".");
-						var new_version_split = self.settings["script"]["update_version"].split(".");
-						var len = (new_version_split.length > current_version_split.length ? new_version_split.length : current_version_split.length);
-						for (var i = 0; i < len; ++i) {
-							if (
-								(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) >
-								(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
-							) {
-								fn();
-								self.settings["script"]["update_found"] = true;
-								break;
+							try {
+								version = GM_getMetadata("version").toString();
+							}
+							catch (e) {
+								version = null;
 							}
 						}
-						// Update settings
-						self.settings_save();
+
+						if (version !== null) {
+							var s = JSON.parse(response);
+							// Settings
+							self.settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
+							self.settings["script"]["update_version"] = s["version"].toString();
+							self.settings["script"]["last_update"] = (new Date()).getTime();
+							self.settings["script"]["update_message"] = (s["message"] || "").toString();
+							// Version compare
+							self.settings["script"]["update_found"] = false;
+							var current_version_split = version.toString().split(".");
+							var new_version_split = self.settings["script"]["update_version"].split(".");
+							var len = (new_version_split.length > current_version_split.length ? new_version_split.length : current_version_split.length);
+							for (var i = 0; i < len; ++i) {
+								if (
+									(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) >
+									(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
+								) {
+									fn();
+									self.settings["script"]["update_found"] = true;
+									break;
+								}
+							}
+							// Update settings
+							self.settings_save();
+						}
 					}
 				}
 			);
@@ -10041,7 +10055,7 @@ $(document).ready(function () {
 			window._unsafe = undefined;
 		}
 	}
-	tag = document.createElement("script");
+	var tag = document.createElement("script");
 	tag.innerHTML = "window._unsafe_exec = " + window._unsafe_exec.toString() + ";";
 	document.body.appendChild(tag);
 	window._unsafe_exec = function (exec_function, data) {

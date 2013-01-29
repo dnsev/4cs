@@ -1,3 +1,6 @@
+1.8.4.3
+- Added a bit of compatability with Chrome's internal userscript manager. Still can't play Youtube videos without Tampermonkey.
+
 1.8.4.2
 - Fixed a bug with DOM replacement, manifested in URL replacement within quotes.
 
