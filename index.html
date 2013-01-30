@@ -1,1 +1,118 @@
-"0" 
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<link rel="shortcut icon" href="favicon.gif" />
+	<link rel="stylesheet" href="style.css" />
+	<title>dnsev / 4cs</title>
+	<script src="jquery.js"></script>
+	<script src="script.js"></script>
+</head>
+<body>
+
+<div class="TitleContainer0">
+	<div class="TitleContainer1"><div class="Title">4cs</div><div class="AuthorContainer"><a class="AuthorLink" href="https://github.com/dnsev">dnsev</a></div>
+	</div><div class="SubTitleSeparator">/</div><div class="SubTitleContainer"><div class="SubTitle">4chan Media Player</div>
+	<div class="SubTitleDescription"><a class="NavigationLink NavigationLinkCurrent" id="navigation_install" href="#">install</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_about" href="https://github.com/dnsev/4cs/wiki">about</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_issues" href="https://github.com/dnsev/4cs/issues">issues</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_source" href="https://github.com/dnsev/4cs">source</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_wiki" href="https://github.com/dnsev/4cs/wiki">wiki</a></div>
+	</div>
+</div>
+
+<div class="TitleBorder"></div>
+<div class="ContentContainer">
+	<div class="Content ContentActive" id="content_install">
+		<div class="ContentHeader Firefox"><span class="ContentHeaderTitle">Firefox</span> / <span class="ContentHeaderTitle">Nightly</span>:</div>
+		<div class="ContentBody Firefox">
+			<ol class="ContentInstructionList">
+				<li>If you don't have <a href="https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/" target="_blank">Greasemonkey</a> or <a href="https://addons.mozilla.org/en-us/firefox/addon/scriptish/" target="_blank">Scriptish</a> installed:<br />
+					<div class="ContentBodyInner">
+						<ol class="ContentInstructionList">
+							<li>Install <a class="InfoLink" href="https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/" target="_blank">Greasemonkey</a><span class="LinkInfo"> (preferred over Scriptish)</span></li>
+							<li>Restart your browser</li>
+						</ol>
+					</div>
+				</li>
+				<li><a class="InstallLink" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">Install 4cs</a></li>
+			</ol>
+			<div class="AfterInstructions">
+				<ul class="ContentInstructionList">
+					<li>Be sure to uninstall any previous userscript players</li>
+				</ul>
+			</div>
+		</div>
+
+		<div class="ContentHeader Chrome"><span class="ContentHeaderTitle">Chrome</span>:</div>
+		<div class="ContentBody Chrome">
+			<ol class="ContentInstructionList">
+				<li>If you don't have <a href="https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank">Tampermonkey</a> installed:<br />
+					<div class="ContentBodyInner">
+						<ol class="ContentInstructionList">
+							<li>Install <a href="https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank">Tampermonkey</a></li>
+							<li>Restart your browser</li>
+						</ol>
+					</div>
+				</li>
+				<li><a class="InstallLink" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">Install 4cs</a> through Tampermonkey</li>
+			</ol>
+			<div class="AfterInstructions">
+				<ul class="ContentInstructionList">
+					<li>Be sure to uninstall any previous userscript players</li>
+				</ul>
+			</div>
+		</div>
+
+		<div class="ContentHeader"><a class="ContentHeaderTitle NonDeveloper" href="#" id="developer_change">For developers</a><span class="ContentHeaderTitle Developer">For developers</span></div>
+		<div class="ContentBodyStub NonDeveloper"></div>
+		<div class="ContentBody Developer">
+			If you want to review the code or modify it yourself, there are 3 versions of the script:
+			<ul class="ContentInstructionList">
+				<li><a href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">4cs.user.js</a>:
+					Stripped comments and whitespace.
+				</li>
+				<li><a href="https://raw.github.com/dnsev/4cs/master/web/4cs.full.user.js">4cs.full.user.js</a>:
+					Nothing stripped, but all in one big file.
+				</li>
+				<li><a href="https://raw.github.com/dnsev/4cs/master/web/4cs.dev.user.js">4cs.dev.user.js</a>:
+					Separated code in different files.
+				</li>
+			</ul>
+			<div class="Chrome SpecificBrowser UniversalBrowser">
+			<p class="Notice">If you are using Chrome + Tampermonkey, it is advisable to not use <a href="https://raw.github.com/dnsev/4cs/master/web/4cs.dev.user.js">4cs.dev.user.js</a> if you plan on modifying it, as Tampermonkey stores userscripts in an odd way.</p>
+			</div>
+		</div>
+
+		<div class="ContentHeader"><a class="ContentHeaderTitle SpecificBrowser" href="#" id="show_all_browser">Browser not shown?</a><span class="ContentHeaderTitle UniversalBrowser">Browser not shown?</span></div>
+		<div class="ContentBody UniversalBrowser">
+			If your browser isn't listed, chances are it's not directly supported. That is, it might work on it, but hasn't been tested on it.
+		</div>
+	</div>
+	<div class="Content" id="content_about">
+		<div class="ContentHeader"><span class="ContentHeaderTitle">About</span>:</div>
+		<div class="ContentBody">
+			<p>The userscript is designed primarily to be an extension to 4chan's image boards, but is designed with modularity in mind.</p>
+			<p>Currently it supports detecting and playing embedded .ogg Vorbis sounds in images, replacing inline URLs, and playing Youtube videos.</p>
+		</div>
+	</div>
+	<div class="Content" id="content_issues">
+		<div class="ContentHeader"><span class="ContentHeaderTitle">Issues</span>:</div>
+		<div class="ContentBody">
+			<p>Issues can be tracked on <a href="https://github.com/dnsev/4cs/issues" target="_blank">this page</a>.</p>
+			<p>If you come across any problems with the script, please refer to the above url and post a new issue.</p>
+			<p>Try to include information about the problem such as browser, userscript plugin (Greasemonkey, Scriptish, Tampermonkey, etc.), and any other userscripts installed which may be conflicting.</p>
+		</div>
+	</div>
+	<div class="Content" id="content_source">
+		<div class="ContentHeader"><span class="ContentHeaderTitle">Source</span>:</div>
+		<div class="ContentBody">
+			<p>Source code is available on <a href="https://github.com/dnsev/4cs" target="_blank">Github</a>.</p>
+		</div>
+	</div>
+	<div class="Content" id="content_wiki">
+		<div class="ContentHeader"><span class="ContentHeaderTitle">Wiki</span>:</div>
+		<div class="ContentBody">
+			<p>Additional project information can be viewed in <a href="https://github.com/dnsev/4cs/wiki" target="_blank">the wiki</a>.</p>
+		</div>
+	</div>
+</div>
+
+</body>
+</html>
