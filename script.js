@@ -167,20 +167,10 @@ var page_browser = new PageBrowser();
 function get_change_log() {
 	var log_url = "https://raw.github.com/dnsev/4cs/master/web/changelog.txt";
 
-	var xhr = new XMLHttpRequest();
-	xhr.open("GET", log_url, true);
-	xhr.responseType = "text";
-	xhr.onload = function (event) {
-		alert(this.status+"\n"+this.response);
-	};
-	xhr.send();
-
-	return;
 	$.ajax({
 		type: "GET",
 		url: log_url,
 		dataType: "text",
-		crossDomain: true,
 		success: function (data, status, jqXHR) {
 			parse_change_log(data);
 		},
@@ -285,7 +275,7 @@ $(document).ready(function () {
 	});
 
 	// Change log
-	get_change_log();
+	if (get_change_log) get_change_log();
 
 	// Page display
 	var hashchange = function (event) {
