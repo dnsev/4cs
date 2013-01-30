@@ -5,6 +5,13 @@ function is_firefox() {
 	return $.browser.mozilla;
 }
 
+function text_to_html(str) {
+	return str.replace(/&/g, "&amp;")
+		.replace(/>/g, "&gt;")
+		.replace(/</g, "&lt;")
+		.replace(/"/g, "&quot;");
+}
+
 function change_developer_display(on) {
 	if (on) {
 		$(".Developer").removeClass("DeveloperDisplayOff").addClass("DeveloperDisplayOn");
@@ -135,7 +142,7 @@ PageBrowser.prototype = {
 		// Which page
 		$(".Content").removeClass("ContentActive");
 		$(".NavigationLink").removeClass("NavigationLinkCurrent");
-		if (page != "about" && page != "issues" && page != "source" && page != "wiki") page = "install";
+		if (page != "about" && page != "issues" && page != "source" && page != "wiki" && page != "changes") page = "install";
 		$("#content_" + page).addClass("ContentActive");
 		$("#navigation_" + page).addClass("NavigationLinkCurrent");
 
@@ -156,21 +163,78 @@ PageBrowser.prototype = {
 };
 var page_browser = new PageBrowser();
 
+// Change log
+function get_change_log() {
+	var log_url = "https://raw.github.com/dnsev/4cs/master/web/changelog.txt";
+	$.ajax({
+		url: log_url,
+		dataType: "text",
+		success: function (data, status, jqXHR) {
+			parse_change_log(data);
+		},
+		error: function (jqXHR, status, error) {
+			$("#change_log").css("display", "");
+		}
+	});
+}
+function parse_change_log(data) {
+	// Parse change log
+	data = data.replace(/\r\n/g, "\n").split("\n\n");
+	var log = [];
+	for (var i = 0; i < data.length; ++i) {
+		data[i] = data[i].trim();
+		if (data[i].length == 0) continue;
+
+		log.push([]);
+		data[i] = data[i].split("\n");
+		for (var j = 0; j < data[i].length; ++j) {
+			if (j == 0) {
+				log[log.length - 1].push(data[i][j]);
+			}
+			else {
+				if (data[i][j][0] == "-") {
+					log[log.length - 1].push(data[i][j].substr(1).trim());
+				}
+				else {
+					log[log.length - 1][log[log.length - 1].length - 1] += "\n" + (data[i][j].substr(1).trim());
+				}
+			}
+		}
+	}
+
+	// Output version
+	$(".Version").html(text_to_html(log[0][0]));
+
+	// Output changelog
+	var cl = $("#change_log");
+	cl.css("display", "");
+	cl.html("");
+	for (var i = 0; i < log.length; ++i) {
+		var list;
+		cl.append(
+			$(document.createElement("div"))
+			.addClass("ChangeLogLabel")
+			.html(text_to_html(log[i][0]) + (i == 0 ? "<span class=\"ChangeLogLabelCurrent\"> (current)</span>" : ""))
+		);
+		cl.append(
+			(list = $(document.createElement("ul")))
+			.addClass("ChangeLogList")
+		);
+		for (var j = 1; j < log[i].length; ++j) {
+			list.append(
+				$(document.createElement("li"))
+				.html(text_to_html(log[i][j]).replace("\n", "<br />"))
+			);
+		}
+	}
+}
+
+
 // Entry
 $(document).ready(function () {
 	$("#show_all_browser").on("click", {}, function (event) {
 		if (event.which == 1) {
 			change_browser_display(true);
-			return false;
-		}
-		return true;
-	});
-	$(".NavigationLink").on("click", {}, function (event) {
-		if (event.which == 1) {
-			window_hash.goto_page(
-				$(this).attr("href")[0] == "#" ? $(this).attr("href").substr(1) : $(this).attr("id").substr("navigation_".length),
-				window_hash.vars
-			);
 			return false;
 		}
 		return true;
@@ -182,7 +246,6 @@ $(document).ready(function () {
 		}
 		return true;
 	});
-
 	$("#hardlink_enable_all,#hardlink_enable_dev").on("click", {}, function (event) {
 		if (event.which == 1) {
 			var ex = {};
@@ -197,7 +260,21 @@ $(document).ready(function () {
 		}
 		return true;
 	});
+	$(".NavigationLink").on("click", {}, function (event) {
+		if (event.which == 1) {
+			window_hash.goto_page(
+				$(this).attr("href")[0] == "#" ? $(this).attr("href").substr(1) : $(this).attr("id").substr("navigation_".length),
+				window_hash.vars
+			);
+			return false;
+		}
+		return true;
+	});
 
+	// Change log
+	get_change_log();
+
+	// Page display
 	var hashchange = function (event) {
 		window_hash.on_change(event);
 		page_browser.open(window_hash.page, window_hash.vars, event===null);

@@ -11,6 +11,9 @@ ol, ul {
 	margin: 0px;
 	padding: 0px;
 }
+ol {
+	list-style-type: decimal;
+}
 p {
 	margin: 0px;
 	padding: 0px;
@@ -53,20 +56,20 @@ p + p {
 	display: none !important;
 }
 
-.TitleContainer0 {
+.TitleContainer {
 	text-align: center;
 	background: #1c7bb1;
 	padding: 16px 0px 32px 0px;
 	overflow: hidden;
 }
-.TitleContainer1 {
+.TitleContainerInner {
 	position: relative;
 	display: inline-block;
 }
 .AuthorContainer {
 	display: inline-block;
 	position: absolute;
-	top: 0;
+	top: 10px;
 	right: 0;
 }
 a.AuthorLink, a.AuthorLink:visited {
@@ -148,6 +151,16 @@ a.NavigationLink:hover {
 a.NavigationLink:active {
 	color: #ffffff;
 	text-decoration: underline !important;
+}
+.Version {
+	position: absolute;
+	right: 0;
+	top: 0;
+
+	color: #72b8e1;
+	text-shadow: 0px 2px 0px rgba(0,0,0,0.5);
+	font-weight: bold;
+	font-size: 20px;
 }
 
 .TitleBorder {
@@ -245,3 +258,22 @@ a.InstallLink:active {
 	text-decoration: none !important;
 	border-bottom: 1px solid #034063 !important;
 }
+
+.ChangeLogLabel {
+	font-weight: bold;
+	font-style: italic;
+}
+.ChangeLogLabelCurrent {
+	font-weight: normal !important;
+}
+.ChangeLogList {
+	font-size: 18px;
+	margin: 2px 0px 2px 32px;
+}
+.ChangeLogList li {
+	padding: 1px 0px 1px 0px;
+}
+.ChangeLogList + .ChangeLogLabel {
+	padding-top: 16px;
+}
+
