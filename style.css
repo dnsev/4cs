@@ -24,14 +24,33 @@ p + p {
 .Firefox {
 }
 .SpecificBrowser {
-	display: none;
 }
 .UniversalBrowser {
 }
+.BrowserDisplayOn {
+}
+.BrowserDisplayOff {
+	display: none !important;
+}
+
 .Developer {
 }
 .NonDeveloper {
-	display: none;
+}
+.DeveloperDisplayOn {
+}
+.DeveloperDisplayOff {
+	display: none !important;
+}
+
+.PageVariableDisplay {
+}
+.PageVariableDisplayInv {
+}
+.PageVariableDisplayOn {
+}
+.PageVariableDisplayOff {
+	display: none !important;
 }
 
 .TitleContainer0 {
@@ -157,6 +176,10 @@ a.NavigationLink:active {
 }
 .ContentHeaderTitle {
 	font-weight: bold;
+}
+.ContentHeaderSeparator {
+	display: inline-block;
+	padding: 0px 6px 0px 6px;
 }
 .ContentBody {
 	color: #034063;

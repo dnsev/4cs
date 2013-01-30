@@ -13,7 +13,7 @@
 <div class="TitleContainer0">
 	<div class="TitleContainer1"><a class="Title" href="">4cs</a><div class="AuthorContainer"><a class="AuthorLink" href="https://github.com/dnsev">dnsev</a></div>
 	</div><div class="SubTitleSeparator">/</div><div class="SubTitleContainer"><div class="SubTitle">4chan Media Player</div>
-	<div class="SubTitleDescription"><a class="NavigationLink NavigationLinkCurrent" id="navigation_install" href="#">install</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_about" href="https://github.com/dnsev/4cs/wiki">about</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_issues" href="https://github.com/dnsev/4cs/issues">issues</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_source" href="https://github.com/dnsev/4cs">source</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_wiki" href="https://github.com/dnsev/4cs/wiki">wiki</a></div>
+	<div class="SubTitleDescription"><a class="NavigationLink NavigationLinkCurrent" id="navigation_install" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">install</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_about" href="https://github.com/dnsev/4cs/wiki">about</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_issues" href="https://github.com/dnsev/4cs/issues">issues</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_source" href="https://github.com/dnsev/4cs">source</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_wiki" href="https://github.com/dnsev/4cs/wiki">wiki</a></div>
 	</div>
 </div>
 
@@ -60,7 +60,7 @@
 			</div>
 		</div>
 
-		<div class="ContentHeader"><a class="ContentHeaderTitle NonDeveloper" href="#" id="developer_change">For developers</a><span class="ContentHeaderTitle Developer">For developers</span></div>
+		<div class="ContentHeader"><a class="ContentHeaderTitle NonDeveloper DeveloperDisplayOff" href="#" id="developer_change">For developers</a><span class="ContentHeaderTitle Developer">For developers</span><span class="PageVariableDisplayInv" pvar="dev">:</span><span class="Developer PageVariableDisplay PageVariableDisplayOff" pvar="dev"><span class="ContentHeaderSeparator">/</span><a href="#" id="hardlink_enable_dev">Hardlink</a></span></div>
 		<div class="ContentBodyStub NonDeveloper"></div>
 		<div class="ContentBody Developer">
 			If you want to review the code or modify it yourself, there are 3 versions of the script:
@@ -80,9 +80,10 @@
 			</div>
 		</div>
 
-		<div class="ContentHeader"><a class="ContentHeaderTitle SpecificBrowser" href="#" id="show_all_browser">Browser not shown?</a><span class="ContentHeaderTitle UniversalBrowser">Browser not shown?</span></div>
+		<div class="ContentHeader"><a class="ContentHeaderTitle SpecificBrowser BrowserDisplayOff" href="#" id="show_all_browser">Browser not shown?</a><span class="ContentHeaderTitle UniversalBrowser">Browser not shown</span><span class="PageVariableDisplayInv" pvar="all">:</span><span class="UniversalBrowser PageVariableDisplay PageVariableDisplayOff" pvar="all"><span class="ContentHeaderSeparator">/</span><a href="#" id="hardlink_enable_all">Hardlink</a></span></div>
 		<div class="ContentBody UniversalBrowser">
-			If your browser isn't listed, chances are it's not directly supported. That is, it might work on it, but hasn't been tested on it.
+			<p>If your browser isn't listed, chances are it's not directly supported. That is, it might work on it, but hasn't been tested on it.</p>
+			<p>You can try using it in your browser, but there is no guarantee it will work. If you find problems with it, create an issue report.</p>
 		</div>
 	</div>
 	<div class="Content" id="content_about">
@@ -97,7 +98,7 @@
 		<div class="ContentBody">
 			<p>Issues can be tracked on <a href="https://github.com/dnsev/4cs/issues" target="_blank">this page</a>.</p>
 			<p>If you come across any problems with the script, please refer to the above url and post a new issue.</p>
-			<p>Try to include information about the problem such as browser, userscript plugin (Greasemonkey, Scriptish, Tampermonkey, etc.), and any other userscripts installed which may be conflicting.</p>
+			<p>Try to include information about the problem such as browser, userscript plugin (Greasemonkey, Scriptish, Tampermonkey, etc.), any other userscripts installed which may be conflicting, and a description of the problem.</p>
 		</div>
 	</div>
 	<div class="Content" id="content_source">

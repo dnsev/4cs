@@ -7,32 +7,32 @@ function is_firefox() {
 
 function change_developer_display(on) {
 	if (on) {
-		$(".Developer").css("display", "block");
-		$(".NonDeveloper").css("display", "none");
+		$(".Developer").removeClass("DeveloperDisplayOff").addClass("DeveloperDisplayOn");
+		$(".NonDeveloper").removeClass("DeveloperDisplayOn").addClass("DeveloperDisplayOff");
 	}
 	else {
-		$(".NonDeveloper").css("display", "block");
-		$(".Developer").css("display", "none");
+		$(".NonDeveloper").removeClass("DeveloperDisplayOff").addClass("DeveloperDisplayOn");
+		$(".Developer").removeClass("DeveloperDisplayOn").addClass("DeveloperDisplayOff");
 	}
 }
 function change_browser_display(show_all) {
 	if (!show_all && is_chrome()) {
-		$(".SpecificBrowser").css("display", "block");
-		$(".Firefox").css("display", "none");
-		$(".UniversalBrowser").css("display", "none");
-		$(".Chrome").css("display", "block");
+		$(".SpecificBrowser").removeClass("BrowserDisplayOff").addClass("BrowserDisplayOn");
+		$(".Firefox").removeClass("BrowserDisplayOn").addClass("BrowserDisplayOff");
+		$(".UniversalBrowser").removeClass("BrowserDisplayOn").addClass("BrowserDisplayOff");
+		$(".Chrome").removeClass("BrowserDisplayOff").addClass("BrowserDisplayOn");
 	}
 	else if (!show_all && is_firefox()) {
-		$(".SpecificBrowser").css("display", "block");
-		$(".Chrome").css("display", "none");
-		$(".UniversalBrowser").css("display", "none");
-		$(".Firefox").css("display", "block");
+		$(".SpecificBrowser").removeClass("BrowserDisplayOff").addClass("BrowserDisplayOn");
+		$(".Chrome").removeClass("BrowserDisplayOn").addClass("BrowserDisplayOff");
+		$(".UniversalBrowser").removeClass("BrowserDisplayOn").addClass("BrowserDisplayOff");
+		$(".Firefox").removeClass("BrowserDisplayOff").addClass("BrowserDisplayOn");
 	}
 	else {
-		$(".Firefox").css("display", "block");
-		$(".Chrome").css("display", "block");
-		$(".SpecificBrowser").css("display", "none");
-		$(".UniversalBrowser").css("display", "block");
+		$(".Firefox").removeClass("BrowserDisplayOff").addClass("BrowserDisplayOn");
+		$(".Chrome").removeClass("BrowserDisplayOff").addClass("BrowserDisplayOn");
+		$(".SpecificBrowser").removeClass("BrowserDisplayOn").addClass("BrowserDisplayOff");
+		$(".UniversalBrowser").removeClass("BrowserDisplayOff").addClass("BrowserDisplayOn");
 	}
 }
 
@@ -46,80 +46,82 @@ function WindowHash() {
 	this.history = [];
 	this.history_index = -1;
 };
-WindowHash.prototype.on_change = function (event) {
-	if (this.hash == window.location.hash) return;
+WindowHash.prototype = {
+	constructor: WindowHash,
+	on_change: function (event) {
+		if (this.hash == window.location.hash) return;
 
-	// Get the new hash
-//	this.hash = decodeURIComponent(window.location.href).split("#");
-//	this.hash = this.hash.splice(1, this.hash.length - 1).join("#");
-	this.hash = window.location.hash;
-	if (this.hash.length > 0) this.hash = this.hash.substr(1);
+		// Get the new hash
+		this.hash = window.location.hash;
+		if (this.hash.length > 0) this.hash = this.hash.substr(1);
 
-	// Get the page
-	var h = this.hash.split("?");
-	this.page = h[0];
+		// Get the page
+		var h = this.hash.split("?");
+		this.page = h[0];
 
-	// Get any variables
-	this.vars = {};
-	h = h.splice(1, h.length - 1).join("?").split("&");
-	for (var i = 0; i < h.length; ++i) {
-		if (h[i].length == 0) continue;
-		var p = h[i].split("=");
-		this.vars[p[0]] = (p.length == 1) ? null : p.splice(1, p.length - 1).join("=");
-	}
-
-	// History update
-	if (this.history_mode == 0) {
-		if (this.history_index < this.history.length - 1) {
-			this.history.splice(this.history_index, this.history.length - 1 - this.history_index);
+		// Get any variables
+		this.vars = {};
+		h = h.splice(1, h.length - 1).join("?").split("&");
+		for (var i = 0; i < h.length; ++i) {
+			if (h[i].length == 0) continue;
+			var p = h[i].split("=");
+			this.vars[p[0]] = (p.length == 1) ? null : p.splice(1, p.length - 1).join("=");
 		}
-		this.history.push([this.hash , this.page , this.vars]);
-		++this.history_index;
-	}
-	else {
-		this.history_index += this.history_mode;
-		alert(this.history[this.history_index][0] + "\n" + this.hash);
-	}
-};
-WindowHash.prototype.goto_page = function (page, vars) {
-	page = page || "";
-	vars = vars || {};
 
-	var i = 0;
-	for (var v in vars) {
-		page += (i == 0 ? "?" : "&") + v + "=" + vars[v];
-		i += 1;
-	}
+		// History update
+		if (this.history_mode == 0) {
+			if (this.history_index < this.history.length - 1) {
+				this.history.splice(this.history_index, this.history.length - 1 - this.history_index);
+			}
+			this.history.push([this.hash , this.page , this.vars]);
+			++this.history_index;
+		}
+		else {
+			this.history_index += this.history_mode;
+			alert(this.history[this.history_index][0] + "\n" + this.hash);
+		}
+	},
+	goto_page: function (page, vars) {
+		page = page || "";
 
-	window.location.hash = page;
-};
-WindowHash.prototype.has_previous = function () {
-	return (this.history_index > 0);
-};
-WindowHash.prototype.goto_previous = function () {
-	if (this.history_index > 0) {
-		this.history_mode = -1;
-		window.location.hash = this.history[this.history_index - 1][0];
-		this.on_change();
-		this.history_mode = 0;
+		var i = 0;
+		for (var a = 1; a < arguments.length; ++a) {
+			for (var v in arguments[a]) {
+				page += (i == 0 ? "?" : "&") + v + (arguments[a][v] === null ? "" : "=" + arguments[a][v]);
+				++i;
+			}
+		}
 
-		return true;
-	}
-	return false;
-};
-WindowHash.prototype.has_next = function () {
-	return (this.history_index < this.history.length - 1);
-};
-WindowHash.prototype.goto_next = function () {
-	if (this.history_index < this.history.length - 1) {
-		this.history_mode = 1;
-		window.location.hash = this.history[this.history_index + 1][0];
-		this.on_change();
-		this.history_mode = 0;
+		window.location.hash = page;
+	},
+	has_previous: function () {
+		return (this.history_index > 0);
+	},
+	goto_previous: function () {
+		if (this.history_index > 0) {
+			this.history_mode = -1;
+			window.location.hash = this.history[this.history_index - 1][0];
+			this.on_change();
+			this.history_mode = 0;
 
-		return true;
+			return true;
+		}
+		return false;
+	},
+	has_next: function () {
+		return (this.history_index < this.history.length - 1);
+	},
+	goto_next: function () {
+		if (this.history_index < this.history.length - 1) {
+			this.history_mode = 1;
+			window.location.hash = this.history[this.history_index + 1][0];
+			this.on_change();
+			this.history_mode = 0;
+
+			return true;
+		}
+		return false;
 	}
-	return false;
 };
 var window_hash = new WindowHash();
 
@@ -127,21 +129,35 @@ var window_hash = new WindowHash();
 function PageBrowser() {
 
 }
-PageBrowser.prototype.open = function (page, vars, refresh) {
-	// Which page
-	$(".Content").removeClass("ContentActive");
-	$(".NavigationLink").removeClass("NavigationLinkCurrent");
-	if (page != "about" && page != "issues" && page != "source" && page != "wiki") page = "install";
-	$("#content_" + page).addClass("ContentActive");
-	$("#navigation_" + page).addClass("NavigationLinkCurrent");
+PageBrowser.prototype = {
+	constructor: PageBrowser,
+	open: function (page, vars, refresh) {
+		// Which page
+		$(".Content").removeClass("ContentActive");
+		$(".NavigationLink").removeClass("NavigationLinkCurrent");
+		if (page != "about" && page != "issues" && page != "source" && page != "wiki") page = "install";
+		$("#content_" + page).addClass("ContentActive");
+		$("#navigation_" + page).addClass("NavigationLinkCurrent");
+
+		change_developer_display(("dev" in vars));
+		change_browser_display(("all" in vars));
+
+		$(".PageVariableDisplay").each(function () {
+			$(this)
+			.removeClass("PageVariableDisplayOn PageVariableDisplayOff")
+			.addClass("PageVariableDisplay" + (($(this).attr("pvar") in vars) ? "Off" : "On"));
+		});
+		$(".PageVariableDisplayInv").each(function () {
+			$(this)
+			.removeClass("PageVariableDisplayOn PageVariableDisplayOff")
+			.addClass("PageVariableDisplay" + (($(this).attr("pvar") in vars) ? "On" : "Off"));
+		});
+	}
 };
 var page_browser = new PageBrowser();
 
 // Entry
 $(document).ready(function () {
-	change_browser_display(false);
-	change_developer_display(false);
-
 	$("#show_all_browser").on("click", {}, function (event) {
 		if (event.which == 1) {
 			change_browser_display(true);
@@ -150,16 +166,33 @@ $(document).ready(function () {
 		return true;
 	});
 	$(".NavigationLink").on("click", {}, function (event) {
-		if (event.which == 1 && $(this).attr("href")[0] != "#") {
-			window.location.hash = "#" + $(this).attr("id").substr("navigation_".length);
+		if (event.which == 1) {
+			window_hash.goto_page(
+				$(this).attr("href")[0] == "#" ? $(this).attr("href").substr(1) : $(this).attr("id").substr("navigation_".length),
+				window_hash.vars
+			);
+			return false;
+		}
+		return true;
+	});
+	$("#developer_change").on("click", {}, function (event) {
+		if (event.which == 1) {
+			change_developer_display(true);
 			return false;
 		}
 		return true;
 	});
 
-	$("#developer_change").on("click", {}, function (event) {
+	$("#hardlink_enable_all,#hardlink_enable_dev").on("click", {}, function (event) {
 		if (event.which == 1) {
-			change_developer_display(true);
+			var ex = {};
+			var v = $(this).attr("id").substr("hardlink_enable_".length);
+			if (!(v in window_hash.vars)) ex[v] = null;
+			window_hash.goto_page(
+				window_hash.page,
+				window_hash.vars,
+				ex
+			);
 			return false;
 		}
 		return true;
