@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.8.4.3
+// @version        1.8.4.4
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -2843,6 +2843,14 @@ $(document).ready(function () {
 
 	// Update check once a day
 	script.update_check_interval(1000 * 60 * 60 * 24);
+
+	// Stylesheet
+	$("head").append(
+		E("style")
+		.html(
+			"a.SPLoadLink,a.SPLoadLink:visited{color: inherit;}"
+		)
+	);
 });
 
 
