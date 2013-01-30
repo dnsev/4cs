@@ -4,6 +4,8 @@ body {
 	font-family: Verdana;
 	font-size: 16px;
 	background: #eff4f8;
+	overflow-x: auto;
+	overflow-y: scroll;
 }
 ol, ul {
 	margin: 0px;
