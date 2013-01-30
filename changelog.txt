@@ -1,0 +1,20 @@
+1.8.4.4
+- Made [tag] links colored a bit differently.
+
+1.8.4.3
+- Added a bit of compatability with Chrome's internal userscript manager. Still can't play Youtube videos without Tampermonkey.
+
+1.8.4.2
+- Fixed a bug with DOM replacement, manifested in URL replacement within quotes.
+
+1.8.4.1
+- Fixed smart URL replacement. (always returned true)
+
+1.8.4
+- Fixed a bug where sounds with headers that aren't OggS won't play.
+
+1.8.3.2
+- Fixed [tags] in quotes for real.
+
+1.8.3.1
+- Fixed [tags] in quotes.

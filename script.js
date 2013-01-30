@@ -165,7 +165,7 @@ var page_browser = new PageBrowser();
 
 // Change log
 function get_change_log() {
-	var log_url = "https://raw.github.com/dnsev/4cs/master/web/changelog.txt";
+	var log_url = "changelog.txt";
 
 	$.ajax({
 		type: "GET",
