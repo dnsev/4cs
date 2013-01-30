@@ -175,7 +175,6 @@ function get_change_log() {
 			parse_change_log(data);
 		},
 		error: function (jqXHR, status, error) {
-			alert(status+","+error+";");
 			$("#change_log").css("display", "");
 		}
 	});
@@ -275,7 +274,7 @@ $(document).ready(function () {
 	});
 
 	// Change log
-	if (get_change_log) get_change_log();
+	get_change_log();
 
 	// Page display
 	var hashchange = function (event) {
