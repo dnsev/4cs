@@ -166,6 +166,16 @@ var page_browser = new PageBrowser();
 // Change log
 function get_change_log() {
 	var log_url = "https://raw.github.com/dnsev/4cs/master/web/changelog.txt";
+
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", url, true);
+	xhr.responseType = "text";
+	xhr.onload = function (event) {
+		alert(this.status+"\n"+this.response);
+	};
+	xhr.send();
+
+	return;
 	$.ajax({
 		type: "GET",
 		url: log_url,
