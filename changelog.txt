@@ -1,3 +1,6 @@
+1.8.4.5
+- Updated to JQuery 1.9.0.
+
 1.8.4.4
 - Made [tag] links colored a bit differently.
 
