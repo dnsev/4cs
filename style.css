@@ -168,7 +168,8 @@ a.NavigationLink:active {
 	color: #ffffff;
 	text-decoration: underline !important;
 }
-.Version {
+a.Version, a.Version:visited, a.Version:hover, a.Version:active {
+	display: block;
 	position: absolute;
 	right: 0;
 	top: 0;
@@ -177,6 +178,15 @@ a.NavigationLink:active {
 	text-shadow: 0px 2px 0px rgba(0,0,0,0.5);
 	font-weight: bold;
 	font-size: 20px;
+	text-decoration: none;
+}
+.VersionBehind {
+	color: #bddef1 !important;
+}
+.VersionAhead {
+	color: #bddef1 !important;
+}
+.VersionSame {
 }
 
 .TitleBorder {

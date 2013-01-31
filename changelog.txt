@@ -1,3 +1,6 @@
+1.8.4.6
+- Version update checking uses the change log now.
+
 1.8.4.5
 - Updated to JQuery 1.9.0.
 

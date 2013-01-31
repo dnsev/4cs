@@ -193,6 +193,7 @@ PageBrowser.prototype = {
 var page_browser = new PageBrowser();
 
 // Change log
+var change_log_version = null;
 function get_change_log() {
 	var log_url = "changelog.txt";
 
@@ -237,7 +238,8 @@ function parse_change_log(data) {
 }
 function display_change_log(log) {
 	// Output version
-	$(".Version").html(text_to_html(log[0][0]));
+	change_log_version = log[0][0];
+	$(".Version").html(text_to_html(change_log_version));
 
 	// Output changelog
 	var cl = $("#change_log");
@@ -261,6 +263,9 @@ function display_change_log(log) {
 			);
 		}
 	}
+
+	// Compare
+	version_compare();
 }
 
 // Title management
@@ -350,7 +355,52 @@ function image_preview_close(img) {
 }
 
 // Version check
+var current_version = null;
 function version_check(version) {
+	if (typeof(version) == typeof("")) {
+		current_version = version;
+
+		version_compare();
+	}
+}
+function version_compare() {
+	// Only compare if both versions are available
+	if (current_version === null || current_version === null) return;
+
+	// Compare
+	var current_version_split = current_version.toString().split(".");
+	var new_version_split = change_log_version.split(".");
+	var len = (new_version_split.length > current_version_split.length ? new_version_split.length : current_version_split.length);
+	for (var i = 0; i < len; ++i) {
+		if (
+			(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) >
+			(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
+		) {
+			// Behind
+			$(".Version")
+			.addClass("VersionBehind")
+			.attr("title", "Your version is behind (at " + current_version + ")")
+			.html(text_to_html(change_log_version));
+			break;
+		}
+		else if (
+			(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) <
+			(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
+		) {
+			// Ahead
+			$(".Version")
+			.addClass("VersionAhead")
+			.attr("title", "Your version is ahead (of " + change_log_version + ")")
+			.html("*" + text_to_html(current_version));
+			break;
+		}
+	}
+	if (i == len) { // Same
+		$(".Version")
+		.addClass("VersionSame")
+		.attr("title", "Your version is up to date")
+		.html(text_to_html(change_log_version));
+	}
 }
 
 // Entry
