@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.8.4.4
+// @version        1.8.4.5
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
