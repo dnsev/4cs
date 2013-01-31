@@ -2,7 +2,7 @@ function is_chrome() {
 	return ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
 }
 function is_firefox() {
-	return $.browser.mozilla;
+	return ((navigator.userAgent + "").indexOf("Mozilla/") >= 0);
 }
 
 function text_to_html(str) {
