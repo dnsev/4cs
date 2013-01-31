@@ -6,7 +6,6 @@
 	<link rel="stylesheet" href="style.css" />
 	<title>dnsev / 4cs</title>
 	<script src="jquery.js"></script>
-	<script src="https://raw.github.com/dnsev/4cs/master/web/changelog.js"></script>
 	<script src="script.js"></script>
 </head>
 <body>
@@ -64,19 +63,19 @@
 		<div class="ContentHeader"><a class="ContentHeaderTitle NonDeveloper DeveloperDisplayOff" href="#" id="developer_change">For developers</a><span class="ContentHeaderTitle Developer">For developers</span><span class="PageVariableDisplayInv" pvar="dev">:</span><span class="Developer PageVariableDisplay PageVariableDisplayOff" pvar="dev"><span class="ContentHeaderSeparator">/</span><a href="#" id="hardlink_enable_dev">Hardlink</a></span></div>
 		<div class="ContentBodyStub NonDeveloper"></div>
 		<div class="ContentBody Developer">
-			If you want to review the code or modify it yourself, there are 3 versions of the script:
+			If you want to review the code or modify it yourself, there are <span class="Firefox UniversalBrowser">3</span><span class="SpecificBrowser Chrome BrowserDisplayOff">2</span> versions of the script:
 			<ul class="ContentInstructionList">
-				<li><a href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">4cs.user.js</a>:
+				<li><a class="InstallLink" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">4cs.user.js</a>:
 					Stripped comments and whitespace.
 				</li>
-				<li><a href="https://raw.github.com/dnsev/4cs/master/web/4cs.full.user.js">4cs.full.user.js</a>:
+				<li><a class="InstallLink" href="https://raw.github.com/dnsev/4cs/master/web/4cs.full.user.js">4cs.full.user.js</a>:
 					Nothing stripped, but all in one big file.
 				</li>
-				<li><a href="https://raw.github.com/dnsev/4cs/master/web/4cs.dev.user.js">4cs.dev.user.js</a>:
+				<li class="Firefox UniversalBrowser"><a class="InstallLink" href="https://raw.github.com/dnsev/4cs/master/web/4cs.dev.user.js">4cs.dev.user.js</a>:
 					Separated code in different files.
 				</li>
 			</ul>
-			<div class="Chrome SpecificBrowser UniversalBrowser">
+			<div class="UniversalBrowser">
 			<p class="Notice">If you are using Chrome + Tampermonkey, it is advisable to not use <a href="https://raw.github.com/dnsev/4cs/master/web/4cs.dev.user.js">4cs.dev.user.js</a> if you plan on modifying it, as Tampermonkey stores userscripts in an odd way.</p>
 			</div>
 		</div>

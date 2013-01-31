@@ -61,6 +61,8 @@ p + p {
 	background: #1c7bb1;
 	padding: 16px 0px 32px 0px;
 	overflow: hidden;
+	position: relative;
+	z-index: 1;
 }
 .TitleContainerInner {
 	position: relative;
@@ -136,8 +138,9 @@ a.Title, a.Title:visited, a.Title:hover, a.Title:active {
 	vertical-align: middle;
 	font-size: 16px;
 }
-a.NavigationLinkCurrent {
+a.NavigationLinkCurrent.NavigationLink, a.NavigationLinkCurrent.NavigationLink:visited {
 	text-decoration: underline !important;
+	color: #ddecf8;
 }
 a.NavigationLink, a.NavigationLink:visited {
 	color: #bddef1;
@@ -247,6 +250,7 @@ a.InstallLink, a.InstallLink:visited {
 	color: #1c7bb1;
 	text-decoration: none !important;
 	border-bottom: 1px dashed #1c7bb1;
+	margin-bottom: -1px;
 }
 a.InstallLink:hover {
 	color: #034063;
