@@ -1,3 +1,4 @@
+// Basic functions
 function is_chrome() {
 	return ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
 }
@@ -200,7 +201,7 @@ function get_change_log() {
 		url: log_url,
 		dataType: "text",
 		success: function (data, status, jqXHR) {
-			parse_change_log(data);
+			display_change_log(parse_change_log(data));
 		},
 		error: function (jqXHR, status, error) {
 			$("#change_log").css("display", "");
@@ -232,6 +233,9 @@ function parse_change_log(data) {
 		}
 	}
 
+	return log;
+}
+function display_change_log(log) {
 	// Output version
 	$(".Version").html(text_to_html(log[0][0]));
 
@@ -343,6 +347,10 @@ function image_preview_close(img) {
 	$(".ImagePreviewOverlay")
 	.off("click")
 	.css("display", "");
+}
+
+// Version check
+function version_check(version) {
 }
 
 // Entry
