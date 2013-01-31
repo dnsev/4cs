@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.8.4.6
+// @version        1.8.4.7
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -15,6 +15,7 @@
 // @icon           data:image/gif;base64,R0lGODlhEAAQAKECAAAAAGbMM////////yH5BAEKAAIALAAAAAAQABAAAAIllI+pB70KQgAPNUmroDHX7Gie95AkpCUn1ISlhKVR/MEre6dLAQA7
 // @require        https://raw.github.com/dnsev/4cs/master/web/jquery.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/jquery.svg.pack.js
+// @require        https://raw.github.com/dnsev/4cs/master/web/froogaloop.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/zlib.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/png.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/Loop.js
