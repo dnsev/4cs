@@ -13,7 +13,7 @@
 <div class="TitleContainer">
 	<div class="TitleContainerInner"><a class="Title" href="">4cs</a><div class="AuthorContainer"><a class="AuthorLink" href="https://github.com/dnsev">dnsev</a></div>
 	</div><div class="SubTitleSeparator">/</div><div class="TitleContainerInner"><div class="SubTitleContainer"><div class="SubTitle">4chan Media Player</div><div class="Version"></div></div>
-	<div class="SubTitleDescription"><a class="NavigationLink NavigationLinkCurrent" id="navigation_install" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">install</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_about" href="https://github.com/dnsev/4cs/wiki">about</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_changes" href="changelog.txt">changes</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_issues" href="https://github.com/dnsev/4cs/issues">issues</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_source" href="https://github.com/dnsev/4cs">source</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_wiki" href="https://github.com/dnsev/4cs/wiki">wiki</a></div>
+	<div class="SubTitleDescription"><a class="NavigationLink NavigationLinkCurrent" id="navigation_install" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">install</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_changes" href="changelog.txt">changes</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_issues" href="https://github.com/dnsev/4cs/issues">issues</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_source" href="https://github.com/dnsev/4cs">source</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_about" href="#about">about</a></div>
 	</div>
 </div>
 
@@ -33,11 +33,6 @@
 				</li>
 				<li><a class="InstallLink" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">Install 4cs</a></li>
 			</ol>
-			<div class="AfterInstructions">
-				<ul class="ContentInstructionList">
-					<li>Be sure to uninstall any previous userscript players</li>
-				</ul>
-			</div>
 		</div>
 
 		<div class="ContentHeader Chrome"><span class="ContentHeaderTitle">Chrome</span>:</div>
@@ -53,17 +48,12 @@
 				</li>
 				<li><a class="InstallLink" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">Install 4cs</a> through Tampermonkey</li>
 			</ol>
-			<div class="AfterInstructions">
-				<ul class="ContentInstructionList">
-					<li>Be sure to uninstall any previous userscript players</li>
-				</ul>
-			</div>
 		</div>
 
-		<div class="ContentHeader"><a class="ContentHeaderTitle NonDeveloper DeveloperDisplayOff" href="#" id="developer_change">For developers</a><span class="ContentHeaderTitle Developer">For developers</span><span class="PageVariableDisplayInv" pvar="dev">:</span><span class="Developer PageVariableDisplay PageVariableDisplayOff" pvar="dev"><span class="ContentHeaderSeparator">/</span><a href="#" id="hardlink_enable_dev">Hardlink</a></span></div>
-		<div class="ContentBodyStub NonDeveloper"></div>
+		<div class="ContentHeader"><a class="ContentHeaderTitle NonDeveloper DeveloperDisplayOff" href="#" id="developer_change">For developers...</a><span class="ContentHeaderTitle Developer">For developers</span><span class="PageVariableDisplayInv" pvar="dev">:</span><span class="Developer PageVariableDisplay PageVariableDisplayOff" pvar="dev"><span class="HardlinkSeparator">/</span><a class="Hardlink" href="#" id="hardlink_enable_dev">Hardlink</a></span></div>
+		<div class="ContentBodyStub NonDeveloper DeveloperDisplayOff"></div>
 		<div class="ContentBody Developer">
-			If you want to review the code or modify it yourself, there are <span class="Firefox UniversalBrowser">3</span><span class="SpecificBrowser Chrome BrowserDisplayOff">2</span> versions of the script:
+			<p>If you want to review the code or modify it yourself, there are <span class="Firefox UniversalBrowser">3</span><span class="SpecificBrowser Chrome BrowserDisplayOff">2</span> versions of the script:</p>
 			<ul class="ContentInstructionList">
 				<li><a class="InstallLink" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">4cs.user.js</a>:
 					Stripped comments and whitespace.
@@ -75,26 +65,29 @@
 					Separated code in different files.
 				</li>
 			</ul>
-			<div class="UniversalBrowser">
-			<p class="Notice">If you are using Chrome + Tampermonkey, it is advisable to not use <a href="https://raw.github.com/dnsev/4cs/master/web/4cs.dev.user.js">4cs.dev.user.js</a> if you plan on modifying it, as Tampermonkey stores userscripts in an odd way.</p>
-			</div>
+			<p class="UniversalBrowser Notice">
+			If you are using Chrome + Tampermonkey, it is advisable to not use <a href="https://raw.github.com/dnsev/4cs/master/web/4cs.dev.user.js">4cs.dev.user.js</a> if you plan on modifying it, as Tampermonkey stores userscripts in an odd way.</p>
 		</div>
 
-		<div class="ContentHeader"><a class="ContentHeaderTitle SpecificBrowser BrowserDisplayOff" href="#" id="show_all_browser">Browser not shown?</a><span class="ContentHeaderTitle UniversalBrowser">Browser not shown</span><span class="PageVariableDisplayInv" pvar="all">:</span><span class="UniversalBrowser PageVariableDisplay PageVariableDisplayOff" pvar="all"><span class="ContentHeaderSeparator">/</span><a href="#" id="hardlink_enable_all">Hardlink</a></span></div>
+		<div class="ContentHeader"><a class="ContentHeaderTitle SpecificBrowser BrowserDisplayOff" href="#" id="show_all_browser">Browser not shown...</a><span class="ContentHeaderTitle UniversalBrowser">Browser not shown</span><span class="PageVariableDisplayInv" pvar="all">:</span><span class="UniversalBrowser PageVariableDisplay PageVariableDisplayOff" pvar="all"><span class="HardlinkSeparator">/</span><a class="Hardlink" href="#" id="hardlink_enable_all">Hardlink</a></span></div>
+		<div class="ContentBodyStub SpecificBrowser BrowserDisplayOff"></div>
 		<div class="ContentBody UniversalBrowser">
 			<p>If your browser isn't listed, chances are it's not directly supported. That is, it might work on it, but hasn't been tested on it.</p>
 			<p>You can try using it in your browser, but there is no guarantee it will work. If you find problems with it, create an issue report.</p>
 		</div>
-	</div>
-	<div class="Content" id="content_about">
-		<div class="ContentHeader"><span class="ContentHeaderTitle">About</span>:</div>
-		<div class="ContentBody">
-			<p>The userscript is designed primarily to be an extension to 4chan's image boards, but is designed with modularity in mind.</p>
-			<p>Currently it supports detecting and playing embedded .ogg Vorbis sounds in images, replacing inline URLs, and playing Youtube videos.</p>
+
+		<div class="ContentHeader"><a class="ContentHeaderTitle NoHelp HelpDisplayOff" href="#" id="help_change">Userscript not working...</a><span class="ContentHeaderTitle Help">Userscript not working</span><span class="PageVariableDisplayInv" pvar="help">:</span><span class="Help PageVariableDisplay PageVariableDisplayOff" pvar="help"><span class="HardlinkSeparator">/</span><a class="Hardlink" href="#" id="hardlink_enable_help">Hardlink</a></span></div>
+		<div class="ContentBody Help">
+			<ul class="ContentInstructionList">
+				<li>Be sure to uninstall any previous userscript players</li>
+				<li>If you use NoScript, be sure to allow scripts</li>
+				<li class="Firefox">If you use <a href="https://addons.mozilla.org/en-us/firefox/addon/scriptish/" target="_blank">Scriptish</a>, try using <a href="https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/" target="_blank">Greasemonkey</a></li>
+				<li class="Chrome">If you aren't using <a href="https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank">Tampermonkey</a>, try using it</li>
+			</ul>
 		</div>
 	</div>
 	<div class="Content" id="content_changes">
-		<div class="ContentHeader"><span class="ContentHeaderTitle">Changes</span>:</div>
+		<div class="ContentHeader"><span class="ContentHeaderTitle">Change log</span>:</div>
 		<div class="ContentBody" id="change_log" style="display: none;">
 			Change log could not be loaded.
 		</div>
@@ -119,6 +112,304 @@
 			<p>Additional project information can be viewed in <a href="https://github.com/dnsev/4cs/wiki" target="_blank">the wiki</a>.</p>
 		</div>
 	</div>
+	<div class="Content" id="content_about">
+		<div class="ContentHeader"><span class="ContentHeaderTitle">About</span>:</div>
+		<div class="ContentBody">
+			<p>The userscript is designed primarily to be an extension to 4chan's image boards, but is designed with modularity in mind.</p>
+			<p>Currently it supports detecting and playing embedded .ogg Vorbis sounds in images, replacing inline URLs, and playing Youtube videos.</p>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Other Pages</span>:</div>
+			<div class="ContentBody">
+				<ul>
+					<li><a href="#about/userscript">Userscript</a></li>
+					<li><a href="#about/development">Development</a></li>
+					<li><a href="#about/codecs">Image encoders/decoders</a></li>
+					<li><a href="#about/acknowledgements">Acknowledgements</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="Content" id="content_about_userscript">
+		<div class="ContentHeader"><a href="#about" class="ContentHeaderTitle">About</a> / <span class="ContentHeaderTitle">Userscript</span>:</div>
+		<div class="ContentBody">
+			<p>The userscript is designed as a plugin to be used on 4chan's image boards, as well as the Foolz archive.</p>
+			<p>The main functionalities it adds are the ability to play embedded .ogg Vorbis sounds, replace inline URLs, and play embedded Youtube videos.</p>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Player</span>:</div>
+			<div class="ContentBody">
+				<p>The script functions by embedding sounds or Youtube videos into a small player window inside the browser. This window can be resized, dragged across the screen, and customized to the user's liking.</p>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Sounds</span>:</div>
+			<div class="ContentBody">
+				<ul>
+					<li>Clicking [<a>tags</a>] in posts load sounds into the player from the relative image</li>
+					<li>The "<a>sounds</a>" link next to the image attributes loads all available sounds in the image</li>
+					<li>The "<a>Detect Sounds</a>" link will attempt to passively detect any sounds inside images in the entire thread</li>
+					<li>The "<a>Load All Sounds</a>" will attempt to load all sounds in the entire thread into the player</li>
+					<li>You can click and drag images onto the player<br />(either from your computer or from the web browser)</li>
+				</ul>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Youtube</span>:</div>
+			<div class="ContentBody">
+				<ul>
+					<li>Youtube videos can be intermixed in your playlist</li>
+					<li>If you have URL replacement enabled, clicking on a Youtube link will queue the video in the player</li>
+					<li>You can also click and drag Youtube URLs onto the player</li>
+				</ul>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Preview Images</span>:</div>
+			<div class="ContentBody">
+				<ul>
+					<li><a class="ImageLink" href="image_player0.png" target="_blank">Image 1</a><div class="ImageDescription">
+						<ul>
+							<li>Player with 2 items loaded</li>
+							<li>Image being hovered by mouse; clicking on the image plays/pauses the sound. Clicking and dragging on the image resizes the image</li>
+							<li>Clicking and dragging the volume bar on the left changes the volume</li>
+							<li>Title-bar buttons all visible for explanatory purposes.<br />
+							Left to right: "Settings", "Downloads", "Info", "Min/maximize", "Close"</li>
+						</ul>
+					</div></li>
+					<li><a class="ImageLink" href="image_player1.png" target="_blank">Image 2</a><div class="ImageDescription">
+						<ul>
+							<li>Player having the resize borders being hovered (in this case, hovering the bottom-right corner)</li>
+							<li>Player controls are now 50% transparent since the main image is not being hovered</li>
+						</ul>
+					</div></li>
+					<li><a class="ImageLink" href="image_player2.png" target="_blank">Image 3</a><div class="ImageDescription">
+						<ul>
+							<li>Player is playing a Youtube video</li>
+							<li>Default look of the title bar; i.e. title-bar buttons are transparent when not hovered</li>
+							<li>Player controls are now 100% transparent since the player is not being hovered</li>
+							<li>Hard to see, but above the seek-bar time (1:11), there is a color difference on the line above it. The dark grey indicates how much of the video is loaded</li>
+						</ul>
+					</div></li>
+					<li><a class="ImageLink" href="image_player3.png" target="_blank">Image 4</a><div class="ImageDescription">
+						<ul>
+							<li>Playlist item is being hovered, in this case a sound file.</li>
+							<li>Controls are displayed on the right.<br />
+							From left to right: "Remove", "Move Up", "Move Down", "Save Sound", "Save Image"</li>
+							<li>Clicking and dragging the volume bar on the left changes the volume</li>
+							<li>Similar functionality for Youtube videos, except "Save Sound", and "Save Image" are replaced with "Video", which functions as a link to the video.</li>
+						</ul>
+					</div></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="Content" id="content_about_development">
+		<div class="ContentHeader"><a href="#about" class="ContentHeaderTitle">About</a> / <span class="ContentHeaderTitle">Development</span>:</div>
+		<div class="ContentBody">
+			<p>The origin of the name "4cs" comes from the abbreviation of <b>4c</b>han <b>s</b>ounds, but since its conception, it has moved on to be more than just a sound player. As it stands now, "4cs" is just a fun way of spelling "forks".</p>
+			<p>The project is focused on 2 major parts: steganographic image encoding and a web plugin for playback.</p>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Steganography</span>:</div>
+			<div class="ContentBody">
+				<p>If you already know how steganography with images works, you'll probably not need to read this, but <a href="https://en.wikipedia.org/wiki/Steganography" target="_blank">steganography</a> is basically a way to hide information. 4cs makes use of it by allowing users to embed files inside of .png images.</p>
+				<p>Each pixel in an image has 3 or 4 components to it, each of which takes up 8 bits of memory. The image steganography in this project works by reducing the number of bits that a pixel's color component uses (to, say, 5 bits instead of 8) and uses the remaining bits (3 bits in the example) to encode data. Since not all of the color bits are used, the image will still maintain (to an extent) the original picture.</p>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Motivation</span>:</div>
+			<div class="ContentBody">
+				<p>The motivation behind this project was essentially "sound threads" on 4chan. While I never actively partook in them, occasionally I would listen to some of them.</p>
+				<p>However, sometime in December 2012, the site developers disallowed the (at that time) current method of uploading sound images.</p>
+				<p>Since the method of embedding files in images is fairly simple (just concatenating the file to the end of an image file,) detection was also easy.</p>
+				<p>I decided I wanted to find a new way to put sounds/files inside of images. Thus the conclusion of steganography, and the only suitable file type for this was .png's.</p>
+				<p>Steganography was chosen because it has a higher CPU usage overhead to detect a sound within a .png image: you can do it easily locally, but it's probably a bad idea to implement large scale on a server.</p>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Python</span>:</div>
+			<div class="ContentBody">
+				<p>Originally this project started out as a toy project using Python, as Python's an easy language to get a quick prototype working with.</p>
+				<p>Both a working encoder and decoder were built using Python.</p>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">C++</span>:</div>
+			<div class="ContentBody">
+				<p>At a certain point, the performance of Python became undesirable, and I ported it to C++. This version ran much faster and presently has many additional features over the deprecated Python version.</p>
+				<p>Additionally, they both run as standalone .exe files, so users wouldn't have to install Python to use it.</p>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Userscript</span>:</div>
+			<div class="ContentBody">
+				<p>Once a working C++ encoder/decoder were made, I worked on modifying the 4chan Sound Player userscript. This was a major pain in the ass for multiple reasons:</p>
+				<ul>
+					<li>The code had atrocious style:
+					<ul>
+						<li>Nearly everything used abbreviated variable names</li>
+						<li>Code is dispersed poorly; no good visual groupings to try and find something</li>
+						<li>Formatting is highly inconsistent, possibly due to multiple parties forking/working on it</li>
+						<li>etc.</li>
+					</ul>
+					</li>
+					<li>I (at the time) had no idea what the exact nature of the old embedding formats were, only the vague idea of it</li>
+					<li>It was difficult to find the correct place to insert my modifications, and keep track of where they were for when I made future modifications</li>
+					<li>Finding a Javascript library to decode .png images, as html's &lt;canvas&gt; butchers images, especially ones with an alpha channel</li>
+					<li>The sound player itself was had hideously poor design</li>
+				</ul>
+				<p>But with much struggles, I finally got a working version of it out and posted 1 thread about it on Christmas.</p>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Complete rewrite</span>:</div>
+			<div class="ContentBody">
+				<p>At a certain point I got tired of the horrible old script, due to the aesthetics of both the code and the sound player. Visually, I wanted users to have a nicer looking player, because this is what every thread revolved around.</p>
+				<p>I redesigned the player to have a more visually pleasing design while maintaining (and adding) features.</p>
+				<p>Improvements include:</p>
+				<ul>
+					<li>Better follows the basic design of an application window</li>
+					<li>Player movement is restricted to screen area</li>
+					<li>Player is resizable</li>
+					<li>Image is resizable</li>
+					<li>Seek bar boundaries are more exact</li>
+					<li>Better volume boundaries, along with a text display</li>
+					<li>Playlist area is more exact</li>
+					<li>Dragging files displays a distinct notification</li>
+					<li>Less clutter when not interacting with the player</li>
+					<li>Links aren't scattered across the player window</li>
+					<li>Options are located in a more unified location</li>
+					<li>More flexible style editing</li>
+					<li>Comes with 4 default styles</li>
+					<li>Hovering a playlist item shows a list of options</li>
+					<li>No little-known/buggy right click feature</li>
+				</ul>
+				<p>This redesign was posted shortly after New Year's.</p>
+				<p>Click <a href="image_comparison.png" target="_blank">here</a> for a comparison image.</p>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">New features</span>:</div>
+			<div class="ContentBody">
+				<p>While maintaining all features of the original userscript, this script also adds the ability to auto-load all image-sounds in the thread, and an option to attempt to passively detect all image-sounds.</p>
+				<p>Passive sound detection runs in the "background" (or at least it shouldn't disrupt the browsing experience by freezing the browser) and scans every image in the thread. The trade-off is that this works very slowly compared to normal loading.</p>
+				<p>Additionally, inline URL replacement was added; this feature can be optionally disabled in the player's settings.</p>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Youtube playback</span>:</div>
+			<div class="ContentBody">
+				<p>After sound playing was completed, I thought that the player looked nice in and of itself, so I thought that adding Youtube video playback would be a nice way to make it able to be used more often, especially since sound playback and video playback can interweave.</p>
+				<p>So after much struggle to get it to work in Google Chrome, here we are.</p>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Batch applications</span>:</div>
+			<div class="ContentBody">
+				<p>Two <a href="#about/codecs/batch-*.exe">batch extraction</a> applications were also created for older formats: a decoder and a re-encoder.</p>
+			</div>
+		</div>
+	</div>
+	<div class="Content" id="content_about_codecs">
+		<div class="ContentHeader"><a href="#about" class="ContentHeaderTitle">About</a> / <span class="ContentHeaderTitle">Image encoders/decoders</span>:</div>
+		<div class="ContentBody">
+			<p>There are 4 applications related to encoding and decoding images. Click on the <a>*.exe</a> links to learn how to use them:</p>
+			<ul>
+				<li class="HiddenHoverMaster"><a href="#about/codecs/embed.exe">embed.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/cpp/embed.exe">download</a></span></li>
+				<li class="HiddenHoverMaster"><a href="#about/codecs/extract.exe">extract.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/cpp/extract.exe">download</a></span></li>
+				<li class="HiddenHoverMaster"><a href="#about/codecs/batch-*.exe">batch-decode.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/batch/batch-decode.exe">download</a></span></li>
+				<li class="HiddenHoverMaster"><a href="#about/codecs/batch-*.exe">batch-re-encode.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/batch/batch-re-encode.exe">download</a></span></li>
+			</ul>
+		</div>
+	</div>
+	<div class="Content" id="content_about_codecs_embed_exe">
+		<div class="ContentHeader"><a href="#about" class="ContentHeaderTitle">About</a> / <a href="#about/codecs" class="ContentHeaderTitle">Image encoders/decoders</a> / <span class="ContentHeaderTitle">embed.exe</span>:</div>
+		<div class="ContentBody">
+			<p><a href="https://github.com/dnsev/4cs/raw/master/cpp/embed.exe">embed.exe</a> is an application designed to efficiently embed files inside of images.</p>
+			<p>Currently it supports input types of .png, .jpg, and .gif and always outputs as a .png image.</p>
+			<p>If you want to encode files using this application, use the following process:</p>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Setup</span>:</div>
+			<div class="ContentBody">
+				<ol>
+					<li>Create a folder</li>
+					<li>Create a blank file named "_" (with <i>no</i> quotes and <i>no</i> extension) inside the folder</li>
+					<li>Download <a href="https://github.com/dnsev/4cs/raw/master/cpp/embed.exe">embed.exe</a> and put it in the folder</li>
+					<li>Get your image file(s) and place them in the folder</li>
+					<li>Get your files you want to embed (e.g. sounds in .ogg format) and place them in the folder</li>
+				</ol>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Embedding</span>:</div>
+			<div class="ContentBody">
+				<ol>
+					<li>In your explorer, select your image file, your file(s) you want to embed, <b>and</b> the file named "_"</li>
+					<li>Drag them all onto "embed.exe"</li>
+					<li>Sit back and wait</li>
+				</ol>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Vorbis audio (.ogg)</span>:</div>
+			<div class="ContentBody">
+				<p>This application currently does not function as an audio encoder. As such, if you wish to convert your .mp3 or other audio files into .ogg files, you'll need an external program.</p>
+				<p>Currently, I suggest using <a href="http://audacity.sourceforge.net/" target="_blank">Audacity</a>, as it's a decent audio application. To encode .ogg files using Audacity:</p>
+				<ol>
+					<li>Download, install, and run Audacity</li>
+					<li>Open your music file</li>
+					<li>"File" -> "Export..."</li>
+					<li>Change the "Save as type" to "Ogg Vorbis Files"</li>
+					<li>Click "Options..." and lower the quality to get a decent output file size</li>
+					<li>Save; make sure the file size is decent</li>
+				</ol>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Advanced options</span>:</div>
+			<div class="ContentBody">
+				<p>If you know how to work command line tools, you can view all the command line options available by running it in a terminal. (The reason the file named "_" is required is because it sets several default options that would normally be set using command line flags.)</p>
+				<p>To view a list of flags, simply run "embed.exe" to view usage information.</p>
+			</div>
+			<div class="ContentHeader"><a class="ContentHeaderTitle" href="image_guide.png" target="_blank">Image guide</a></div>
+		</div>
+	</div>
+	<div class="Content" id="content_about_codecs_extract_exe">
+		<div class="ContentHeader"><a href="#about" class="ContentHeaderTitle">About</a> / <a href="#about/codecs" class="ContentHeaderTitle">Image codecs</a> / <span class="ContentHeaderTitle">extract.exe</span>:</div>
+		<div class="ContentBody">
+			<p><a href="https://github.com/dnsev/4cs/raw/master/cpp/extract.exe">extract.exe</a> is an application designed extract files hidden in steganographic images created by embed.exe.</p>
+			<p>Extracting files is easy:</p>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Setup</span>:</div>
+			<div class="ContentBody">
+				<ol>
+					<li>Create a folder</li>
+					<li>Download <a href="https://github.com/dnsev/4cs/raw/master/cpp/extract.exe">extract.exe</a> and put it in the folder</li>
+				</ol>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Extracting steganographic images</span>:</div>
+			<div class="ContentBody">
+				<ol>
+					<li>Put your images you want to extract files from inside the folder</li>
+					<li>Click and drag them onto "extract.exe"</li>
+					<li>You should be left with any files that were located inside the image(s)</li>
+				</ol>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Extracting older formats</span>:</div>
+			<div class="ContentBody">
+				<p>If want to extract files from non-steganographic images, go to <a href="#about/codecs/batch-*.exe">this page</a>.</p>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Advanced options</span>:</div>
+			<div class="ContentBody">
+				<p>While not very many, there are still a few command line flags that you can use when extracting images.</p>
+				<p>To view a list of flags, simply run "extract.exe" to view usage information.</p>
+			</div>
+		</div>
+	</div>
+	<div class="Content" id="content_about_codecs_batch___exe">
+		<div class="ContentHeader"><a href="#about" class="ContentHeaderTitle">About</a> / <a href="#about/codecs" class="ContentHeaderTitle">Image encoders/decoders</a> / <span class="ContentHeaderTitle">batch-*.exe</span>:</div>
+		<div class="ContentBody">
+			<p><a href="https://github.com/dnsev/4cs/raw/master/batch/batch-decode.exe">batch-decode.exe</a> and <a href="https://github.com/dnsev/4cs/raw/master/batch/batch-re-encode.exe">batch-re-encode.exe</a> are two applications used to extract from older (non-steganographic) image file formats.</p>
+			<div class="ContentHeader"><a class="ContentHeaderTitle" href="https://github.com/dnsev/4cs/raw/master/batch/batch-decode.exe">batch-decode.exe</a>:</div>
+			<div class="ContentBody">
+				<p>This application is used to extract sounds from images.</p>
+				<p>It renames any sounds found as <i>sound_tag</i>.ogg and outputs it to the current folder. Any naming conflicts will be resolved.</p>
+			</div>
+			<div class="ContentHeader"><a class="ContentHeaderTitle" href="https://github.com/dnsev/4cs/raw/master/batch/batch-re-encode.exe">batch-re-encode.exe</a>:</div>
+			<div class="ContentBody">
+				<p>This application is used to re-encode old image formats into steganographic images.</p>
+				<p>It renames any sounds found as <i>sound_tag</i>.ogg and outputs it to the current folder. Any naming conflicts will be resolved.</p>
+				<p><b>Note</b>: this requires <a href="https://github.com/dnsev/4cs/raw/master/cpp/embed.exe">embed.exe</a> to be in the same folder.</p>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Usage</span>:</div>
+			<div class="ContentBody">
+				<p>Both applications are used in the same manner:</p>
+				<ol>
+					<li>Click and drag any images with embedded content onto the executable</li>
+					<li>Wait for the cmd window to close and then view your new files</li>
+				</ol>
+			</div>
+		</div>
+	</div>
+	<div class="Content" id="content_about_acknowledgements">
+		<div class="ContentHeader"><a href="#about" class="ContentHeaderTitle">About</a> / <span class="ContentHeaderTitle">Acknowledgements</span>:</div>
+		<div class="ContentBody">
+			<p><a href="http://userscripts.org/users/481445" target="_blank">cornarxgm</a>: for concurrently working on his version, some general collaboration, and <a href="https://userscripts.org/users/481445/scripts" target="_blank">other</a> <a href="http://cornarx.6te.net/" target="_blank">related</a> <a href="http://cornarx.6te.net/mask.html" target="_blank">works</a>.</p>
+			<p><a href="https://github.com/ms11" target="_blank">ms11</a>: for the source code I originally modified.</p>
+			<p><a>Whoever</a>: for making the original sound formats for me to implement.</p>
+			<p>and <a>You</a>: for using the script.</p>
+		</div>
+	</div>
+</div>
+
+<div class="ImagePreviewOverlay">
+<div class="ImagePreviewOverlayInner">
+</div>
 </div>
 
 </body>

@@ -166,7 +166,7 @@ pip-log.txt
 # Test files, etc
 *.jpg
 *.jpeg
-*.png
+*/*.png
 *.ogg
 *.lnk
 

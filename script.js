@@ -12,15 +12,10 @@ function text_to_html(str) {
 		.replace(/"/g, "&quot;");
 }
 
-function change_developer_display(on) {
-	if (on) {
-		$(".Developer").removeClass("DeveloperDisplayOff").addClass("DeveloperDisplayOn");
-		$(".NonDeveloper").removeClass("DeveloperDisplayOn").addClass("DeveloperDisplayOff");
-	}
-	else {
-		$(".NonDeveloper").removeClass("DeveloperDisplayOff").addClass("DeveloperDisplayOn");
-		$(".Developer").removeClass("DeveloperDisplayOn").addClass("DeveloperDisplayOff");
-	}
+function change_style_display(class_names, display_prefix, on) {
+	on = on ? 1 : 0;
+	$("." + class_names[on]).removeClass(display_prefix + "DisplayOff").addClass(display_prefix + "DisplayOn");
+	$("." + class_names[1 - on]).removeClass(display_prefix + "DisplayOn").addClass(display_prefix + "DisplayOff");
 }
 function change_browser_display(show_all) {
 	if (!show_all && is_chrome()) {
@@ -133,6 +128,22 @@ WindowHash.prototype = {
 var window_hash = new WindowHash();
 
 // Pages
+var page_list = {
+	"about": {
+		"userscript": null,
+		"development": null,
+		"codecs": {
+			"embed.exe": null,
+			"extract.exe": null,
+			"batch-*.exe": null
+		},
+		"acknowledgements": null
+	},
+	"issues": null,
+	"source": null,
+	"wiki": null,
+	"changes": null
+};
 function PageBrowser() {
 
 }
@@ -140,13 +151,30 @@ PageBrowser.prototype = {
 	constructor: PageBrowser,
 	open: function (page, vars, refresh) {
 		// Which page
+		var title = "";
+		var p = page.split("/");
+		var s = page_list;
+		var nav_page = page;
+		for (var i = 0; i < p.length; ++i) {
+			if (s !== null && p[i] in s) {
+				s = s[p[i]];
+				title += (title.length == 0 ? "" : " / ") + p[i];
+				if (i == 0) nav_page = p[i];
+			}
+			else {
+				title = "";
+				nav_page = page = "install";
+			}
+		}
+
 		$(".Content").removeClass("ContentActive");
 		$(".NavigationLink").removeClass("NavigationLinkCurrent");
-		if (page != "about" && page != "issues" && page != "source" && page != "wiki" && page != "changes") page = "install";
-		$("#content_" + page).addClass("ContentActive");
-		$("#navigation_" + page).addClass("NavigationLinkCurrent");
+		$("#content_" + page.replace(/\W/g, "_")).addClass("ContentActive");
+		$("#navigation_" + nav_page).addClass("NavigationLinkCurrent");
 
-		change_developer_display(("dev" in vars));
+		$("title").html(default_title + (title.length == 0 ? "" : " / " + title));
+		change_style_display(["NonDeveloper","Developer"], "Developer", ("dev" in vars));
+		change_style_display(["NoHelp","Help"], "Help", ("help" in vars));
 		change_browser_display(("all" in vars));
 
 		$(".PageVariableDisplay").each(function () {
@@ -231,9 +259,95 @@ function parse_change_log(data) {
 	}
 }
 
+// Title management
+var default_title = "";
+
+// Image previewing
+function image_preview(obj) {
+	var descr = (obj.next().length > 0 ? (obj.next().hasClass && obj.next().hasClass("ImageDescription") ? obj.next().html() : "") : "");
+	var descr_container, img_append, offset, offset2, img;
+
+	// Remove any previous
+	$("body").find(".ImagePreviewBoxInner2").remove();
+
+	// Create new
+	$("body").append(
+		(offset = $(document.createElement("div")))
+		.addClass("ImagePreviewBoxInner2")
+		.append(
+			(offset2 = $(document.createElement("div")))
+			.append(
+				(img_append = $(document.createElement("a")))
+				.addClass("ImagePreviewImageContainer")
+				.attr("href", obj.attr("href"))
+				.attr("target", "_blank")
+				.on("click", function () { return true; })
+			)
+			.append(
+				(descr_container = $(document.createElement("div")))
+				.addClass("ImagePreviewDescriptionContainer")
+				.html(descr)
+			)
+		)
+		.on("click", {}, function (event) {
+			if (event.which == 1) {
+				event.preventDefault();
+				event.stopPropagation();
+				return false;
+			}
+			return true;
+		})
+		.css({"left": "0", "top": "0", "opacity": "0"})
+	);
+
+	// Click to close
+	$(".ImagePreviewOverlay")
+	.on("click", {}, function (event) {
+		if (event.which == 1) {
+			image_preview_close(img);
+		}
+		return true;
+	});
+
+	// Image
+	img_append.append(
+		(img = $(document.createElement("img")))
+		.attr("src", obj.attr("href"))
+		.on("load", {}, function (event) {
+			// Image loaded; open
+			descr_container.css({
+				"width": descr_container.outerWidth(),
+			});
+			offset.css({
+				"left": (-offset.outerWidth() / 2) + "px",
+				"top": (-offset.outerHeight() / 2) + "px",
+			});
+			$(".ImagePreviewOverlayInner").html(
+				$(document.createElement("div"))
+				.addClass("ImagePreviewBox")
+				.append(
+					$(document.createElement("div"))
+					.addClass("ImagePreviewBoxInner1")
+					.append(
+						offset
+						.css("opacity", "")
+					)
+				)
+			);
+			$(".ImagePreviewOverlay").css("display", "block");
+		})
+	);
+}
+function image_preview_close(img) {
+	img.off("load").removeAttr("src");
+	$(".ImagePreviewOverlay")
+	.off("click")
+	.css("display", "");
+}
 
 // Entry
 $(document).ready(function () {
+	// Events
 	$("#show_all_browser").on("click", {}, function (event) {
 		if (event.which == 1) {
 			change_browser_display(true);
@@ -243,12 +357,19 @@ $(document).ready(function () {
 	});
 	$("#developer_change").on("click", {}, function (event) {
 		if (event.which == 1) {
-			change_developer_display(true);
+			change_style_display(["NonDeveloper","Developer"], "Developer", true);
 			return false;
 		}
 		return true;
 	});
-	$("#hardlink_enable_all,#hardlink_enable_dev").on("click", {}, function (event) {
+	$("#help_change").on("click", {}, function (event) {
+		if (event.which == 1) {
+			change_style_display(["NoHelp","Help"], "Help", true);
+			return false;
+		}
+		return true;
+	});
+	$(".Hardlink").on("click", {}, function (event) {
 		if (event.which == 1) {
 			var ex = {};
 			var v = $(this).attr("id").substr("hardlink_enable_".length);
@@ -272,9 +393,20 @@ $(document).ready(function () {
 		}
 		return true;
 	});
+	$(".ImageLink").on("click", {}, function (event) {
+		if (event.which == 1) {
+			image_preview($(this));
+			return false;
+		}
+		return true;
+	});
+
 
 	// Change log
 	get_change_log();
+
+	// Title
+	default_title = $("title").html();
 
 	// Page display
 	var hashchange = function (event) {
