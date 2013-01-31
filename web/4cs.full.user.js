@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.8.4.5
+// @version     1.8.4.6
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -11,6 +11,7 @@
 // @include     https://boards.4chan.org/*
 // @include     http://archive.foolz.us/*
 // @include     https://archive.foolz.us/*
+// @include     http://dnsev.github.com/4cs/*
 // @icon        data:image/gif;base64,R0lGODlhEAAQAKECAAAAAGbMM////////yH5BAEKAAIALAAAAAAQABAAAAIllI+pB70KQgAPNUmroDHX7Gie95AkpCUn1ISlhKVR/MEre6dLAQA7
 // @updateURL   https://raw.github.com/dnsev/4cs/master/web/4cs.full.user.js
 // @downloadURL https://raw.github.com/dnsev/4cs/master/web/4cs.full.user.js
@@ -7273,6 +7274,36 @@ ZipWriter.prototype = {
 
 
 
+// ==Ordered==
+// @after jquery.js
+if (/http\:\/\/dnsev\.github\.com\/4cs\//.exec(window.location.href + "")) {
+	$(document).ready(function () {
+		if (unsafeWindow && unsafeWindow.version_check) {
+			// Get the version
+			var version = "";
+			try {
+				version = GM_info.script.version;
+			}
+			catch (e) {
+				try {
+					version = GM_getMetadata("version").toString();
+				}
+				catch (e) {
+					version = null;
+				}
+			}
+			if (version !== null) {
+				// Perform an update check
+				unsafeWindow.version_check(version);
+			}
+		}
+	});
+	return;
+}
+// ==/Ordered==
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Bug-fixes for other userscripts and compatability
 ///////////////////////////////////////////////////////////////////////////////
@@ -8462,7 +8493,7 @@ function InlineManager() {
 			(this.update_link = E("a"))
 			.html("Update")
 			.attr("href", "#")
-			.on("click", function (event) { return script.update(event); })
+			.on("click", function (event) { return script.on_update_click(event); })
 		)
 	)
 	.append(
@@ -9855,7 +9886,6 @@ function Script() {
 		"script": {
 			"last_update": 0,
 			"update_found": false,
-			"update_url": "",
 			"update_version": "",
 			"current_version": "",
 			"update_message": ""
@@ -9867,7 +9897,26 @@ function Script() {
 		}
 	};
 	this.storage_name = "4cs";
-	this.update_version_url = "https://raw.github.com/dnsev/4cs/master/web/version.txt";
+
+	// Changelog URL
+	this.update_version_url = "http://dnsev.github.com/4cs/changelog.txt";
+
+	// Update URL
+	this.update_url = "https://raw.github.com/dnsev/4cs/master/web/4cs.dev.user.js";
+	try {
+		this.update_url = GM_getMetadata("downloadURL").toString();
+	}
+	catch (e) {
+		try {
+			var m = /\/\/\s*@downloadURL\s+(.+)/.exec(GM_info.scriptMetaStr);
+			if (m) {
+				this.update_url = m[1].trim();
+			}
+		}
+		catch (e) {
+			this.update_url = "https://raw.github.com/dnsev/4cs/master/web/4cs.user.js";
+		}
+	}
 }
 Script.prototype = {
 	constructor: Script,
@@ -9939,14 +9988,14 @@ Script.prototype = {
 		}
 	},
 	update_check: function (ajax) {
+		var self = this;
 		var fn = function () {
 			inline_manager.update_span.css("display", "");
-			inline_manager.update_link.html("UPDATE");
-			inline_manager.update_link.attr("href", this.settings["script"]["update_url"]);
+			inline_manager.update_link.html("Update");
+			inline_manager.update_link.attr("href", self.update_url);
 		};
 
 		if (ajax) {
-			var self = this;
 			ajax_get(
 				this.update_version_url,
 				true,
@@ -9968,12 +10017,12 @@ Script.prototype = {
 						}
 
 						if (version !== null) {
-							var s = JSON.parse(response);
+							// Get the log
+							var log = self.parse_change_log(response);
 							// Settings
-							self.settings["script"]["update_url"] = s[is_chrome() ? "update_url_gc" : "update_url_ff"];
-							self.settings["script"]["update_version"] = s["version"].toString();
+							self.settings["script"]["update_version"] = log[0][0].toString();
 							self.settings["script"]["last_update"] = (new Date()).getTime();
-							self.settings["script"]["update_message"] = (s["message"] || "").toString();
+							self.settings["script"]["update_message"] = "";
 							// Version compare
 							self.settings["script"]["update_found"] = false;
 							var current_version_split = version.toString().split(".");
@@ -9984,6 +10033,32 @@ Script.prototype = {
 									(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) >
 									(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
 								) {
+									// Get the update notes
+									var version_count = 0;
+									for (var k = 0; k < log.length; ++k) {
+										new_version_split = log[k][0].split(".");
+										len = (new_version_split.length > current_version_split.length ? new_version_split.length : current_version_split.length);
+										for (i = 0; i < len; ++i) {
+											if (
+												(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) >
+												(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
+											) {
+												if (++version_count > 5) {
+													self.settings["script"]["update_message"] += "...\n";
+													i = len;
+													break;
+												}
+												self.settings["script"]["update_message"] += log[k][0] + "\n";
+												for (i = 1; i < log[k].length; ++i) {
+													self.settings["script"]["update_message"] += "- " + log[k][i] + "\n";
+												}
+												i = -1;
+												break;
+											}
+										}
+										if (i >= len) break;
+									}
+									// Update alert
 									fn();
 									self.settings["script"]["update_found"] = true;
 									break;
@@ -10000,6 +10075,33 @@ Script.prototype = {
 			fn();
 		}
 	},
+	parse_change_log: function (data) {
+		// Parse change log
+		data = data.replace(/\r\n/g, "\n").split("\n\n");
+		var log = [];
+		for (var i = 0; i < data.length; ++i) {
+			data[i] = data[i].trim();
+			if (data[i].length == 0) continue;
+
+			log.push([]);
+			data[i] = data[i].split("\n");
+			for (var j = 0; j < data[i].length; ++j) {
+				if (j == 0) {
+					log[log.length - 1].push(data[i][j]);
+				}
+				else {
+					if (data[i][j][0] == "-") {
+						log[log.length - 1].push(data[i][j].substr(1).trim());
+					}
+					else {
+						log[log.length - 1][log[log.length - 1].length - 1] += "\n" + (data[i][j].substr(1).trim());
+					}
+				}
+			}
+		}
+
+		return log;
+	},
 	on_update_click: function (event) {
 		if (!event.originalEvent.which || event.originalEvent.which == 1) {
 			var scr_name = "";
@@ -10013,13 +10115,13 @@ Script.prototype = {
 				scr_version = GM_getMetadata("version").toString();
 			}
 
-			var s = "An update is available to \"" + scr_name + "\".\n\n" +
+			var s = "An update is available to \"" + scr_name + "\":\n\n" +
 				"Current version: " + scr_version + "\n" +
 				"Update Version: " + this.settings["script"]["update_version"] + "\n\n" +
-				"About: " + this.settings["script"]["update_message"] + "\n\n" +
+				"Changes:\n" + this.settings["script"]["update_message"] + "\n\n" +
 				"Middle click the link or copy and paste the following url:               ";
 
-			prompt(s, this.settings["script"]["update_url"]);
+			prompt(s, this.update_url);
 			return false;
 		}
 		return true;

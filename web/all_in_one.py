@@ -264,6 +264,7 @@ def main():
 
 	# Find headers
 	metadata_labels = [ "UserScript" , "Meta" ];
+	metadata_types = [ 0 , 0 ];
 	metadata = [];
 	i = 0;
 	for label in range(len(metadata_labels)):
@@ -279,6 +280,8 @@ def main():
 					if (data == ("==/" + metadata_labels[label] + "==")):
 						i += 1;
 						break;
+					elif (metadata_types[label] == 1):
+						metadata[label].append(source[i]);
 					elif (data[0] == "@"):
 						# Parse the option
 						s = re.split(r"\s", data);
@@ -287,6 +290,8 @@ def main():
 						metadata[label].append((param , value));
 				elif (data == ("==" + metadata_labels[label] + "==")): in_header = True;
 				else: break;
+			elif (metadata_types[label] == 1):
+				metadata[label].append(source[i]);
 			else: break;
 			i += 1;
 	source_line_first = i;
