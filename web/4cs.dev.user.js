@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.9
+// @version        1.9.1
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -1220,6 +1220,25 @@ var thread_manager = null;
 // Inline text
 ///////////////////////////////////////////////////////////////////////////////
 function InlineManager() {
+	// Insert stylesheet
+	$("head")
+	.append(
+		E("style")
+		.html(
+			".MPImageSearchingTextContainer{}\n" +
+			".MPImageSearchingText{}\n" +
+			".MPLoadLinkTop{}\n" +
+			".MPLoadLinkTopFile{}\n" +
+			".MPLoadAllLink{}\n" +
+			".MPReplacedURL{}\n" +
+			".MPIconedURLText{vertical-align:middle;}\n" +
+			".MPIconedURLTextNotFound{font-style:italic;}\n" +
+			".MPURLIcon{display:inline-block;width:20px;height:16px;vertical-align:middle;background-repeat:no-repeat;background-position:top left;background-size:16px 16px;}\n" +
+			".MPURLIconVimeo{background-image:url(//vimeo.com/favicon.ico);}\n" +
+			".MPURLIconYoutube{background-image:url(//youtube.com/favicon.ico);}\n"
+		)
+	);
+
 	// Insert navigation link
 	var self = this;
 	var pre, post, reload_span;
@@ -1307,7 +1326,7 @@ InlineManager.prototype = {
 
 			if (redo) {
 				// Re-replace
-				post_data_copy.post.find(".SPLoadLink").each(function (index) {
+				post_data_copy.post.find(".MPLoadLink").each(function (index) {
 					var tag_id = parseInt($(this).attr("_sp_tag_id"));
 
 					$(this)
@@ -1315,7 +1334,7 @@ InlineManager.prototype = {
 					.off("click")
 					.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
 				});
-				post_data_copy.container.find(".SPLoadAllLink").each(function (index) {
+				post_data_copy.container.find(".MPLoadAllLink").each(function (index) {
 					$(this)
 					.attr("href", "#")
 					.html(post_data.sounds.load_all_text)
@@ -1368,7 +1387,7 @@ InlineManager.prototype = {
 				);
 
 				// Sounds links
-				post_data.post.find(".SPLoadLink").each(function (index) {
+				post_data.post.find(".MPLoadLink").each(function (index) {
 					var tag_id = post_data.sounds.post_tags.length;
 					post_data.sounds.post_tags.push($(this).html());
 
@@ -1382,11 +1401,11 @@ InlineManager.prototype = {
 				if (is_archive) {
 					var file_size_label = post_data.container.find(".post_file_controls").find("a");
 					file_size_label = $(file_size_label[0]);
-					file_size_label.before((post_data.sounds.load_all_link = E("a")).addClass("SPLoadAllLink btnr parent"));
+					file_size_label.before((post_data.sounds.load_all_link = E("a")).addClass("MPLoadAllLink btnr parent"));
 				}
 				else {
 					var file_size_label = post_data.container.find(".fileText");
-					file_size_label.after((post_data.sounds.load_all_link = E("a")).addClass("SPLoadAllLink"));
+					file_size_label.after((post_data.sounds.load_all_link = E("a")).addClass("MPLoadAllLink"));
 					file_size_label.after(T(" "));
 				}
 				post_data.sounds.load_all_link
@@ -1413,12 +1432,12 @@ InlineManager.prototype = {
 				post_data.sounds.load_all_link
 				.after(
 					(post_data.sounds.auto_check.search_span = E("span"))
-					.addClass("SPImageSearchingTextContainer")
+					.addClass("MPImageSearchingTextContainer")
 					.css("display", (sound_auto_checker.enabled ? "" :"none"))
 					.html("...")
 					.append(
 						(post_data.sounds.auto_check.search_status = E("span"))
-						.addClass("SPImageSearchingText")
+						.addClass("MPImageSearchingText")
 					)
 				);
 
@@ -1484,155 +1503,113 @@ InlineManager.prototype = {
 			if (links_found) {
 				// Sounds links
 				post_data.post.find(".MPReplacedURL").each(function (index) {
+					// Link URL
 					var href = html_to_text(string_remove_tags($(this).html()));
 					if (href.indexOf(":") < 0) href = "//" + href;
 
+					// Video settings
 					var video_type = null;
 					var video_id = null;
+					var icon_class = "";
+					var api_url = "";
+					var temp_prefix = "";
+					var xml_parse = null;
 
-					// Youtube
+					// Video check
 					if ((video_id = MediaPlayer.prototype.url_get_youtube_video_id(href)) !== null) {
 						// Youtube
 						video_type = "youtube";
-
-						$(this)
-						.attr("mp_video_type", video_type)
-						.attr("mp_video_id", video_id)
-						.html(
-							$(document.createElement("img"))
-							.attr("src", "//youtube.com/favicon.ico")
-							.attr("alt", "")
-							.attr("title", "")
-							.css({
-								"vertical-align": "middle",
-								"width": "16px",
-								"height": "16px"
-							})
-						)
-						.append(
-							E("span")
-							.css({"padding-left": "8px"})
-							.html("Youtube: " + video_id)
-						);
-						ajax_get(
-							"//gdata.youtube.com/feeds/api/videos/" + video_id,
-							true,
-							{"link": $(this)},
-							null,
-							function (okay, data, response) {
-								if (okay) {
-									var xml = $.parseXML(response);
-
-									// Get XML variables
-									var title = "Unknown Title";
-									var duration = 0.0;
-									var d = xml_find_nodes_by_name(xml, "yt:duration");
-									if (d.length > 0) {
-										duration = d[0].getAttribute("seconds");
-										duration = parseFloat(duration);
-										duration = (isFinite(duration) ? duration : 0.0);
-									}
-
-									try {
-										title = $(xml_find_nodes_by_name(xml, "title")).text();
-									}
-									catch (e) {
-										console.log(e);
-									}
-
-									// Update link's text and click event
-									data.link.find("span").html(title);
-									data.link
-									.attr("mp_video_cache_title", title)
-									.attr("mp_video_cache_duration", duration.toString())
-									.off("click")
-									.on("click", {
-										"post_data": post_data,
-										"video_type": video_type,
-										"video_id": video_id,
-										"video_cache": {
-											"title": title,
-											"duration": duration
-										},
-										"url": href
-									}, self.on_url_click);
-								}
-								else {
-									// Not found
-									data.link.find("span").html("Video not found").css("font-style", "italic");
-								}
+						temp_prefix = "Youtube: ";
+						icon_class = "MPURLIconYoutube";
+						api_url = "//gdata.youtube.com/feeds/api/videos/" + video_id;
+						xml_parse = function (xml, results) {
+							var d = xml_find_nodes_by_name(xml, "yt:duration");
+							if (d.length > 0) {
+								results.duration = d[0].getAttribute("seconds");
+								results.duration = parseFloat(results.duration);
+								results.duration = (isFinite(results.duration) ? results.duration : 0.0);
 							}
-						);
+
+							try {
+								results.title = $(xml_find_nodes_by_name(xml, "title")).text();
+							}
+							catch (e) {
+								console.log(e);
+							}
+						};
 					}
 					else if ((video_id = MediaPlayer.prototype.url_get_vimeo_video_id(href)) !== null) {
-						// Youtube
+						// Vimeo
 						video_type = "vimeo";
+						temp_prefix = "Vimeo: ";
+						icon_class = "MPURLIconVimeo";
+						api_url = "//vimeo.com/api/v2/video/" + video_id + ".xml";
+						xml_parse = function (xml, results) {
+							var d = xml_find_nodes_by_name(xml, "duration");
+							if (d.length > 0) {
+								results.duration = $(d[0]).text();
+								results.duration = parseFloat(results.duration);
+								results.duration = isFinite(results.duration) ? results.duration : 0.0;
+							}
 
+							try {
+								results.title = $(xml_find_nodes_by_name(xml, "title")).text();
+							}
+							catch (e) {
+								console.log(e);
+							}
+						};
+					}
+
+					// Is a video url
+					if (video_type !== null) {
 						$(this)
 						.attr("mp_video_type", video_type)
 						.attr("mp_video_id", video_id)
 						.html(
-							$(document.createElement("img"))
-							.attr("src", "//vimeo.com/favicon.ico")
-							.attr("alt", "")
-							.attr("title", "")
-							.css({
-								"vertical-align": "middle",
-								"width": "16px",
-								"height": "16px"
-							})
+							$(document.createElement("div")).addClass("MPURLIcon " + icon_class)
 						)
 						.append(
-							E("span")
-							.css({"padding-left": "8px"})
-							.html("Vimeo: " + video_id)
+							E("span").addClass("MPIconedURLText").html(temp_prefix + video_id)
 						);
+
+						// API query
 						ajax_get(
-							"//vimeo.com/api/v2/video/" + video_id + ".xml",
+							api_url,
 							true,
 							{"link": $(this)},
 							null,
 							function (okay, data, response) {
 								if (okay) {
-									var xml = $.parseXML(response);
-
 									// Get XML variables
-									var title = "Unknown Title";
-									var duration = 0.0;
-									var d = xml_find_nodes_by_name(xml, "duration");
-									if (d.length > 0) {
-										duration = $(d[0]).text();
-										duration = parseFloat(duration);
-										duration = isFinite(duration) ? duration : 0.0;
-									}
-
-									try {
-										title = $(xml_find_nodes_by_name(xml, "title")).text();
-									}
-									catch (e) {
-										console.log(e);
-									}
+									var results = {
+										title: "Unknown Title",
+										duration: 0.0
+									};
+									xml_parse($.parseXML(response), results);
 
 									// Update link's text and click event
-									data.link.find("span").html(title);
+									data.link.find(".MPIconedURLText").html(text_to_html(results.title));
 									data.link
-									.attr("mp_video_cache_title", title)
-									.attr("mp_video_cache_duration", duration.toString())
+									.attr("mp_video_cache_title", results.title)
+									.attr("mp_video_cache_duration", results.duration.toString())
 									.off("click")
 									.on("click", {
 										"post_data": post_data,
 										"video_type": video_type,
 										"video_id": video_id,
 										"video_cache": {
-											"title": title,
-											"duration": duration
+											"title": results.title,
+											"duration": results.duration
 										},
 										"url": href
 									}, self.on_url_click);
 								}
 								else {
 									// Not found
-									data.link.find("span").html("Video not found").css("font-style", "italic");
+									data.link.find(".MPIconedURLText")
+									.addClass("MPIconedURLTextNotFound")
+									.html(temp_prefix + "Video not found");
 								}
 							}
 						);
@@ -1700,7 +1677,7 @@ InlineManager.prototype = {
 							.append(
 								E("a")
 								.attr("href", "#")
-								.addClass("SPLoadLinkTop")
+								.addClass("MPLoadLinkTop")
 								.html(text_to_html(post_data.sounds.sound_names[i].substr(0, post_data.sounds.sound_names[i].length - 4))) // remove extension
 								.on("click", {"post_data": post_data, "sound_id": i}, this.on_link_top_click)
 							)
@@ -1712,7 +1689,7 @@ InlineManager.prototype = {
 							.append(T("- "))
 							.append(
 								E("span")
-								.addClass("SPLoadLinkTopFile")
+								.addClass("MPLoadLinkTopFile")
 								.html(text_to_html(post_data.sounds.sound_names[i]))
 							)
 						);
@@ -1840,7 +1817,7 @@ InlineManager.prototype = {
 		var sounds_found = false;
 		var new_text = text_to_html(tags[0].text()).replace(/\[.+?\]/g, function (match) {
 			sounds_found = true;
-			return "[<a class=\"SPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
+			return "[<a class=\"MPLoadLink\">" + match.substr(1, match.length - 2) + "</a>]";
 		});
 		if (sounds_found) {
 			if (tags[0].prop("tagName")) {
@@ -1871,40 +1848,37 @@ InlineManager.prototype = {
 	on_url_click: function (event) {
 		// Add to playlist
 		if (event.which == 1) {
+			// Open
+			media_player_manager.open_player(true);
+
+			// Custom
+			var fn;
+			var cache;
 			if (event.data.video_type === "youtube") {
-				var pl_data = {};
-				if (event.data.video_cache) pl_data["youtubevideo_cache"] = event.data.video_cache;
-				media_player_manager.open_player(true);
-				media_player_manager.media_player.attempt_load_ytvideo_video(
-					event.data.url,
-					null,
-					pl_data,
-					{ "post_data": event.data.post_data, "link": $(this) },
-					function (event, data) {
-					},
-					function (okay, data) {
-					},
-					function (status, data, xml_info) {
-					}
-				);
+				fn = media_player_manager.media_player.attempt_load_ytvideo_video;
+				cache = "youtubevideo_cache";
 			}
-			else if (event.data.video_type === "vimeo") {
-				var pl_data = {};
-				if (event.data.video_cache) pl_data["vimeovideo_cache"] = event.data.video_cache;
-				media_player_manager.open_player(true);
-				media_player_manager.media_player.attempt_load_vimeo_video(
-					event.data.url,
-					null,
-					pl_data,
-					{ "post_data": event.data.post_data, "link": $(this) },
-					function (event, data) {
-					},
-					function (okay, data) {
-					},
-					function (status, data, xml_info) {
-					}
-				);
+			else { // if (event.data.video_type === "vimeo") {
+				fn = media_player_manager.media_player.attempt_load_vimeo_video;
+				cache = "vimeovideo_cache";
 			}
+
+			// Generic
+			var pl_data = {};
+			if (event.data.video_cache) pl_data[cache] = event.data.video_cache;
+			fn.call(
+				media_player_manager.media_player,
+				event.data.url,
+				null,
+				pl_data,
+				{ "post_data": event.data.post_data, "link": $(this) },
+				function (event, data) {
+				},
+				function (okay, data) {
+				},
+				function (status, data, xml_info) {
+				}
+			);
 			return false;
 		}
 		return true;
@@ -2249,7 +2223,7 @@ function HotkeyListener() {
 		13: "ENTER",
 		18: "ESCAPE",
 		20: "CAPS LOCK",
-		32: "SPACE",
+		32: "MPACE",
 		33: "PAGE UP",
 		34: "PAGE DOWN",
 		35: "END",
@@ -2365,16 +2339,16 @@ HotkeyListener.prototype = {
 		(hotkey_settings.html = E("div"))
 		.append( //{ DOM
 			E("div")
-			.addClass("SPHelpColorInputDiv2")
+			.addClass("MPHelpColorInputDiv2")
 			.append(
 				E("div")
-				.addClass("SPHelpColorInputDiv3")
+				.addClass("MPHelpColorInputDiv3")
 				.css({
 					"position": "relative",
 				})
 				.append(
 					(hotkey_settings.html_input = E("input"))
-					.addClass("SPHelpColorInput")
+					.addClass("MPHelpColorInput")
 					.attr("type", "text")
 					.val(hotkey_settings.value)
 				)
@@ -3092,7 +3066,7 @@ $(document).ready(function () {
 	$("head").append(
 		E("style")
 		.html(
-			"a.SPLoadLink,a.SPLoadLink:visited{color: inherit;}"
+			"a.MPLoadLink,a.MPLoadLink:visited{color: inherit;}"
 		)
 	);
 });

@@ -51,7 +51,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 	// JSON stylesheet
 	this.css_suffix = "";
 	this.css = {
-		".SPContainerMain": {
+		".MPContainerMain": {
 			"border-radius": "{exp:bg_outer_border_radius,*,border_scale}px",
 			"padding": "{exp:bg_outer_size,*,padding_scale}px",
 			"background": "transparent",
@@ -61,14 +61,14 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_standard}",
 			"z-index": "1000000"
 		},
-		".SPContainerMainBorders": {
+		".MPContainerMainBorders": {
 			"background": "{rgba:bg_outer_color}"
 		},
-		".SPContainer": {
+		".MPContainer": {
 			"position": "relative"
 		},
 
-		".SPTitleBarContainer": {
+		".MPTitleBarContainer": {
 			"position": "relative",
 			"background": "{rgba:bg_color_dark}",
 			"text-align": "center",
@@ -76,12 +76,12 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"border-top-left-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
 			"border-top-right-radius": "{exp:bg_inner_border_radius,*,border_scale}px"
 		},
-		".SPTitleContainer": {
+		".MPTitleContainer": {
 			"display": "block",
 			"padding": "{exp:1,*,padding_scale}px 0px {exp:1,*,padding_scale}px 0px",
 			"overflow": "hidden"
 		},
-		".SPTitle": {
+		".MPTitle": {
 			"display": "inline",
 			"white-space": "nowrap",
 			"font-weight": "bold",
@@ -89,7 +89,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"text-shadow": "{exp:1,*,font_scale}px {exp:1,*,font_scale}px 1px {hex:color_highlight_light}"
 		},
 
-		".SPMainButtonsLeft": {
+		".MPMainButtonsLeft": {
 			"position": "absolute",
 			"left": "0",
 			"top": "0",
@@ -97,7 +97,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"height": "100%",
 			"overflow": "hidden"
 		},
-		".SPMainButtonsRight": {
+		".MPMainButtonsRight": {
 			"position": "absolute",
 			"right": "0",
 			"top": "0",
@@ -105,7 +105,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"height": "100%",
 			"overflow": "hidden"
 		},
-		".SPMainButtonLeft, a.SPMainButtonLeft": {
+		".MPMainButtonLeft, a.MPMainButtonLeft": {
 			"display": "inline-block",
 			"padding": "{exp:1,*,padding_scale}px",
 			"border-top-left-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
@@ -116,19 +116,19 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_disabled} !important",
 			"background": "transparent"
 		},
-		".SPMainButtonLeft:hover": {
+		".MPMainButtonLeft:hover": {
 			"opacity": "1.0",
 			"text-decoration": "none !important",
 			"color": "{hex:color_light} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
-		".SPMainButtonLeft:active": {
+		".MPMainButtonLeft:active": {
 			"opacity": "1.0",
 			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
-		".SPMainButtonRight, a.SPMainButtonRight": {
+		".MPMainButtonRight, a.MPMainButtonRight": {
 			"display": "inline-block",
 			"padding": "{exp:1,*,padding_scale}px",
 			"border-top-right-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
@@ -139,19 +139,19 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_disabled} !important",
 			"background": "transparent"
 		},
-		".SPMainButtonRight:hover": {
+		".MPMainButtonRight:hover": {
 			"opacity": "1.0",
 			"text-decoration": "none !important",
 			"color": "{hex:color_light} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
-		".SPMainButtonRight:active": {
+		".MPMainButtonRight:active": {
 			"opacity": "1.0",
 			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
-		".SPMainButtonGeneric, a.SPMainButtonGeneric": {
+		".MPMainButtonGeneric, a.MPMainButtonGeneric": {
 			"display": "inline-block",
 			"padding": "{exp:1,*,padding_scale}px",
 			"text-decoration": "none !important",
@@ -161,13 +161,13 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_disabled} !important",
 			"background": "transparent"
 		},
-		".SPMainButtonGeneric:hover": {
+		".MPMainButtonGeneric:hover": {
 			"opacity": "1.0",
 			"text-decoration": "none !important",
 			"color": "{hex:color_light} !important",
 			"background": "{rgba:bg_color_darker}"
 		},
-		".SPMainButtonGeneric:active": {
+		".MPMainButtonGeneric:active": {
 			"opacity": "1.0",
 			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
@@ -175,16 +175,16 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 		},
 
 
-		".SPContentContainer": {
+		".MPContentContainer": {
 			"background": "{rgba:bg_color_light}",
 			"text-align": "center",
 			"position": "relative"
 		},
 
-		".SPTopContainer": {
+		".MPTopContainer": {
 			"position": "relative",
 		},
-		".SPVolumeContainer": {
+		".MPVolumeContainer": {
 			"position": "absolute",
 			"left": "0",
 			"top": "0",
@@ -192,22 +192,22 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"opacity": "0.0",
 			"background": "transparent"
 		},
-		".SPVolumeContainerActive": {
+		".MPVolumeContainerActive": {
 			"opacity": "1.0 !important"
 		},
-		".SPContainerMain:hover .SPVolumeContainer": {
+		".MPContainerMain:hover .MPVolumeContainer": {
 			"opacity": "0.5"
 		},
-		".SPContainerMain:hover .SPTopContainer:hover .SPVolumeContainer": {
+		".MPContainerMain:hover .MPTopContainer:hover .MPVolumeContainer": {
 			"opacity": "1.0"
 		},
-		".SPVolumeContainerActive .SPVolumeContainer": {
+		".MPVolumeContainerActive .MPVolumeContainer": {
 			"opacity": "1.0 !important"
 		},
-		".SPVolumeContainerActive .SPVolumeContainer:hover": {
+		".MPVolumeContainerActive .MPVolumeContainer:hover": {
 			"opacity": "1.0 !important"
 		},
-		".SPVolumeBarContainer": {
+		".MPVolumeBarContainer": {
 			"position": "relative",
 			"width": "{exp:16,*,font_scale}px",
 			"height": "100%",
@@ -216,30 +216,30 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"cursor": "pointer",
 			"background": "{rgba:bg_color_lightest}"
 		},
-		".SPVolumeBar": {
+		".MPVolumeBar": {
 			"position": "absolute",
 			"bottom": "0",
 			"width": "100%",
 			"cursor": "pointer"
 		},
-		".SPVolumeLabelContainer": {
+		".MPVolumeLabelContainer": {
 			"text-align": "left",
 			"display": "inline-block",
 			"cursor": "default",
 			"padding": "0px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px",
 			"text-shadow": "{exp:1,*,font_scale}px {exp:1,*,font_scale}px 1px {hex:color_highlight_light}"
 		},
-		".SPVolumeLabel": {
+		".MPVolumeLabel": {
 			"display": "block",
 			"color": "{hex:color_standard} !important",
 		},
-		".SPVolumeValue": {
+		".MPVolumeValue": {
 			"display": "block",
 			"font-size": "{exp:font_size_small,*,font_scale}px",
 			"color": "{hex:color_standard} !important",
 		},
 
-		".SPPlaylistIndexContainer": {
+		".MPPlaylistIndexContainer": {
 			"position": "absolute",
 			"right": "0",
 			"top": "0",
@@ -247,35 +247,35 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"opacity": "0.0",
 			"padding": "{exp:2,*,padding_scale}px",
 		},
-		".SPPlaylistIndexContainerActive": {
+		".MPPlaylistIndexContainerActive": {
 			"opacity": "1.0 !important"
 		},
-		".SPContainerMain:hover .SPPlaylistIndexContainer": {
+		".MPContainerMain:hover .MPPlaylistIndexContainer": {
 			"opacity": "0.5"
 		},
-		".SPContainerMain:hover .SPTopContainer:hover .SPPlaylistIndexContainer": {
+		".MPContainerMain:hover .MPTopContainer:hover .MPPlaylistIndexContainer": {
 			"opacity": "1.0"
 		},
-		".SPPlaylistIndexContainerInner": {
+		".MPPlaylistIndexContainerInner": {
 			"padding": "{exp:2,*,padding_scale}px",
 			"border-radius": "{exp:2,*,padding_scale}px",
 			"background": "{rgba:bg_color_lightest}",
 		},
-		".SPPlaylistIndexText1": {
+		".MPPlaylistIndexText1": {
 			"color": "{hex:color_standard} !important",
 			"display": "inline-block"
 		},
-		".SPPlaylistIndexText2": {
+		".MPPlaylistIndexText2": {
 			"color": "{hex:color_standard} !important",
 			"display": "inline-block",
 			"padding": "0px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px",
 		},
-		".SPPlaylistIndexText3": {
+		".MPPlaylistIndexText3": {
 			"color": "{hex:color_standard} !important",
 			"display": "inline-block"
 		},
 
-		".SPControlContainer": {
+		".MPControlContainer": {
 			"width": "100%",
 			"padding-top": "{exp:2,*,padding_scale}px",
 			"text-align": "center",
@@ -283,20 +283,20 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"bottom": "0",
 			"opacity": "0.0"
 		},
-		".SPContainerMain:hover .SPControlContainer": {
+		".MPContainerMain:hover .MPControlContainer": {
 			"opacity": "1.0"
 		},
-		".SPControlContainerInner": {
+		".MPControlContainerInner": {
 			"padding": "{exp:4,*,padding_scale}px {exp:6,*,padding_scale}px {exp:2,*,padding_scale}px {exp:6,*,padding_scale}px",
 			"display": "inline-block",
 			"border-top-left-radius": "{exp:border_radius_normal,*,border_scale}px",
 			"border-top-right-radius": "{exp:border_radius_normal,*,border_scale}px",
 			"background": "{rgba:bg_color_lightest,0.5}"
 		},
-		".SPTopContainer:hover .SPControlContainerInner": {
+		".MPTopContainer:hover .MPControlContainerInner": {
 			"background": "{rgba:bg_color_lightest}"
 		},
-		".SPControlLink, a.SPControlLink": {
+		".MPControlLink, a.MPControlLink": {
 			"padding": "{exp:1,*,padding_scale}px {exp:2,*,padding_scale}px {exp:1,*,padding_scale}px {exp:2,*,padding_scale}px",
 			"font-family": "{controls_font} !important",
 			"font-size": "{exp:font_size_controls,*,font_scale}px",
@@ -308,64 +308,64 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_standard} !important",
 			"background": "transparent"
 		},
-		".SPControlLink:hover, a.SPControlLink:hover": {
+		".MPControlLink:hover, a.MPControlLink:hover": {
 			"text-decoration": "none !important",
 			"color": "{hex:color_standard} !important",
 			"background": "{rgba:bg_color_light}"
 		},
-		".SPControlLink:active, a.SPControlLink:active": {
+		".MPControlLink:active, a.MPControlLink:active": {
 			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_dark}"
 		},
-		".SPControlLinkDisabled, .SPControlLinkDisabled:hover, .SPControlLinkDisabled:active": {
+		".MPControlLinkDisabled, .MPControlLinkDisabled:hover, .MPControlLinkDisabled:active": {
 			"color": "{hex:color_disabled} !important",
 			"background": "transparent !important",
 			"cursor": "default !important"
 		},
-		".SPControlLinkSeparator": {
+		".MPControlLinkSeparator": {
 			"display": "inline-block",
 			"width": "{exp:2,*,padding_scale}px"
 		},
 
-		".SPControlLinkSvgContainer": {
+		".MPControlLinkSvgContainer": {
 			"padding": "{exp:1,*,padding_scale}px {exp:2,*,padding_scale}px {exp:1,*,padding_scale}px {exp:2,*,padding_scale}px",
 			"border-radius": "{exp:border_radius_small,*,border_scale}px",
 			"background": "transparent",
 			"display": "inline-block",
 			"cursor": "pointer"
 		},
-		".SPControlLinkSvgContainer:hover": {
+		".MPControlLinkSvgContainer:hover": {
 			"background": "{rgba:bg_color_light}"
 		},
-		".SPControlLinkSvgContainer:active": {
+		".MPControlLinkSvgContainer:active": {
 			"background": "{rgba:bg_color_dark}"
 		},
-		".SPControlLinkSvg": {
+		".MPControlLinkSvg": {
 			"width": "{exp:14,*,font_scale}px", 
 			"height": "{exp:14,*,font_scale}px"
 		},
-		".SPControlLinkSvgMainGroup": {
+		".MPControlLinkSvgMainGroup": {
 		},
-		".SPControlLinkSvgShapeColor": {
+		".MPControlLinkSvgShapeColor": {
 			"fill": "{rgb:color_standard}",
 			"fill-opacity": "0.5",
 			"stroke": "none"
 		},
-		".SPTopContainer:hover .SPControlLinkSvgShapeColor": {
+		".MPTopContainer:hover .MPControlLinkSvgShapeColor": {
 			"fill-opacity": "1.0 !important"
 		},
-		".SPTopContainer:hover .SPControlLinkDisabled .SPControlLinkSvgShapeColor": {
+		".MPTopContainer:hover .MPControlLinkDisabled .MPControlLinkSvgShapeColor": {
 			"fill-opacity": "0.5 !important"
 		},
-		".SPControlLinkSvgContainer:hover .SPControlLinkSvgShapeColor": {
+		".MPControlLinkSvgContainer:hover .MPControlLinkSvgShapeColor": {
 			"fill": "{rgb:color_standard}",
 		},
-		".SPControlLinkSvgContainer:active .SPControlLinkSvgShapeColor": {
+		".MPControlLinkSvgContainer:active .MPControlLinkSvgShapeColor": {
 			"fill": "{rgb:color_special_2}",
 		},
 
-		".SPVideoContainer": {
+		".MPVideoContainer": {
 			"display": "block",
 			"position": "absolute",
 			"left": "0",
@@ -374,7 +374,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"height": "100%",
 			"overflow": "hidden"
 		},
-		".SPVideoContainerMask": {
+		".MPVideoContainerMask": {
 			"display": "block",
 			"position": "absolute",
 			"left": "0",
@@ -383,46 +383,46 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"height": "100%"
 		},
 
-		".SPSeekContainerTop": {
+		".MPSeekContainerTop": {
 			"position": "relative",
 			"height": "{exp:1,*,border_scale}px",
 			"background": "{rgba:bg_color_dark}",
 			"font-size":"0px"
 		},
-		".SPSeekContainerBottom": {
+		".MPSeekContainerBottom": {
 			"height": "{exp:1,*,border_scale}px",
 			"background": "{rgba:bg_color_dark}"
 		},
 
-		".SPSeekContainer": {
+		".MPSeekContainer": {
 			"position": "relative",
 			"border": "0px"
 		},
-		".SPSeekTimeContainer": {
+		".MPSeekTimeContainer": {
 			"position": "relative",
 			"padding": "{exp:1,*,padding_scale}px 0px {exp:1,*,padding_scale}px 0px",
 			"text-align": "center"
 		},
-		".SPSeekTime": {
+		".MPSeekTime": {
 			"color": "{hex:color_standard} !important",
 			"display": "inline-block",
 			"text-shadow": "{exp:1,*,font_scale}px {exp:1,*,font_scale}px 1px {hex:color_highlight_light}",
 		},
-		".SPSeekTimeLeft": {
+		".MPSeekTimeLeft": {
 			"position": "absolute",
 			"left": "0",
 			"padding-left": "{exp:1,*,padding_scale}px",
 			"display": "inline-block",
 			"color": "{hex:color_disabled} !important"
 		},
-		".SPSeekTimeRight": {
+		".MPSeekTimeRight": {
 			"position": "absolute",
 			"right": "0",
 			"padding-right": "{exp:1,*,padding_scale}px",
 			"display": "inline-block",
 			"color": "{hex:color_disabled} !important"
 		},
-		".SPSeekBarContainer": {
+		".MPSeekBarContainer": {
 			"position": "absolute",
 			"left": "0",
 			"top": "0",
@@ -432,25 +432,25 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"overflow": "hidden",
 			"cursor": "default"
 		},
-		".SPSeekBarMover": {
+		".MPSeekBarMover": {
 			"width": "0px",
 			"height": "100%",
 			"display": "inline-block",
 			"background": "{rgba:bg_color_darkest,0.125}",
 			"cursor": "default"
 		},
-		".SPSeekBar": {
+		".MPSeekBar": {
 			"width": "{exp:8,*,font_scale}px",
 			"height": "100%",
 			"display": "inline-block",
 			"background": "{rgba:bg_color_darkest,0.75}",
 			"cursor": "pointer"
 		},
-		".SPSeekBarActive": {
+		".MPSeekBarActive": {
 			"background": "{rgba:color_special_2,0.75} !important"
 		},
 
-		".SPLoadPercentBarContainer": {
+		".MPLoadPercentBarContainer": {
 			"position": "absolute",
 			"left": "0",
 			"top": "0",
@@ -460,14 +460,14 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"overflow": "hidden",
 			"cursor": "default",
 		},
-		".SPLoadPercentBarMover": {
+		".MPLoadPercentBarMover": {
 			"width": "0px",
 			"height": "100%",
 			"display": "inline-block",
 			"background": "transparent",
 			"cursor": "default"
 		},
-		".SPLoadPercentBar": {
+		".MPLoadPercentBar": {
 			"width": "0px",
 			"height": "100%",
 			"display": "inline-block",
@@ -475,35 +475,35 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"cursor": "default"
 		},
 
-		".SPImageContainerMain": {
+		".MPImageContainerMain": {
 			"padding": "{exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px 0px",
 			"width": "100%",
 			"text-align": "center",
 			"position": "relative"
 		},
-		".SPImageContainer": {
+		".MPImageContainer": {
 			"display": "block",
 			"width": "100%",
 			"overflow": "hidden",
 			"position": "relative"
 		},
-		".SPImage": {},
-		".SPNoImage": {
+		".MPImage": {},
+		".MPNoImage": {
 			"display": "inline-block",
 			"background": "{rgba:bg_color_lightest}",
 			"color": "{hex:color_disabled}",
 			"cursor": "default"
 		},
-		".SPNoImageText": {
+		".MPNoImageText": {
 			"display": "none"
 		},
 
-		".SPPlaylistContainer": {
+		".MPPlaylistContainer": {
 			"cursor": "default",
 			"overflow-x": "hidden",
 			"overflow-y": "auto"
 		},
-		".SPPlaylistItem": {
+		".MPPlaylistItem": {
 			"position": "relative",
 			"display": "block",
 			"text-align": "left",
@@ -511,18 +511,18 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"white-space": "nowrap",
 			"cursor": "pointer"
 		},
-		".SPPlaylistItem:hover, .SPPlaylistItem:active": {
+		".MPPlaylistItem:hover, .MPPlaylistItem:active": {
 			"background": "{rgba:bg_color_lightest}"
 		},
-		".SPPlaylistItemActive": {},
-		".SPPlaylistControlsContainer": {
+		".MPPlaylistItemActive": {},
+		".MPPlaylistControlsContainer": {
 			"position": "absolute",
 			"right": "0",
 			"top": "0",
 			"display": "block",
 			"cursor": "default"
 		},
-		".SPPlaylistItemInfo": {
+		".MPPlaylistItemInfo": {
 			"position": "absolute",
 			"right": "0",
 			"top": "0",
@@ -533,10 +533,10 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"padding": "{exp:1,*,padding_scale}px {exp:2,*,padding_scale}px {exp:1,*,padding_scale}px 0px",
 			"background": "{rgba:bg_color_light}",
 		},
-		".SPPlaylistItem:hover .SPPlaylistItemInfo": {
+		".MPPlaylistItem:hover .MPPlaylistItemInfo": {
 			"background": "{rgba:bg_color_lightest}",
 		},
-		".SPPlaylistControls": {
+		".MPPlaylistControls": {
 			"opacity": "0.0",
 			"text-decoration": "none !important",
 			"background": "transparent",
@@ -544,17 +544,17 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_standard} !important",
 			"padding": "{exp:1,*,padding_scale}px 0px {exp:1,*,padding_scale}px 0px"
 		},
-		".SPPlaylistItem:hover .SPPlaylistControls": {
+		".MPPlaylistItem:hover .MPPlaylistControls": {
 			"background": "{rgba:bg_color_lightest}",
 			"text-decoration": "none !important",
 			"opacity": "0.25"
 		},
-		".SPPlaylistItem:hover .SPPlaylistControls:hover, .SPPlaylistControls:active": {
+		".MPPlaylistItem:hover .MPPlaylistControls:hover, .MPPlaylistControls:active": {
 			"background": "{rgba:bg_color_lightest}",
 			"text-decoration": "none !important",
 			"opacity": "1.0"
 		},
-		".SPPlaylistControlLink, a.SPPlaylistControlLink, .SPPlaylistControlLink:visited, a.SPPlaylistControlLink:visited": {
+		".MPPlaylistControlLink, a.MPPlaylistControlLink, .MPPlaylistControlLink:visited, a.MPPlaylistControlLink:visited": {
 			"display": "inline-block",
 			"padding": "0px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px",
 			"width": "{exp:12,*,font_scale}px",
@@ -565,35 +565,35 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_disabled} !important",
 			"background": "transparent"
 		},
-		".SPPlaylistControls:hover .SPPlaylistControlLink, .SPPlaylistControls:hover a.SPPlaylistControlLink": {
+		".MPPlaylistControls:hover .MPPlaylistControlLink, .MPPlaylistControls:hover a.MPPlaylistControlLink": {
 			"text-decoration": "none !important",
 			"background": "{rgba:bg_color_light} !important"
 		},
-		".SPPlaylistControls:hover .SPPlaylistControlLink:hover, .SPPlaylistControls:hover a.SPPlaylistControlLink:hover": {
+		".MPPlaylistControls:hover .MPPlaylistControlLink:hover, .MPPlaylistControls:hover a.MPPlaylistControlLink:hover": {
 			"text-decoration": "none !important",
 			"color": "{hex:color_standard} !important",
 			"background": "{rgba:bg_color_dark}"
 		},
-		".SPPlaylistControls:hover .SPPlaylistControlLink:active, .SPPlaylistControls:hover a.SPPlaylistControlLink:active": {
+		".MPPlaylistControls:hover .MPPlaylistControlLink:active, .MPPlaylistControls:hover a.MPPlaylistControlLink:active": {
 			"text-decoration": "none !important",
 			"color": "{hex:color_special_2} !important",
 			"background": "{rgba:bg_color_dark}"
 		},
-		".SPPlaylistControlLinkSeparator": {
+		".MPPlaylistControlLinkSeparator": {
 			"display": "inline-block",
 			"padding": "0px 0px 0px {exp:1,*,padding_scale}px",
 			"cursor": "default"
 		},
-		".SPPlaylistSoundName": {
+		".MPPlaylistSoundName": {
 			"color": "{hex:color_standard}",
 			"padding": "{exp:1,*,padding_scale}px 0px {exp:1,*,padding_scale}px {exp:2,*,padding_scale}px"
 		},
-		".SPPlaylistItemActive .SPPlaylistSoundName": {
+		".MPPlaylistItemActive .MPPlaylistSoundName": {
 			"color": "{hex:color_special_2} !important",
 			"text-shadow": "{exp:1,*,font_scale}px {exp:1,*,font_scale}px 1px {hex:color_highlight_light}"
 		},
 
-		".SPHelpContainer": {
+		".MPHelpContainer": {
 			"position": "absolute",
 			"left": "0",
 			"top": "0",
@@ -601,12 +601,12 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"height": "100%",
 			"background": "{rgba:bg_color_light}"
 		},
-		".SPHelpContainerInner0": {
+		".MPHelpContainerInner0": {
 			"position": "relative",
 			"width": "100%",
 			"height": "100%",
 		},
-		".SPHelpContainerInner1": {
+		".MPHelpContainerInner1": {
 			"position": "absolute",
 			"left": "0",
 			"top": "0",
@@ -615,7 +615,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"overflow-x": "hidden",
 			"overflow-y": "auto",
 		},
-		".SPHelpLabelDiv": {
+		".MPHelpLabelDiv": {
 			"display": "block",
 			"width": "100%",
 			"text-align": "left",
@@ -623,21 +623,21 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_standard} !important",
 			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px"
 		},
-		".SPHelpTextDiv": {
+		".MPHelpTextDiv": {
 			"display": "block",
 			"width": "100%",
 			"text-align": "left",
 			"color": "{hex:color_standard} !important",
 			"padding": "{exp:2,*,padding_scale}px {exp:4,*,padding_scale}px 0px {exp:4,*,padding_scale}px"
 		},
-		".SPHelpSectionDiv": {
+		".MPHelpSectionDiv": {
 			"display": "block",
 			"width": "100%",
 			"text-align": "left",
 			"color": "{hex:color_standard} !important",
 			"padding-top": "{exp:2,*,padding_scale}px"
 		},
-		".SPHelpLinkDiv": {
+		".MPHelpLinkDiv": {
 			"background": "{rgba:bg_color_light}",
 			"display": "block",
 			"width": "100%",
@@ -645,7 +645,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"bottom": "0",
 			"left": "0"
 		},
-		".SPHelpTextLink, a.SPHelpTextLink": {
+		".MPHelpTextLink, a.MPHelpTextLink": {
 			"display": "inline-block",
 			"width": "50%",
 			"text-align": "center",
@@ -653,18 +653,18 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"text-decoration": "none",
 			"color": "{hex:color_standard} !important"
 		},
-		".SPHelpTextLink:hover, a.SPHelpTextLink:hover": {
+		".MPHelpTextLink:hover, a.MPHelpTextLink:hover": {
 			"text-decoration": "underline",
 			"color": "{hex:color_standard} !important"
 		},
-		".SPHelpTextLink:active, a.SPHelpTextLink:active": {
+		".MPHelpTextLink:active, a.MPHelpTextLink:active": {
 			"text-decoration": "underline",
 			"color": "{hex:color_special_2} !important"
 		},
-		".SPHelpModeNonLink": {
+		".MPHelpModeNonLink": {
 			"padding-left": "{exp:4.0,*,padding_scale}px"
 		},
-		".SPHelpModeLink, a.SPHelpModeLink": {
+		".MPHelpModeLink, a.MPHelpModeLink": {
 			"display": "inline-block",
 			"width": "100%",
 			"text-align": "left",
@@ -673,20 +673,20 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_standard} !important",
 			"padding-left": "{exp:4.0,*,padding_scale}px"
 		},
-		".SPHelpModeLink:hover, a.SPHelpModeLink:hover": {
+		".MPHelpModeLink:hover, a.MPHelpModeLink:hover": {
 			"text-decoration": "underline",
 			"color": "{hex:color_standard} !important"
 		},
-		".SPHelpModeLink:active, a.SPHelpModeLink:active": {
+		".MPHelpModeLink:active, a.MPHelpModeLink:active": {
 			"text-decoration": "underline",
 			"color": "{hex:color_special_2} !important"
 		},
-		".SPHelpColorInputDiv0": {
+		".MPHelpColorInputDiv0": {
 			"width": "28%",
 			"display": "inline-block",
 			"position": "relative"
 		},
-		".SPHelpColorLabelText": {
+		".MPHelpColorLabelText": {
 			"display": "block",
 			"width": "100%",
 			"text-align": "right",
@@ -694,7 +694,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_standard} !important",
 			"vertical-align": "middle"
 		},
-		".SPHelpColorLabelDisplay": {
+		".MPHelpColorLabelDisplay": {
 			"display": "block",
 			"width": "{exp:4,*,padding_scale}px",
 			"height": "100%",
@@ -702,26 +702,26 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"left	": "0",
 			"top": "0"
 		},
-		".SPHelpColorInputDiv1": {
+		".MPHelpColorInputDiv1": {
 			"width": "18%",
 			"display": "inline-block"
 		},
-		".SPHelpColorInputDiv1Full": {
+		".MPHelpColorInputDiv1Full": {
 			"width": "72%",
 			"display": "inline-block"
 		},
-		".SPHelpColorInputDiv2": {
+		".MPHelpColorInputDiv2": {
 			"padding-right": "{exp:2,*,padding_scale}px"
 		},
-		".SPHelpColorInputDiv2b": {
+		".MPHelpColorInputDiv2b": {
 			"padding-right": "{exp:2,*,padding_scale}px"
 		},
-		".SPHelpColorInputDiv3": {
+		".MPHelpColorInputDiv3": {
 			"border": "{exp:1,*,border_scale}px solid {hex:bg_color_dark}",
 			"padding": "{exp:2,*,padding_scale}px",
 			"background": "{rgba:bg_color_lightest}"
 		},
-		".SPHelpColorInput[type=\"text\"], .SPHelpColorInput[type=\"text\"]:hover, .SPHelpColorInput[type=\"text\"]:active, .SPHelpColorInput[type=\"text\"]:focus, input.SPHelpColorInput[type=\"text\"], input.SPHelpColorInput[type=\"text\"]:hover, input.SPHelpColorInput[type=\"text\"]:active, input.SPHelpColorInput[type=\"text\"]:focus": {
+		".MPHelpColorInput[type=\"text\"], .MPHelpColorInput[type=\"text\"]:hover, .MPHelpColorInput[type=\"text\"]:active, .MPHelpColorInput[type=\"text\"]:focus, input.MPHelpColorInput[type=\"text\"], input.MPHelpColorInput[type=\"text\"]:hover, input.MPHelpColorInput[type=\"text\"]:active, input.MPHelpColorInput[type=\"text\"]:focus": {
 			"width": "100% !important",
 			"display": "inline-block !important",
 			"padding": "0px !important",
@@ -734,7 +734,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"border": "0px hidden !important"
 		},
 
-		".SPFooterBarContainer": {
+		".MPFooterBarContainer": {
 			"position": "relative",
 			"background": "{rgba:bg_color_light}",
 			"text-align": "center",
@@ -743,7 +743,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"border-bottom-right-radius": "{exp:bg_inner_border_radius,*,border_scale}px"
 		},
 
-		".SPDownloadsContainer": {
+		".MPDownloadsContainer": {
 			"position": "absolute",
 			"left": "0",
 			"top": "0",
@@ -754,7 +754,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"display": "block",
 			"background": "{rgba:bg_color_light}"
 		},
-		".SPDownloadsLabel": {
+		".MPDownloadsLabel": {
 			"display": "block",
 			"width": "100%",
 			"text-align": "left",
@@ -762,33 +762,33 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_standard} !important",
 			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px"
 		},
-		".SPDownloadsContent": {
+		".MPDownloadsContent": {
 			"display": "block",
 			"width": "100%",
 			"text-align": "left",
 			"color": "{hex:color_standard} !important",
 			"padding": "{exp:2,*,padding_scale}px {exp:4,*,padding_scale}px 0px {exp:4,*,padding_scale}px"
 		},
-		".SPDownloadsContent div": {
+		".MPDownloadsContent div": {
 			"color": "{hex:color_standard} !important",
 		},
-		".SPDownloadsLink, a.SPDownloadsLink, .SPDownloadsLink:visited, a.SPDownloadsLink:visited": {
+		".MPDownloadsLink, a.MPDownloadsLink, .MPDownloadsLink:visited, a.MPDownloadsLink:visited": {
 			"cursor": "pointer",
 			"text-decoration": "underline !important",
 			"color": "{hex:color_standard} !important",
 		},
-		".SPDownloadsLink:hover, a.SPDownloadsLink:hover": {
+		".MPDownloadsLink:hover, a.MPDownloadsLink:hover": {
 			"color": "{hex:color_special_2} !important"
 		},
-		".SPDownloadsLink:active, a.SPDownloadsLink:active": {
+		".MPDownloadsLink:active, a.MPDownloadsLink:active": {
 			"color": "{hex:color_special_2} !important"
 		},
 
-		".SPDownloadsContentReady": {
+		".MPDownloadsContentReady": {
 			"padding-top": "{exp:6,*,padding_scale}px",
 		},
 
-		".SPAlertContainer": {
+		".MPAlertContainer": {
 			"width": "100%",
 			"height": "100%",
 			"background": "{rgba:bg_color_lightest,0.75} !important",
@@ -798,7 +798,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"border-radius": "{exp:bg_inner_border_radius,*,border_scale}px",
 			"display": "block"
 		},
-		".SPAlertContentContainer": {
+		".MPAlertContentContainer": {
 			"position": "relative",
 			"top": "50%",
 			"text-align": "center",
@@ -807,7 +807,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"margin-top": "{exp:-40,*,font_scale}px !important"
 		},
 
-		".SPFirstRunContainer": {
+		".MPFirstRunContainer": {
 			"position": "absolute",
 			"left": "0",
 			"top": "0",
@@ -818,48 +818,48 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"display": "block",
 			"background": "{rgba:bg_color_light}"
 		},
-		".SPFirstRunLabel": {
+		".MPFirstRunLabel": {
 			"display": "block",
 			"text-align": "left",
 			"font-weight": "bold",
 			"color": "{hex:color_standard} !important",
 			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px"
 		},
-		".SPFirstRunTextContainer": {
+		".MPFirstRunTextContainer": {
 			"display": "block",
 			"text-align": "left",
 			"color": "{hex:color_standard} !important",
 			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:4,*,padding_scale}px"
 		},
-		".SPFirstRunTextContainer div": {
+		".MPFirstRunTextContainer div": {
 			"color": "{hex:color_standard} !important",
 		},
-		".SPFirstRunLink, a.SPFirstRunLink, .SPFirstRunLink:visited, a.SPFirstRunLink:visited": {
+		".MPFirstRunLink, a.MPFirstRunLink, .MPFirstRunLink:visited, a.MPFirstRunLink:visited": {
 			"cursor": "pointer",
 			"text-decoration": "underline !important",
 			"color": "{hex:color_standard} !important",
 		},
-		".SPFirstRunLink:hover, a.SPFirstRunLink:hover": {
+		".MPFirstRunLink:hover, a.MPFirstRunLink:hover": {
 			"color": "{hex:color_special_2} !important"
 		},
-		".SPFirstRunLink:active, a.SPFirstRunLink:active": {
+		".MPFirstRunLink:active, a.MPFirstRunLink:active": {
 			"color": "{hex:color_special_2} !important"
 		},
-		".SPFirstRunExitLink": {
+		".MPFirstRunExitLink": {
 			"display": "block",
 			"text-align": "center",
 			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px"
 		},
 
-		".SPResizingSizeOff": {
+		".MPResizingSizeOff": {
 			"width": "{exp:bg_outer_size,*,padding_scale}px",
 			"height": "{exp:bg_outer_size,*,padding_scale}px",
 		},
-		".SPResizingSizeAvailable": {
+		".MPResizingSizeAvailable": {
 			"width": "{exp:bg_outer_size,*,padding_scale,*,2}px",
 			"height": "{exp:bg_outer_size,*,padding_scale,*,2}px",
 		},
-		".SPResizingContainerFull": {
+		".MPResizingContainerFull": {
 			"position": "absolute",
 			"left": "-{exp:bg_outer_size,*,padding_scale}px",
 			"top": "-{exp:bg_outer_size,*,padding_scale}px",
@@ -870,77 +870,77 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"border-radius": "{exp:bg_outer_border_radius,*,border_scale}px",
 			"background": "{rgba:bg_outer_color}"
 		},
-		".SPResizingContainerInner": {
+		".MPResizingContainerInner": {
 			"position": "relative",
 			"width": "100%",
 			"height": "100%"
 		},
-		".SPResizingContainerControl": {
+		".MPResizingContainerControl": {
 			"overflow": "hidden",
 			"position": "absolute"
 		},
-		".SPResizingContainerTopLeft": {
+		".MPResizingContainerTopLeft": {
 			"left": "0",
 			"width": "16px",
 			"top": "0",
 			"height": "16px",
 			"cursor": "nw-resize"
 		},
-		".SPResizingContainerTop": {
+		".MPResizingContainerTop": {
 			"left": "16px",
 			"right": "16px",
 			"top": "0",
 			"height": "16px",
 			"cursor": "n-resize"
 		},
-		".SPResizingContainerTopRight": {
+		".MPResizingContainerTopRight": {
 			"right": "0",
 			"width": "16px",
 			"top": "0",
 			"height": "16px",
 			"cursor": "ne-resize"
 		},
-		".SPResizingContainerLeft": {
+		".MPResizingContainerLeft": {
 			"left": "0",
 			"width": "16px",
 			"top": "16px",
 			"bottom": "16px",
 			"cursor": "w-resize"
 		},
-		".SPResizingContainerRight": {
+		".MPResizingContainerRight": {
 			"right": "0",
 			"width": "16px",
 			"top": "16px",
 			"bottom": "16px",
 			"cursor": "e-resize"
 		},
-		".SPResizingContainerBottomLeft": {
+		".MPResizingContainerBottomLeft": {
 			"left": "0",
 			"width": "16px",
 			"bottom": "0",
 			"height": "16px",
 			"cursor": "sw-resize"
 		},
-		".SPResizingContainerBottom": {
+		".MPResizingContainerBottom": {
 			"left": "16px",
 			"right": "16px",
 			"bottom": "0",
 			"height": "16px",
 			"cursor": "s-resize"
 		},
-		".SPResizingContainerBottomRight": {
+		".MPResizingContainerBottomRight": {
 			"right": "0",
 			"width": "16px",
 			"bottom": "0",
 			"height": "16px",
 			"cursor": "se-resize"
 		},
-		".SPResizingContainerTextContainerOuter": {
+		".MPResizingContainerTextContainerOuter": {
 			"position": "relative",
 			"width": "100%",
 			"height": "100%"
 		},
-		".SPResizingContainerTextContainerInner": {
+		".MPResizingContainerTextContainerInner": {
 			"position": "absolute",
 			"left": "0",
 			"top": "50%",
@@ -948,13 +948,13 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"height": "100%",
 			"margin-top": "-{exp:font_size_controls,*,font_scale,/,2}px",
 		},
-		".SPResizingContainerTextContainer": {
+		".MPResizingContainerTextContainer": {
 			"width": "100%",
 			"height": "100%",
 			"text-align": "center",
 			"cursor": "inherit"
 		},
-		".SPResizingContainerText": {
+		".MPResizingContainerText": {
 			"font-family": "{controls_font}",
 			"font-size": "{exp:font_size_controls,*,font_scale}px",
 			"font-weight": "bold",
@@ -1460,7 +1460,7 @@ MediaPlayer.prototype = {
 
 		// Container
 		$("body").append( //{ DOM Source
-			(this.sp_container_main = this.D("SPContainerMain", "SPContainerMainBorders"))
+			(this.mp_container_main = this.D("MPContainerMain", "MPContainerMainBorders"))
 			.width(this.player_width * this.scale_factor)
 			.css({"right": this.position_offset[0], "bottom": this.position_offset[1]})
 			.on("dragover." + this.namespace, {media_player: this}, this.on_container_dragover)
@@ -1470,139 +1470,139 @@ MediaPlayer.prototype = {
 			.on("mouseover." + this.namespace, {media_player: this}, this.on_main_container_mouseover)
 			.on("mouseout." + this.namespace, {media_player: this}, this.on_main_container_mouseout)
 			.append(
-				(this.sp_container = this.D("SPContainer"))
+				(this.mp_container = this.D("MPContainer"))
 				.append( //{ Resizing
-					(this.resizing_container = this.D("SPResizingContainerFull"))
+					(this.resizing_container = this.D("MPResizingContainerFull"))
 					.css("display", "none")
 					.append(
-						this.D("SPResizingContainerInner")
+						this.D("MPResizingContainerInner")
 						.append(
-							(this.resizing_controls[0] = this.D("SPResizingContainerTopLeft", "SPResizingContainerControl"))
+							(this.resizing_controls[0] = this.D("MPResizingContainerTopLeft", "MPResizingContainerControl"))
 							.on("mousedown." + this.namespace, {media_player: this, sides: [0,3]}, this.on_resizer_mousedown)
 							.append(
-								(this.resizing_texts[0] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+								(this.resizing_texts[0] = this.D("MPResizingContainerTextContainer", "MPResizingContainerText"))
 								.html("&#x2196;")
 							)
 						)
 						.append(
-							(this.resizing_controls[1] = this.D("SPResizingContainerTop", "SPResizingContainerControl"))
+							(this.resizing_controls[1] = this.D("MPResizingContainerTop", "MPResizingContainerControl"))
 							.on("mousedown." + this.namespace, {media_player: this, sides: [0,null]}, this.on_resizer_mousedown)
 							.append(
-								(this.resizing_texts[1] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+								(this.resizing_texts[1] = this.D("MPResizingContainerTextContainer", "MPResizingContainerText"))
 								.html("&#x2191;")
 							)
 						)
 						.append(
-							(this.resizing_controls[2] = this.D("SPResizingContainerTopRight", "SPResizingContainerControl"))
+							(this.resizing_controls[2] = this.D("MPResizingContainerTopRight", "MPResizingContainerControl"))
 							.on("mousedown." + this.namespace, {media_player: this, sides: [0,1]}, this.on_resizer_mousedown)
 							.append(
-								(this.resizing_texts[2] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+								(this.resizing_texts[2] = this.D("MPResizingContainerTextContainer", "MPResizingContainerText"))
 								.html("&#x2197;")
 							)
 						)
 						.append(
-							(this.resizing_controls[3] = this.D("SPResizingContainerLeft", "SPResizingContainerControl"))
+							(this.resizing_controls[3] = this.D("MPResizingContainerLeft", "MPResizingContainerControl"))
 							.on("mousedown." + this.namespace, {media_player: this, sides: [null,3]}, this.on_resizer_mousedown)
 							.append(
-								this.D("SPResizingContainerTextContainerOuter")
+								this.D("MPResizingContainerTextContainerOuter")
 								.append(
-									(this.resizing_texts[3] = this.D("SPResizingContainerTextContainerInner", "SPResizingContainerTextContainer", "SPResizingContainerText"))
+									(this.resizing_texts[3] = this.D("MPResizingContainerTextContainerInner", "MPResizingContainerTextContainer", "MPResizingContainerText"))
 									.html("&#x2190;")
 								)
 							)
 						)
 						.append(
-							(this.resizing_controls[4] = this.D("SPResizingContainerRight", "SPResizingContainerControl"))
+							(this.resizing_controls[4] = this.D("MPResizingContainerRight", "MPResizingContainerControl"))
 							.on("mousedown." + this.namespace, {media_player: this, sides: [null,1]}, this.on_resizer_mousedown)
 							.append(
-								this.D("SPResizingContainerTextContainerOuter")
+								this.D("MPResizingContainerTextContainerOuter")
 								.append(
-									(this.resizing_texts[4] = this.D("SPResizingContainerTextContainerInner", "SPResizingContainerTextContainer", "SPResizingContainerText"))
+									(this.resizing_texts[4] = this.D("MPResizingContainerTextContainerInner", "MPResizingContainerTextContainer", "MPResizingContainerText"))
 									.html("&#x2192;")
 								)
 							)
 						)
 						.append(
-							(this.resizing_controls[5] = this.D("SPResizingContainerBottomLeft", "SPResizingContainerControl"))
+							(this.resizing_controls[5] = this.D("MPResizingContainerBottomLeft", "MPResizingContainerControl"))
 							.on("mousedown." + this.namespace, {media_player: this, sides: [2,3]}, this.on_resizer_mousedown)
 							.append(
-								(this.resizing_texts[5] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+								(this.resizing_texts[5] = this.D("MPResizingContainerTextContainer", "MPResizingContainerText"))
 								.html("&#x2199;")
 							)
 						)
 						.append(
-							(this.resizing_controls[6] = this.D("SPResizingContainerBottom", "SPResizingContainerControl"))
+							(this.resizing_controls[6] = this.D("MPResizingContainerBottom", "MPResizingContainerControl"))
 							.on("mousedown." + this.namespace, {media_player: this, sides: [2,null]}, this.on_resizer_mousedown)
 							.append(
-								(this.resizing_texts[6] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+								(this.resizing_texts[6] = this.D("MPResizingContainerTextContainer", "MPResizingContainerText"))
 								.html("&#x2193;")
 							)
 						)
 						.append(
-							(this.resizing_controls[7] = this.D("SPResizingContainerBottomRight", "SPResizingContainerControl"))
+							(this.resizing_controls[7] = this.D("MPResizingContainerBottomRight", "MPResizingContainerControl"))
 							.on("mousedown." + this.namespace, {media_player: this, sides: [2,1]}, this.on_resizer_mousedown)
 							.append(
-								(this.resizing_texts[7] = this.D("SPResizingContainerTextContainer", "SPResizingContainerText"))
+								(this.resizing_texts[7] = this.D("MPResizingContainerTextContainer", "MPResizingContainerText"))
 								.html("&#x2198;")
 							)
 						)
 					)
 				) //}
 				.append( //{ Title bar
-					this.D("SPTitleBarContainer")
+					this.D("MPTitleBarContainer")
 					.on("mousedown." + this.namespace, {media_player: this}, this.on_titlebar_mousedown)
 					.append(
-						this.D("SPTitleContainer")
+						this.D("MPTitleContainer")
 						.append(
-							(this.title = this.D("SPTitle"))
+							(this.title = this.D("MPTitle"))
 							.html(this.title_default)
 						)
 					)
 					.append(
-						this.D("SPMainButtonsLeft")
+						this.D("MPMainButtonsLeft")
 						.append(
-							(this.title_buttons[0] = this.E("a", "SPMainButtonLeft"))
+							(this.title_buttons[0] = this.E("a", "MPMainButtonLeft"))
 							.html("[S]")
 						)
 						.append(
-							(this.title_buttons[1] = this.E("a", "SPMainButtonGeneric"))
+							(this.title_buttons[1] = this.E("a", "MPMainButtonGeneric"))
 							.html("[D]")
 						)
 						.append(
-							(this.title_buttons[2] = this.E("a", "SPMainButtonGeneric"))
+							(this.title_buttons[2] = this.E("a", "MPMainButtonGeneric"))
 							.html("[?]")
 						)
 					)
 					.append(
-						this.D("SPMainButtonsRight")
+						this.D("MPMainButtonsRight")
 						.append(
-							(this.title_buttons[3] = this.E("a", "SPMainButtonGeneric"))
+							(this.title_buttons[3] = this.E("a", "MPMainButtonGeneric"))
 							.html("[&#x2012;]")
 						)
 						.append(
-							(this.title_buttons[4] = this.E("a", "SPMainButtonRight"))
+							(this.title_buttons[4] = this.E("a", "MPMainButtonRight"))
 							.html("[&times;]")
 						)
 					)
 				) //}
 				.append( //{ Content
-					(this.content_container = this.D("SPContentContainer"))
+					(this.content_container = this.D("MPContentContainer"))
 					.append( //{ Top
-						(this.top_container = this.D("SPTopContainer"))
+						(this.top_container = this.D("MPTopContainer"))
 						.append(
-							this.D("SPImageContainerMain")
+							this.D("MPImageContainerMain")
 							.append( //{ Image
-								(this.image_container = this.D("SPImageContainer"))
+								(this.image_container = this.D("MPImageContainer"))
 								.height(this.image_height_max * this.scale_factor)
 								.append(
-									(this.no_image = this.D("SPNoImage"))
+									(this.no_image = this.D("MPNoImage"))
 									.append(
-										this.D("SPNoImageText")
+										this.D("MPNoImageText")
 										.html("[no media]")
 									)
 								)
 								.append(
-									(this.image = this.E("img", "SPImage"))
+									(this.image = this.E("img", "MPImage"))
 									.attr("title", "")
 									.attr("alt", "")
 									.css("display", "none")
@@ -1611,16 +1611,16 @@ MediaPlayer.prototype = {
 								)
 							) //}
 							.append( //{ Video
-								(this.video_container = this.D("SPVideoContainer"))
+								(this.video_container = this.D("MPVideoContainer"))
 							)
 							.append(
-								(this.video_mask = this.D("SPVideoContainerMask"))
+								(this.video_mask = this.D("MPVideoContainerMask"))
 								.on("mousedown", {media_player: this}, this.on_image_resize_mousedown)
 							) //}
 							.append( //{ Playback controls
-								this.D("SPControlContainer")
+								this.D("MPControlContainer")
 								.append(
-									(this.playback_control_container = this.D("SPControlContainerInner"))
+									(this.playback_control_container = this.D("MPControlContainerInner"))
 								)
 							) //}
 						)
@@ -1634,126 +1634,126 @@ MediaPlayer.prototype = {
 							.on("durationchange." + this.namespace, {media_player: this}, this.on_audio_durationchange)
 						) //}
 						.append( //{ Playlist index
-							(this.playlist_index_container = this.D("SPPlaylistIndexContainer"))
+							(this.playlist_index_container = this.D("MPPlaylistIndexContainer"))
 							.on("mousedown", this.cancel_event)
 							.append(
-								this.D("SPPlaylistIndexContainerInner")
+								this.D("MPPlaylistIndexContainerInner")
 								.append(
-									(this.playlist_index_text1 = this.D("SPPlaylistIndexText1"))
+									(this.playlist_index_text1 = this.D("MPPlaylistIndexText1"))
 									.html("-")
 								)
 								.append(
-									this.D("SPPlaylistIndexText2")
+									this.D("MPPlaylistIndexText2")
 									.html("/")
 								)
 								.append(
-									(this.playlist_index_text2 = this.D("SPPlaylistIndexText3"))
+									(this.playlist_index_text2 = this.D("MPPlaylistIndexText3"))
 									.html("-")
 								)
 							)
 						) //}
 						.append( //{ Volume
-							(this.volume_container = this.D("SPVolumeContainer"))
+							(this.volume_container = this.D("MPVolumeContainer"))
 							.append(
-								(this.volume_bar_container = this.D("SPVolumeBarContainer"))
+								(this.volume_bar_container = this.D("MPVolumeBarContainer"))
 								.on("mousedown." + this.namespace, {media_player: this}, this.on_volumebar_mousedown)
 								.append(
-									(this.volume_bar = this.D("SPVolumeBar"))
+									(this.volume_bar = this.D("MPVolumeBar"))
 								)
 							)
 							.append(
-								this.D("SPVolumeLabelContainer")
+								this.D("MPVolumeLabelContainer")
 								.append(
-									(this.D("SPVolumeLabel").html("Vol"))
+									(this.D("MPVolumeLabel").html("Vol"))
 								)
 								.append(
-									(this.volume_label = this.D("SPVolumeValue").html("100%"))
+									(this.volume_label = this.D("MPVolumeValue").html("100%"))
 								)
 							)
 						) //}
 					) //}
 					.append( //{ Loaded
-						this.D("SPSeekContainerTop")
+						this.D("MPSeekContainerTop")
 						.append(
-							(this.load_percent_bar_container = this.D("SPLoadPercentBarContainer"))
+							(this.load_percent_bar_container = this.D("MPLoadPercentBarContainer"))
 							.on("mousedown." + this.namespace, this.cancel_event)
 							.append(
-								(this.load_percent_bar_mover = this.D("SPLoadPercentBarMover"))
+								(this.load_percent_bar_mover = this.D("MPLoadPercentBarMover"))
 								.on("mousedown." + this.namespace, this.cancel_event)
 							)
 							.append(
-								(this.load_percent_bar = this.D("SPLoadPercentBar"))
+								(this.load_percent_bar = this.D("MPLoadPercentBar"))
 								.on("mousedown." + this.namespace, this.cancel_event)
 							)
 						)
 					) //}
 					.append( //{ Seek bar
-						this.D("SPSeekContainer")
+						this.D("MPSeekContainer")
 						.append(
-							this.D("SPSeekTimeContainer")
+							this.D("MPSeekTimeContainer")
 							.append(
-								(this.seek_time_start_label = this.D("SPSeekTimeLeft"))
+								(this.seek_time_start_label = this.D("MPSeekTimeLeft"))
 								.html("0:00")
 							)
 							.append(
-								(this.seek_time_end_label = this.D("SPSeekTimeRight"))
+								(this.seek_time_end_label = this.D("MPSeekTimeRight"))
 								.html("0:00")
 							)
 							.append(
-								(this.seek_time_current_label = this.D("SPSeekTime"))
+								(this.seek_time_current_label = this.D("MPSeekTime"))
 								.html("0:00")
 							)
 						)
 						.append(
-							(this.seek_bar_container = this.D("SPSeekBarContainer"))
+							(this.seek_bar_container = this.D("MPSeekBarContainer"))
 							.on("mousedown." + this.namespace, {media_player: this}, this.on_seekbar_container_mousedown)
 							.append(
-								(this.seek_bar_mover = this.D("SPSeekBarMover"))
+								(this.seek_bar_mover = this.D("MPSeekBarMover"))
 							)
 							.append(
-								(this.seek_bar = this.D("SPSeekBar"))
+								(this.seek_bar = this.D("MPSeekBar"))
 								.on("mousedown." + this.namespace, {media_player: this}, this.on_seekbar_mousedown)
 							)
 						)
 					) //}
 					.append( //{ Resize
-						this.D("SPSeekContainerBottom")
+						this.D("MPSeekContainerBottom")
 					) //}
 					.append( //{ Playlist
-						(this.playlist_container = this.D("SPPlaylistContainer"))
+						(this.playlist_container = this.D("MPPlaylistContainer"))
 						.height(this.playlist_height * this.scale_factor)
 						.on("mousedown", this.cancel_event)
 					) //}
 
 					.append( //{ Help 0
-						(this.help_container[0] = this.D("SPHelpContainer"))
+						(this.help_container[0] = this.D("MPHelpContainer"))
 						.css("display", "none")
 						.append(
-							this.D("SPHelpContainerInner0")
+							this.D("MPHelpContainerInner0")
 							.append(
-								(this.help_container_inner1[0] = this.D("SPHelpContainerInner1"))
+								(this.help_container_inner1[0] = this.D("MPHelpContainerInner1"))
 								.append( //{ Playlist Settings
-									this.D("SPHelpLabelDiv")
+									this.D("MPHelpLabelDiv")
 									.html("Playlist Settings")
 								)
 								.append(
-									this.D("SPHelpSectionDiv")
+									this.D("MPHelpSectionDiv")
 									.append(
-										this.D("SPHelpColorInputDiv0")
+										this.D("MPHelpColorInputDiv0")
 										.append(
-											this.D("SPHelpColorInputDiv2b")
+											this.D("MPHelpColorInputDiv2b")
 											.append(
-												this.D("SPHelpColorLabelText")
+												this.D("MPHelpColorLabelText")
 												.html("Mode")
 											)
 										)
 									)
 									.append(
-										this.D("SPHelpColorInputDiv1Full")
+										this.D("MPHelpColorInputDiv1Full")
 										.append(
-											this.D("SPHelpColorInputDiv2")
+											this.D("MPHelpColorInputDiv2")
 											.append(
-												this.E("a", "SPHelpModeLink")
+												this.E("a", "MPHelpModeLink")
 												.html(this.playlist_randomize ? "Randomize" : (this.playlist_loop ? "Loop" : "Play Once"))
 												.on("click." + this.namespace, {media_player: this}, this.on_playlist_mode_change)
 												.on("mousedown", this.cancel_event)
@@ -1762,23 +1762,23 @@ MediaPlayer.prototype = {
 									)
 								)
 								.append(
-									this.D("SPHelpSectionDiv")
+									this.D("MPHelpSectionDiv")
 									.append(
-										this.D("SPHelpColorInputDiv0")
+										this.D("MPHelpColorInputDiv0")
 										.append(
-											this.D("SPHelpColorInputDiv2b")
+											this.D("MPHelpColorInputDiv2b")
 											.append(
-												this.D("SPHelpColorLabelText")
+												this.D("MPHelpColorLabelText")
 												.html("On Load")
 											)
 										)
 									)
 									.append(
-										this.D("SPHelpColorInputDiv1Full")
+										this.D("MPHelpColorInputDiv1Full")
 										.append(
-											this.D("SPHelpColorInputDiv2")
+											this.D("MPHelpColorInputDiv2")
 											.append(
-												this.E("a", "SPHelpModeLink")
+												this.E("a", "MPHelpModeLink")
 												.html(this.playlist_play_on_load_settings[this.playlist_play_on_load])
 												.on("click." + this.namespace, {media_player: this}, this.on_playlist_onload_change)
 												.on("mousedown", this.cancel_event)
@@ -1787,22 +1787,22 @@ MediaPlayer.prototype = {
 									)
 								)
 								.append(
-									this.D("SPHelpSectionDiv")
+									this.D("MPHelpSectionDiv")
 									.append(
-										this.D("SPHelpColorInputDiv0")
+										this.D("MPHelpColorInputDiv0")
 										.append(
-											this.D("SPHelpColorInputDiv2b")
+											this.D("MPHelpColorInputDiv2b")
 											.append(
-												this.D("SPHelpColorLabelText")
+												this.D("MPHelpColorLabelText")
 											)
 										)
 									)
 									.append(
-										this.D("SPHelpColorInputDiv1Full")
+										this.D("MPHelpColorInputDiv1Full")
 										.append(
-											this.D("SPHelpColorInputDiv2")
+											this.D("MPHelpColorInputDiv2")
 											.append(
-												this.E("a", "SPHelpModeLink")
+												this.E("a", "MPHelpModeLink")
 												.html(this.playlist_scrollto_onload ? "Scroll to in playlist" : "Don't scroll playlist")
 												.on("click." + this.namespace, {media_player: this}, this.on_playlist_scrollto_change)
 												.on("mousedown", this.cancel_event)
@@ -1811,23 +1811,23 @@ MediaPlayer.prototype = {
 									)
 								)
 								.append(
-									this.D("SPHelpSectionDiv")
+									this.D("MPHelpSectionDiv")
 									.append(
-										this.D("SPHelpColorInputDiv0")
+										this.D("MPHelpColorInputDiv0")
 										.append(
-											this.D("SPHelpColorInputDiv2b")
+											this.D("MPHelpColorInputDiv2b")
 											.append(
-												this.D("SPHelpColorLabelText")
+												this.D("MPHelpColorLabelText")
 												.html("YT Quality")
 											)
 										)
 									)
 									.append(
-										this.D("SPHelpColorInputDiv1Full")
+										this.D("MPHelpColorInputDiv1Full")
 										.append(
-											this.D("SPHelpColorInputDiv2")
+											this.D("MPHelpColorInputDiv2")
 											.append(
-												this.E("a", "SPHelpModeLink")
+												this.E("a", "MPHelpModeLink")
 												.html(this.ytvideo_qualities[this.ytvideo_quality_index])
 												.on("click." + this.namespace, {media_player: this}, this.on_ytquality_change)
 												.on("mousedown", this.cancel_event)
@@ -1836,48 +1836,48 @@ MediaPlayer.prototype = {
 									)
 								) //}
 								.append( //{ Player Settings
-									this.D("SPHelpLabelDiv")
+									this.D("MPHelpLabelDiv")
 									.html("Player Settings")
 								)
 								.append(
-									(help_custom_div = this.D("SPHelpSectionDiv"))
+									(help_custom_div = this.D("MPHelpSectionDiv"))
 									.append(
-										this.D("SPHelpColorInputDiv0")
+										this.D("MPHelpColorInputDiv0")
 										.append(
-											this.D("SPHelpColorInputDiv2b")
+											this.D("MPHelpColorInputDiv2b")
 											.append(
-												this.D("SPHelpColorLabelText")
+												this.D("MPHelpColorLabelText")
 												.html("Theme")
 											)
 										)
 									)
 									.append(
-										this.D("SPHelpColorInputDiv1Full")
+										this.D("MPHelpColorInputDiv1Full")
 										.append(
-											this.D("SPHelpColorInputDiv2")
+											this.D("MPHelpColorInputDiv2")
 											.append(
-												(this.player_theme_name = this.E("a", "SPHelpModeLink"))
+												(this.player_theme_name = this.E("a", "MPHelpModeLink"))
 												.on("click." + this.namespace, {media_player: this}, this.on_player_theme_change)
 												.on("mousedown", this.cancel_event)
 											)
 										)
 									)
 									.append(
-										this.D("SPHelpColorInputDiv0")
+										this.D("MPHelpColorInputDiv0")
 										.append(
-											this.D("SPHelpColorInputDiv2b")
+											this.D("MPHelpColorInputDiv2b")
 											.append(
-												this.D("SPHelpColorLabelText")
+												this.D("MPHelpColorLabelText")
 												.html("Player Graphics")
 											)
 										)
 									)
 									.append(
-										this.D("SPHelpColorInputDiv1Full")
+										this.D("MPHelpColorInputDiv1Full")
 										.append(
-											this.D("SPHelpColorInputDiv2")
+											this.D("MPHelpColorInputDiv2")
 											.append(
-												this.E("a", "SPHelpModeLink")
+												this.E("a", "MPHelpModeLink")
 												.on("click." + this.namespace, {media_player: this}, this.on_player_use_svg_update)
 												.on("mousedown", this.cancel_event)
 												.html(this.use_svg ? "Allowed" : "Disallowed")
@@ -1886,7 +1886,7 @@ MediaPlayer.prototype = {
 									)
 								) //}
 								.append( //{ Scaling Settings
-									this.D("SPHelpLabelDiv")
+									this.D("MPHelpLabelDiv")
 									.html("Scaling Settings")
 								)
 								.append(this.generate_value_editor("Padding", "padding_scale", this.css.css_size_presets[this.css.preset].padding_scale, false))
@@ -1896,20 +1896,20 @@ MediaPlayer.prototype = {
 								//}
 							)
 							.append( //{ More
-								(this.help_container_footer[0] = this.D("SPHelpLinkDiv"))
+								(this.help_container_footer[0] = this.D("MPHelpLinkDiv"))
 								.append(
-									this.D("SPHelpLabelDiv")
+									this.D("MPHelpLabelDiv")
 									.html("More Settings")
 								) 
 								.append(
-									this.D("SPHelpSectionDiv")
+									this.D("MPHelpSectionDiv")
 									.append(
-										this.E("A", "SPHelpTextLink")
+										this.E("A", "MPHelpTextLink")
 										.html("Color Settings")
 										.on("click." + this.namespace, {media_player: this, help_page: 1}, this.on_helppage_goto)
 									)
 									.append(
-										this.E("A", "SPHelpTextLink")
+										this.E("A", "MPHelpTextLink")
 										.html("Other Settings")
 										.on("click." + this.namespace, {media_player: this, help_page: 2}, this.on_helppage_goto)
 									)
@@ -1918,49 +1918,49 @@ MediaPlayer.prototype = {
 						)
 					) //}
 					.append( //{ Help 1
-						(this.help_container[1] = this.D("SPHelpContainer"))
+						(this.help_container[1] = this.D("MPHelpContainer"))
 						.css("display", "none")
 						.append(
-							this.D("SPHelpContainerInner0")
+							this.D("MPHelpContainerInner0")
 							.append(
-								(this.help_container_inner1[1] = this.D("SPHelpContainerInner1"))
-								.append(this.D("SPHelpLabelDiv").html("Background Colors"))
+								(this.help_container_inner1[1] = this.D("MPHelpContainerInner1"))
+								.append(this.D("MPHelpLabelDiv").html("Background Colors"))
 								.append(this.generate_color_editor("Outline", "bg_outer_color", this.css.css_color_presets[this.css.preset].bg_outer_color))
 								.append(this.generate_color_editor("Lightest", "bg_color_lightest", this.css.css_color_presets[this.css.preset].bg_color_lightest))
 								.append(this.generate_color_editor("Light", "bg_color_light", this.css.css_color_presets[this.css.preset].bg_color_light))
 								.append(this.generate_color_editor("Medium", "bg_color_dark", this.css.css_color_presets[this.css.preset].bg_color_dark))
 								.append(this.generate_color_editor("Dark", "bg_color_darker", this.css.css_color_presets[this.css.preset].bg_color_darker))
 								.append(this.generate_color_editor("Darkest", "bg_color_darkest", this.css.css_color_presets[this.css.preset].bg_color_darkest))
-								.append(this.D("SPHelpLabelDiv").html("Text Colors"))
+								.append(this.D("MPHelpLabelDiv").html("Text Colors"))
 								.append(this.generate_color_editor("Default", "color_standard", this.css.css_color_presets[this.css.preset].color_standard))
 								.append(this.generate_color_editor("Disabled", "color_disabled", this.css.css_color_presets[this.css.preset].color_disabled))
 								.append(this.generate_color_editor("Light", "color_light", this.css.css_color_presets[this.css.preset].color_light))
 								.append(this.generate_color_editor("Special 1", "color_special_1", this.css.css_color_presets[this.css.preset].color_special_1))
 								.append(this.generate_color_editor("Special 2", "color_special_2", this.css.css_color_presets[this.css.preset].color_special_2))
 								.append(this.generate_color_editor("Highlight", "color_highlight_light", this.css.css_color_presets[this.css.preset].color_highlight_light))
-								.append(this.D("SPHelpLabelDiv").html("Other Colors"))
+								.append(this.D("MPHelpLabelDiv").html("Other Colors"))
 								.append(this.generate_color_editor("Volume", "volume_colors[0]", this.css.css_color_presets[this.css.preset].volume_colors[0]))
 							)
 						)
 					) //}
 					.append( //{ Help 2
-						(this.help_container[2] = this.D("SPHelpContainer"))
+						(this.help_container[2] = this.D("MPHelpContainer"))
 						.css("display", "none")
 						.append(
-							this.D("SPHelpContainerInner0")
+							this.D("MPHelpContainerInner0")
 							.append(
-								(this.help_container_inner1[2] = this.D("SPHelpContainerInner1"))
-								.append(this.D("SPHelpLabelDiv").html("Borders"))
+								(this.help_container_inner1[2] = this.D("MPHelpContainerInner1"))
+								.append(this.D("MPHelpLabelDiv").html("Borders"))
 								.append(this.generate_value_editor("Outer", "bg_outer_size", this.css.css_size_presets[this.css.preset].bg_outer_size, false))
-								.append(this.D("SPHelpLabelDiv").html("Border Radii"))
+								.append(this.D("MPHelpLabelDiv").html("Border Radii"))
 								.append(this.generate_value_editor("Outer", "bg_outer_border_radius", this.css.css_size_presets[this.css.preset].bg_outer_border_radius, false))
 								.append(this.generate_value_editor("Inner", "bg_inner_border_radius", this.css.css_size_presets[this.css.preset].bg_inner_border_radius, false))
 								.append(this.generate_value_editor("Major", "border_radius_normal", this.css.css_size_presets[this.css.preset].border_radius_normal, false))
 								.append(this.generate_value_editor("Minor", "border_radius_small", this.css.css_size_presets[this.css.preset].border_radius_small, false))
-								.append(this.D("SPHelpLabelDiv").html("Fonts"))
+								.append(this.D("MPHelpLabelDiv").html("Fonts"))
 								.append(this.generate_value_editor("Font", "main_font", this.css.css_size_presets[this.css.preset].main_font, true))
 								.append(this.generate_value_editor("Controls", "controls_font", this.css.css_size_presets[this.css.preset].controls_font, true))
-								.append(this.D("SPHelpLabelDiv").html("Font Sizes"))
+								.append(this.D("MPHelpLabelDiv").html("Font Sizes"))
 								.append(this.generate_value_editor("Default", "font_size", this.css.css_size_presets[this.css.preset].font_size, false))
 								.append(this.generate_value_editor("Small", "font_size_small", this.css.css_size_presets[this.css.preset].font_size_small, false))
 								.append(this.generate_value_editor("Controls", "font_size_controls", this.css.css_size_presets[this.css.preset].font_size_controls, false))
@@ -1969,14 +1969,14 @@ MediaPlayer.prototype = {
 					) //}
 
 					.append( //{ Downloads
-						(this.downloads_container = this.D("SPDownloadsContainer"))
+						(this.downloads_container = this.D("MPDownloadsContainer"))
 						.css("display", "none")
 						.append(
-							this.D("SPDownloadsLabel")
+							this.D("MPDownloadsLabel")
 							.html("Download Content")
 						)
 						.append(
-							this.D("SPDownloadsContent")
+							this.D("MPDownloadsContent")
 							.append(
 								this.D()
 								.append(
@@ -1987,7 +1987,7 @@ MediaPlayer.prototype = {
 									this.D()
 									.append("- ")
 									.append(
-										this.E("a", "SPDownloadsLink")
+										this.E("a", "MPDownloadsLink")
 										.attr("href", "#")
 										.html("All loaded sounds")
 										.on("click." + this.namespace, {media_player: this, type: "sounds"}, this.on_downloads_generate_click)
@@ -1997,7 +1997,7 @@ MediaPlayer.prototype = {
 									this.D()
 									.append("- ")
 									.append(
-										this.E("a", "SPDownloadsLink")
+										this.E("a", "MPDownloadsLink")
 										.attr("href", "#")
 										.html("All loaded images")
 										.on("click." + this.namespace, {media_player: this, type: "images2"}, this.on_downloads_generate_click)
@@ -2008,7 +2008,7 @@ MediaPlayer.prototype = {
 									this.D()
 									.append("- ")
 									.append(
-										this.E("a", "SPDownloadsLink")
+										this.E("a", "MPDownloadsLink")
 										.attr("href", "#")
 										.html("All loaded images")
 										.on("click." + this.namespace, {media_player: this, type: "images"}, this.on_downloads_generate_click)
@@ -2017,11 +2017,11 @@ MediaPlayer.prototype = {
 								)
 							)
 							.append(
-								(this.downloads_ready_container = this.D("SPDownloadsContentReady"))
+								(this.downloads_ready_container = this.D("MPDownloadsContentReady"))
 								.css("display", "none")
 								.append("Click ")
 								.append(
-									(this.downloads_link = this.E("a", "SPDownloadsLink"))
+									(this.downloads_link = this.E("a", "MPDownloadsLink"))
 									.attr("href", "#")
 									.html("here")
 									.on("click." + this.namespace, {media_player: this}, this.on_downloads_link_click)
@@ -2034,19 +2034,19 @@ MediaPlayer.prototype = {
 					) //}
 
 					.append( //{ First run
-						(this.first_run_container = this.D("SPFirstRunContainer"))
+						(this.first_run_container = this.D("MPFirstRunContainer"))
 						.append(
-							this.D("SPFirstRunLabel")
+							this.D("MPFirstRunLabel")
 							.html("Info")
 						)
 						.append(
-							this.D("SPFirstRunTextContainer")
+							this.D("MPFirstRunTextContainer")
 							.append(
 								"This player can play embedded sound files in images " +
 								"as well as Youtube videos. Scroll to the "
 							)
 							.append(
-								this.E("a", "SPFirstRunLink")
+								this.E("a", "MPFirstRunLink")
 								.attr("href", "#")
 								.html("bottom")
 							)
@@ -2062,11 +2062,11 @@ MediaPlayer.prototype = {
 							)
 						)
 						.append(
-							this.D("SPFirstRunLabel")
+							this.D("MPFirstRunLabel")
 							.html("Player")
 						)
 						.append(
-							this.D("SPFirstRunTextContainer")
+							this.D("MPFirstRunTextContainer")
 							.append(
 								this.D()
 								.css("padding-bottom", "0.5em")
@@ -2089,11 +2089,11 @@ MediaPlayer.prototype = {
 							)
 						)
 						.append(
-							this.D("SPFirstRunLabel")
+							this.D("MPFirstRunLabel")
 							.html("Playlist")
 						)
 						.append(
-							this.D("SPFirstRunTextContainer")
+							this.D("MPFirstRunTextContainer")
 							.append(
 								this.D()
 								.css("padding-bottom", "0.5em")
@@ -2114,11 +2114,11 @@ MediaPlayer.prototype = {
 							)
 						)
 						.append(
-							this.D("SPFirstRunLabel")
+							this.D("MPFirstRunLabel")
 							.html("Customization")
 						)
 						.append(
-							this.D("SPFirstRunTextContainer")
+							this.D("MPFirstRunTextContainer")
 							.append(
 								this.D()
 								.css("padding-bottom", "0.5em")
@@ -2137,11 +2137,11 @@ MediaPlayer.prototype = {
 							)
 						)
 						.append(
-							this.D("SPFirstRunLabel")
+							this.D("MPFirstRunLabel")
 							.html("Broken?")
 						)
 						.append(
-							this.D("SPFirstRunTextContainer")
+							this.D("MPFirstRunTextContainer")
 							.append(
 								this.D()
 								.css("padding-bottom", "0.5em")
@@ -2161,11 +2161,11 @@ MediaPlayer.prototype = {
 							)
 						)
 						.append(
-							this.D("SPFirstRunLabel")
+							this.D("MPFirstRunLabel")
 							.html("Done")
 						)
 						.append(
-							this.E("a", "SPFirstRunExitLink", "SPFirstRunLink")
+							this.E("a", "MPFirstRunExitLink", "MPFirstRunLink")
 							.attr("href", "#")
 							.on("click." + this.namespace, {media_player: this}, this.on_firstrun_page_exit_click)
 							.html("Exit Page")
@@ -2173,15 +2173,18 @@ MediaPlayer.prototype = {
 					) //}
 				) //}
 				.append( //{ Footer
-					(this.footer_container = this.D("SPFooterBarContainer"))
+					(this.footer_container = this.D("MPFooterBarContainer"))
 				) //}
 				.append( //{ Alert page
-					(this.alert_container = this.D("SPAlertContainer"))
+					(this.alert_container = this.D("MPAlertContainer"))
 					.css("display", "none")
 					.append(
-						(this.D("SPAlertContentContainer")
+						(this.D("MPAlertContentContainer")
 						.html("Drop Files<br />Here"))
 					)
+					.on("click", {}, function (event) {
+						$(this).css("display", "none");
+					})
 				) //}
 			)
 		); //}
@@ -2204,7 +2207,7 @@ MediaPlayer.prototype = {
 				if (!(s in sections)) {
 					// Create a new label (ensure the default is always last)
 					section_label_references[(s == section_default ? 0 : 1)].after(
-						(reference = this.D("SPHelpLabelDiv"))
+						(reference = this.D("MPHelpLabelDiv"))
 						.html(s)
 					);
 					reference.after(
@@ -2233,32 +2236,32 @@ MediaPlayer.prototype = {
 				}
 				var content = null;
 				if ("descr" in this.additional_options[i]) {
-					(content = this.E("a", "SPHelpModeLink"))
+					(content = this.E("a", "MPHelpModeLink"))
 					.html(this.additional_options[i]["descr"][v_id])
 					.on("click." + this.namespace, {media_player: this, custom_data: this.additional_options[i]}, this.on_custom_option_click)
 					.on("mousedown", this.cancel_event);
 				}
 				// Custom HTML
 				else if ("html" in this.additional_options[i]) {
-					content = this.D("SPHelpModeNonLink").html(this.additional_options[i]["html"]);
+					content = this.D("MPHelpModeNonLink").html(this.additional_options[i]["html"]);
 				}
 				// Setup DOM
 				reference.append(
-					(sections[s] = this.D("SPHelpSectionDiv"))
+					(sections[s] = this.D("MPHelpSectionDiv"))
 					.append(
-						this.D("SPHelpColorInputDiv0")
+						this.D("MPHelpColorInputDiv0")
 						.append(
-							this.D("SPHelpColorInputDiv2b")
+							this.D("MPHelpColorInputDiv2b")
 							.append(
-								this.D("SPHelpColorLabelText")
+								this.D("MPHelpColorLabelText")
 								.html(this.additional_options[i]["label"])
 							)
 						)
 					)
 					.append(
-						this.D("SPHelpColorInputDiv1Full")
+						this.D("MPHelpColorInputDiv1Full")
 						.append(
-							this.D("SPHelpColorInputDiv2")
+							this.D("MPHelpColorInputDiv2")
 							.append(content)
 						)
 					)
@@ -2292,7 +2295,7 @@ MediaPlayer.prototype = {
 		}
 
 		// Remove html
-		if (this.sp_container_main != null) this.sp_container_main.remove();
+		if (this.mp_container_main != null) this.mp_container_main.remove();
 
 		// Events
 		$(window)
@@ -2610,7 +2613,7 @@ MediaPlayer.prototype = {
 	},
 	deselect: function (old_type) {
 		if (this.current_media !== null) {
-			this.unC(this.current_media.playlist_item, "SPPlaylistItemActive");
+			this.unC(this.current_media.playlist_item, "MPPlaylistItemActive");
 
 			if (this.current_media.type == "youtube-video") {
 				// Timer
@@ -2650,7 +2653,7 @@ MediaPlayer.prototype = {
 				// Global
 				for (var i = 0; i < this.playback_controls.length; ++i) {
 					for (var j = 0; j < this.playback_controls[i].length; ++j) {
-						this.C(this.playback_controls[i][j], "SPControlLinkDisabled");
+						this.C(this.playback_controls[i][j], "MPControlLinkDisabled");
 					}
 				}
 				this.seek_time_current_label.html(this.duration_to_string(0.0));
@@ -2681,14 +2684,14 @@ MediaPlayer.prototype = {
 		// Controls
 		for (var i = 0; i < this.playback_controls.length; ++i) {
 			for (var j = 0; j < this.playback_controls[i].length; ++j) {
-				this.unC(this.playback_controls[i][j], "SPControlLinkDisabled");
+				this.unC(this.playback_controls[i][j], "MPControlLinkDisabled");
 			}
 		}
 
 		// Select
 		this.current_media = this.playlist[index];
 
-		this.C(this.current_media.playlist_item, "SPPlaylistItemActive");
+		this.C(this.current_media.playlist_item, "MPPlaylistItemActive");
 		this.seek_time_current_label.html(this.duration_to_string(this.current_media.position));
 		this.seek_time_end_label.html(this.duration_to_string(this.current_media.duration));
 
@@ -3074,8 +3077,8 @@ MediaPlayer.prototype = {
 
 
 	nullify: function () {
-		this.sp_container_main = null;
-		this.sp_container = null;
+		this.mp_container_main = null;
+		this.mp_container = null;
 		this.alert_container = null;
 		this.title = null;
 		this.image_container = null;
@@ -3157,17 +3160,17 @@ MediaPlayer.prototype = {
 
 			for (var i = 0; i < this.playback_controls.length; ++i) {
 				// Separator
-				if (i > 0) this.playback_control_container.append(this.D("SPControlLinkSeparator"));
+				if (i > 0) this.playback_control_container.append(this.D("MPControlLinkSeparator"));
 
 				for (var j = 0; j < this.playback_controls[i].length; ++j) {
 					// Create SVG container
 					this.playback_control_container.append(
-						(this.playback_controls[i][j] = this.D("SPControlLinkSvgContainer", "SPControlLinkDisabled"))
+						(this.playback_controls[i][j] = this.D("MPControlLinkSvgContainer", "MPControlLinkDisabled"))
 					);
 					if (j > 0) this.playback_controls[i][j].css("display", "none");
 
 					var svg_finder;
-					this.playback_controls[i][j].append((svg_finder = this.D("SPControlLinkSvg")));
+					this.playback_controls[i][j].append((svg_finder = this.D("MPControlLinkSvg")));
 					var w = svg_finder.outerWidth();
 					var h = svg_finder.outerHeight();
 
@@ -3180,7 +3183,7 @@ MediaPlayer.prototype = {
 
 					// Create contents
 					var g = this.playback_controls_svg[i][j].group({
-						"class": "SPControlLinkSvgMainGroup",
+						"class": "MPControlLinkSvgMainGroup",
 						"transform": "scale(" + w + "," + h + ")"
 					});
 
@@ -3188,22 +3191,22 @@ MediaPlayer.prototype = {
 						// Back
 						this.playback_controls_svg[i][j].rect(g,
 							0.125, 0.0, 0.25, 1.0,
-							{"class": "SPControlLinkSvgShapeColor"}
+							{"class": "MPControlLinkSvgShapeColor"}
 						);
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.875 , 0.0] , [0.875 , 1.0] , [0.375 , 0.5] ],
-							{"class": "SPControlLinkSvgShapeColor"}
+							{"class": "MPControlLinkSvgShapeColor"}
 						);
 					}
 					else if (i == 1) {
 						// RW
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.5 , 0.0] , [0.5 , 1.0] , [0.125 , 0.5] ],
-							{"class": "SPControlLinkSvgShapeColor"}
+							{"class": "MPControlLinkSvgShapeColor"}
 						);
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.875 , 0.0] , [0.875 , 1.0] , [0.5 , 0.5] ],
-							{"class": "SPControlLinkSvgShapeColor"}
+							{"class": "MPControlLinkSvgShapeColor"}
 						);
 					}
 					else if (i == 2) {
@@ -3211,17 +3214,17 @@ MediaPlayer.prototype = {
 						if (j == 1) {
 							this.playback_controls_svg[i][j].rect(g,
 								0.125, 0.0, 0.25, 1.0,
-								{"class": "SPControlLinkSvgShapeColor"}
+								{"class": "MPControlLinkSvgShapeColor"}
 							);
 							this.playback_controls_svg[i][j].rect(g,
 								0.625, 0.0, 0.25, 1.0,
-								{"class": "SPControlLinkSvgShapeColor"}
+								{"class": "MPControlLinkSvgShapeColor"}
 							);
 						}
 						else {
 							this.playback_controls_svg[i][j].polygon(g,
 								[ [0.25 , 0.0] , [0.25 , 1.0] , [0.75 , 0.5] ],
-								{"class": "SPControlLinkSvgShapeColor"}
+								{"class": "MPControlLinkSvgShapeColor"}
 							);
 						}
 					}
@@ -3229,22 +3232,22 @@ MediaPlayer.prototype = {
 						// FFW
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.125 , 0.0] , [0.125 , 1.0] , [0.5 , 0.5] ],
-							{"class": "SPControlLinkSvgShapeColor"}
+							{"class": "MPControlLinkSvgShapeColor"}
 						);
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.5 , 0.0] , [0.5 , 1.0] , [0.875 , 0.5] ],
-							{"class": "SPControlLinkSvgShapeColor"}
+							{"class": "MPControlLinkSvgShapeColor"}
 						);
 					}
 					else {
 						// Next
 						this.playback_controls_svg[i][j].rect(g,
 							0.625, 0.0, 0.25, 1.0,
-							{"class": "SPControlLinkSvgShapeColor"}
+							{"class": "MPControlLinkSvgShapeColor"}
 						);
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.125 , 0.0] , [0.125 , 1.0] , [0.625 , 0.5] ],
-							{"class": "SPControlLinkSvgShapeColor"}
+							{"class": "MPControlLinkSvgShapeColor"}
 						);
 					}
 				}
@@ -3255,10 +3258,10 @@ MediaPlayer.prototype = {
 			var control_texts = [ ["|&lt;"] , ["&lt;&lt"] , ["&gt;","||"] , ["&gt;&gt;"] , ["&gt;|"] ];
 
 			for (var i = 0; i < this.playback_controls.length; ++i) {
-				if (i > 0) this.playback_control_container.append(this.D("SPControlLinkSeparator"));
+				if (i > 0) this.playback_control_container.append(this.D("MPControlLinkSeparator"));
 				for (var j = 0; j < this.playback_controls[i].length; ++j) {
 					this.playback_control_container.append(
-						(this.playback_controls[i][j] = this.E("a", "SPControlLink", "SPControlLinkDisabled"))
+						(this.playback_controls[i][j] = this.E("a", "MPControlLink", "MPControlLinkDisabled"))
 						.html(control_texts[i][j])
 					);
 					if (j > 0) this.playback_controls[i][j].css("display", "none");
@@ -3297,7 +3300,7 @@ MediaPlayer.prototype = {
 
 		if (!activate) return;
 
-		this.playlist_index_container.addClass("SPPlaylistIndexContainerActive");
+		this.playlist_index_container.addClass("MPPlaylistIndexContainerActive");
 		if (this.playlist_index_timer !== null) {
 			clearTimeout(this.playlist_index_timer);
 			this.playlist_index_timer = null;
@@ -3305,7 +3308,7 @@ MediaPlayer.prototype = {
 		var self = this;
 		this.playlist_index_timer = setTimeout(function () {
 			self.playlist_index_timer = null;
-			self.playlist_index_container.removeClass("SPPlaylistIndexContainerActive");
+			self.playlist_index_container.removeClass("MPPlaylistIndexContainerActive");
 		}, 1000);
 	},
 
@@ -3325,21 +3328,21 @@ MediaPlayer.prototype = {
 	},
 	reposition: function (left, top) {
 		if (left != undefined) {
-			this.position_offset[0] = $(window).outerWidth() - (left + this.sp_container_main.outerWidth());
+			this.position_offset[0] = $(window).outerWidth() - (left + this.mp_container_main.outerWidth());
 		}
 		if (top != undefined) {
-			this.position_offset[1] = $(window).outerHeight() - (top + this.sp_container_main.outerHeight());
+			this.position_offset[1] = $(window).outerHeight() - (top + this.mp_container_main.outerHeight());
 		}
 		var v;
-		if (this.position_offset[0] > (v = $(window).outerWidth() - this.sp_container_main.outerWidth())) this.position_offset[0] = v;
-		if (this.position_offset[1] > (v = $(window).outerHeight() - this.sp_container_main.outerHeight())) this.position_offset[1] = v;
+		if (this.position_offset[0] > (v = $(window).outerWidth() - this.mp_container_main.outerWidth())) this.position_offset[0] = v;
+		if (this.position_offset[1] > (v = $(window).outerHeight() - this.mp_container_main.outerHeight())) this.position_offset[1] = v;
 		if (this.position_offset[0] < 0) this.position_offset[0] = 0;
 		if (this.position_offset[1] < 0) this.position_offset[1] = 0;
-		this.sp_container_main.css({"right": this.position_offset[0], "bottom": this.position_offset[1]});
+		this.mp_container_main.css({"right": this.position_offset[0], "bottom": this.position_offset[1]});
 	},
 	resize_to: function (width, height, is_left, is_top) {
 		// Current size
-		var current_size = [ this.sp_container_main.outerWidth() , this.sp_container_main.outerHeight() ];
+		var current_size = [ this.mp_container_main.outerWidth() , this.mp_container_main.outerHeight() ];
 
 		// Height change
 		if (height !== null) {
@@ -3379,14 +3382,14 @@ MediaPlayer.prototype = {
 
 			// Update width
 			this.player_width = width / this.scale_factor;
-			this.sp_container_main.outerWidth(width);
+			this.mp_container_main.outerWidth(width);
 			if (!is_left) {
 				this.position_offset[0] -= (width - current_size[0]);
 			}
 		}
 
 		// Update position
-		this.sp_container_main.css({"right": this.position_offset[0], "bottom": this.position_offset[1]});
+		this.mp_container_main.css({"right": this.position_offset[0], "bottom": this.position_offset[1]});
 		this.update_image_scale();
 
 		// Update others
@@ -3408,7 +3411,7 @@ MediaPlayer.prototype = {
 	update_scale_factor: function (scale_factor) {
 		this.scale_factor = scale_factor;
 
-		this.sp_container_main.outerWidth(this.player_width * this.scale_factor);
+		this.mp_container_main.outerWidth(this.player_width * this.scale_factor);
 		this.playlist_container.outerHeight(this.playlist_height * this.scale_factor);
 		this.image_container.outerHeight(this.image_height * this.scale_factor);
 		// rescale image
@@ -3521,71 +3524,71 @@ MediaPlayer.prototype = {
 		var color_edit;
 		var help_input = [ null , null , null , null ];
 
-		var e = this.D("SPHelpSectionDiv") //{ DOM Generation
+		var e = this.D("MPHelpSectionDiv") //{ DOM Generation
 			.append(
-				this.D("SPHelpColorInputDiv0")
+				this.D("MPHelpColorInputDiv0")
 				.append(
-					this.D("SPHelpColorInputDiv2b")
+					this.D("MPHelpColorInputDiv2b")
 					.append(
-						(color_edit = this.D("SPHelpColorLabelDisplay"))
+						(color_edit = this.D("MPHelpColorLabelDisplay"))
 					)
 					.append(
-						this.D("SPHelpColorLabelText")
+						this.D("MPHelpColorLabelText")
 						.html(label)
 					)
 				)
 			)
 			.append(
-				this.D("SPHelpColorInputDiv1")
+				this.D("MPHelpColorInputDiv1")
 				.append(
-					this.D("SPHelpColorInputDiv2")
+					this.D("MPHelpColorInputDiv2")
 					.attr("title", "Red : [0,255]")
 					.append(
-						this.D("SPHelpColorInputDiv3")
+						this.D("MPHelpColorInputDiv3")
 						.append(
-							(help_input[0] = this.E("input", "SPHelpColorInput"))
+							(help_input[0] = this.E("input", "MPHelpColorInput"))
 							.attr("type", "text")
 						)
 					)
 				)
 			)
 			.append(
-				this.D("SPHelpColorInputDiv1")
+				this.D("MPHelpColorInputDiv1")
 				.append(
-					this.D("SPHelpColorInputDiv2")
+					this.D("MPHelpColorInputDiv2")
 					.attr("title", "Green : [0,255]")
 					.append(
-						this.D("SPHelpColorInputDiv3")
+						this.D("MPHelpColorInputDiv3")
 						.append(
-							(help_input[1] = this.E("input", "SPHelpColorInput"))
+							(help_input[1] = this.E("input", "MPHelpColorInput"))
 							.attr("type", "text")
 						)
 					)
 				)
 			)
 			.append(
-				this.D("SPHelpColorInputDiv1")
+				this.D("MPHelpColorInputDiv1")
 				.append(
-					this.D("SPHelpColorInputDiv2")
+					this.D("MPHelpColorInputDiv2")
 					.attr("title", "Blue : [0,255]")
 					.append(
-						this.D("SPHelpColorInputDiv3")
+						this.D("MPHelpColorInputDiv3")
 						.append(
-							(help_input[2] = this.E("input", "SPHelpColorInput"))
+							(help_input[2] = this.E("input", "MPHelpColorInput"))
 							.attr("type", "text")
 						)
 					)
 				)
 			)
 			.append(
-				this.D("SPHelpColorInputDiv1")
+				this.D("MPHelpColorInputDiv1")
 				.append(
-					this.D("SPHelpColorInputDiv2")
+					this.D("MPHelpColorInputDiv2")
 					.attr("title", "Alpha : [0.0,1.0]")
 					.append(
-						this.D("SPHelpColorInputDiv3")
+						this.D("MPHelpColorInputDiv3")
 						.append(
-							(help_input[3] = this.E("input", "SPHelpColorInput"))
+							(help_input[3] = this.E("input", "MPHelpColorInput"))
 							.attr("type", "text")
 						)
 					)
@@ -3615,25 +3618,25 @@ MediaPlayer.prototype = {
 	generate_value_editor: function (label, identifier, value, is_string) {
 		var help_input;
 
-		var  e = this.D("SPHelpSectionDiv") //{ DOM Generation
+		var  e = this.D("MPHelpSectionDiv") //{ DOM Generation
 			.append(
-				this.D("SPHelpColorInputDiv0")
+				this.D("MPHelpColorInputDiv0")
 				.append(
-					this.D("SPHelpColorInputDiv2b")
+					this.D("MPHelpColorInputDiv2b")
 					.append(
-						this.D("SPHelpColorLabelText")
+						this.D("MPHelpColorLabelText")
 						.html(label)
 					)
 				)
 			)
 			.append(
-				this.D("SPHelpColorInputDiv1Full")
+				this.D("MPHelpColorInputDiv1Full")
 				.append(
-					this.D("SPHelpColorInputDiv2")
+					this.D("MPHelpColorInputDiv2")
 					.append(
-						this.D("SPHelpColorInputDiv3")
+						this.D("MPHelpColorInputDiv3")
 						.append(
-							(help_input = this.E("input", "SPHelpColorInput"))
+							(help_input = this.E("input", "MPHelpColorInput"))
 							.attr("type", "text")
 							.val(value)
 							.on("change." + this.namespace, {media_player: this, value_id: identifier, "is_string": is_string}, this.on_settings_value_change)
@@ -3786,59 +3789,59 @@ MediaPlayer.prototype = {
 
 		// html setup
 		this.playlist_container.append( //{ DOM creation
-			(playlist_item.playlist_item = this.D("SPPlaylistItem"))
+			(playlist_item.playlist_item = this.D("MPPlaylistItem"))
 			.on("click." + this.namespace, {media_player: this, playlist_item: playlist_item}, this.on_playlist_item_click)
 			.on("mousedown", this.cancel_event)
 			.attr("title", tag != MediaPlayer.ALL_SOUNDS ? tag : "")
 			.append(
-				this.D("SPPlaylistSoundName")
+				this.D("MPPlaylistSoundName")
 				.text(playlist_item.title)
 			)
 			.append(
-				(playlist_item.info_container = this.D("SPPlaylistItemInfo"))
+				(playlist_item.info_container = this.D("MPPlaylistItemInfo"))
 				.html(this.duration_to_string(playlist_item.duration))
 			)
 			.append(
-				this.D("SPPlaylistControlsContainer")
+				this.D("MPPlaylistControlsContainer")
 				.on("mousedown", this.cancel_event)
 				.append(
-					this.D("SPPlaylistControls")
+					this.D("MPPlaylistControls")
 					.on("click", this.cancel_event)
 					.append(
-						(playlist_item.controls[0] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[0] = this.E("a", "MPPlaylistControlLink"))
 						.html("&times;")
 						.attr("title", "Delete")
 					)
 					.append(
-						this.D("SPPlaylistControlLinkSeparator")
+						this.D("MPPlaylistControlLinkSeparator")
 					)
 					.append(
-						(playlist_item.controls[1] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[1] = this.E("a", "MPPlaylistControlLink"))
 						.html("&uarr;")
 						.attr("title", "Move up")
 					)
 					.append(
-						this.D("SPPlaylistControlLinkSeparator")
+						this.D("MPPlaylistControlLinkSeparator")
 					)
 					.append(
-						(playlist_item.controls[2] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[2] = this.E("a", "MPPlaylistControlLink"))
 						.html("&darr;")
 						.attr("title", "Move down")
 					)
 					.append(
-						this.D("SPPlaylistControlLinkSeparator")
+						this.D("MPPlaylistControlLinkSeparator")
 					)
 					.append(
-						(playlist_item.controls[3] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[3] = this.E("a", "MPPlaylistControlLink"))
 						.html("S")
 						.attr("title", "Save...")
 						.attr("href", playlist_item.audio_blob_url)
 					)
 					.append(
-						this.D("SPPlaylistControlLinkSeparator")
+						this.D("MPPlaylistControlLinkSeparator")
 					)
 					.append(
-						(playlist_item.controls[4] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[4] = this.E("a", "MPPlaylistControlLink"))
 						.html("I")
 						.attr("title", "Image...")
 						.attr("href", playlist_item.image_url)
@@ -3951,49 +3954,49 @@ MediaPlayer.prototype = {
 
 		// html setup
 		this.playlist_container.append( //{ DOM creation
-			(playlist_item.playlist_item = this.D("SPPlaylistItem"))
+			(playlist_item.playlist_item = this.D("MPPlaylistItem"))
 			.on("click." + this.namespace, {media_player: this, playlist_item: playlist_item}, this.on_playlist_item_click)
 			.on("mousedown", this.cancel_event)
 			.append(
-				this.D("SPPlaylistSoundName")
+				this.D("MPPlaylistSoundName")
 				.text(playlist_item.title)
 			)
 			.append(
-				(playlist_item.info_container = this.D("SPPlaylistItemInfo"))
+				(playlist_item.info_container = this.D("MPPlaylistItemInfo"))
 				.html(this.duration_to_string(playlist_item.duration))
 			)
 			.append(
-				this.D("SPPlaylistControlsContainer")
+				this.D("MPPlaylistControlsContainer")
 				.on("mousedown", this.cancel_event)
 				.append(
-					this.D("SPPlaylistControls")
+					this.D("MPPlaylistControls")
 					.on("click", this.cancel_event)
 					.append(
-						(playlist_item.controls[0] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[0] = this.E("a", "MPPlaylistControlLink"))
 						.html("&times;")
 						.attr("title", "Delete")
 					)
 					.append(
-						this.D("SPPlaylistControlLinkSeparator")
+						this.D("MPPlaylistControlLinkSeparator")
 					)
 					.append(
-						(playlist_item.controls[1] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[1] = this.E("a", "MPPlaylistControlLink"))
 						.html("&uarr;")
 						.attr("title", "Move up")
 					)
 					.append(
-						this.D("SPPlaylistControlLinkSeparator")
+						this.D("MPPlaylistControlLinkSeparator")
 					)
 					.append(
-						(playlist_item.controls[2] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[2] = this.E("a", "MPPlaylistControlLink"))
 						.html("&darr;")
 						.attr("title", "Move down")
 					)
 					.append(
-						this.D("SPPlaylistControlLinkSeparator")
+						this.D("MPPlaylistControlLinkSeparator")
 					)
 					.append(
-						(playlist_item.controls[3] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[3] = this.E("a", "MPPlaylistControlLink"))
 						.html("Y")
 						.attr("title", "Youtube Link")
 						.attr("href", "//www.youtube.com/watch?v=" + playlist_item.vid_id + (playlist_item.start == 0.0 ? "" : ("&t=" + Math.floor(playlist_item.start) + "s")))
@@ -4094,49 +4097,49 @@ MediaPlayer.prototype = {
 
 		// html setup
 		this.playlist_container.append( //{ DOM creation
-			(playlist_item.playlist_item = this.D("SPPlaylistItem"))
+			(playlist_item.playlist_item = this.D("MPPlaylistItem"))
 			.on("click." + this.namespace, {media_player: this, playlist_item: playlist_item}, this.on_playlist_item_click)
 			.on("mousedown", this.cancel_event)
 			.append(
-				this.D("SPPlaylistSoundName")
+				this.D("MPPlaylistSoundName")
 				.text(playlist_item.title)
 			)
 			.append(
-				(playlist_item.info_container = this.D("SPPlaylistItemInfo"))
+				(playlist_item.info_container = this.D("MPPlaylistItemInfo"))
 				.html(this.duration_to_string(playlist_item.duration))
 			)
 			.append(
-				this.D("SPPlaylistControlsContainer")
+				this.D("MPPlaylistControlsContainer")
 				.on("mousedown", this.cancel_event)
 				.append(
-					this.D("SPPlaylistControls")
+					this.D("MPPlaylistControls")
 					.on("click", this.cancel_event)
 					.append(
-						(playlist_item.controls[0] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[0] = this.E("a", "MPPlaylistControlLink"))
 						.html("&times;")
 						.attr("title", "Delete")
 					)
 					.append(
-						this.D("SPPlaylistControlLinkSeparator")
+						this.D("MPPlaylistControlLinkSeparator")
 					)
 					.append(
-						(playlist_item.controls[1] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[1] = this.E("a", "MPPlaylistControlLink"))
 						.html("&uarr;")
 						.attr("title", "Move up")
 					)
 					.append(
-						this.D("SPPlaylistControlLinkSeparator")
+						this.D("MPPlaylistControlLinkSeparator")
 					)
 					.append(
-						(playlist_item.controls[2] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[2] = this.E("a", "MPPlaylistControlLink"))
 						.html("&darr;")
 						.attr("title", "Move down")
 					)
 					.append(
-						this.D("SPPlaylistControlLinkSeparator")
+						this.D("MPPlaylistControlLinkSeparator")
 					)
 					.append(
-						(playlist_item.controls[3] = this.E("a", "SPPlaylistControlLink"))
+						(playlist_item.controls[3] = this.E("a", "MPPlaylistControlLink"))
 						.html("V")
 						.attr("title", "Vimeo Link")
 						.attr("href", "//vimeo.com/" + playlist_item.vid_id + (playlist_item.start == 0.0 ? "" : ("?t=" + Math.floor(playlist_item.start))))
@@ -4665,13 +4668,13 @@ MediaPlayer.prototype = {
 
 		// Update sizes
 		var d;
-		$("body").append(d = this.D("SPResizingSizeOff"));
+		$("body").append(d = this.D("MPResizingSizeOff"));
 		this.resize_sizes[0] = d.outerWidth();
 		d.remove();
-		$("body").append(d = this.D("SPResizingSizeAvailable"));
+		$("body").append(d = this.D("MPResizingSizeAvailable"));
 		this.resize_sizes[1] = d.outerWidth();
 		d.remove();
-		$("body").append(d = this.D("SPResizingContainerText").html("I"));
+		$("body").append(d = this.D("MPResizingContainerText").html("I"));
 		this.resize_sizes[2] = d.outerHeight();
 		d.remove();
 		if (this.resize_sizes[1] > this.resize_sizes[2]) this.resize_sizes[1] = this.resize_sizes[2];
@@ -4685,7 +4688,7 @@ MediaPlayer.prototype = {
 			this.resize_side_sizes = [ this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0] ];
 
 			// CSS update
-			this.sp_container_main.removeClass("SPContainerMainBorders");
+			this.mp_container_main.removeClass("MPContainerMainBorders");
 			this.resizing_container.css("display", "");
 
 			// Size update loop
@@ -4741,7 +4744,7 @@ MediaPlayer.prototype = {
 
 			this.resize_container_border_hovered = false;
 
-			this.sp_container_main.addClass("SPContainerMainBorders");
+			this.mp_container_main.addClass("MPContainerMainBorders");
 			this.resizing_container.css("display", "none");
 
 			return;
@@ -4753,7 +4756,7 @@ MediaPlayer.prototype = {
 		if (rel_y !== null) this.resize_mouse_offset[1] = rel_y;
 		else rel_y = this.resize_mouse_offset[1];
 
-		var size = [ this.sp_container.outerWidth() , this.sp_container.outerHeight() ];
+		var size = [ this.mp_container.outerWidth() , this.mp_container.outerHeight() ];
 		var should_open = this.resizing;
 		if (this.resize_container_hovered && !this.resizing) {
 			should_open = (
@@ -4826,10 +4829,10 @@ MediaPlayer.prototype = {
 					"top": (event.pageY - $(document).scrollTop())
 				};
 				event.data.media_player.resizing_base_size = {
-					//"width": event.data.media_player.sp_container.outerWidth() + event.data.media_player.resize_sizes[0] * 2,
-					//"height": event.data.media_player.sp_container.outerHeight() + event.data.media_player.resize_sizes[0] * 2
-					"width": event.data.media_player.sp_container_main.outerWidth(),
-					"height": event.data.media_player.sp_container_main.outerHeight()
+					//"width": event.data.media_player.mp_container.outerWidth() + event.data.media_player.resize_sizes[0] * 2,
+					//"height": event.data.media_player.mp_container.outerHeight() + event.data.media_player.resize_sizes[0] * 2
+					"width": event.data.media_player.mp_container_main.outerWidth(),
+					"height": event.data.media_player.mp_container_main.outerHeight()
 				};
 			}
 
@@ -4843,7 +4846,7 @@ MediaPlayer.prototype = {
 		if (event.which == 1) {
 			// Mouse offset
 			event.data.media_player.moving = true;
-			event.data.media_player.mouse_offset = event.data.media_player.sp_container_main.offset();
+			event.data.media_player.mouse_offset = event.data.media_player.mp_container_main.offset();
 			event.data.media_player.mouse_offset.left -= event.pageX;
 			event.data.media_player.mouse_offset.top -= event.pageY;
 
@@ -4857,7 +4860,7 @@ MediaPlayer.prototype = {
 			// Mouse offset
 			event.data.media_player.volume_changing = true;
 			// Visuals
-			event.data.media_player.C(event.data.media_player.volume_container, "SPVolumeContainerActive");
+			event.data.media_player.C(event.data.media_player.volume_container, "MPVolumeContainerActive");
 			// Change volume
 			var volume = 1.0 - ((event.pageY) - event.data.media_player.volume_bar_container.offset().top) / event.data.media_player.volume_bar_container.outerHeight();
 			event.data.media_player.set_volume(volume);
@@ -4869,7 +4872,7 @@ MediaPlayer.prototype = {
 	on_seekbar_mousedown: function (event) {
 		if (event.which == 1) {
 			// Mouse offset
-			event.data.media_player.C(event.data.media_player.seek_bar, "SPSeekBarActive");
+			event.data.media_player.C(event.data.media_player.seek_bar, "MPSeekBarActive");
 			event.data.media_player.seek_dragging = true;
 			if ((event.data.media_player.seek_was_playing = !event.data.media_player.is_paused())) {
 				event.data.media_player.pause();
@@ -4885,7 +4888,7 @@ MediaPlayer.prototype = {
 	on_seekbar_container_mousedown: function (event) {
 		if (event.which == 1) {
 			// Mouse offset
-			event.data.media_player.C(event.data.media_player.seek_bar, "SPSeekBarActive");
+			event.data.media_player.C(event.data.media_player.seek_bar, "MPSeekBarActive");
 			event.data.media_player.seek_exacting = true;
 			if ((event.data.media_player.seek_was_playing = !event.data.media_player.is_paused())) {
 				event.data.media_player.pause();
@@ -4905,7 +4908,7 @@ MediaPlayer.prototype = {
 		if (event.which == 1) {
 			// Mouse offset
 			event.data.media_player.resizing_image = true;
-			event.data.media_player.mouse_offset = event.data.media_player.sp_container_main.offset();
+			event.data.media_player.mouse_offset = event.data.media_player.mp_container_main.offset();
 			event.data.media_player.mouse_offset.left -= event.pageX;
 			event.data.media_player.mouse_offset.top -= event.pageY - (event.data.media_player.image_height * event.data.media_player.scale_factor);
 
@@ -4951,11 +4954,11 @@ MediaPlayer.prototype = {
 		}
 		else if (event.data.media_player.volume_changing) {
 			event.data.media_player.volume_changing = false;
-			event.data.media_player.unC(event.data.media_player.volume_container, "SPVolumeContainerActive");
+			event.data.media_player.unC(event.data.media_player.volume_container, "MPVolumeContainerActive");
 		}
 		else if (event.data.media_player.seek_dragging) {
 			event.data.media_player.seek_dragging = false;
-			event.data.media_player.unC(event.data.media_player.seek_bar, "SPSeekBarActive");
+			event.data.media_player.unC(event.data.media_player.seek_bar, "MPSeekBarActive");
 
 			event.data.media_player.seek_to(null, false, false);
 
@@ -4965,7 +4968,7 @@ MediaPlayer.prototype = {
 		}
 		else if (event.data.media_player.seek_exacting) {
 			event.data.media_player.seek_exacting = false;
-			event.data.media_player.unC(event.data.media_player.seek_bar, "SPSeekBarActive");
+			event.data.media_player.unC(event.data.media_player.seek_bar, "MPSeekBarActive");
 
 			event.data.media_player.seek_to(null, false, false);
 
@@ -5010,7 +5013,7 @@ MediaPlayer.prototype = {
 			event.data.media_player.resize_to(size.width, size.height, is_left, is_top);
 		}
 		else if (event.data.media_player.resizing_image) {
-			var size = event.data.media_player.sp_container_main.offset();
+			var size = event.data.media_player.mp_container_main.offset();
 			size.left = (event.pageX - size.left) + event.data.media_player.mouse_offset.left;
 			size.top = (event.pageY - size.top) + event.data.media_player.mouse_offset.top;
 
@@ -5044,7 +5047,7 @@ MediaPlayer.prototype = {
 		}
 
 		if (event.data.media_player.resize_container_hovered) {
-			var rel = event.data.media_player.sp_container.offset();
+			var rel = event.data.media_player.mp_container.offset();
 			rel.left -= event.pageX;
 			rel.top -= event.pageY;
 
