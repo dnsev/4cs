@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.9.3
+// @version     1.9.4
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -9214,6 +9214,19 @@ InlineManager.prototype = {
 			});
 		}
 		else {
+			// Hijack links
+			var links_found = false;
+			if (script.settings["inline"]["url_hijack"]) {
+				post_data.post.find("a").each(function (index) {
+					var href = html_to_text(string_remove_tags($(this).html()));
+					if (href == $(this).attr("href")) {
+						$(this).addClass("MPReplacedURL");
+						links_found = true;
+					}
+				});
+			}
+
+			// Text replace
 			var links_found = dom_replace(
 				post_data.post,
 				function (tag, old_tags) { // check
@@ -9238,7 +9251,7 @@ InlineManager.prototype = {
 					return 0;
 				},
 				this.replace_urls
-			);
+			) || links_found;
 
 			if (links_found) {
 				// Sounds links
@@ -10457,6 +10470,16 @@ MediaPlayerManager.prototype = {
 					script.settings_save();
 				}
 			},
+			{
+				"current": script.settings["inline"]["url_hijack"],
+				"label": "URL Hijacking",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["url_hijack"] = value;
+					script.settings_save();
+				}
+			},
 		];
 		for (var i = 0; i < hotkey_listener.hotkeys.length; ++i) {
 			extra_options.push(
@@ -10505,6 +10528,7 @@ function Script() {
 		"inline": {
 			"url_replace": true,
 			"url_replace_smart": false,
+			"url_hijack": true,
 		}
 	};
 	this.storage_name = "4cs";
