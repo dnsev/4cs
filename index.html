@@ -116,7 +116,7 @@
 		<div class="ContentHeader"><span class="ContentHeaderTitle">About</span>:</div>
 		<div class="ContentBody">
 			<p>The userscript is designed primarily to be an extension to 4chan's image boards, but is designed with modularity in mind.</p>
-			<p>Currently it supports detecting and playing embedded .ogg Vorbis sounds in images, replacing inline URLs, and playing Youtube videos.</p>
+			<p>Currently it supports detecting and playing embedded .ogg Vorbis sounds in images, replacing inline URLs, playing Youtube videos, and playing Vimeo videos.</p>
 			<div class="ContentHeader"><span class="ContentHeaderTitle">Other Pages</span>:</div>
 			<div class="ContentBody">
 				<ul>
@@ -132,10 +132,10 @@
 		<div class="ContentHeader"><a href="#about" class="ContentHeaderTitle">About</a> / <span class="ContentHeaderTitle">Userscript</span>:</div>
 		<div class="ContentBody">
 			<p>The userscript is designed as a plugin to be used on 4chan's image boards, as well as the Foolz archive.</p>
-			<p>The main functionalities it adds are the ability to play embedded .ogg Vorbis sounds, replace inline URLs, and play embedded Youtube videos.</p>
+			<p>The main functionalities it adds are the ability to play embedded .ogg Vorbis sounds, replace inline URLs, and play embedded Youtube/Vimeo videos.</p>
 			<div class="ContentHeader"><span class="ContentHeaderTitle">Player</span>:</div>
 			<div class="ContentBody">
-				<p>The script functions by embedding sounds or Youtube videos into a small player window inside the browser. This window can be resized, dragged across the screen, and customized to the user's liking.</p>
+				<p>The script functions by embedding sounds or videos into a small player window inside the browser. This window can be resized, dragged across the screen, and customized to the user's liking.</p>
 			</div>
 			<div class="ContentHeader"><span class="ContentHeaderTitle">Sounds</span>:</div>
 			<div class="ContentBody">
@@ -147,12 +147,12 @@
 					<li>You can click and drag images onto the player<br />(either from your computer or from the web browser)</li>
 				</ul>
 			</div>
-			<div class="ContentHeader"><span class="ContentHeaderTitle">Youtube</span>:</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Youtube/Vimeo</span>:</div>
 			<div class="ContentBody">
 				<ul>
 					<li>Youtube videos can be intermixed in your playlist</li>
-					<li>If you have URL replacement enabled, clicking on a Youtube link will queue the video in the player</li>
-					<li>You can also click and drag Youtube URLs onto the player</li>
+					<li>If you have URL replacement enabled, clicking on a Youtube/Vimeo link will queue the video in the player</li>
+					<li>You can also click and drag Youtube/Vimeo URLs onto the player</li>
 				</ul>
 			</div>
 			<div class="ContentHeader"><span class="ContentHeaderTitle">Preview Images</span>:</div>
@@ -187,7 +187,7 @@
 							<li>Controls are displayed on the right.<br />
 							From left to right: "Remove", "Move Up", "Move Down", "Save Sound", "Save Image"</li>
 							<li>Clicking and dragging the volume bar on the left changes the volume</li>
-							<li>Similar functionality for Youtube videos, except "Save Sound", and "Save Image" are replaced with "Video", which functions as a link to the video.</li>
+							<li>Similar functionality for Youtube/Vimeo videos, except "Save Sound", and "Save Image" are replaced with "Video", which functions as a link to the video.</li>
 						</ul>
 					</div></li>
 				</ul>
@@ -276,6 +276,11 @@
 			<div class="ContentBody">
 				<p>After sound playing was completed, I thought that the player looked nice in and of itself, so I thought that adding Youtube video playback would be a nice way to make it able to be used more often, especially since sound playback and video playback can interweave.</p>
 				<p>So after much struggle to get it to work in Google Chrome, here we are.</p>
+			</div>
+			<div class="ContentHeader"><span class="ContentHeaderTitle">Vimeo playback</span>:</div>
+			<div class="ContentBody">
+				<p>Vimeo playback support was also added; functions similar to Youtube playback.</p>
+				<p><i>As an aside, as much of a hassle as it was to get it to work again, I found the API nicer than Youtube's, since you can (and I did) write my own wrapper easily.</i></p>
 			</div>
 			<div class="ContentHeader"><span class="ContentHeaderTitle">Batch applications</span>:</div>
 			<div class="ContentBody">
