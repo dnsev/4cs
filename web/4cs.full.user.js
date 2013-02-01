@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.9.4
+// @version     1.9.5
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -8857,7 +8857,7 @@ ThreadManager.prototype = {
 	constructor: ThreadManager,
 	on_dom_mutation: function (target) {
 		// Updating
-		if (target.hasClass("inline") || target.hasClass("postContainer")) {
+		if (target.hasClass("inline") || target.hasClass("postContainer") || target.hasClass("post")) {
 			this.parse_post(target);
 		}
 		else if (target.hasClass("backlinkHr")) {
