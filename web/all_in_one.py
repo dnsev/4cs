@@ -238,6 +238,7 @@ def write_compressed(source, out, t_pre, newline):
 			t_pre = t;
 		else:
 			add += s[1];
+
 	return t_pre;
 
 
@@ -329,6 +330,7 @@ def main():
 
 		if (shrink):
 			t_pre = write_compressed(require_source, out, t_pre, newline);
+			out.write(newline);
 		else:
 			out.write(("/" * 80) + newline);
 			out.write("//{ " + requires[i] + newline);

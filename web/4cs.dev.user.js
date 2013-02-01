@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.8.4.7
+// @version        1.9
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -15,7 +15,6 @@
 // @icon           data:image/gif;base64,R0lGODlhEAAQAKECAAAAAGbMM////////yH5BAEKAAIALAAAAAAQABAAAAIllI+pB70KQgAPNUmroDHX7Gie95AkpCUn1ISlhKVR/MEre6dLAQA7
 // @require        https://raw.github.com/dnsev/4cs/master/web/jquery.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/jquery.svg.pack.js
-// @require        https://raw.github.com/dnsev/4cs/master/web/froogaloop.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/zlib.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/png.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/Loop.js
@@ -1432,14 +1431,27 @@ InlineManager.prototype = {
 	parse_post_for_urls: function (post_data, redo, post_data_copy) {
 		var self = this;
 		if (redo) {
+			// Fix the link's click events
 			post_data_copy.post.find(".MPReplacedURL").each(function (index) {
-				var vid_id = $(this).attr("_mp_vid_id");
-				vid_id = vid_id || null;
-				var href = $(this).attr("_mp_original_url");
+				var video_type = $(this).attr("mp_video_type") || null;
+				var video_id = $(this).attr("mp_video_id") || null;
+
+				var cache_title, cache_duration, video_cache = null;
+				if (
+					(cache_title = $(this).attr("mp_video_cache_title") || null) !== null &&
+					(cache_duration = $(this).attr("mp_video_cache_duration") || null) !== null
+				) {
+					video_cache = {
+						"title": cache_title,
+						"duration": (parseFloat(cache_duration) || 0.0)
+					};
+				}
+				
+				var href = $(this).attr("mp_original_url");
 
 				$(this)
 				.off("click")
-				.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, self.on_url_click);
+				.on("click", {"post_data": post_data, "video_type": video_type, "video_id": video_id, "video_cache": video_cache, "url": href}, self.on_url_click);
 			});
 		}
 		else {
@@ -1475,50 +1487,162 @@ InlineManager.prototype = {
 					var href = html_to_text(string_remove_tags($(this).html()));
 					if (href.indexOf(":") < 0) href = "//" + href;
 
-					var vid_id = MediaPlayer.prototype.url_get_youtube_video_id(href);
+					var video_type = null;
+					var video_id = null;
 
-					$(this)
-					.attr("href", href)
-					.attr("_mp_original_url", href)
-					.on("click", {"post_data": post_data, "vid_id": vid_id, "url": href}, self.on_url_click);
+					// Youtube
+					if ((video_id = MediaPlayer.prototype.url_get_youtube_video_id(href)) !== null) {
+						// Youtube
+						video_type = "youtube";
 
-					if (vid_id !== null) {
 						$(this)
-						.attr("_mp_vid_id", vid_id)
+						.attr("mp_video_type", video_type)
+						.attr("mp_video_id", video_id)
 						.html(
 							$(document.createElement("img"))
 							.attr("src", "//youtube.com/favicon.ico")
 							.attr("alt", "")
 							.attr("title", "")
-							.css({"vertical-align": "middle"})
+							.css({
+								"vertical-align": "middle",
+								"width": "16px",
+								"height": "16px"
+							})
 						)
 						.append(
 							E("span")
 							.css({"padding-left": "8px"})
-							.html("Youtube: " + vid_id)
+							.html("Youtube: " + video_id)
 						);
 						ajax_get(
-							"//gdata.youtube.com/feeds/api/videos/" + vid_id, true, {a: $(this)}, null,
+							"//gdata.youtube.com/feeds/api/videos/" + video_id,
+							true,
+							{"link": $(this)},
+							null,
 							function (okay, data, response) {
 								if (okay) {
 									var xml = $.parseXML(response);
-									var title;
+
+									// Get XML variables
+									var title = "Unknown Title";
+									var duration = 0.0;
+									var d = xml_find_nodes_by_name(xml, "yt:duration");
+									if (d.length > 0) {
+										duration = d[0].getAttribute("seconds");
+										duration = parseFloat(duration);
+										duration = (isFinite(duration) ? duration : 0.0);
+									}
+
 									try {
 										title = $(xml_find_nodes_by_name(xml, "title")).text();
 									}
 									catch (e) {
 										console.log(e);
-										title = "Unknown Title";
 									}
 
-									data.a.find("span").html(title);
+									// Update link's text and click event
+									data.link.find("span").html(title);
+									data.link
+									.attr("mp_video_cache_title", title)
+									.attr("mp_video_cache_duration", duration.toString())
+									.off("click")
+									.on("click", {
+										"post_data": post_data,
+										"video_type": video_type,
+										"video_id": video_id,
+										"video_cache": {
+											"title": title,
+											"duration": duration
+										},
+										"url": href
+									}, self.on_url_click);
 								}
 								else {
-									data.a.find("span").html("Video not found").css("font-style", "italic");
+									// Not found
+									data.link.find("span").html("Video not found").css("font-style", "italic");
 								}
 							}
 						);
 					}
+					else if ((video_id = MediaPlayer.prototype.url_get_vimeo_video_id(href)) !== null) {
+						// Youtube
+						video_type = "vimeo";
+
+						$(this)
+						.attr("mp_video_type", video_type)
+						.attr("mp_video_id", video_id)
+						.html(
+							$(document.createElement("img"))
+							.attr("src", "//vimeo.com/favicon.ico")
+							.attr("alt", "")
+							.attr("title", "")
+							.css({
+								"vertical-align": "middle",
+								"width": "16px",
+								"height": "16px"
+							})
+						)
+						.append(
+							E("span")
+							.css({"padding-left": "8px"})
+							.html("Vimeo: " + video_id)
+						);
+						ajax_get(
+							"//vimeo.com/api/v2/video/" + video_id + ".xml",
+							true,
+							{"link": $(this)},
+							null,
+							function (okay, data, response) {
+								if (okay) {
+									var xml = $.parseXML(response);
+
+									// Get XML variables
+									var title = "Unknown Title";
+									var duration = 0.0;
+									var d = xml_find_nodes_by_name(xml, "duration");
+									if (d.length > 0) {
+										duration = $(d[0]).text();
+										duration = parseFloat(duration);
+										duration = isFinite(duration) ? duration : 0.0;
+									}
+
+									try {
+										title = $(xml_find_nodes_by_name(xml, "title")).text();
+									}
+									catch (e) {
+										console.log(e);
+									}
+
+									// Update link's text and click event
+									data.link.find("span").html(title);
+									data.link
+									.attr("mp_video_cache_title", title)
+									.attr("mp_video_cache_duration", duration.toString())
+									.off("click")
+									.on("click", {
+										"post_data": post_data,
+										"video_type": video_type,
+										"video_id": video_id,
+										"video_cache": {
+											"title": title,
+											"duration": duration
+										},
+										"url": href
+									}, self.on_url_click);
+								}
+								else {
+									// Not found
+									data.link.find("span").html("Video not found").css("font-style", "italic");
+								}
+							}
+						);
+					}
+
+					// Set link settings
+					$(this)
+					.attr("href", href)
+					.attr("mp_original_url", href)
+					.on("click", {"post_data": post_data, "video_type": video_type, "video_id": video_id, "video_cache": null, "url": href}, self.on_url_click);
 				});
 			}
 		}
@@ -1746,20 +1870,36 @@ InlineManager.prototype = {
 	},
 	on_url_click: function (event) {
 		// Add to playlist
-		if (!event.originalEvent.which || event.originalEvent.which == 1) {
-			if (event.data.vid_id !== null) {
+		if (event.which == 1) {
+			if (event.data.video_type === "youtube") {
+				var pl_data = {};
+				if (event.data.video_cache) pl_data["youtubevideo_cache"] = event.data.video_cache;
 				media_player_manager.open_player(true);
-				media_player_manager.media_player.attempt_load_video(
+				media_player_manager.media_player.attempt_load_ytvideo_video(
 					event.data.url,
 					null,
-					{},
+					pl_data,
 					{ "post_data": event.data.post_data, "link": $(this) },
 					function (event, data) {
-						//var progress = Math.floor((event.loaded / event.total) * 100);
-						//data.object.html(data.load_str + " (" + progress + ")");
 					},
 					function (okay, data) {
-						//data.object.html(data.post_data.sounds.post_tags[data.tag_id] + (okay ? "" : " (ajax&nbsp;error)"));
+					},
+					function (status, data, xml_info) {
+					}
+				);
+			}
+			else if (event.data.video_type === "vimeo") {
+				var pl_data = {};
+				if (event.data.video_cache) pl_data["vimeovideo_cache"] = event.data.video_cache;
+				media_player_manager.open_player(true);
+				media_player_manager.media_player.attempt_load_vimeo_video(
+					event.data.url,
+					null,
+					pl_data,
+					{ "post_data": event.data.post_data, "link": $(this) },
+					function (event, data) {
+					},
+					function (okay, data) {
 					},
 					function (status, data, xml_info) {
 					}
@@ -2170,8 +2310,6 @@ function HotkeyListener() {
 						script.settings["hotkeys"][k][1] == flags
 					) {
 						event.data.self.hotkeys[i][1].call(event.data.self);
-						event.stopPropagation();
-						event.preventDefault();
 						return false;
 					}
 				}
@@ -2288,8 +2426,6 @@ HotkeyListener.prototype = {
 
 			event.data.hotkey_settings.update_value(event.data.hotkey_settings);
 
-			event.stopPropagation();
-			event.preventDefault();
 			return false;
 		})
 		.on("keyup", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
@@ -2300,8 +2436,6 @@ HotkeyListener.prototype = {
 				event.data.hotkey_settings.update_value(event.data.hotkey_settings);
 			}
 
-			event.stopPropagation();
-			event.preventDefault();
 			return false;
 		})
 		.on("blur", {"hotkey_settings": hotkey_settings, "hotkey_name": hotkey_name}, function (event) {
@@ -2818,6 +2952,13 @@ Script.prototype = {
 									self.settings["script"]["update_found"] = true;
 									break;
 								}
+								else if (
+									(i < new_version_split.length ? (parseInt(new_version_split[i]) || 0) : 0) <
+									(i < current_version_split.length ? (parseInt(current_version_split[i]) || 0) : 0)
+								) {
+									// Ahead
+									break;
+								}
 							}
 							// Update settings
 							self.settings_save();
@@ -2858,7 +2999,7 @@ Script.prototype = {
 		return log;
 	},
 	on_update_click: function (event) {
-		if (!event.originalEvent.which || event.originalEvent.which == 1) {
+		if (event.which == 1) {
 			var scr_name = "";
 			var scr_version = "";
 			try {
