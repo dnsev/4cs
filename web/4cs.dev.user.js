@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.9.1
+// @version        1.9.2
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -1225,6 +1225,7 @@ function InlineManager() {
 	.append(
 		E("style")
 		.html(
+			"a.MPLoadLink,a.MPLoadLink:visited{color: inherit;}\n" +
 			".MPImageSearchingTextContainer{}\n" +
 			".MPImageSearchingText{}\n" +
 			".MPLoadLinkTop{}\n" +
@@ -3061,14 +3062,6 @@ $(document).ready(function () {
 
 	// Update check once a day
 	script.update_check_interval(1000 * 60 * 60 * 24);
-
-	// Stylesheet
-	$("head").append(
-		E("style")
-		.html(
-			"a.MPLoadLink,a.MPLoadLink:visited{color: inherit;}"
-		)
-	);
 });
 
 
