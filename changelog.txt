@@ -1,3 +1,12 @@
+1.9.2
+- Merged different stylesheets into 1
+
+1.9.1
+- Style/variable prefix changes
+- Style changes for links
+- Removed redundant code for video URLs
+- Bugfix with drag-drop overlay where it stays open; clicking on it will close it if it remains open
+
 1.9
 - Vimeo playback support
 - Caching of video settings; a new ajax query isn't needed when clicking the link (for both Youtube/Vimeo)
