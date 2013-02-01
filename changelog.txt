@@ -1,3 +1,10 @@
+1.9
+- Vimeo playback support
+- Caching of video settings; a new ajax query isn't needed when clicking the link (for both Youtube/Vimeo)
+- Mousedown events are now only handled when using left click
+- Version checking now doesn't display "Update" if you're ahead (for some reason)
+- Bugfixes
+
 1.8.4.6
 - Version update checking uses the change log now.
 
