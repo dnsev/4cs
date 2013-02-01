@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.9.2
+// @version        1.9.3
 // @namespace      dnsev
 // @description    4chan Media Player
 // @grant          GM_xmlhttpRequest
@@ -1831,17 +1831,25 @@ InlineManager.prototype = {
 		}
 		return false;
 	},
-	on_image_drag: function (data) {
-		var url_lower = data.text.toLowerCase();
-		for (var post_id in thread_manager.posts) {
-			if (
-				thread_manager.posts[post_id].image_url !== null &&
-				url_lower.indexOf(thread_manager.posts[post_id].image_url.toLowerCase()) >= 0
-			) {
-				// Found; activate manual load
-				this.activate_load_all_link(thread_manager.posts[post_id]);
-				data.text = "";
-				return false;
+	on_content_drag: function (data) {
+		var url_lower = data.text.split("#")[0];
+		if (url_lower.substr(0, 2) == "//") url_lower = window.location.protocol + url_lower;
+		else if (url_lower.indexOf(":") < 0) url_lower = window.location.protocol + "//" + url_lower;
+
+		if (url_lower) {
+			for (var post_id in thread_manager.posts) {
+				if (thread_manager.posts[post_id].image_url) {
+					var u = thread_manager.posts[post_id].image_url.split("#")[0];
+					if (u.substr(0, 2) == "//") u = window.location.protocol + u;
+					else if (u.indexOf(":") < 0) u = window.location.protocol + "//" + u;
+
+					if (url_lower == u) {
+						// Found; activate manual load
+						this.activate_load_all_link(thread_manager.posts[post_id]);
+						data.text = "";
+						return false;
+					}
+				}
 			}
 		}
 		return true;
@@ -2722,7 +2730,7 @@ MediaPlayerManager.prototype = {
 		this.media_player = new MediaPlayer(
 			media_player_css,
 			[ png_load_callback , image_load_callback ],
-			function (data) { inline_manager.on_image_drag(data); },
+			function (data) { inline_manager.on_content_drag(data); },
 			function (media_player) { script.settings_save(); },
 			function (media_player) { self.media_player_destruct_callback(media_player); },
 			extra_options
