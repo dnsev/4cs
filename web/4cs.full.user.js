@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.9.5
+// @version     1.9.6
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -4761,12 +4761,11 @@ MediaPlayer.prototype = {
 					var iframe;
 					data.self.video_container.html(
 						(iframe = data.self.E("iframe"))
-						.attr("id", data.div_id)
 						.attr("frameborder", "0")
 						.attr("width", data.size[0])
 						.attr("height", data.size[1])
 						.attr("src",
-							"//player.vimeo.com/video/" + (data.self.current_media.vid_id) + "?api=1&player_id=" + data.div_id +
+							"//player.vimeo.com/video/" + (data.self.current_media.vid_id) + "?api=1" +
 							"&title=0&byline=0&portrait=0&autoplay=1" + (data.self.current_media.start == 0 ? "" : "&t=" + data.self.current_media.start)
 						)
 					);
@@ -4779,7 +4778,6 @@ MediaPlayer.prototype = {
 
 				// Params
 				var params = {
-					div_id: "MediaPlayer_aJIferfh4FR49fkd",
 					size: [ this.video_container.outerWidth() , this.video_container.outerHeight() ],
 					self: this,
 					"VimeoManager": VimeoManager
@@ -8857,12 +8855,8 @@ ThreadManager.prototype = {
 	constructor: ThreadManager,
 	on_dom_mutation: function (target) {
 		// Updating
-		if (target.hasClass("inline") || target.hasClass("postContainer") || target.hasClass("post")) {
+		if (target.hasClass("postContainer") || target.hasClass("post")) {
 			this.parse_post(target);
-		}
-		else if (target.hasClass("backlinkHr")) {
-			// Not tested
-			this.parse_post(target.parent().parent());
 		}
 	},
 	parse_post: function (container) {
@@ -9465,10 +9459,11 @@ InlineManager.prototype = {
 
 		post_data.sounds.about_count_label.html(str);
 	},
-	activate_load_all_link: function (post_data, done_callback) {
+	activate_load_all_link: function (link, post_data, done_callback) {
 		// Change status
+		link = link || post_data.sounds.load_all_link;
 		var load_str = "loading";
-		post_data.sounds.load_all_link.html(load_str);
+		link.html(load_str);
 
 		// Load sound
 		var self = this;
@@ -9479,16 +9474,16 @@ InlineManager.prototype = {
 			MediaPlayer.ALL_SOUNDS,
 			{ "image_name": post_data.image_name },
 			{
-				"object": post_data.sounds.load_all_link,
+				"link": link,
 				"post_data": post_data,
 				"load_str": load_str
 			},
 			function (event, data) {
 				var progress = Math.floor((event.loaded / event.total) * 100);
-				data.object.html(data.load_str + " (" + progress + ")");
+				data.link.html(data.load_str + " (" + progress + ")");
 			},
 			function (okay, data) {
-				data.object.html(
+				data.link.html(
 					data.post_data.sounds.load_all_text + (okay ? "" : " (ajax&nbsp;error)")
 				);
 				if (!okay) {
@@ -9597,7 +9592,7 @@ InlineManager.prototype = {
 
 					if (url_lower == u) {
 						// Found; activate manual load
-						this.activate_load_all_link(thread_manager.posts[post_id]);
+						this.activate_load_all_link(null, thread_manager.posts[post_id]);
 						data.text = "";
 						return false;
 					}
@@ -9725,7 +9720,7 @@ InlineManager.prototype = {
 		return false;
 	},
 	on_load_all_click: function (event) {
-		event.data.manager.activate_load_all_link(event.data.post_data);
+		event.data.manager.activate_load_all_link($(this), event.data.post_data);
 
 		// Done
 		return false;
@@ -9822,7 +9817,7 @@ SoundAutoLoader.prototype = {
 	},
 	load_single: function (post_data) {
 		var self = this;
-		inline_manager.activate_load_all_link(post_data, function (okay, post_data) {
+		inline_manager.activate_load_all_link(null, post_data, function (okay, post_data) {
 			self.load_single_done();
 		});
 	},

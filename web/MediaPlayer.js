@@ -2861,12 +2861,11 @@ MediaPlayer.prototype = {
 					var iframe;
 					data.self.video_container.html(
 						(iframe = data.self.E("iframe"))
-						.attr("id", data.div_id)
 						.attr("frameborder", "0")
 						.attr("width", data.size[0])
 						.attr("height", data.size[1])
 						.attr("src",
-							"//player.vimeo.com/video/" + (data.self.current_media.vid_id) + "?api=1&player_id=" + data.div_id +
+							"//player.vimeo.com/video/" + (data.self.current_media.vid_id) + "?api=1" +
 							"&title=0&byline=0&portrait=0&autoplay=1" + (data.self.current_media.start == 0 ? "" : "&t=" + data.self.current_media.start)
 						)
 					);
@@ -2879,7 +2878,6 @@ MediaPlayer.prototype = {
 
 				// Params
 				var params = {
-					div_id: "MediaPlayer_aJIferfh4FR49fkd",
 					size: [ this.video_container.outerWidth() , this.video_container.outerHeight() ],
 					self: this,
 					"VimeoManager": VimeoManager
