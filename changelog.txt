@@ -1,3 +1,6 @@
+1.9.7
+- Fixed a bug where clicking ANY link would open the player.
+
 1.9.6
 - Removed unnecessary id for Vimeo player
 - Fixed an issue with backlink sound loading
