@@ -1,5 +1,8 @@
+1.9.7.1
+- Updated some info when clicking "save" links
+
 1.9.7
-- Fixed a bug where clicking ANY link would open the player.
+- Fixed a bug where clicking ANY link would open the player
 
 1.9.6
 - Removed unnecessary id for Vimeo player
