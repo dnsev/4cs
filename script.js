@@ -533,7 +533,7 @@ $(document).ready(function () {
 			var href = $(this).attr("href_update").substr(1).split("?");
 			window_hash.goto_page(
 				window_hash.modify_href(href[0]),
-				maintain_vars(window_hash.vars, ["all","dev","help"]),
+				maintain_vars(window_hash.vars, ["all","dev","help","scroll"]),
 				(href[1] ? window_hash.parse_vars(href[1]) : undefined)
 			);
 
