@@ -232,6 +232,17 @@ a.Version, a.Version:visited, a.Version:hover, a.Version:active {
 	font-style: italic;
 }
 
+.InternalLink {
+}
+.HoverShowControl {
+}
+.HoverShow {
+	display: none;
+}
+.HoverShowControl:hover .HoverShow {
+	display: inline;
+}
+
 .Hardlink {
 }
 .HardlinkSeparator {

@@ -1,3 +1,6 @@
+// Title management
+var default_title = "";
+
 // Basic functions
 function is_chrome() {
 	return ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
@@ -63,13 +66,7 @@ WindowHash.prototype = {
 		this.page = h[0];
 
 		// Get any variables
-		this.vars = {};
-		h = h.splice(1, h.length - 1).join("?").split("&");
-		for (var i = 0; i < h.length; ++i) {
-			if (h[i].length == 0) continue;
-			var p = h[i].split("=");
-			this.vars[p[0]] = (p.length == 1) ? null : p.splice(1, p.length - 1).join("=");
-		}
+		this.vars = this.parse_vars(h.splice(1, h.length - 1).join("?"));
 
 		// History update
 		if (this.history_mode == 0) {
@@ -124,11 +121,63 @@ WindowHash.prototype = {
 			return true;
 		}
 		return false;
+	},
+	parse_vars: function (str) {
+		var vars = {};
+		var h = str.split("&");
+		for (var i = 0; i < h.length; ++i) {
+			if (h[i].length == 0) continue;
+			var p = h[i].split("=");
+			vars[p[0]] = (p.length == 1) ? null : p.splice(1, p.length - 1).join("=");
+		}
+
+		return vars;
+	},
+	modify_href: function (href) {
+		if (href == ".") href = this.page;
+		return href;
+		// TODO
+		/*href = href.split("/");
+		
+		for (var i = 0; i < href.length; ++i) {
+			if (href[i]
+		}
+		
+		return href.join("/");*/
 	}
 };
 var window_hash = new WindowHash();
 
 // Pages
+function maintain_vars(vars, maintain) {
+	var v = {};
+
+	for (var k in vars) {
+		for (var i = 0; i < maintain.length; ++i) {
+			if (maintain[i] == k) {
+				v[k] = vars[k];
+				break;
+			}
+		}
+	}
+
+	return v;
+}
+function remove_vars(vars, remove) {
+	var v = {};
+
+	for (var k in vars) {
+		for (var i = 0; i < remove.length; ++i) {
+			if (remove[i] == k) {
+				k = null;
+				break;
+			}
+		}
+		if (k !== null) v[k] = vars[k];
+	}
+
+	return v;
+}
 var page_list = {
 	"about": {
 		"userscript": null,
@@ -188,6 +237,29 @@ PageBrowser.prototype = {
 			.removeClass("PageVariableDisplayOn PageVariableDisplayOff")
 			.addClass("PageVariableDisplay" + (($(this).attr("pvar") in vars) ? "On" : "Off"));
 		});
+
+		image_preview_close();
+
+		// Scroll
+		var scrolled = false;
+		if ("scroll" in vars) {
+			var scroll_to = $("[multi_id=" + vars["scroll"].replace(/\W/g, "\\$&") + "]:visible");
+			if (scroll_to.length > 0) {
+				try {
+					$(document).scrollTop(scroll_to.offset().top);
+					scrolled = true;
+				}
+				catch (e) {}
+			}
+		}
+		//if (!refresh && !scrolled) $(document).scrollTop(0);
+
+		if ("activate" in vars) {
+			var activate = $("[multi_id=" + vars["activate"].replace(/\W/g, "\\$&") + "]:visible");
+			if (activate.length > 0) {
+				$(activate[0]).trigger("click");
+			}
+		}
 	}
 };
 var page_browser = new PageBrowser();
@@ -268,16 +340,15 @@ function display_change_log(log) {
 	version_compare();
 }
 
-// Title management
-var default_title = "";
-
 // Image previewing
 function image_preview(obj) {
-	var descr = (obj.next().length > 0 ? (obj.next().hasClass && obj.next().hasClass("ImageDescription") ? obj.next().html() : "") : "");
-	var descr_container, img_append, offset, offset2, img;
+	// Only open if necessary
+	if ($(".ImagePreviewBoxInner2").length > 0) {
+		return;
+	}
 
-	// Remove any previous
-	$("body").find(".ImagePreviewBoxInner2").remove();
+	var descr = (obj.next().length > 0 ? (obj.next().hasClass && obj.next().hasClass("ImageDescription") ? obj.next().html() : "") : "");
+	var descr_container, img_append, offset, offset2;
 
 	// Create new
 	$("body").append(
@@ -311,16 +382,22 @@ function image_preview(obj) {
 
 	// Click to close
 	$(".ImagePreviewOverlay")
-	.on("click", {}, function (event) {
+	.on("click", {href: "#" + window_hash.page}, function (event) {
 		if (event.which == 1) {
-			image_preview_close(img);
+			image_preview_close();
+			// Change URL
+			window_hash.goto_page(
+				event.data.href,
+				remove_vars(window_hash.vars, ["activate"])
+			);
+			return false;
 		}
 		return true;
 	});
 
 	// Image
 	img_append.append(
-		(img = $(document.createElement("img")))
+		$(document.createElement("img"))
 		.attr("src", obj.attr("href"))
 		.on("load", {}, function (event) {
 			// Image loaded; open
@@ -347,8 +424,8 @@ function image_preview(obj) {
 		})
 	);
 }
-function image_preview_close(img) {
-	img.off("load").removeAttr("src");
+function image_preview_close() {
+	$(".ImagePreviewBoxInner2").remove();
 	$(".ImagePreviewOverlay")
 	.off("click")
 	.css("display", "");
@@ -445,20 +522,38 @@ $(document).ready(function () {
 		if (event.which == 1) {
 			window_hash.goto_page(
 				$(this).attr("href")[0] == "#" ? $(this).attr("href").substr(1) : $(this).attr("id").substr("navigation_".length),
-				window_hash.vars
+				maintain_vars(window_hash.vars, ["all","dev","help"])
 			);
 			return false;
 		}
 		return true;
 	});
 	$(".ImageLink").on("click", {}, function (event) {
-		if (event.which == 1) {
+		if (event.which == 1 || event.which === undefined) {
+			var href = $(this).attr("href_update").substr(1).split("?");
+			window_hash.goto_page(
+				window_hash.modify_href(href[0]),
+				maintain_vars(window_hash.vars, ["all","dev","help"]),
+				(href[1] ? window_hash.parse_vars(href[1]) : undefined)
+			);
+
 			image_preview($(this));
 			return false;
 		}
 		return true;
 	});
-
+	$(".InternalLink").on("click", {}, function (event) {
+		if (event.which == 1 && $(this).attr("href")[0] == "#") {
+			var href = $(this).attr("href").substr(1).split("?");
+			window_hash.goto_page(
+				window_hash.modify_href(href[0]),
+				maintain_vars(window_hash.vars, ["all","dev","help"]),
+				(href[1] ? window_hash.parse_vars(href[1]) : undefined)
+			);
+			return false;
+		}
+		return true;
+	});
 
 	// Change log
 	get_change_log();
@@ -476,3 +571,4 @@ $(document).ready(function () {
 });
 
 
+ 
