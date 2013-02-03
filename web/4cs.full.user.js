@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.9.7
+// @version     1.9.7.1
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -7259,7 +7259,11 @@ MediaPlayer.prototype = {
 				// URL
 				if (event.which == 1) {
 					if (event.data.playlist_item.type == "image-audio") {
-						alert("Right click and save as, or open in a new tab.");
+						prompt(
+							"Right click and save as, or open in a new tab and save.\n" +
+							"(Be sure to save as .ogg)",
+							$(this).attr("href")
+						);
 					}
 					else if (event.data.playlist_item.type == "youtube-video" || event.data.playlist_item.type == "vimeo-video") {
 						prompt("Right click/middle click to open. Original:", event.data.playlist_item.original_url);
@@ -7519,7 +7523,11 @@ MediaPlayer.prototype = {
 	},
 	on_downloads_link_click: function (event) {
 		if (event.which == 1) {
-			prompt("Right click -> save as, middle click, or visit this URL:", event.data.media_player.batch_download_blob_url);
+			prompt(
+				"Right click and save as, middle click, or visit the URL below.\n" +
+				"(Be sure to save as .zip)",
+				event.data.media_player.batch_download_blob_url
+			);
 			return false;
 		}
 		return true;
