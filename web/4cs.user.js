@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.9.6
+// @version     1.9.7
 // @namespace   dnsev
 // @description 4chan Media Player
 // @grant       GM_xmlhttpRequest
@@ -8170,32 +8170,34 @@ InlineManager.prototype={
 	},
 	on_url_click:function(event){
 		if(event.which==1){
-			media_player_manager.open_player(true);
-			var fn;
-			var cache;
-			if(event.data.video_type==="youtube"){
-				fn=media_player_manager.media_player.attempt_load_ytvideo_video;
-				cache="youtubevideo_cache";
-			}
-			else{
-				fn=media_player_manager.media_player.attempt_load_vimeo_video;
-				cache="vimeovideo_cache";
-			}
-			var pl_data={};
-			if(event.data.video_cache)pl_data[cache]=event.data.video_cache;
-			fn.call(
-				media_player_manager.media_player,
-				event.data.url,
-				null,
-				pl_data,
-				{"post_data":event.data.post_data,"link":$(this)},
-				function(event,data){
-				},
-				function(okay,data){
-				},
-				function(status,data,xml_info){
+			if(event.data.video_type){
+				media_player_manager.open_player(true);
+				var fn;
+				var cache;
+				if(event.data.video_type==="youtube"){
+					fn=media_player_manager.media_player.attempt_load_ytvideo_video;
+					cache="youtubevideo_cache";
 				}
-			);
+				else{
+					fn=media_player_manager.media_player.attempt_load_vimeo_video;
+					cache="vimeovideo_cache";
+				}
+				var pl_data={};
+				if(event.data.video_cache)pl_data[cache]=event.data.video_cache;
+				fn.call(
+					media_player_manager.media_player,
+					event.data.url,
+					null,
+					pl_data,
+					{"post_data":event.data.post_data,"link":$(this)},
+					function(event,data){
+					},
+					function(okay,data){
+					},
+					function(status,data,xml_info){
+					}
+				);
+			}
 			return false;
 		}
 		return true;
