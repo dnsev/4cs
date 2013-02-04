@@ -350,7 +350,7 @@ a.Version, a.Version:visited, a.Version:hover, a.Version:active {
 	display: inline !important;
 }
 
-.Content a:link, a:visited {
+.Content a, .Content a:link, .Content a:visited {
 	color: #1c7bb1;
 	text-decoration: none;
 }
