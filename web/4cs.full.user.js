@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.9.7.1
+// @version     1.10
 // @namespace   dnsev
-// @description 4chan Media Player
+// @description 4chan Media Player :: Sounds, Youtube, and Vimeo playback
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
 // @grant       GM_getValue
@@ -8977,7 +8977,17 @@ function InlineManager() {
 			".MPIconedURLTextNotFound{font-style:italic;}\n" +
 			".MPURLIcon{display:inline-block;width:20px;height:16px;vertical-align:middle;background-repeat:no-repeat;background-position:top left;background-size:16px 16px;}\n" +
 			".MPURLIconVimeo{background-image:url(//vimeo.com/favicon.ico);}\n" +
-			".MPURLIconYoutube{background-image:url(//youtube.com/favicon.ico);}\n"
+			".MPURLIconYoutube{background-image:url(//youtube.com/favicon.ico);}\n" +
+			".MPReplacedURLContainer{display:inline;position:relative;}\n" +
+			".MPVideoInfo{display:none !important;}\n" +
+			".MPVideoInfoThumbnail,.MPVideoInfoDuration,.MPVideoInfoStart{}\n" +
+			".MPVideoInfoDisplay{z-index:1;text-align:center;padding:8px !important;display:block;position:absolute;left:0;top:100%;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);}\n" +
+			".MPVideoInfoDisplayHidden{display:none !important}\n" +
+			".MPVideoInfoDisplayContainer{overflow:hidden;white-space:nowrap;}\n" +
+			".MPVideoInfoDisplayThumbnail{display:inline-block;}\n" +
+			".MPVideoInfoDisplayDescription{text-align:left;margin-bottom:2px;}\n" +
+			".MPVideoInfoDisplayDescriptionStart{opacity:0.5;}\n" +
+			".MPVideoInfoDisplayThumbnailFirst{display:block;}\n"
 		)
 	);
 
@@ -9213,6 +9223,19 @@ InlineManager.prototype = {
 				$(this)
 				.off("click")
 				.on("click", {"post_data": post_data, "video_type": video_type, "video_id": video_id, "video_cache": video_cache, "url": href}, self.on_url_click);
+
+				if (video_type !== null) {
+					// Preview
+					if (script.settings["inline"]["video_preview"]) {
+						var hover_data = {
+							timeout: null,
+							display_container: null
+						};
+						$(this)
+						.on("mouseover", hover_data, self.on_video_url_mouseover)
+						.on("mouseout", hover_data, self.on_video_url_mouseout);
+					}
+				}
 			});
 		}
 		else {
@@ -9258,6 +9281,11 @@ InlineManager.prototype = {
 			if (links_found) {
 				// Sounds links
 				post_data.post.find(".MPReplacedURL").each(function (index) {
+					// Wrap
+					var temp = E("span").addClass("MPReplacedURLContainer");
+					$(this).after(temp);
+					temp.append($(this));
+
 					// Link URL
 					var href = html_to_text(string_remove_tags($(this).html()));
 					if (href.indexOf(":") < 0) href = "//" + href;
@@ -9269,6 +9297,7 @@ InlineManager.prototype = {
 					var api_url = "";
 					var temp_prefix = "";
 					var xml_parse = null;
+					var xml_vid_info = null;
 
 					// Video check
 					if ((video_id = MediaPlayer.prototype.url_get_youtube_video_id(href)) !== null) {
@@ -9291,6 +9320,15 @@ InlineManager.prototype = {
 							catch (e) {
 								console.log(e);
 							}
+
+							var thumbnails = xml_find_nodes_by_name(xml, "media:thumbnail");
+							for (var i = 0; i < thumbnails.length; ++i) {
+								results.thumbnails.push({
+									"url": thumbnails[i].getAttribute("url"),
+									"width": thumbnails[i].getAttribute("width"),
+									"height": thumbnails[i].getAttribute("height")
+								});
+							}
 						};
 					}
 					else if ((video_id = MediaPlayer.prototype.url_get_vimeo_video_id(href)) !== null) {
@@ -9312,6 +9350,19 @@ InlineManager.prototype = {
 							}
 							catch (e) {
 								console.log(e);
+							}
+
+							var w = xml_find_nodes_by_name(xml, "width");
+							var h = xml_find_nodes_by_name(xml, "height");
+							w = (w.length > 0 ? $(w[0]).text() : "1");
+							h = (h.length > 0 ? $(h[0]).text() : "1");
+							var thumbnails = xml_find_nodes_by_name(xml, "thumbnail_large");
+							if (thumbnails.length > 0) {
+								results.thumbnails.push({
+									"url": $(thumbnails[0]).text(),
+									"width": w,
+									"height": h
+								});
 							}
 						};
 					}
@@ -9339,9 +9390,11 @@ InlineManager.prototype = {
 									// Get XML variables
 									var results = {
 										title: "Unknown Title",
-										duration: 0.0
+										duration: 0.0,
+										thumbnails: []
 									};
-									xml_parse($.parseXML(response), results);
+									var xml = $.parseXML(response);
+									xml_parse(xml, results);
 
 									// Update link's text and click event
 									data.link.find(".MPIconedURLText").html(text_to_html(results.title));
@@ -9359,6 +9412,43 @@ InlineManager.prototype = {
 										},
 										"url": href
 									}, self.on_url_click);
+
+									// Preview
+									if (script.settings["inline"]["video_preview"]) {
+										var start = /[\!\#\?\&]t=[0-9smh]+/.exec(href);
+										start = (start ? MediaPlayer.prototype.youtube_time_to_number(start[0].substr(3, start[0].length - 3)) : 0.0);
+
+										var data_span = E("span")
+										.addClass("MPVideoInfo")
+										.append(
+											E("span")
+											.addClass("MPVideoInfoDuration")
+											.html(results.duration.toString())
+										)
+										.append(
+											E("span")
+											.addClass("MPVideoInfoStart")
+											.html(start.toString())
+										);
+										for (var i = 0; i < results.thumbnails.length; ++i) {
+											data_span.append(
+												E("span")
+												.addClass("MPVideoInfoThumbnail")
+												.attr("url", results.thumbnails[i].url)
+												.attr("width", results.thumbnails[i].width)
+												.attr("height", results.thumbnails[i].height)
+											);
+										}
+
+										var hover_data = {
+											timeout: null,
+											display_container: null
+										};
+										data.link
+										.after(data_span)
+										.on("mouseover", hover_data, self.on_video_url_mouseover)
+										.on("mouseout", hover_data, self.on_video_url_mouseout);
+									}
 								}
 								else {
 									// Not found
@@ -9754,7 +9844,119 @@ InlineManager.prototype = {
 		}
 
 		return false;
-	}
+	},
+
+	on_video_url_timeout: function (event) {
+		event.data.timeout = null;
+
+		// Generate
+		if (event.data.display_container === null) {
+			// Create
+			var container;
+			var max_size = script.settings["inline"]["video_preview_image_space"];
+			$("body").append(
+				(event.data.display_container = E("div"))
+				.addClass("MPVideoInfoDisplay MPVideoInfoDisplayHidden")
+				.addClass(is_archive ? "post_wrapper" : "reply")
+				.append(
+					(container = E("div"))
+					.addClass("MPVideoInfoDisplayContainer")
+					.css("width", max_size + "px")
+				)
+			);
+
+			// Info
+			var info;
+			if (!(info = $(this).parent().find(".MPVideoInfo")).length > 0) return;
+
+			// Info
+			var c;
+			var duration = parseInt(info.find(".MPVideoInfoDuration").html()) || 0;
+			container.append(
+				(c = E("div"))
+				.addClass("MPVideoInfoDisplayDescription")
+				.html("Duration: " + MediaPlayer.prototype.duration_to_string(duration))
+			);
+			duration = parseInt(info.find(".MPVideoInfoStart").html()) || 0;
+			if (duration > 0) {
+				c.append(
+					E("span")
+					.addClass("MPVideoInfoDisplayDescriptionStart")
+					.html(" @" + MediaPlayer.prototype.duration_to_string(duration))
+				);
+			}
+
+			// Thumbnails
+			var thumbs = info.find(".MPVideoInfoThumbnail");
+			if (thumbs.length > 0) {
+				// Calculate scale
+				var w = parseInt($(thumbs[0]).attr("width"));
+				var h = parseInt($(thumbs[0]).attr("height"));
+				var scale = Math.min(max_size / w, max_size / h);
+				w *= scale;
+				h *= scale;
+				var h_space = max_size - h;
+				// Output
+				for (var i = 0; true; ) {
+					container.append(
+						E("div")
+						.addClass("MPVideoInfoDisplayThumbnail" + (i == 0 ? "First" : ""))
+						.css({
+							"width": w + "px",
+							"height": h + "px",
+							"background-size": w + "px " + h + "px",
+							"background-image": "url(" + $(thumbs[i]).attr("url") + ")"
+						})
+					);
+					if (++i >= thumbs.length) break;
+					w = parseInt($(thumbs[i]).attr("width"));
+					h = parseInt($(thumbs[i]).attr("height"));
+					scale = h_space / h;
+					w *= scale;
+					h *= scale;
+				}
+			}
+		}
+		// Display
+		if (event.data.display_container !== null) {
+			event.data.display_container.removeClass("MPVideoInfoDisplayHidden");
+
+			var scroll = $(document).scrollTop();
+			var win_height = $(window).height();
+			var disp_height = event.data.display_container.outerHeight();
+			var offset = $(this).offset();
+			var top, top2;
+			if (
+				(top = offset.top + $(this).height()) + disp_height - scroll > win_height &&
+				(top2 = offset.top - disp_height) > scroll
+			) {
+				top = top2;
+			}
+			event.data.display_container.css({
+				"left": (offset.left) + "px",
+				"top": (top) + "px"
+			});
+		}
+	},
+	on_video_url_mouseover: function (event) {
+		if (script.settings["inline"]["video_preview"]) {
+			var self = this;
+			if (event.data.timeout === null) {
+				event.data.timeout = setTimeout(function () {
+					InlineManager.prototype.on_video_url_timeout.call(self, event);
+				}, script.settings["inline"]["video_preview_timeout"] * 1000);
+			}
+		}
+	},
+	on_video_url_mouseout: function (event) {
+		if (event.data.timeout !== null) {
+			clearTimeout(event.data.timeout);
+			event.data.timeout = null;
+		}
+		if (event.data.display_container !== null) {
+			event.data.display_container.addClass("MPVideoInfoDisplayHidden");
+		}
+	},
 };
 var inline_manager = null;
 
@@ -10485,6 +10687,39 @@ MediaPlayerManager.prototype = {
 					script.settings_save();
 				}
 			},
+			{
+				"section": "Video Links",
+				"current": script.settings["inline"]["video_preview"],
+				"label": "Hover Preview",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["video_preview"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Video Links",
+				"current": script.settings["inline"]["video_preview_timeout"],
+				"label": "Hover Time",
+				"values": [ 2.0 , 1.5 , 1.0 , 0.75 , 0.5 , 0.25 , 0.125 , 0.0 ],
+				"descr": [ "2 seconds" , "1.5 seconds" , "1 second" , "0.75 seconds" , "0.5 seconds" , "0.25 seconds" , "0.125 seconds" , "instant" ],
+				"change": function (value) {
+					script.settings["inline"]["video_preview_timeout"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Video Links",
+				"current": script.settings["inline"]["video_preview_image_space"],
+				"label": "Preview Size",
+				"values": [ 480 , 320 , 240 , 120 ],
+				"descr": [ "Huge (480px)" , "Large (320px)" , "Normal (240px)" , "Small (120px)" ],
+				"change": function (value) {
+					script.settings["inline"]["video_preview_image_space"] = value;
+					script.settings_save();
+				}
+			},
 		];
 		for (var i = 0; i < hotkey_listener.hotkeys.length; ++i) {
 			extra_options.push(
@@ -10534,6 +10769,9 @@ function Script() {
 			"url_replace": true,
 			"url_replace_smart": false,
 			"url_hijack": true,
+			"video_preview": true,
+			"video_preview_timeout": 0.5,
+			"video_preview_image_space": 240
 		}
 	};
 	this.storage_name = "4cs";
