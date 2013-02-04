@@ -20,7 +20,17 @@
 <div class="TitleBorder"></div>
 <div class="ContentContainer">
 	<div class="Content ContentActive" id="content_install">
-		<div class="ContentHeader Firefox"><span class="ContentHeaderTitle">Firefox</span> / <span class="ContentHeaderTitle">Nightly</span>:</div>
+		<div class="FeaturesContainer">
+			<div class="Feature">
+				<a class="InternalLink FeatureLink" href="#about/userscript?scroll=sounds"><div class="TextIcon TextIconAudio"></div><span class="TextIconText FeatureText">Sound playback</span></a>
+			</div><div class="Feature">
+				<a class="InternalLink FeatureLink" href="#about/userscript?scroll=youtube_vimeo"><div class="TextIcon TextIconYoutube"></div><span class="TextIconText FeatureText">Youtube +</span><div class="TextIcon TextIconVimeo TextIconPadLeft"></div><span class="TextIconText FeatureText">Vimeo playback</span></a>
+			</div><div class="Feature">
+				<a class="InternalLink FeatureLink" href="#about/userscript?scroll=links"><div class="TextIcon TextIconLink"></div><span class="TextIconText FeatureText">Link replacement</span></a>
+			</div>
+		</div>
+
+		<div class="ContentHeader Firefox"><div class="TextIcon TextIconFirefox"></div><span class="ContentHeaderTitle TextIconText">Firefox</span><span class="TextIconText">:</span></div>
 		<div class="ContentBody Firefox">
 			<ol class="ContentInstructionList">
 				<li>If you don't have <a href="https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/" target="_blank">Greasemonkey</a> or <a href="https://addons.mozilla.org/en-us/firefox/addon/scriptish/" target="_blank">Scriptish</a> installed:<br />
@@ -35,7 +45,7 @@
 			</ol>
 		</div>
 
-		<div class="ContentHeader Chrome"><span class="ContentHeaderTitle">Chrome</span>:</div>
+		<div class="ContentHeader Chrome"><div class="TextIcon TextIconChrome"></div><span class="ContentHeaderTitle TextIconText">Chrome</span><span class="TextIconText">:</span></div>
 		<div class="ContentBody Chrome">
 			<ol class="ContentInstructionList">
 				<li>If you don't have <a href="https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank">Tampermonkey</a> installed:<br />
@@ -50,8 +60,7 @@
 			</ol>
 		</div>
 
-		<div class="ContentHeader"><a class="ContentHeaderTitle NonDeveloper DeveloperDisplayOff" href="#" id="developer_change">For developers...</a><span class="ContentHeaderTitle Developer">For developers</span><span class="PageVariableDisplayInv" pvar="dev">:</span><span class="Developer PageVariableDisplay PageVariableDisplayOff" pvar="dev"><span class="HardlinkSeparator">/</span><a class="Hardlink" href="#" id="hardlink_enable_dev">Hardlink</a></span></div>
-		<div class="ContentBodyStub NonDeveloper DeveloperDisplayOff"></div>
+		<div class="ContentHeader"><span class="ContentHeaderTitle Developer">For developers</span><span class="PageVariableDisplayInv" pvar="dev">:</span><span class="Developer PageVariableDisplay PageVariableDisplayOff" pvar="dev"><span class="HardlinkSeparator">/</span><a class="Hardlink" href="#" id="hardlink_enable_dev">Hardlink</a></span></div>
 		<div class="ContentBody Developer">
 			<p>If you want to review the code or modify it yourself, there are <span class="Firefox UniversalBrowser">3</span><span class="SpecificBrowser Chrome BrowserDisplayOff">2</span> versions of the script:</p>
 			<ul class="ContentInstructionList">
@@ -69,14 +78,13 @@
 			If you are using Chrome + Tampermonkey, it is advisable to not use <a href="https://raw.github.com/dnsev/4cs/master/web/4cs.dev.user.js">4cs.dev.user.js</a> if you plan on modifying it, as Tampermonkey stores userscripts in an odd way.</p>
 		</div>
 
-		<div class="ContentHeader"><a class="ContentHeaderTitle SpecificBrowser BrowserDisplayOff" href="#" id="show_all_browser">Browser not shown...</a><span class="ContentHeaderTitle UniversalBrowser">Browser not shown</span><span class="PageVariableDisplayInv" pvar="all">:</span><span class="UniversalBrowser PageVariableDisplay PageVariableDisplayOff" pvar="all"><span class="HardlinkSeparator">/</span><a class="Hardlink" href="#" id="hardlink_enable_all">Hardlink</a></span></div>
-		<div class="ContentBodyStub SpecificBrowser BrowserDisplayOff"></div>
+		<div class="ContentHeader"><span class="ContentHeaderTitle UniversalBrowser">Browser not shown</span><span class="PageVariableDisplayInv" pvar="all">:</span><span class="UniversalBrowser PageVariableDisplay PageVariableDisplayOff" pvar="all"><span class="HardlinkSeparator">/</span><a class="Hardlink" href="#" id="hardlink_enable_all">Hardlink</a></span></div>
 		<div class="ContentBody UniversalBrowser">
 			<p>If your browser isn't listed, chances are it's not directly supported. That is, it might work on it, but hasn't been tested on it.</p>
 			<p>You can try using it in your browser, but there is no guarantee it will work. If you find problems with it, create an issue report.</p>
 		</div>
 
-		<div class="ContentHeader"><a class="ContentHeaderTitle NoHelp HelpDisplayOff" href="#" id="help_change">Userscript not working...</a><span class="ContentHeaderTitle Help">Userscript not working</span><span class="PageVariableDisplayInv" pvar="help">:</span><span class="Help PageVariableDisplay PageVariableDisplayOff" pvar="help"><span class="HardlinkSeparator">/</span><a class="Hardlink" href="#" id="hardlink_enable_help">Hardlink</a></span></div>
+		<div class="ContentHeader"><span class="ContentHeaderTitle Help">Userscript not working</span><span class="PageVariableDisplayInv" pvar="help">:</span><span class="Help PageVariableDisplay PageVariableDisplayOff" pvar="help"><span class="HardlinkSeparator">/</span><a class="Hardlink" href="#" id="hardlink_enable_help">Hardlink</a></span></div>
 		<div class="ContentBody Help">
 			<ul class="ContentInstructionList">
 				<li>Be sure to uninstall any previous userscript players</li>
@@ -84,6 +92,16 @@
 				<li class="Firefox">If you use <a href="https://addons.mozilla.org/en-us/firefox/addon/scriptish/" target="_blank">Scriptish</a>, try using <a href="https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/" target="_blank">Greasemonkey</a></li>
 				<li class="Chrome">If you aren't using <a href="https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank">Tampermonkey</a>, try using it</li>
 			</ul>
+		</div>
+
+		<div class="ExtrasContainer">
+			<div class="Extra">
+				<a class="NonDeveloper DeveloperDisplayOff" href="#" id="developer_change">For developers</a>
+			</div><div class="Extra">
+				<a class="SpecificBrowser BrowserDisplayOff" href="#" id="show_all_browser">Browser not shown</a>
+			</div><div class="Extra">
+				<a class="NoHelp HelpDisplayOff" href="#" id="help_change">Not working?</a>
+			</div>
 		</div>
 	</div>
 	<div class="Content" id="content_changes">
@@ -145,6 +163,14 @@
 					<li>The "<a>Detect Sounds</a>" link will attempt to passively detect any sounds inside images in the entire thread</li>
 					<li>The "<a>Load All Sounds</a>" will attempt to load all sounds in the entire thread into the player</li>
 					<li>You can click and drag images onto the player<br />(either from your computer or from the web browser)</li>
+				</ul>
+			</div>
+			<div class="ContentHeader" multi_id="links"><span class="HoverShowControl"><span class="ContentHeaderTitle">Link Replacement</span>:<span class="HoverShow"> <a class="InternalLink" href="#.?scroll=links">Hardlink</a></span></span></div>
+			<div class="ContentBody">
+				<ul>
+					<li>Links inside posts will be replaced with clickable links; middle clicking on a link will open it, so that it will open in a new tab and not the current one</li>
+					<li>Video links which can be opened in the player will display an icon next to them, along with the video title</li>
+					<li>This feature can be disabled in the settings if desired</li>
 				</ul>
 			</div>
 			<div class="ContentHeader" multi_id="youtube_vimeo"><span class="HoverShowControl"><span class="ContentHeaderTitle">Youtube/Vimeo</span>:<span class="HoverShow"> <a class="InternalLink" href="#.?scroll=youtube_vimeo">Hardlink</a></span></span></div>

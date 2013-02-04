@@ -39,6 +39,82 @@ p + p, p + div, p + ol, p + ul, ol + p, ul + p {
 	display: none !important;
 }
 
+.FeaturesContainer {
+	font-size: 16px;
+	text-align: center;
+	margin-bottom: 16px;
+}
+.Feature {
+	display: inline-block;
+	margin: 0px 8px 0px 8px;
+}
+.FeatureText {
+}
+.Content a.FeatureLink:link, .Content a.FeatureLink:visited {
+	display: inline-block;
+	text-decoration: none;
+	color: #01283f;
+}
+.Content a.FeatureLink:hover, .Content a.FeatureLink:active {
+	color: #72b8e1;
+}
+
+.ExtrasContainer {
+	font-size: 16px;
+	text-align: center;
+	margin-top: 8px;
+}
+.Extra {
+	display: inline-block;
+	margin: 0px 8px 0px 8px;
+}
+.Content .Extra a:link, .Content .Extra a:visited {
+	color: #97c4e7;
+	text-decoration: none;
+}
+.Content .Extra a:hover {
+	color: #1c7bb1;
+	text-decoration: underline;
+}
+.Content .Extra a:active {
+	color: #034063;
+	text-decoration: underline;
+}
+
+.TextIcon {
+	display: inline-block;
+	vertical-align: middle;
+	width: 24px;
+	height: 16px;
+	background-repeat: no-repeat;
+	background-position: top left;
+	background-size: 16px 16px;
+}
+.TextIconPadLeft {
+	margin-left: 8px;
+}
+.TextIconFirefox {
+	background-image: url(icon_firefox.png);
+}
+.TextIconChrome {
+	background-image: url(icon_chrome.png);
+}
+.TextIconYoutube {
+	background-image: url(icon_youtube.png);
+}
+.TextIconVimeo {
+	background-image: url(icon_vimeo.png);
+}
+.TextIconAudio {
+	background-image: url(icon_audio.png);
+}
+.TextIconLink {
+	background-image: url(icon_link.png);
+}
+.TextIconText {
+	vertical-align: middle;
+}
+
 .Developer {
 }
 .NonDeveloper {
@@ -260,7 +336,7 @@ a.Version, a.Version:visited, a.Version:hover, a.Version:active {
 	display: inline !important;
 }
 
-.Content a, a:visited {
+.Content a:link, a:visited {
 	color: #1c7bb1;
 	text-decoration: none;
 }
