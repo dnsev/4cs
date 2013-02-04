@@ -25,6 +25,15 @@ p + p, p + div, p + ol, p + ul, ol + p, ul + p {
 	margin-top: 8px !important;
 }
 
+*::selection {
+	color: #eff4f8;
+	background: #034063;
+}
+*::-moz-selection {
+	color: #eff4f8;
+	background: #034063;
+}
+
 .Chrome {
 }
 .Firefox {

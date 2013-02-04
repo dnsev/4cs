@@ -443,7 +443,7 @@ function version_check(version) {
 }
 function version_compare() {
 	// Only compare if both versions are available
-	if (current_version === null || current_version === null) return;
+	if (current_version === null || change_log_version === null) return;
 
 	// Compare
 	var current_version_split = current_version.toString().split(".");
