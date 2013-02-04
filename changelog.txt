@@ -1,4 +1,7 @@
-﻿1.9.7.1
+﻿1.10
+- Added previews to video links; available by hovering
+
+1.9.7.1
 - Updated some info when clicking "save" links
 
 1.9.7
