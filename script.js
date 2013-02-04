@@ -6,7 +6,8 @@ function is_chrome() {
 	return ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
 }
 function is_firefox() {
-	return ((navigator.userAgent + "").indexOf("Mozilla/") >= 0);
+	var ua = navigator.userAgent + "";
+	return (ua.indexOf("Mozilla/") >= 0 && ua.indexOf("MSIE") < 0);
 }
 
 function text_to_html(str) {
