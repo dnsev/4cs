@@ -1,4 +1,7 @@
-﻿1.10
+﻿1.10.1
+- Re-arranged the settings; they are now not all located inside the player
+
+1.10
 - Added previews to video links; available by hovering
 
 1.9.7.1
