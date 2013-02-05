@@ -1,4 +1,10 @@
-﻿1.10.1
+﻿1.10.2
+- Auto-update notification (changes the color of the [Media Player] link)
+- Style updates for the video preview
+- More stats in video preview (views, rating)
+- Code re-arrangement (moved XML parsing)
+
+1.10.1
 - Re-arranged the settings; they are now not all located inside the player
 
 1.10
