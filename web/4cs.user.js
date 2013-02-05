@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.10.1
+// @version     1.10.2
 // @namespace   dnsev
 // @description 4chan Media Player :: Sounds, Youtube, and Vimeo playback
 // @grant       GM_xmlhttpRequest
@@ -7922,33 +7922,39 @@ function InlineManager(){
 			".MPURLIconYoutube{background-image:url(//youtube.com/favicon.ico);}\n"+
 			".MPReplacedURLContainer{display:inline;position:relative;}\n"+
 			".MPVideoInfo{display:none !important;}\n"+
-			".MPVideoInfoThumbnail,.MPVideoInfoDuration,.MPVideoInfoStart{}\n"+
-			".MPVideoInfoDisplay{z-index:1;text-align:center;padding:8px !important;display:block;position:absolute;left:0;top:100%;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);}\n"+
+			".MPVideoInfoDisplay{z-index:1;text-align:center;padding:8px !important;display:block;position:absolute;left:0;top:100%;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);border-radius:4px;}\n"+
 			".MPVideoInfoDisplayHidden{display:none !important}\n"+
-			".MPVideoInfoDisplayContainer{overflow:hidden;white-space:nowrap;}\n"+
-			".MPVideoInfoDisplayThumbnail{display:inline-block;}\n"+
+			".MPVideoInfoDisplayContainer{}\n"+
 			".MPVideoInfoDisplayDescription{text-align:left;margin-bottom:2px;}\n"+
-			".MPVideoInfoDisplayDescriptionStart{opacity:0.5;}\n"+
+			".MPVideoInfoDisplayDescriptionStart{opacity:0.5 !important;}\n"+
+			".MPVideoInfoDisplayDescriptionViews{float:right;}\n"+
+			".MPVideoInfoDisplayDescriptionEnd{clear:both;}\n"+
+			".MPVideoInfoDisplayRatingBg{position:relative;z-index:1;background:#b41414;height:2px;width:100%;opacity:1.0 !important;overflow:hidden;}\n"+
+			".MPVideoInfoDisplayRatingGood{background:#60b410;height:2px;}\n"+
+			".MPVideoInfoDisplayThumbnailContainerOuter{border-width:0px 2px 2px 2px;border-style:solid;border-color:rgba(0,0,0,0.25);}\n"+
+			".MPVideoInfoDisplayThumbnailContainerOuterTop{border-width:2px !important;}\n"+
+			".MPVideoInfoDisplayThumbnailContainer{display:block;width:100%;white-space:nowrap !important;line-height:0px;overflow:hidden;}\n"+
+			".MPVideoInfoDisplayThumbnail{display:inline-block;}\n"+
 			".MPVideoInfoDisplayThumbnailFirst{display:block;}\n"
 		)
 	);
 	var self=this;
-	var pre,post,reload_span;
+	var pre,post,reload_span,settings_span;
 	if(is_archive){
-		$(".letters").append((this.settings_span=E("span")));
+		$(".letters").append((settings_span=E("span")));
 		pre=" [ ";
 		post=" ]";
 	}
 	else{
-		$("#navtopright").prepend((this.settings_span=E("span")));
+		$("#navtopright").prepend((settings_span=E("span")));
 		pre="[";
 		post="] ";
 	}
 	this.settings_manager=new SettingsManager();
-	this.settings_span
+	settings_span
 	.append(T(pre))
 	.append(
-		E("a")
+		(this.nav_link=E("a"))
 		.html("Media Player")
 		.attr("href","http://dnsev.github.com/4cs/")
 		.attr("target","_blank")
@@ -8175,60 +8181,14 @@ InlineManager.prototype={
 						temp_prefix="Youtube: ";
 						icon_class="MPURLIconYoutube";
 						api_url="//gdata.youtube.com/feeds/api/videos/"+video_id;
-						xml_parse=function(xml,results){
-							var d=xml_find_nodes_by_name(xml,"yt:duration");
-							if(d.length>0){
-								results.duration=d[0].getAttribute("seconds");
-								results.duration=parseFloat(results.duration);
-								results.duration=(isFinite(results.duration)?results.duration:0.0);
-							}
-							try{
-								results.title=$(xml_find_nodes_by_name(xml,"title")).text();
-							}
-							catch(e){
-								console.log(e);
-							}
-							var thumbnails=xml_find_nodes_by_name(xml,"media:thumbnail");
-							for(var i=0;i<thumbnails.length;++i){
-								results.thumbnails.push({
-									"url":thumbnails[i].getAttribute("url"),
-									"width":thumbnails[i].getAttribute("width"),
-									"height":thumbnails[i].getAttribute("height")
-								});
-							}
-						};
+						xml_parse=self.parse_xml_youtube;
 					}
 					else if((video_id=MediaPlayer.prototype.url_get_vimeo_video_id(href))!==null){
 						video_type="vimeo";
 						temp_prefix="Vimeo: ";
 						icon_class="MPURLIconVimeo";
 						api_url="//vimeo.com/api/v2/video/"+video_id+".xml";
-						xml_parse=function(xml,results){
-							var d=xml_find_nodes_by_name(xml,"duration");
-							if(d.length>0){
-								results.duration=$(d[0]).text();
-								results.duration=parseFloat(results.duration);
-								results.duration=isFinite(results.duration)?results.duration:0.0;
-							}
-							try{
-								results.title=$(xml_find_nodes_by_name(xml,"title")).text();
-							}
-							catch(e){
-								console.log(e);
-							}
-							var w=xml_find_nodes_by_name(xml,"width");
-							var h=xml_find_nodes_by_name(xml,"height");
-							w=(w.length>0?$(w[0]).text():"1");
-							h=(h.length>0?$(h[0]).text():"1");
-							var thumbnails=xml_find_nodes_by_name(xml,"thumbnail_large");
-							if(thumbnails.length>0){
-								results.thumbnails.push({
-									"url":$(thumbnails[0]).text(),
-									"width":w,
-									"height":h
-								});
-							}
-						};
+						xml_parse=self.parse_xml_vimeo;
 					}
 					if(video_type!==null){
 						$(this)
@@ -8247,11 +8207,7 @@ InlineManager.prototype={
 							null,
 							function(okay,data,response){
 								if(okay){
-									var results={
-										title:"Unknown Title",
-										duration:0.0,
-										thumbnails:[]
-									};
+									var results=self.parse_xml_init();
 									var xml=$.parseXML(response);
 									xml_parse(xml,results);
 									data.link.find(".MPIconedURLText").html(text_to_html(results.title));
@@ -8270,35 +8226,19 @@ InlineManager.prototype={
 										"url":href
 									},self.on_url_click);
 									if(script.settings["inline"]["video_preview"]){
-										var start=/[\!\#\?\&]t=[0-9smh]+/.exec(href);
-										start=(start?MediaPlayer.prototype.youtube_time_to_number(start[0].substr(3,start[0].length-3)):0.0);
-										var data_span=E("span")
-										.addClass("MPVideoInfo")
-										.append(
-											E("span")
-											.addClass("MPVideoInfoDuration")
-											.html(results.duration.toString())
-										)
-										.append(
-											E("span")
-											.addClass("MPVideoInfoStart")
-											.html(start.toString())
-										);
-										for(var i=0;i<results.thumbnails.length;++i){
-											data_span.append(
-												E("span")
-												.addClass("MPVideoInfoThumbnail")
-												.attr("url",results.thumbnails[i].url)
-												.attr("width",results.thumbnails[i].width)
-												.attr("height",results.thumbnails[i].height)
-											);
-										}
+										results.start=/[\!\#\?\&]t=[0-9smh]+/.exec(href);
+										results.start=(results.start?MediaPlayer.prototype.youtube_time_to_number(results.start[0].substr(3,results.start[0].length-3)):0.0);
 										var hover_data={
 											timeout:null,
 											display_container:null
 										};
 										data.link
-										.after(data_span)
+										.after(
+											self.attributeify(
+												E("span").addClass("MPVideoInfo"),
+												results
+											)
+										)
 										.on("mouseover",hover_data,self.on_video_url_mouseover)
 										.on("mouseout",hover_data,self.on_video_url_mouseout);
 									}
@@ -8319,6 +8259,84 @@ InlineManager.prototype={
 				});
 			}
 		}
+	},
+	parse_xml_init:function(){
+		return{
+			title:"Unknown Title",
+			duration:0.0,
+			thumbnails:[],
+			views:0,
+			rating:1.0,
+			raters:0,
+		};
+	},
+	parse_xml_youtube:function(xml,results){
+		var elem=xml_find_nodes_by_name(xml,"yt:duration");
+		if(elem.length>0){
+			results.duration=elem[0].getAttribute("seconds");
+			results.duration=parseFloat(results.duration);
+			results.duration=(isFinite(results.duration)?results.duration:0.0);
+		}
+		elem=xml_find_nodes_by_name(xml,"title");
+		if(elem.length>0){
+			results.title=$(elem[0]).text();
+		}
+		elem=xml_find_nodes_by_name(xml,"media:thumbnail");
+		for(var i=0;i<elem.length;++i){
+			results.thumbnails.push({
+				"url":elem[i].getAttribute("url"),
+				"width":parseInt(elem[i].getAttribute("width")),
+				"height":parseInt(elem[i].getAttribute("height"))
+			});
+		}
+		elem=xml_find_nodes_by_name(xml,"yt:statistics");
+		if(elem.length>0){
+			results.views=parseInt(elem[0].getAttribute("viewCount"));
+		}
+		elem=xml_find_nodes_by_name(xml,"gd:rating");
+		if(elem.length>0){
+			var m=parseFloat(elem[0].getAttribute("min"));
+			results.raters=parseInt(elem[0].getAttribute("numRaters"))||0;
+			results.rating=((parseFloat(elem[0].getAttribute("average"))-m)/(elem[0].getAttribute("max")-m))||0;
+		}
+	},
+	parse_xml_vimeo:function(xml,results){
+		var elem=xml_find_nodes_by_name(xml,"duration");
+		if(elem.length>0){
+			results.duration=$(elem[0]).text();
+			results.duration=parseFloat(results.duration);
+			results.duration=isFinite(results.duration)?results.duration:0.0;
+		}
+		elem=xml_find_nodes_by_name(xml,"title");
+		if(elem.length>0){
+			results.title=$(elem[0]).text();
+		}
+		var w=xml_find_nodes_by_name(xml,"width");
+		var h=xml_find_nodes_by_name(xml,"height");
+		w=(w.length>0?parseInt($(w[0]).text()):1);
+		h=(h.length>0?parseInt($(h[0]).text()):1);
+		elem=xml_find_nodes_by_name(xml,"thumbnail_large");
+		if(elem.length>0){
+			results.thumbnails.push({
+				"url":$(elem[0]).text(),
+				"width":w,
+				"height":h
+			});
+		}
+		elem=xml_find_nodes_by_name(xml,"stats_number_of_plays");
+		if(elem.length>0){
+			results.views=parseInt($(elem[0]).text());
+		}
+	},
+	attributeify:function(element,attributes,prefix){
+		prefix=prefix||"";
+		for(var key in attributes){
+			element.attr(key,JSON.stringify(attributes[key]));
+		}
+		return element;
+	},
+	commaify_number:function(number){
+		return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
 	},
 	update_about_image:function(post_data){
 		post_data.sounds.about_container.css("display","");
@@ -8495,8 +8513,12 @@ InlineManager.prototype={
 		return false;
 	},
 	enable_update:function(url){
-		this.settings_update_link.css("display","");
-		this.settings_update_link.attr("href",url);
+		this.settings_update_link
+		.css("display","")
+		.attr("href",url);
+		if(!is_archive){
+			this.nav_link.addClass("quotelink");
+		}
 	},
 	position_relative:function(parent,obj,offset){
 		offset=offset||[0,0];
@@ -8689,13 +8711,13 @@ InlineManager.prototype={
 			var info;
 			if(!(info=$(this).parent().find(".MPVideoInfo")).length>0)return;
 			var c;
-			var duration=parseInt(info.find(".MPVideoInfoDuration").html())||0;
+			var duration=parseInt(info.attr("duration"))||0;
 			container.append(
 				(c=E("div"))
 				.addClass("MPVideoInfoDisplayDescription")
 				.html("Duration: "+MediaPlayer.prototype.duration_to_string(duration))
 			);
-			duration=parseInt(info.find(".MPVideoInfoStart").html())||0;
+			duration=parseInt(info.attr("start"))||0;
 			if(duration>0){
 				c.append(
 					E("span")
@@ -8703,28 +8725,61 @@ InlineManager.prototype={
 					.html(" @"+MediaPlayer.prototype.duration_to_string(duration))
 				);
 			}
-			var thumbs=info.find(".MPVideoInfoThumbnail");
+			c.prepend(
+				E("div")
+				.addClass("MPVideoInfoDisplayDescriptionViews")
+				.html(
+					InlineManager.prototype.commaify_number(info.attr("views"))+" views"
+				)
+			)
+			.append(E("div").addClass("MPVideoInfoDisplayDescriptionEnd"));
+			var raters=parseInt(info.attr("raters"))||0;
+			var ex_class="";
+			if(raters>0){
+				container.append(
+					E("div")
+					.addClass("MPVideoInfoDisplayRatingBg")
+					.append(
+						E("div")
+						.addClass("MPVideoInfoDisplayRatingGood")
+						.css("width",((parseFloat(info.attr("rating"))||0)*100)+"%")
+					)
+				);
+			}
+			else{
+				ex_class=" MPVideoInfoDisplayThumbnailContainerOuterTop";
+			}
+			var thumbs=JSON.parse(info.attr("thumbnails"));
 			if(thumbs.length>0){
-				var w=parseInt($(thumbs[0]).attr("width"));
-				var h=parseInt($(thumbs[0]).attr("height"));
+				var w=thumbs[0].width;
+				var h=thumbs[0].height;
 				var scale=Math.min(max_size/w,max_size/h);
 				w*=scale;
 				h*=scale;
 				var h_space=max_size-h;
+				var thumb_container;
+				container.append(
+					E("div")
+					.addClass("MPVideoInfoDisplayThumbnailContainerOuter"+ex_class)
+					.append(
+						(thumb_container=E("div"))
+						.addClass("MPVideoInfoDisplayThumbnailContainer")
+					)
+				);
 				for(var i=0;true;){
-					container.append(
+					thumb_container.append(
 						E("div")
 						.addClass("MPVideoInfoDisplayThumbnail"+(i==0?"First":""))
 						.css({
 							"width":w+"px",
 							"height":h+"px",
 							"background-size":w+"px "+h+"px",
-							"background-image":"url("+$(thumbs[i]).attr("url")+")"
+							"background-image":"url("+thumbs[i].url+")"
 						})
 					);
 					if(++i>=thumbs.length)break;
-					w=parseInt($(thumbs[i]).attr("width"));
-					h=parseInt($(thumbs[i]).attr("height"));
+					w=thumbs[i].width;
+					h=thumbs[i].height;
 					scale=h_space/h;
 					w*=scale;
 					h*=scale;
