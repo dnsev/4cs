@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.10
+// @version     1.10.1
 // @namespace   dnsev
 // @description 4chan Media Player :: Sounds, Youtube, and Vimeo playback
 // @grant       GM_xmlhttpRequest
@@ -2124,7 +2124,7 @@ function MediaPlayerCSS(preset,css_color_presets,css_size_presets){
 			"cursor":"default"
 		},
 		".MPPlaylistSoundName":{
-			"color":"{hex:color_standard}",
+			"color":"{hex:color_standard} !important",
 			"padding":"{exp:1,*,padding_scale}px 0px {exp:1,*,padding_scale}px {exp:2,*,padding_scale}px"
 		},
 		".MPPlaylistItemActive .MPPlaylistSoundName":{
@@ -4690,8 +4690,12 @@ MediaPlayer.prototype={
 	duration_to_string:function(position){
 		var seconds_in=Math.round(position);
 		var minutes_in=Math.floor(seconds_in/60);
+		var hours_in=Math.floor(minutes_in/60);
 		seconds_in=Math.floor(seconds_in-minutes_in*60);
-		var s=minutes_in+":"+(seconds_in>=10?seconds_in:"0"+seconds_in);
+		minutes_in=Math.floor(minutes_in-hours_in*60);
+		var s=(hours_in>0?hours_in+":":"")+
+			(hours_in>0?(minutes_in>=10?minutes_in:"0"+minutes_in):minutes_in)+
+			":"+(seconds_in>=10?seconds_in:"0"+seconds_in);
 		return s;
 	},
 	youtube_time_to_number:function(str){
@@ -7619,6 +7623,286 @@ ThreadManager.prototype={
 	}
 }
 var thread_manager=null;
+function SettingsManager(){
+	var self=this;
+	$("head")
+	.append(
+		E("style")
+		.html(
+			".MPMenu{display:block !important;position:absolute;left:0;top:0;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);z-index:1000;margin:0px !important;padding:2px !important;}\n"+
+			".MPMenuClosed{display:none !important;}\n"+
+			"a.MPMenuItem,a.MPMenuItem:link,a.MPMenuItem:visited{display:block !important;padding:2px !important;text-decoration:none !important;}"+
+			".MPMenuItem + .MPMenuItem{margin-top:1px;}\n"+
+			".MPSettingsContainerOuter{position:fixed;left:0;top:0;right:0;bottom:0;z-index:1000;background:rgba(0,0,0,0.25);}\n"+
+			".MPSettingsClosed{display:none !important;}\n"+
+			".MPSettingsContainerInner{position:relative;width:100%;height:100%;}\n"+
+			"div.MPSettingsBox{display:block !important;position:absolute !important;left:25%;top:15%;right:25%;bottom:15%;border:0px !important;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);border-radius:6px !important;padding:0px !important;margin:0px !important;overflow:hidden;}\n"+
+			"div.MPSettingsTitleContainer{position:relative;z-index:1;padding:4px !important;}\n"+
+			"div.MPSettingsTitle{position:relative;display:inline-block !important;font-size:2em !important;vertical-align:top !important;font-weight:bold;}\n"+
+			"div.MPSettingsTitleVersion{padding-left:4px !important;display:inline-block !important;vertical-align:top !important;font-style:italic;}\n"+
+			"a.MPSettingsTitleUpdate{position:absolute;right:4px;top:4px;vertical-align:top !important;}\n"+
+			"div.MPSettingsContainer{overflow-x:hidden;overflow-y:auto;margin:4px !important;left:0;top:0;right:0;bottom:0;position:absolute;}\n"+
+			".MPSettingsSingleLabel{font-size:1.25em !important;font-weight:bold;padding:2px 2px 2px 0px !important;}\n"+
+			".MPSettingsSingleContainer + .MPSettingsSingleLabel{margin-top:4px;}\n"+
+			".MPSettingsSingleContainer{border:1px solid rgba(0,0,0,0.125);padding:1px !important;border-radius:2px;}\n"+
+			".MPSettingsSingleItem{padding:2px !important;position:relative;background:rgba(0,0,0,0.03125);}\n"+
+			".MPSettingsSingleItem.MPSettingsSingleItemEven{background:rgba(0,0,0,0.0625) !important;}\n"+
+			".MPSettingsSingleItem + .MPSettingsSingleItem{margin-top:1px !important;}\n"+
+			".MPSettingsSingleItemValue{float:right;}\n"+
+			".MPSettingsSingleItemValueAfter{clear:both;}\n"+
+			".MPSettingsSingleItemLabel{}\n"+
+			".MPSettingsSingleItemDescription{font-size:0.8em !important;opacity:0.5 !important;}\n"+
+			"input.MPSettingsTextbox[type=text]{padding:2px !important;margin:0px !important;background:rgba(0,0,0,0.03125) !important;border:1px solid rgba(0,0,0,0.125) !important;color:inherit !important;}\n"+
+			".MPSettingsTextboxContainer{position:relative;}\n"+
+			".MPSettingsTextboxLinkContainer{position:absolute;right:2px;top:2px;}\n"
+		)
+	);
+	this.menu_order=true;
+	$("body").append(
+		(this.menu_list=E("div"))
+		.addClass("MPMenu MPMenuClosed")
+		.addClass(is_archive?"post_wrapper":"reply")
+		.append(
+			E("a")
+			.addClass("MPMenuItem")
+			.attr("href","#")
+			.html("Open Player")
+			.on("click",{item:0},function(event){
+				return self.on_menu_item_click($(this),event);
+			})
+		)
+		.append(
+			E("a")
+			.addClass("MPMenuItem")
+			.attr("href","#")
+			.html("Reload Player")
+			.on("click",{item:1},function(event){
+				return self.on_menu_item_click($(this),event);
+			})
+		)
+		.append(
+			E("a")
+			.addClass("MPMenuItem")
+			.attr("href","#")
+			.html("Settings")
+			.on("click",{item:2},function(event){
+				return self.on_menu_item_click($(this),event);
+			})
+		)
+		.append(
+			E("a")
+			.addClass("MPMenuItem")
+			.attr("href","http://dnsev.github.com/4cs/")
+			.attr("target","_blank")
+			.html("Homepage")
+			.on("click",{item:3},function(event){
+				return self.on_menu_item_click($(this),event);
+			})
+		)
+	);
+	$(document)
+	.on("scroll",{},function(event){
+		self.menu_close();
+	})
+	.on("click",{},function(event){
+		self.menu_close();
+	});
+	var script_name="Userscript";
+	var version="";
+	try{
+		script_name=GM_info.script.name;
+		version=GM_info.script.version;
+	}
+	catch(e){
+		try{
+			script_name=GM_getMetadata("name").toString();
+			version=GM_getMetadata("version").toString();
+		}
+		catch(e){}
+	}
+	$("body").append(
+		(this.settings_container=E("div"))
+		.addClass("MPSettingsContainerOuter MPSettingsClosed")
+		.on("click",{},function(event){
+			self.settings_close();
+		})
+		.append(
+			E("div")
+			.addClass("MPSettingsContainerInner")
+			.append(
+				E("div")
+				.addClass("MPSettingsBox")
+				.addClass(is_archive?"post_wrapper":"reply")
+				.on("click",{},function(event){
+					return false;
+				})
+				.append(
+					(this.settings_region_title=E("div"))
+					.addClass("MPSettingsTitleContainer")
+					.append(
+						E("div")
+						.addClass("MPSettingsTitle")
+						.html(script_name)
+					)
+					.append(
+						E("div")
+						.addClass("MPSettingsTitleVersion")
+						.html(version)
+					)
+					.append(
+						(this.settings_update_link=E("a"))
+						.addClass("MPSettingsTitleUpdate")
+						.css("display","none")
+						.attr("href","http://dnsev.github.com/4cs/")
+						.attr("target","_blank")
+						.html("An update is available!")
+						.on("click",function(event){
+							if(event.which==1){
+								script.on_update_click(event);
+								return false;
+							}
+							return true;
+						})
+					)
+				)
+				.append(
+					(this.settings_region=E("div"))
+					.addClass("MPSettingsContainer")
+				)
+			)
+		)
+	);
+	this.section_default="Other Settings";
+	this.sections={};
+}
+SettingsManager.prototype={
+	constructor:SettingsManager,
+	on_menu_item_click:function(link,event){
+		if(event.which!=1)return true;
+		switch(event.data.item){
+			case 0:
+			{
+				media_player_manager.open_player(true);
+				this.menu_close();
+			}
+			return false;
+			case 1:
+			{
+				media_player_manager.open_player(false);
+				script.settings_save();
+				this.menu_close();
+			}
+			return false;
+			case 2:
+			{
+				this.settings_open();
+				this.menu_close();
+			}
+			return false;
+			default:
+			{
+				this.menu_close();
+			}
+			return true;
+		}
+	},
+	menu_arrange_order:function(order){
+		if(order!==this.menu_order){
+			this.menu_order=order;
+			var items=this.menu_list.find(".MPMenuItem");
+			for(var i=0;i<items.length;++i){
+				$(items[i]).parent().prepend(items[i]);
+			}
+		}
+	},
+	menu_open:function(parent){
+		this.menu_list.removeClass("MPMenuClosed");
+		this.menu_arrange_order(InlineManager.prototype.position_relative(parent,this.menu_list,[0,2])[0]);
+	},
+	menu_close:function(){
+		this.menu_list.addClass("MPMenuClosed");
+	},
+	settings_open:function(){
+		this.settings_container.removeClass("MPSettingsClosed");
+		this.settings_region.css("top",this.settings_region_title.outerHeight()+"px");
+		this.settings_region.scrollTop(0);
+	},
+	settings_close:function(){
+		this.settings_container.addClass("MPSettingsClosed");
+	},
+	setting_add:function(data){
+		var section=data.section||this.section_default;
+		if(!(section in this.sections)){
+			var c,s;
+			(c=E("div"))
+			.addClass("MPSettingsSingleLabel")
+			.html(section);
+			if(this.section_default in this.sections){
+				this.sections[this.section_default][0].before(c);
+			}
+			else{
+				this.settings_region.append(c);
+			}
+			c.after(
+				(s=E("div"))
+				.addClass("MPSettingsSingleContainer")
+			);
+			this.sections[section]=[c,s,0];
+		}
+		var container=this.sections[section][1];
+		var value="";
+		if("values"in data){
+			var i;
+			for(i=0;i<data.values.length;++i){
+				if(data.current==data.values[i])break;
+			}
+			(value=E("a"))
+			.attr("href","#")
+			.on("click",{values:data.values,descr:data.descr,current:i%data.values.length,change:data.change},function(event){
+				if(event.which==1){
+					event.data.current=(event.data.current+1)%event.data.values.length;
+					$(this).html(event.data.descr[event.data.current]);
+					event.data.change(event.data.values[event.data.current]);
+					return false;
+				}
+				return true;
+			});
+			value.html(data.descr[i%data.values.length]);
+		}
+		else if("html"in data){
+			value=data.html;
+		}
+		var label;
+		container.append(
+			E("div")
+			.addClass("MPSettingsSingleItem"+(this.sections[section][2]%2==1?"":" MPSettingsSingleItemEven"))
+			.append(
+				E("div")
+				.addClass("MPSettingsSingleItemValue")
+				.html(
+					value
+				)
+			)
+			.append(
+				(label=E("div"))
+				.addClass("MPSettingsSingleItemLabel")
+				.html(data.label)
+			)
+			.append(
+				E("div")
+				.addClass("MPSettingsSingleItemValueAfter")
+			)
+		);
+		if(data.description){
+			label.after(
+				E("div")
+				.addClass("MPSettingsSingleItemDescription")
+				.html(data.description)
+			);
+		}
+		++this.sections[section][2];
+	},
+};
 function InlineManager(){
 	$("head")
 	.append(
@@ -7660,46 +7944,19 @@ function InlineManager(){
 		pre="[";
 		post="] ";
 	}
+	this.settings_manager=new SettingsManager();
 	this.settings_span
 	.append(T(pre))
-	.append(E("a").html("Media Player").attr("href","#").on("click",function(event){
-		media_player_manager.open_player(true);
-		return false;
-	}))
 	.append(
-		(this.update_span=E("span").css("display","none"))
-		.append(T(" / "))
-		.append(
-			(this.update_link=E("a"))
-			.html("Update")
-			.attr("href","#")
-			.on("click",function(event){return script.on_update_click(event);})
-		)
+		E("a")
+		.html("Media Player")
+		.attr("href","http://dnsev.github.com/4cs/")
+		.attr("target","_blank")
+		.on("click",function(event){
+			return self.on_menu_link_click($(this),event);
+		})
 	)
-	.append(
-		E("span")
-		.append(
-			(reload_span=E("span").css("display","none"))
-			.append(T(" / "))
-			.append(
-				E("a")
-				.html("Reload")
-				.attr("href","#")
-				.on("click",function(event){
-					media_player_manager.open_player(false);
-					script.settings_save();
-					return false;
-				})
-			)
-		)
-		.append(T(post))
-		.on("mouseover",{"reload_span":reload_span},function(event){
-			$($(this).children()[0]).css("display","");
-		})
-		.on("mouseout",{"reload_span":reload_span},function(event){
-			$($(this).children()[0]).css("display","none");
-		})
-	);
+	.append(T(post));
 	var threads=$(".thread");
 	if(threads.length>0){
 		$(threads[0]).before(
@@ -8056,6 +8313,7 @@ InlineManager.prototype={
 					}
 					$(this)
 					.attr("href",href)
+					.attr("target","_blank")
 					.attr("mp_original_url",href)
 					.on("click",{"post_data":post_data,"video_type":video_type,"video_id":video_id,"video_cache":null,"url":href},self.on_url_click);
 				});
@@ -8236,6 +8494,31 @@ InlineManager.prototype={
 		}
 		return false;
 	},
+	enable_update:function(url){
+		this.settings_update_link.css("display","");
+		this.settings_update_link.attr("href",url);
+	},
+	position_relative:function(parent,obj,offset){
+		offset=offset||[0,0];
+		var scroll=$(document).scrollTop();
+		var win_height=$(window).height();
+		var disp_height=obj.outerHeight();
+		var off=parent.offset();
+		var top,top2;
+		var t=true;
+		if(
+			(top=off.top+parent.height()+offset[1])+disp_height-scroll>win_height&&
+			(top2=off.top-disp_height-offset[1])>scroll
+		){
+			top=top2;
+			t=false;
+		}
+		obj.css({
+			"left":(off.left+offset[0])+"px",
+			"top":(top)+"px"
+		});
+		return[t,true];
+	},
 	on_content_drag:function(data){
 		var url_lower=data.text.split("#")[0];
 		if(url_lower.substr(0,2)=="//")url_lower=window.location.protocol+url_lower;
@@ -8381,6 +8664,13 @@ InlineManager.prototype={
 		}
 		return false;
 	},
+	on_menu_link_click:function(link,event){
+		if(event.which==1){
+			this.settings_manager.menu_open(link.parent());
+			return false;
+		}
+		return true;
+	},
 	on_video_url_timeout:function(event){
 		event.data.timeout=null;
 		if(event.data.display_container===null){
@@ -8443,21 +8733,7 @@ InlineManager.prototype={
 		}
 		if(event.data.display_container!==null){
 			event.data.display_container.removeClass("MPVideoInfoDisplayHidden");
-			var scroll=$(document).scrollTop();
-			var win_height=$(window).height();
-			var disp_height=event.data.display_container.outerHeight();
-			var offset=$(this).offset();
-			var top,top2;
-			if(
-				(top=offset.top+$(this).height())+disp_height-scroll>win_height&&
-				(top2=offset.top-disp_height)>scroll
-			){
-				top=top2;
-			}
-			event.data.display_container.css({
-				"left":(offset.left)+"px",
-				"top":(top)+"px"
-			});
+			InlineManager.prototype.position_relative($(this),event.data.display_container,[0,2]);
 		}
 	},
 	on_video_url_mouseover:function(event){
@@ -8774,32 +9050,20 @@ HotkeyListener.prototype={
 		(hotkey_settings.html=E("div"))
 		.append(
 			E("div")
-			.addClass("MPHelpColorInputDiv2")
+			.addClass("MPSettingsTextboxContainer")
+			.append(
+				(hotkey_settings.html_input=E("input"))
+				.addClass("MPSettingsTextbox")
+				.attr("type","text")
+				.val(hotkey_settings.value)
+			)
 			.append(
 				E("div")
-				.addClass("MPHelpColorInputDiv3")
-				.css({
-					"position":"relative",
-				})
+				.addClass("MPSettingsTextboxLinkContainer")
 				.append(
-					(hotkey_settings.html_input=E("input"))
-					.addClass("MPHelpColorInput")
-					.attr("type","text")
-					.val(hotkey_settings.value)
-				)
-				.append(
-					E("div")
-					.css({
-						"position":"absolute",
-						"right":"0",
-						"top":"0",
-						"bottom":"0",
-					})
-					.append(
-						(hotkey_settings.html_input_clear=E("a"))
-						.attr("href","#")
-						.html("Clear")
-					)
+					(hotkey_settings.html_input_clear=E("a"))
+					.attr("href","#")
+					.html("Clear")
 				)
 			)
 		);
@@ -9047,77 +9311,7 @@ MediaPlayerManager.prototype={
 		}
 		var media_player_css=new MediaPlayerCSS("yotsubab",this.css_color_presets,this.css_size_presets);
 		if(load_settings)media_player_css.load(script.settings["style"]);
-		var extra_options=[
-			{
-				"current":script.settings["inline"]["url_replace"],
-				"label":"URL Replacing",
-				"values":[true,false],
-				"descr":["Enabled","Disabled"],
-				"change":function(value){
-					script.settings["inline"]["url_replace"]=value;
-					script.settings_save();
-				}
-			},
-			{
-				"current":script.settings["inline"]["url_replace_smart"],
-				"label":"Extended URLs",
-				"values":[true,false],
-				"descr":["Enabled","Disabled"],
-				"change":function(value){
-					script.settings["inline"]["url_replace_smart"]=value;
-					script.settings_save();
-				}
-			},
-			{
-				"current":script.settings["inline"]["url_hijack"],
-				"label":"URL Hijacking",
-				"values":[true,false],
-				"descr":["Enabled","Disabled"],
-				"change":function(value){
-					script.settings["inline"]["url_hijack"]=value;
-					script.settings_save();
-				}
-			},
-			{
-				"section":"Video Links",
-				"current":script.settings["inline"]["video_preview"],
-				"label":"Hover Preview",
-				"values":[true,false],
-				"descr":["Enabled","Disabled"],
-				"change":function(value){
-					script.settings["inline"]["video_preview"]=value;
-					script.settings_save();
-				}
-			},
-			{
-				"section":"Video Links",
-				"current":script.settings["inline"]["video_preview_timeout"],
-				"label":"Hover Time",
-				"values":[2.0,1.5,1.0,0.75,0.5,0.25,0.125,0.0],
-				"descr":["2 seconds","1.5 seconds","1 second","0.75 seconds","0.5 seconds","0.25 seconds","0.125 seconds","instant"],
-				"change":function(value){
-					script.settings["inline"]["video_preview_timeout"]=value;
-					script.settings_save();
-				}
-			},
-			{
-				"section":"Video Links",
-				"current":script.settings["inline"]["video_preview_image_space"],
-				"label":"Preview Size",
-				"values":[480,320,240,120],
-				"descr":["Huge (480px)","Large (320px)","Normal (240px)","Small (120px)"],
-				"change":function(value){
-					script.settings["inline"]["video_preview_image_space"]=value;
-					script.settings_save();
-				}
-			},
-		];
-		for(var i=0;i<hotkey_listener.hotkeys.length;++i){
-			extra_options.push(
-				hotkey_listener.create_hotkey_setting(hotkey_listener.hotkeys[i][2],
-				hotkey_listener.hotkeys[i][0])
-			);
-		}
+		var extra_options=[];
 		var self=this;
 		this.media_player=new MediaPlayer(
 			media_player_css,
@@ -9241,9 +9435,7 @@ Script.prototype={
 	update_check:function(ajax){
 		var self=this;
 		var fn=function(){
-			inline_manager.update_span.css("display","");
-			inline_manager.update_link.html("Update");
-			inline_manager.update_link.attr("href",self.update_url);
+			inline_manager.enable_update(self.update_url);
 		};
 		if(ajax){
 			ajax_get(
@@ -9369,6 +9561,91 @@ Script.prototype={
 			return false;
 		}
 		return true;
+	},
+	setup_options:function(inline_manager){
+		var extra_options=[
+			{
+				"section":"Link Replacement",
+				"current":script.settings["inline"]["url_replace"],
+				"label":"URL Replacing",
+				"description":"Replace URLs in posts",
+				"values":[true,false],
+				"descr":["Enabled","Disabled"],
+				"change":function(value){
+					script.settings["inline"]["url_replace"]=value;
+					script.settings_save();
+				}
+			},
+			{
+				"section":"Link Replacement",
+				"current":script.settings["inline"]["url_replace_smart"],
+				"label":"Extended URLs",
+				"description":"Attempt to replace urls through spoilers",
+				"values":[true,false],
+				"descr":["Enabled","Disabled"],
+				"change":function(value){
+					script.settings["inline"]["url_replace_smart"]=value;
+					script.settings_save();
+				}
+			},
+			{
+				"section":"Link Replacement",
+				"current":script.settings["inline"]["url_hijack"],
+				"label":"URL Hijacking",
+				"description":"Take over URLs replaced by other scripts",
+				"values":[true,false],
+				"descr":["Enabled","Disabled"],
+				"change":function(value){
+					script.settings["inline"]["url_hijack"]=value;
+					script.settings_save();
+				}
+			},
+			{
+				"section":"Video Links",
+				"current":script.settings["inline"]["video_preview"],
+				"label":"Hover Preview",
+				"description":"When enabled, hovering a video link will display a preview image",
+				"values":[true,false],
+				"descr":["Enabled","Disabled"],
+				"change":function(value){
+					script.settings["inline"]["video_preview"]=value;
+					script.settings_save();
+				}
+			},
+			{
+				"section":"Video Links",
+				"current":script.settings["inline"]["video_preview_timeout"],
+				"label":"Hover Time",
+				"description":"How long you have to hover a link for the preview to appear",
+				"values":[2.0,1.5,1.0,0.75,0.5,0.25,0.125,0.0],
+				"descr":["2 seconds","1.5 seconds","1 second","0.75 seconds","0.5 seconds","0.25 seconds","0.125 seconds","instant"],
+				"change":function(value){
+					script.settings["inline"]["video_preview_timeout"]=value;
+					script.settings_save();
+				}
+			},
+			{
+				"section":"Video Links",
+				"current":script.settings["inline"]["video_preview_image_space"],
+				"label":"Preview Size",
+				"description":"Size to use for the preview image",
+				"values":[480,320,240,120],
+				"descr":["Huge (480px)","Large (320px)","Normal (240px)","Small (120px)"],
+				"change":function(value){
+					script.settings["inline"]["video_preview_image_space"]=value;
+					script.settings_save();
+				}
+			},
+		];
+		for(var i=0;i<hotkey_listener.hotkeys.length;++i){
+			extra_options.push(
+				hotkey_listener.create_hotkey_setting(hotkey_listener.hotkeys[i][2],
+				hotkey_listener.hotkeys[i][0])
+			);
+		}
+		for(var i=0;i<extra_options.length;++i){
+			inline_manager.settings_manager.setting_add(extra_options[i]);
+		}
 	}
 };
 var script=null;
@@ -9382,6 +9659,7 @@ $(document).ready(function(){
 	sound_auto_checker=new SoundAutoChecker();
 	inline_manager=new InlineManager();
 	thread_manager=new ThreadManager();
+	script.setup_options(inline_manager);
 	window._unsafe_exec=function(){
 		if(window._unsafe!==undefined){
 			window._unsafe_return=window[window._unsafe.func].call(window,window._unsafe.data);

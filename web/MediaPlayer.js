@@ -585,7 +585,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"cursor": "default"
 		},
 		".MPPlaylistSoundName": {
-			"color": "{hex:color_standard}",
+			"color": "{hex:color_standard} !important",
 			"padding": "{exp:1,*,padding_scale}px 0px {exp:1,*,padding_scale}px {exp:2,*,padding_scale}px"
 		},
 		".MPPlaylistItemActive .MPPlaylistSoundName": {
@@ -3487,8 +3487,12 @@ MediaPlayer.prototype = {
 	duration_to_string: function (position) {
 		var seconds_in = Math.round(position);
 		var minutes_in = Math.floor(seconds_in / 60);
+		var hours_in = Math.floor(minutes_in / 60);
 		seconds_in = Math.floor(seconds_in - minutes_in * 60);
-		var s = minutes_in + ":" + (seconds_in >= 10 ? seconds_in : "0" + seconds_in);
+		minutes_in = Math.floor(minutes_in - hours_in * 60);
+		var s = (hours_in > 0 ? hours_in + ":" : "") +
+			(hours_in > 0 ? (minutes_in >= 10 ? minutes_in : "0" + minutes_in) : minutes_in) +
+			":" + (seconds_in >= 10 ? seconds_in : "0" + seconds_in);
 		return s;
 	},
 	youtube_time_to_number: function (str) {
