@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.10.3.1
+// @version     1.10.3.2
 // @namespace   dnsev
 // @description 4chan Media Player :: Sounds, Youtube, and Vimeo playback
 // @grant       GM_xmlhttpRequest
@@ -4687,6 +4687,12 @@ MediaPlayer.prototype={
 	unC:function(elem,cls){
 		elem.removeClass(cls+this.css.css_suffix);
 	},
+	text_to_html:function(str){
+		return str.replace(/&/g,"&amp;")
+			.replace(/>/g,"&gt;")
+			.replace(/</g,"&lt;")
+			.replace(/"/g,"&quot;");
+	},
 	duration_to_string:function(position){
 		var seconds_in=Math.round(position);
 		var minutes_in=Math.floor(seconds_in/60);
@@ -5077,7 +5083,7 @@ MediaPlayer.prototype={
 				duration=(isFinite(duration)?duration:0.0);
 			}
 			try{
-				title=$(this.xml_find_nodes_by_name(info_xml,"title")).text();
+				title=this.text_to_html($(this.xml_find_nodes_by_name(info_xml,"title")).text());
 			}
 			catch(e){
 				console.log(e);
@@ -5112,7 +5118,7 @@ MediaPlayer.prototype={
 			.on("mousedown",this.cancel_event)
 			.append(
 				this.D("MPPlaylistSoundName")
-				.text(playlist_item.title)
+				.html(playlist_item.title)
 			)
 			.append(
 				(playlist_item.info_container=this.D("MPPlaylistItemInfo"))
@@ -5200,7 +5206,7 @@ MediaPlayer.prototype={
 				duration=isFinite(duration)?duration:0.0;
 			}
 			try{
-				title=$(this.xml_find_nodes_by_name(info_xml,"title")).text();
+				title=this.text_to_html($(this.xml_find_nodes_by_name(info_xml,"title")).text());
 			}
 			catch(e){
 				console.log(e);
@@ -5235,7 +5241,7 @@ MediaPlayer.prototype={
 			.on("mousedown",this.cancel_event)
 			.append(
 				this.D("MPPlaylistSoundName")
-				.text(playlist_item.title)
+				.html(playlist_item.title)
 			)
 			.append(
 				(playlist_item.info_container=this.D("MPPlaylistItemInfo"))

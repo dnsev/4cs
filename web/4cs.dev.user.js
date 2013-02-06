@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.10.3.1
+// @version        1.10.3.2
 // @namespace      dnsev
 // @description    4chan Media Player :: Sounds, Youtube, and Vimeo playback
 // @grant          GM_xmlhttpRequest
