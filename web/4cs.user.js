@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.10.3
+// @version     1.10.3.1
 // @namespace   dnsev
 // @description 4chan Media Player :: Sounds, Youtube, and Vimeo playback
 // @grant       GM_xmlhttpRequest
@@ -8213,7 +8213,7 @@ InlineManager.prototype={
 									var results=self.parse_xml_init();
 									var xml=$.parseXML(response);
 									xml_parse(xml,results);
-									data.link.find(".MPIconedURLText").html(text_to_html(results.title));
+									data.link.find(".MPIconedURLText").html(results.title);
 									data.link
 									.attr("mp_video_cache_title",results.title)
 									.attr("mp_video_cache_duration",results.duration.toString())

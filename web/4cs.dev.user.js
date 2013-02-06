@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.10.3
+// @version        1.10.3.1
 // @namespace      dnsev
 // @description    4chan Media Player :: Sounds, Youtube, and Vimeo playback
 // @grant          GM_xmlhttpRequest
@@ -1904,7 +1904,7 @@ InlineManager.prototype = {
 									xml_parse(xml, results);
 
 									// Update link's text and click event
-									data.link.find(".MPIconedURLText").html(text_to_html(results.title));
+									data.link.find(".MPIconedURLText").html(results.title);
 									data.link
 									.attr("mp_video_cache_title", results.title)
 									.attr("mp_video_cache_duration", results.duration.toString())
@@ -2710,7 +2710,7 @@ InlineManager.prototype = {
 				event.data.display_container.addClass("MPVideoInfoDisplayHidden");
 			}
 		}
-	},//"video_preview_animate": true,"video_preview_description_timeout": 0.0, 
+	}, 
 };
 var inline_manager = null;
 
