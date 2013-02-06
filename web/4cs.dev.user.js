@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        1.10.3.3
+// @version        2.0
 // @namespace      dnsev
-// @description    4chan Media Player :: Sounds, Youtube, and Vimeo playback
+// @description    4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant          GM_xmlhttpRequest
 // @grant          GM_info
 // @grant          GM_getValue
@@ -1554,6 +1554,7 @@ function InlineManager() {
 			".MPURLIcon{display:inline-block;width:20px;height:16px;vertical-align:middle;background-repeat:no-repeat;background-position:top left;background-size:16px 16px;}\n" +
 			".MPURLIconVimeo{background-image:url(//vimeo.com/favicon.ico);}\n" +
 			".MPURLIconYoutube{background-image:url(//youtube.com/favicon.ico);}\n" +
+			".MPURLIconSoundcloud{background-image:url(//soundcloud.com/favicon.ico);}\n" +
 			".MPReplacedURLContainer{display:inline;position:relative;}\n" +
 
 			".MPVideoInfo{display:none !important;}\n" +
@@ -1768,27 +1769,17 @@ InlineManager.prototype = {
 		if (redo) {
 			// Fix the link's click events
 			post_data_copy.post.find(".MPReplacedURL").each(function (index) {
-				var video_type = $(this).attr("mp_video_type") || null;
-				var video_id = $(this).attr("mp_video_id") || null;
-
-				var cache_title, cache_duration, video_cache = null;
-				if (
-					(cache_title = $(this).attr("mp_video_cache_title") || null) !== null &&
-					(cache_duration = $(this).attr("mp_video_cache_duration") || null) !== null
-				) {
-					video_cache = {
-						"title": cache_title,
-						"duration": (parseFloat(cache_duration) || 0.0)
-					};
-				}
-				
-				var href = $(this).attr("mp_original_url");
+				var href = $(this).attr("mp_original_url") || null;
+				var media_type = $(this).attr("mp_media_type") || null;
+				var media_id = $(this).attr("mp_media_id") || null;
+				var media_cache = $(this).attr("mp_media_cache") || null;
+				if (media_cache) media_cache = JSON.parse(media_cache);
 
 				$(this)
 				.off("click")
-				.on("click", {"post_data": post_data, "video_type": video_type, "video_id": video_id, "video_cache": video_cache, "url": href}, self.on_url_click);
+				.on("click", {"post_data": post_data, "media_type": media_type, "media_id": media_id, "media_cache": media_cache, "url": href}, self.on_url_click);
 
-				if (video_type !== null) {
+				if (media_type !== null) {
 					// Preview
 					if (script.settings["inline"]["video_preview"]) {
 						var hover_data = {};
@@ -1848,46 +1839,61 @@ InlineManager.prototype = {
 					temp.append($(this));
 
 					// Link URL
-					var href = html_to_text(string_remove_tags($(this).html()));
+					var href = html_to_text(string_remove_tags($(this).html())).replace(/\s/g, "");
 					if (href.indexOf(":") < 0) href = "//" + href;
 
 					// Video settings
-					var video_type = null;
-					var video_id = null;
+					var media_type = null;
+					var media_id = null;
+					var media_not_found = "Video not found";
 					var icon_class = "";
 					var api_url = "";
 					var temp_prefix = "";
-					var xml_parse = null;
-					var xml_vid_info = null;
+					var response_parse = null;
+					var inline_preview = true;
+					var media_cache_keys = null;
 
 					// Video check
-					if ((video_id = MediaPlayer.prototype.url_get_youtube_video_id(href)) !== null) {
+					if ((media_id = MediaPlayer.prototype.url_get_youtube_video_id(href)) !== null) {
 						// Youtube
-						video_type = "youtube";
+						media_type = "youtube";
 						temp_prefix = "Youtube: ";
 						icon_class = "MPURLIconYoutube";
-						api_url = "//gdata.youtube.com/feeds/api/videos/" + video_id;
-						xml_parse = self.parse_xml_youtube;
+						api_url = "//gdata.youtube.com/feeds/api/videos/" + media_id;
+						response_parse = self.parse_response_youtube;
+						media_cache_keys = [ "title" , "duration" ];
 					}
-					else if ((video_id = MediaPlayer.prototype.url_get_vimeo_video_id(href)) !== null) {
+					else if ((media_id = MediaPlayer.prototype.url_get_vimeo_video_id(href)) !== null) {
 						// Vimeo
-						video_type = "vimeo";
+						media_type = "vimeo";
 						temp_prefix = "Vimeo: ";
 						icon_class = "MPURLIconVimeo";
-						api_url = "//vimeo.com/api/v2/video/" + video_id + ".xml";
-						xml_parse = self.parse_xml_vimeo;
+						api_url = "//vimeo.com/api/v2/video/" + media_id + ".xml";
+						response_parse = self.parse_response_vimeo;
+						media_cache_keys = [ "title" , "duration" ];
+					}
+					else if ((media_id = MediaPlayer.prototype.url_get_soundcloud_info(href)) !== null) {
+						// Vimeo
+						media_type = "soundcloud";
+						temp_prefix = "Soundcloud: ";
+						icon_class = "MPURLIconSoundcloud";
+						api_url = "//soundcloud.com/oembed?format=json&iframe=true&show_comments=false&show_artwork=false&show_user=false&show_playcount=false&sharing=false&download=false&liking=false&buying=false&url=" + href;
+						response_parse = self.parse_response_soundcloud;
+						media_not_found = "Sound not found";
+						inline_preview = false;
+						media_cache_keys = [ "title" , "embed_code" ];
 					}
 
 					// Is a video url
-					if (video_type !== null) {
+					if (media_type !== null) {
 						$(this)
-						.attr("mp_video_type", video_type)
-						.attr("mp_video_id", video_id)
+						.attr("mp_media_type", media_type)
+						.attr("mp_media_id", media_id)
 						.html(
 							$(document.createElement("div")).addClass("MPURLIcon " + icon_class)
 						)
 						.append(
-							E("span").addClass("MPIconedURLText").html(temp_prefix + video_id)
+							E("span").addClass("MPIconedURLText").html(temp_prefix + media_id)
 						);
 
 						// API query
@@ -1899,29 +1905,29 @@ InlineManager.prototype = {
 							function (okay, data, response) {
 								if (okay) {
 									// Get XML variables
-									var results = self.parse_xml_init();
-									var xml = $.parseXML(response);
-									xml_parse(xml, results);
+									var results = self.parse_response_init();
+									response_parse(response, results);
+
+									var media_cache = {};
+									for (var i = 0; i < media_cache_keys.length; ++i) {
+										media_cache[media_cache_keys[i]] = results[media_cache_keys[i]];
+									}
 
 									// Update link's text and click event
 									data.link.find(".MPIconedURLText").html(results.title);
 									data.link
-									.attr("mp_video_cache_title", results.title)
-									.attr("mp_video_cache_duration", results.duration.toString())
+									.attr("mp_media_cache", JSON.stringify(media_cache))
 									.off("click")
 									.on("click", {
 										"post_data": post_data,
-										"video_type": video_type,
-										"video_id": video_id,
-										"video_cache": {
-											"title": results.title,
-											"duration": results.duration
-										},
+										"media_type": media_type,
+										"media_id": media_id,
+										"media_cache": media_cache,
 										"url": href
 									}, self.on_url_click);
 
 									// Preview
-									if (script.settings["inline"]["video_preview"]) {
+									if (script.settings["inline"]["video_preview"] && inline_preview) {
 										results.start = /[\!\#\?\&]t=[0-9smh]+/.exec(href);
 										results.start = (results.start ? MediaPlayer.prototype.youtube_time_to_number(results.start[0].substr(3, results.start[0].length - 3)) : 0.0);
 
@@ -1941,7 +1947,7 @@ InlineManager.prototype = {
 									// Not found
 									data.link.find(".MPIconedURLText")
 									.addClass("MPIconedURLTextNotFound")
-									.html(temp_prefix + "Video not found");
+									.html(temp_prefix + media_not_found);
 								}
 							}
 						);
@@ -1952,13 +1958,13 @@ InlineManager.prototype = {
 					.attr("href", href)
 					.attr("target", "_blank")
 					.attr("mp_original_url", href)
-					.on("click", {"post_data": post_data, "video_type": video_type, "video_id": video_id, "video_cache": null, "url": href}, self.on_url_click);
+					.on("click", {"post_data": post_data, "media_type": media_type, "media_id": media_id, "media_cache": null, "url": href}, self.on_url_click);
 				});
 			}
 		}
 	},
 
-	parse_xml_init: function () {
+	parse_response_init: function () {
 		return {
 			title: "Unknown Title",
 			description: "",
@@ -1967,9 +1973,12 @@ InlineManager.prototype = {
 			views: 0,
 			rating: 1.0,
 			raters: 0,
+			embed_code: null,
 		};
 	},
-	parse_xml_youtube: function (xml, results) {
+	parse_response_youtube: function (xml, results) {
+		xml = $.parseXML(xml);
+
 		var elem = xml_find_nodes_by_name(xml, "yt:duration");
 		if (elem.length > 0) {
 			results.duration = elem[0].getAttribute("seconds");
@@ -2008,7 +2017,9 @@ InlineManager.prototype = {
 			results.rating = ((parseFloat(elem[0].getAttribute("average")) - m) / (elem[0].getAttribute("max") - m)) || 0;
 		}
 	},
-	parse_xml_vimeo: function (xml, results) {
+	parse_response_vimeo: function (xml, results) {
+		xml = $.parseXML(xml);
+
 		var elem = xml_find_nodes_by_name(xml, "duration");
 		if (elem.length > 0) {
 			results.duration = $(elem[0]).text();
@@ -2043,6 +2054,24 @@ InlineManager.prototype = {
 		if (elem.length > 0) {
 			results.views = parseInt($(elem[0]).text());
 		}
+	},
+	parse_response_soundcloud: function (json, results) {
+		json = JSON.parse(json);
+
+		results.title = json.title;
+		if (json.author_name.length > 0) {
+			results.title = results.title.substr(0, results.title.length - 4 - json.author_name.length);
+		}
+		results.title = text_to_html(results.title);
+		if ("description" in json && json.description) results.description = text_to_html(json.description.replace(/\r\n/g, "\n"));
+
+		results.thumbnails.push({
+			"url": json.thumbnail_url,
+			"width": 130,
+			"height": 130
+		});
+
+		results.embed_code = json.html;
 	},
 
 	attributeify: function (element, attributes, prefix) {
@@ -2340,25 +2369,25 @@ InlineManager.prototype = {
 	on_url_click: function (event) {
 		// Add to playlist
 		if (event.which == 1) {
-			if (event.data.video_type) {
+			if (event.data.media_type) {
 				// Open
 				media_player_manager.open_player(true);
 
 				// Custom
 				var fn;
-				var cache;
-				if (event.data.video_type === "youtube") {
-					fn = media_player_manager.media_player.attempt_load_ytvideo_video;
-					cache = "youtubevideo_cache";
+				if (event.data.media_type === "youtube") {
+					fn = media_player_manager.media_player.attempt_load_youtube_video;
 				}
-				else { // if (event.data.video_type === "vimeo") {
+				else if (event.data.media_type === "vimeo") {
 					fn = media_player_manager.media_player.attempt_load_vimeo_video;
-					cache = "vimeovideo_cache";
+				}
+				else { // if (event.data.media_type === "soundcloud") {
+					fn = media_player_manager.media_player.attempt_load_soundcloud_sound;
 				}
 
 				// Generic
 				var pl_data = {};
-				if (event.data.video_cache) pl_data[cache] = event.data.video_cache;
+				if (event.data.media_cache) pl_data.media_cache = event.data.media_cache;
 				fn.call(
 					media_player_manager.media_player,
 					event.data.url,
