@@ -124,6 +124,9 @@ p + p, p + div, p + ol, p + ul, ol + p, ul + p {
 .TextIconVimeo {
 	background-image: url(icon_vimeo.png);
 }
+.TextIconSoundcloud {
+	background-image: url(icon_soundcloud.png);
+}
 .TextIconAudio {
 	background-image: url(icon_audio.png);
 }
