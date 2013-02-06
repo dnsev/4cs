@@ -1,4 +1,10 @@
-﻿1.10.3
+﻿1.10.3.2
+- Fixed redundant HTMLing in video titles in the player
+
+1.10.3.1
+- Fixed redundant HTMLing in video titles
+
+1.10.3
 - Added animations to video previews
 - Added descriptions to video previews
 - Changed video preview image background color to black
