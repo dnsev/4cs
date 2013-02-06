@@ -59,7 +59,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"font-size": "{exp:font_size,*,font_scale}px",
 			"position": "fixed",
 			"color": "{hex:color_standard}",
-			"z-index": "1000000"
+			"z-index": "10000"
 		},
 		".MPContainerMainBorders": {
 			"background": "{rgba:bg_outer_color}"

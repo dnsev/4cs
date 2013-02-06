@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     1.10.3.2
+// @version     1.10.3.3
 // @namespace   dnsev
 // @description 4chan Media Player :: Sounds, Youtube, and Vimeo playback
 // @grant       GM_xmlhttpRequest
@@ -1612,7 +1612,7 @@ function MediaPlayerCSS(preset,css_color_presets,css_size_presets){
 			"font-size":"{exp:font_size,*,font_scale}px",
 			"position":"fixed",
 			"color":"{hex:color_standard}",
-			"z-index":"1000000"
+			"z-index":"10000"
 		},
 		".MPContainerMainBorders":{
 			"background":"{rgba:bg_outer_color}"
@@ -7635,11 +7635,11 @@ function SettingsManager(){
 	.append(
 		E("style")
 		.html(
-			".MPMenu{display:block !important;position:absolute;left:0;top:0;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);z-index:1000;margin:0px !important;padding:2px !important;}\n"+
+			".MPMenu{display:block !important;position:absolute;left:0;top:0;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);z-index:10001;margin:0px !important;padding:2px !important;}\n"+
 			".MPMenuClosed{display:none !important;}\n"+
 			"a.MPMenuItem,a.MPMenuItem:link,a.MPMenuItem:visited{display:block !important;padding:2px !important;text-decoration:none !important;}"+
 			".MPMenuItem + .MPMenuItem{margin-top:1px;}\n"+
-			".MPSettingsContainerOuter{position:fixed;left:0;top:0;right:0;bottom:0;z-index:1000;background:rgba(0,0,0,0.25);}\n"+
+			".MPSettingsContainerOuter{position:fixed;left:0;top:0;right:0;bottom:0;z-index:10001;background:rgba(0,0,0,0.25);}\n"+
 			".MPSettingsClosed{display:none !important;}\n"+
 			".MPSettingsContainerInner{position:relative;width:100%;height:100%;}\n"+
 			"div.MPSettingsBox{display:block !important;position:absolute !important;left:25%;top:15%;right:25%;bottom:15%;border:0px !important;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);border-radius:6px !important;padding:0px !important;margin:0px !important;overflow:hidden;}\n"+
@@ -7823,7 +7823,7 @@ SettingsManager.prototype={
 	},
 	menu_open:function(parent){
 		this.menu_list.removeClass("MPMenuClosed");
-		this.menu_arrange_order(InlineManager.prototype.position_relative(parent,this.menu_list,[0,2])[0]);
+		this.menu_arrange_order(InlineManager.prototype.position_relative(parent,this.menu_list,[0,2],[false,true])[1]);
 	},
 	menu_close:function(){
 		this.menu_list.addClass("MPMenuClosed");
@@ -8535,26 +8535,37 @@ InlineManager.prototype={
 			this.nav_link.addClass("quotelink");
 		}
 	},
-	position_relative:function(parent,obj,offset){
+	position_relative:function(parent,obj,offset,flippable){
 		offset=offset||[0,0];
-		var scroll=$(document).scrollTop();
-		var win_height=$(window).height();
-		var disp_height=obj.outerHeight();
+		flippable=flippable||[true,true];
+		var scroll=[$(document).scrollLeft(),$(document).scrollTop()];
+		var win_size=[$(window).width(),$(window).height()];
+		var obj_size=[obj.outerWidth(),obj.outerHeight()];
+		var par_size=[parent.width(),parent.height()];
 		var off=parent.offset();
-		var top,top2;
-		var t=true;
+		var pos=[0,0],pos_label=["left","top"],pos2;
+		var ret=[true,true];
+		off=[off.left,off.top];
 		if(
-			(top=off.top+parent.height()+offset[1])+disp_height-scroll>win_height&&
-			(top2=off.top-disp_height-offset[1])>scroll
+			(pos[1]=off[1]+offset[1]+par_size[1])+obj_size[1]-scroll[1]>win_size[1]&&
+			(pos2=off[1]-offset[1]-obj_size[1])>scroll[1]&&
+			flippable[1]
 		){
-			top=top2;
-			t=false;
+			pos[1]=pos2;
+			ret[1]=false;
 		}
-		obj.css({
-			"left":(off.left+offset[0])+"px",
-			"top":(top)+"px"
-		});
-		return[t,true];
+		if(
+			(pos[0]=(off[0]+offset[0]))+obj_size[0]/2>win_size[0]/2&&
+			flippable[0]
+		){
+			obj.css("left","auto");
+			pos_label[0]="right";
+			pos[0]=win_size[0]-(off[0]+par_size[0]);
+			ret[0]=false;
+		}
+		obj.css(pos_label[0],pos[0]+"px");
+		obj.css(pos_label[1],pos[1]+"px");
+		return ret;
 	},
 	on_content_drag:function(data){
 		var url_lower=data.text.split("#")[0];
