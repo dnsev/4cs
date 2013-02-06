@@ -1,4 +1,9 @@
-﻿1.10.2
+﻿1.10.3
+- Added animations to video previews
+- Added descriptions to video previews
+- Changed video preview image background color to black
+
+1.10.2
 - Auto-update notification (changes the color of the [Media Player] link)
 - Style updates for the video preview
 - More stats in video preview (views, rating)
