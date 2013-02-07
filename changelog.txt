@@ -1,4 +1,8 @@
-﻿2.0.1.1
+﻿2.0.1.2
+- Middle clicking the image/video opens it in a new tab
+- ishygddt
+
+2.0.1.1
 - Soundcloud link checking works a bit differently
 - Un-decodable sounds will be removed from the player
 
