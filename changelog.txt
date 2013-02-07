@@ -1,4 +1,7 @@
-﻿2.0.1.2
+﻿2.0.1.3
+- Added some info about "ajax error"
+
+2.0.1.2
 - Middle clicking the image/video opens it in a new tab
 - ishygddt
 
