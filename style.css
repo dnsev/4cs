@@ -359,7 +359,7 @@ a.Version, a.Version:visited, a.Version:hover, a.Version:active {
 }
 .LinkInfo {
 	display: none;
-	color: #9ac4dc;
+	color: #97c4e7;
 }
 .InfoLink:hover + .LinkInfo {
 	display: inline !important;
@@ -481,13 +481,10 @@ a.InstallLink:active {
 	font-weight: bold;
 	font-style: italic;
 }
-.AudioTestLogSource {
+.AudioTestSource {
 	font-weight: normal !important;
-	display: none;
-	color: #9ac4dc;
-}
-.AudioTestLogTitle:hover .AudioTestLogSource {
-	display: inline !important;
+	color: #97c4e7;
+	margin-bottom: 32px;
 }
 .AudioLogContainer {
 	max-height: 200px;

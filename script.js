@@ -605,7 +605,7 @@ function audio_log(label, value) {
 	c.append(
 		$(document.createElement("div"))
 		.addClass("AudioTestLog")
-		.html(text_to_html(str))
+		.html("&gt; " + text_to_html(str))
 	);
 
 	try {
