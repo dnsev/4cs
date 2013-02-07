@@ -4345,7 +4345,7 @@ MediaPlayer.prototype = {
 		}
 		else {
 			title = info_json.title;
-			if (info_json.author_name.length > 0) {
+			if (info_json.author_name.length > 0 && title.length > 4 + info_json.author_name.length) {
 				title = title.substr(0, title.length - 4 - info_json.author_name.length);
 			}
 			title = this.text_to_html(title);

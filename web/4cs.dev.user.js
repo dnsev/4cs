@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        2.0
+// @version        2.0.1
 // @namespace      dnsev
 // @description    4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant          GM_xmlhttpRequest
@@ -1249,6 +1249,7 @@ function SettingsManager() {
 			".MPSettingsSingleItemDescription{font-size:0.8em !important;opacity:0.5 !important;}\n" +
 
 			"input.MPSettingsTextbox[type=text]{padding:2px !important;margin:0px !important;background:rgba(0,0,0,0.03125) !important;border:1px solid rgba(0,0,0,0.125) !important;color:inherit !important;}\n" +
+			".MPSettingsTextboxRight{text-align:right;}\n" +
 			".MPSettingsTextboxContainer{position:relative;}\n" +
 			".MPSettingsTextboxLinkContainer{position:absolute;right:2px;top:2px;}\n"
 		)
@@ -1258,7 +1259,7 @@ function SettingsManager() {
 	this.menu_order = true;
 	$("body").append( //{ Menu
 		(this.menu_list = E("div"))
-		.addClass("MPMenu MPMenuClosed")
+		.addClass("MPMenu MPMenuClosed MPHighlightShadow2px")
 		.addClass(is_archive ? "post_wrapper" : "reply")
 		.append(
 			E("a")
@@ -1332,7 +1333,7 @@ function SettingsManager() {
 			.addClass("MPSettingsContainerInner")
 			.append(
 				E("div")
-				.addClass("MPSettingsBox")
+				.addClass("MPSettingsBox MPHighlightShadow2px")
 				.addClass(is_archive ? "post_wrapper" : "reply")
 				.on("click", {}, function (event) {
 					return false;
@@ -1542,6 +1543,8 @@ function InlineManager() {
 	.append( //{ Stylesheet
 		E("style")
 		.html(
+			"a.MPNavLink,.MPNavSpan{}\n" +
+
 			"a.MPLoadLink,a.MPLoadLink:visited{color: inherit;}\n" +
 			".MPImageSearchingTextContainer{}\n" +
 			".MPImageSearchingText{}\n" +
@@ -1565,8 +1568,8 @@ function InlineManager() {
 			".MPVideoInfoDisplayTitleStart{opacity:0.5 !important;}\n" +
 			".MPVideoInfoDisplayTitleViews{float:right;}\n" +
 			".MPVideoInfoDisplayTitleEnd{clear:both;}\n" +
-			".MPVideoInfoDisplayRatingBg{position:relative;z-index:1;background:#b41414;height:2px;width:100%;opacity:1.0 !important;overflow:hidden;}\n" +
-			".MPVideoInfoDisplayRatingGood{background:#60b410;height:2px;}\n" +
+			".MPVideoInfoDisplayRatingBg{position:relative;z-index:1;background:#f02020;height:2px;width:100%;opacity:1.0 !important;overflow:hidden;}\n" +
+			".MPVideoInfoDisplayRatingGood{background:#80d820;height:2px;}\n" +
 			".MPVideoInfoDisplayContent{white-space:nowrap;}\n" +
 			".MPVideoInfoDisplayPreview{display:inline-block;vertical-align:top !important;}\n" +
 			".MPVideoInfoDisplayThumbnailContainerOuter{border-width:0px 2px 2px 2px;border-style:solid;border-color:rgba(0,0,0,0.25);}\n" +
@@ -1579,30 +1582,36 @@ function InlineManager() {
 			".MPVideoInfoDisplayDescriptionInner p{padding:0px !important;margin:0px !important;}\n" +
 			".MPVideoInfoDisplayDescriptionInner p + p{margin-top:0.375em !important;}\n"
 		)
+	)
+	.append(
+		(this.custom_styles = E("style"))
 	); //}
+	this.update_styles();
 
 	// Insert navigation link
 	var self = this;
-	var pre, post, reload_span, settings_span;
+	var around0, around1;
 	if (is_archive) {
-		$(".letters").append((settings_span = E("span")));
-		pre = " [ ";
-		post = " ]";
+		$(".letters").append("<span class=\"MPNavSpan\"></span>");
+		around0 = [ " " , "" ];
+		around1 = [ "[ " , " ]" ];
 	}
 	else {
-		$("#navtopright").prepend((settings_span = E("span")));
-		pre = "[";
-		post = "] ";
+		$("#navtopright,#navbotright").prepend("<span class=\"MPNavSpan\"></span>");
+		around0 = [ "" , " " ];
+		around1 = [ "[" , "]" ];
 	}
 
 	// Settings
 	this.settings_manager = new SettingsManager();
 
 	// Settings link
-	settings_span
-	.append(T(pre))
+	var s;
+	(s = $(".MPNavSpan"))
+	.append(T(around1[0]))
 	.append( //{
-		(this.nav_link = E("a"))
+		E("a")
+		.addClass("MPNavLink")
 		.html("Media Player")
 		.attr("href", "http://dnsev.github.com/4cs/")
 		.attr("target", "_blank")
@@ -1610,7 +1619,9 @@ function InlineManager() {
 			return self.on_menu_link_click($(this), event);
 		})
 	) //}
-	.append(T(post));
+	.append(T(around1[1]));
+	if (around0[0]) s.before(T(around0[0]));
+	if (around0[1]) s.after(T(around0[1]));
 
 	// Load all
 	var threads = $(".thread");
@@ -1637,6 +1648,55 @@ function InlineManager() {
 }
 InlineManager.prototype = {
 	constructor: InlineManager,
+
+	parse_color: function (color) {
+		var m;
+		var c = [ 0 , 0 , 0 , 1 ];
+		// Scan
+		if ((m = /^\s*\#?([0-9a-fA-F]{3})\s*$/.exec(color))) {
+			for (var i = 0; i < 3; ++i) {
+				c[i] = parseInt(m[1][i], 16) * 16;
+			}
+		}
+		else if ((m = /^\s*\#?([0-9a-fA-F]{6})\s*$/.exec(color))) {
+			for (var i = 0; i < 3; ++i) {
+				c[i] = parseInt(m[1].substr(i * 2, 2), 16);
+			}
+		}
+		else if ((m = /^\s*rgb\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*\)\s*$/.exec(color))) {
+			for (var i = 0; i < 3; ++i) {
+				c[i] = parseInt(m[1 + i], 10);
+			}
+		}
+		else if ((m = /^\s*rgba\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9\.]+)\s*\)\s*$/.exec(color))) {
+			for (var i = 0; i < 3; ++i) {
+				c[i] = parseInt(m[1 + i], 10);
+			}
+			c[3] = parseFloat(m[1 + 3]);
+		}
+		// Correct
+		for (var i = 0; i < 3; ++i) {
+			if (c[i] < 0) c[i] = 0;
+			else if (c[i] > 255) c[i] = 255;
+		}
+		if (c[3] < 0.0) c[3] = 0.0;
+		else if (c[3] > 1.0) c[3] = 1.0;
+		// Return
+		return c;
+	},
+	color_to_style: function (color, alpha) {
+		var a = (alpha === undefined ? color[3] : alpha);
+		return (a >= 1.0 ? "rgb(" : "rgba(") + color[0] + "," + color[1] + "," + color[2] + "," + a + ")";
+	},
+	update_styles: function () {
+		var c = this.parse_color(script.settings["inline"]["highlight_color"]);
+
+		this.custom_styles.html(
+			".MPHighlightShadow2px{box-shadow:0px 0px 2px 2px " + this.color_to_style(c, 0.25) + " !important;}\n" +
+			".MPHighlightBorderColor{border-color:" + this.color_to_style(c, 0.25) + " !important;}"
+		);
+	},
+
 	parse_post: function (post_data, redo, post_data_copy) {
 		if (post_data.image_url != null) {
 			var self = this;
@@ -2059,7 +2119,7 @@ InlineManager.prototype = {
 		json = JSON.parse(json);
 
 		results.title = json.title;
-		if (json.author_name.length > 0) {
+		if (json.author_name.length > 0 && results.title.length > 4 + json.author_name.length) {
 			results.title = results.title.substr(0, results.title.length - 4 - json.author_name.length);
 		}
 		results.title = text_to_html(results.title);
@@ -2300,7 +2360,7 @@ InlineManager.prototype = {
 		.css("display", "")
 		.attr("href", url);
 		if (!is_archive) {
-			this.nav_link.addClass("quotelink");
+			$(".MPNavLink").addClass("quotelink");
 		}
 	},
 
@@ -2550,7 +2610,7 @@ InlineManager.prototype = {
 			$("body").append(
 				(event.data.display_container = E("div"))
 				.css("opacity", "0")
-				.addClass("MPVideoInfoDisplay")
+				.addClass("MPVideoInfoDisplay MPHighlightShadow2px")
 				.addClass(is_archive ? "post_wrapper" : "reply")
 				.append(
 					(container = E("div"))
@@ -2633,7 +2693,7 @@ InlineManager.prototype = {
 				var thumb_container;
 				preview_container.append(
 					E("div")
-					.addClass("MPVideoInfoDisplayThumbnailContainerOuter" + ex_class)
+					.addClass("MPVideoInfoDisplayThumbnailContainerOuter MPHighlightBorderColor" + ex_class)
 					.append(
 						(thumb_container = E("div"))
 						.addClass("MPVideoInfoDisplayThumbnailContainer")
@@ -3483,6 +3543,7 @@ function Script() {
 		},
 		"hotkeys": {}, // loaded elsewhere
 		"inline": {
+			"highlight_color": "000000",
 			"url_replace": true,
 			"url_replace_smart": false,
 			"url_hijack": true,
@@ -3734,7 +3795,7 @@ Script.prototype = {
 
 	setup_options: function (inline_manager) {
 		// Custom settings
-		var extra_options = [
+		var extra_options = [ //{
 			{
 				"section": "Link Replacement",
 				"current": script.settings["inline"]["url_replace"],
@@ -3867,7 +3928,32 @@ Script.prototype = {
 					script.settings_save();
 				}
 			},
-		];
+		]; //}
+
+		// Stylings
+		var o;
+		extra_options.push(o = {
+			"section": "Styling",
+			"label": "Highlight Color",
+			"description": "The highlight color used for video previews, settings, etc.",
+			"html": null
+		});
+		(o.html = E("div"))
+		.append( //{ DOM
+			E("div")
+			.addClass("MPSettingsTextboxContainer")
+			.append(
+				(o.html_input = E("input"))
+				.addClass("MPSettingsTextbox MPSettingsTextboxRight")
+				.attr("type", "text")
+				.val(script.settings["inline"]["highlight_color"])
+				.on("change", {}, function (event) {
+					script.settings["inline"]["highlight_color"] = $(this).val();
+					script.settings_save();
+					inline_manager.update_styles();
+				})
+			)
+		); //}
 
 
 		for (var i = 0; i < hotkey_listener.hotkeys.length; ++i) {
