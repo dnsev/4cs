@@ -3861,7 +3861,11 @@ MediaPlayer.prototype = {
 						);
 					}
 					else {
-						done_callback(false, callback_data, null);
+						done_callback(false, callback_data, {
+							status: this.status,
+							response: this.response,
+							status_text: this.statusText
+						});
 					}
 				}
 			};
@@ -3886,7 +3890,11 @@ MediaPlayer.prototype = {
 							);
 						}
 						else {
-							done_callback(false, callback_data, null);
+							done_callback(false, callback_data, {
+								status: event.status,
+								response: event.responseText,
+								status_text: event.statusText
+							});
 						}
 					}
 				}
@@ -4514,7 +4522,7 @@ MediaPlayer.prototype = {
 			var media_player = this;
 
 			var dcb = function (okay, callback_data, response) {
-				if (typeof(done_callback) == "function") done_callback(okay, callback_data);
+				if (typeof(done_callback) == "function") done_callback(okay, callback_data, (okay ? null : response));
 
 				if (okay) {
 					media_player.attempt_load_raw(false, url_or_file, load_tag, playlist_data, response, 0, function (status, files) {
@@ -4583,13 +4591,13 @@ MediaPlayer.prototype = {
 
 		// Not found
 		if (vid_id === null) {
-			if (typeof(done_callback) == "function") done_callback(false, callback_data);
+			if (typeof(done_callback) == "function") done_callback(false, callback_data, null);
 			return;
 		}
 
 		// Cached info
 		if ("media_cache" in playlist_data) {
-			if (typeof(done_callback) == "function") done_callback(true, callback_data);
+			if (typeof(done_callback) == "function") done_callback(true, callback_data, null);
 
 			var xml = null;
 			var status = this.add_to_playlist_ytvideo(url, vid_id, null, false, xml, playlist_data);
@@ -4607,7 +4615,7 @@ MediaPlayer.prototype = {
 			callback_data,
 			progress_callback,
 			function (okay, data, response) {
-				if (typeof(done_callback) == "function") done_callback(okay, callback_data);
+				if (typeof(done_callback) == "function") done_callback(okay, callback_data, (okay ? null : response));
 
 				if (okay) {
 					var xml = $.parseXML(response);
@@ -4625,13 +4633,13 @@ MediaPlayer.prototype = {
 
 		// Not found
 		if (vid_id === null) {
-			if (typeof(done_callback) == "function") done_callback(false, callback_data);
+			if (typeof(done_callback) == "function") done_callback(false, callback_data, null);
 			return;
 		}
 
 		// Cached info
 		if ("media_cache" in playlist_data) {
-			if (typeof(done_callback) == "function") done_callback(true, callback_data);
+			if (typeof(done_callback) == "function") done_callback(true, callback_data, null);
 
 			var xml = null;
 			var status = this.add_to_playlist_vimeovideo(url, vid_id, null, false, xml, playlist_data);
@@ -4649,7 +4657,7 @@ MediaPlayer.prototype = {
 			callback_data,
 			progress_callback,
 			function (okay, data, response) {
-				if (typeof(done_callback) == "function") done_callback(okay, callback_data);
+				if (typeof(done_callback) == "function") done_callback(okay, callback_data, (okay ? null : response));
 
 				if (okay) {
 					var xml = $.parseXML(response);
@@ -4667,13 +4675,13 @@ MediaPlayer.prototype = {
 
 		// Not found
 		if (vid_id === null) {
-			if (typeof(done_callback) == "function") done_callback(false, callback_data);
+			if (typeof(done_callback) == "function") done_callback(false, callback_data, null);
 			return;
 		}
 
 		// Cached info
 		if ("media_cache" in playlist_data) {
-			if (typeof(done_callback) == "function") done_callback(true, callback_data);
+			if (typeof(done_callback) == "function") done_callback(true, callback_data, null);
 
 			var json = null;
 			var status = this.add_to_playlist_soundcloud_sound(url, vid_id, null, false, json, playlist_data);
@@ -4691,7 +4699,7 @@ MediaPlayer.prototype = {
 			callback_data,
 			progress_callback,
 			function (okay, data, response) {
-				if (typeof(done_callback) == "function") done_callback(okay, callback_data);
+				if (typeof(done_callback) == "function") done_callback(okay, callback_data, (okay ? null : response));
 
 				if (okay) {
 					var json = JSON.parse(response);

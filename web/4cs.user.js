@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.0.1.2
+// @version     2.0.1.3
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -5030,7 +5030,11 @@ MediaPlayer.prototype={
 						);
 					}
 					else{
-						done_callback(false,callback_data,null);
+						done_callback(false,callback_data,{
+							status:this.status,
+							response:this.response,
+							status_text:this.statusText
+						});
 					}
 				}
 			};
@@ -5055,7 +5059,11 @@ MediaPlayer.prototype={
 							);
 						}
 						else{
-							done_callback(false,callback_data,null);
+							done_callback(false,callback_data,{
+								status:event.status,
+								response:event.responseText,
+								status_text:event.statusText
+							});
 						}
 					}
 				}
@@ -5597,7 +5605,7 @@ MediaPlayer.prototype={
 			}
 			var media_player=this;
 			var dcb=function(okay,callback_data,response){
-				if(typeof(done_callback)=="function")done_callback(okay,callback_data);
+				if(typeof(done_callback)=="function")done_callback(okay,callback_data,(okay?null:response));
 				if(okay){
 					media_player.attempt_load_raw(false,url_or_file,load_tag,playlist_data,response,0,function(status,files){
 						if(typeof(status_callback)=="function")status_callback(status,callback_data,files);
@@ -5653,11 +5661,11 @@ MediaPlayer.prototype={
 	attempt_load_youtube_video:function(url,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
 		var vid_id=this.url_get_youtube_video_id(url);
 		if(vid_id===null){
-			if(typeof(done_callback)=="function")done_callback(false,callback_data);
+			if(typeof(done_callback)=="function")done_callback(false,callback_data,null);
 			return;
 		}
 		if("media_cache"in playlist_data){
-			if(typeof(done_callback)=="function")done_callback(true,callback_data);
+			if(typeof(done_callback)=="function")done_callback(true,callback_data,null);
 			var xml=null;
 			var status=this.add_to_playlist_ytvideo(url,vid_id,null,false,xml,playlist_data);
 			if(typeof(status_callback)=="function")status_callback(status,callback_data,xml);
@@ -5671,7 +5679,7 @@ MediaPlayer.prototype={
 			callback_data,
 			progress_callback,
 			function(okay,data,response){
-				if(typeof(done_callback)=="function")done_callback(okay,callback_data);
+				if(typeof(done_callback)=="function")done_callback(okay,callback_data,(okay?null:response));
 				if(okay){
 					var xml=$.parseXML(response);
 					var status=self.add_to_playlist_ytvideo(url,vid_id,null,false,xml,playlist_data);
@@ -5685,11 +5693,11 @@ MediaPlayer.prototype={
 	attempt_load_vimeo_video:function(url,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
 		var vid_id=this.url_get_vimeo_video_id(url);
 		if(vid_id===null){
-			if(typeof(done_callback)=="function")done_callback(false,callback_data);
+			if(typeof(done_callback)=="function")done_callback(false,callback_data,null);
 			return;
 		}
 		if("media_cache"in playlist_data){
-			if(typeof(done_callback)=="function")done_callback(true,callback_data);
+			if(typeof(done_callback)=="function")done_callback(true,callback_data,null);
 			var xml=null;
 			var status=this.add_to_playlist_vimeovideo(url,vid_id,null,false,xml,playlist_data);
 			if(typeof(status_callback)=="function")status_callback(status,callback_data,xml);
@@ -5703,7 +5711,7 @@ MediaPlayer.prototype={
 			callback_data,
 			progress_callback,
 			function(okay,data,response){
-				if(typeof(done_callback)=="function")done_callback(okay,callback_data);
+				if(typeof(done_callback)=="function")done_callback(okay,callback_data,(okay?null:response));
 				if(okay){
 					var xml=$.parseXML(response);
 					var status=self.add_to_playlist_vimeovideo(url,vid_id,null,false,xml,playlist_data);
@@ -5717,11 +5725,11 @@ MediaPlayer.prototype={
 	attempt_load_soundcloud_sound:function(url,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
 		var vid_id=this.url_get_soundcloud_info(url);
 		if(vid_id===null){
-			if(typeof(done_callback)=="function")done_callback(false,callback_data);
+			if(typeof(done_callback)=="function")done_callback(false,callback_data,null);
 			return;
 		}
 		if("media_cache"in playlist_data){
-			if(typeof(done_callback)=="function")done_callback(true,callback_data);
+			if(typeof(done_callback)=="function")done_callback(true,callback_data,null);
 			var json=null;
 			var status=this.add_to_playlist_soundcloud_sound(url,vid_id,null,false,json,playlist_data);
 			if(typeof(status_callback)=="function")status_callback(status,callback_data,json);
@@ -5735,7 +5743,7 @@ MediaPlayer.prototype={
 			callback_data,
 			progress_callback,
 			function(okay,data,response){
-				if(typeof(done_callback)=="function")done_callback(okay,callback_data);
+				if(typeof(done_callback)=="function")done_callback(okay,callback_data,(okay?null:response));
 				if(okay){
 					var json=JSON.parse(response);
 					var status=self.add_to_playlist_soundcloud_sound(url,vid_id,null,false,json,playlist_data);
@@ -7190,7 +7198,11 @@ function ajax_get(url,return_as_string,callback_data,progress_callback,done_call
 					);
 				}
 				else{
-					done_callback(false,callback_data,null);
+					done_callback(false,callback_data,{
+						status:this.status,
+						response:this.response,
+						status_text:this.statusText
+					});
 				}
 			}
 		};
@@ -7215,7 +7227,11 @@ function ajax_get(url,return_as_string,callback_data,progress_callback,done_call
 						);
 					}
 					else{
-						done_callback(false,callback_data,null);
+						done_callback(false,callback_data,{
+							status:event.status,
+							response:event.responseText,
+							status_text:event.statusText
+						});
 					}
 				}
 			}
@@ -8408,7 +8424,14 @@ function InlineManager(){
 			".MPVideoInfoDisplayDescription{display:inline-block;overflow:hidden;text-align:left;vertical-align:top !important;}\n"+
 			".MPVideoInfoDisplayDescriptionInner{padding-left:2px;white-space:normal !important;}\n"+
 			".MPVideoInfoDisplayDescriptionInner p{padding:0px !important;margin:0px !important;}\n"+
-			".MPVideoInfoDisplayDescriptionInner p + p{margin-top:0.375em !important;}\n"
+			".MPVideoInfoDisplayDescriptionInner p + p{margin-top:0.375em !important;}\n"+
+			".MPPopupContainerOuter{position:fixed;left:0;top:0;right:0;bottom:0;z-index:10001;background:rgba(0,0,0,0.25);}\n"+
+			".MPPopupClosed{display:none !important;}\n"+
+			".MPPopupContainerInner{position:relative;width:100%;height:100%;}\n"+
+			"div.MPPopupBox{display:block !important;position:absolute !important;left:25%;top:15%;right:25%;bottom:15%;border:0px !important;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);border-radius:6px !important;padding:0px !important;margin:0px !important;padding:4px !important;}\n"+
+			".MPPopupInfoContainer{width:100%;height:100%;overflow-x:hidden;overflow-y:auto;}\n"+
+			".MPPopupInfoContainer p{margin:0px !important;padding:0px !important;}\n"+
+			".MPPopupInfoContainer p + p{margin-top:4px !important;}\n"
 		)
 	)
 	.append(
@@ -8444,6 +8467,29 @@ function InlineManager(){
 	.append(T(around1[1]));
 	if(around0[0])s.before(T(around0[0]));
 	if(around0[1])s.after(T(around0[1]));
+	$("body").append(
+		(this.popup_container=E("div"))
+		.addClass("MPPopupContainerOuter MPPopupClosed")
+		.on("click",{},function(event){
+			self.popup_close();
+		})
+		.append(
+			E("div")
+			.addClass("MPPopupContainerInner")
+			.append(
+				E("div")
+				.addClass("MPPopupBox MPHighlightShadow2px")
+				.addClass(is_archive?"post_wrapper":"reply")
+				.on("click",{},function(event){
+					return false;
+				})
+				.append(
+					(this.popup_info_container=E("div"))
+					.addClass("MPPopupInfoContainer")
+				)
+			)
+		)
+	);
 	var threads=$(".thread");
 	if(threads.length>0){
 		$(threads[0]).before(
@@ -8990,11 +9036,25 @@ InlineManager.prototype={
 				var progress=Math.floor((event.loaded/event.total)*100);
 				data.link.html(data.load_str+" ("+progress+")");
 			},
-			function(okay,data){
-				data.link.html(
-					data.post_data.sounds.load_all_text+(okay?"":" (ajax&nbsp;error)")
-				);
+			function(okay,data,response){
+				data.link.html(data.post_data.sounds.load_all_text);
 				if(!okay){
+					data.link
+					.append(" (")
+					.append(
+						E("a")
+						.attr("href","#")
+						.html("ajax&nbsp;error")
+						.on("click",function(event){
+							if(event.which==1){
+								response.url=post_data.image_url;
+								inline_manager.display_info("ajax error",response);
+								return false;
+							}
+							return true;
+						})
+					)
+					.append(")");
 					if(typeof(done_callback)=="function")done_callback(false,data.post_data);
 				}
 			},
@@ -9181,8 +9241,26 @@ InlineManager.prototype={
 				var progress=Math.floor((event.loaded/event.total)*100);
 				data.object.html(data.load_str+" ("+progress+")");
 			},
-			function(okay,data){
-				data.object.html(data.post_data.sounds.post_tags[data.tag_id]+(okay?"":" (ajax&nbsp;error)"));
+			function(okay,data,response){
+				data.object.html(data.post_data.sounds.post_tags[data.tag_id]);
+				if(!okay){
+					data.object
+					.append(" (")
+					.append(
+						E("a")
+						.attr("href","#")
+						.html("ajax&nbsp;error")
+						.on("click",function(event){
+							if(event.which==1){
+								response.url=data.post_data.image_url;
+								inline_manager.display_info("ajax error",response);
+								return false;
+							}
+							return true;
+						})
+					)
+					.append(")");
+				}
 			},
 			function(status,data,all_files){
 				if(all_files!==null&&data.post_data.sounds.sound_names.length==0&&all_files.length>0){
@@ -9459,6 +9537,32 @@ InlineManager.prototype={
 				event.data.display_container.addClass("MPVideoInfoDisplayHidden");
 			}
 		}
+	},
+	popup_close:function(){
+		this.popup_container.addClass("MPPopupClosed");
+	},
+	display_info:function(index,data){
+		this.popup_info_container.html("");
+		switch(index){
+			case"ajax error":
+			{
+				this.popup_info_container
+				.append(
+					E("p")
+					.html("Ajax errors occur when your browser tries to fetch an image using Javascript, but for some reason it can't retrieve it.")
+				)
+				.append(
+					E("p")
+					.html("Error your browser encountered: <b>"+data.status+"</b> - "+data.status_text)
+				)
+				.append(
+					E("p")
+					.html("URL: <i>"+data.url+"</i>")
+				);
+			}
+			break;
+		}
+		this.popup_container.removeClass("MPPopupClosed");
 	},
 };
 var inline_manager=null;
