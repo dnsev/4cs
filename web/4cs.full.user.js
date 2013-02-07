@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.0.1.1
+// @version     2.0.1.2
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -2280,7 +2280,9 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"left": "0",
 			"top": "0",
 			"width": "100%",
-			"height": "100%"
+			"height": "100%",
+			"cursor": "default !important",
+			"border": "0px hidden !important",
 		},
 
 		".MPSeekContainerTop": {
@@ -3520,8 +3522,10 @@ MediaPlayer.prototype = {
 								(this.video_container = this.D("MPVideoContainer"))
 							)
 							.append(
-								(this.video_mask = this.D("MPVideoContainerMask"))
+								(this.video_mask = this.E("a", "MPVideoContainerMask"))
+								.attr("target", "_blank")
 								.on("mousedown", {media_player: this}, this.on_image_resize_mousedown)
+								.on("click", {media_player: this}, this.on_image_resize_click)
 							) //}
 							.append( //{ Playback controls
 								this.D("MPControlContainer")
@@ -4593,6 +4597,9 @@ MediaPlayer.prototype = {
 		if (this.current_media !== null) {
 			this.unC(this.current_media.playlist_item, "MPPlaylistItemActive");
 
+			// Image target
+			this.video_mask.removeAttr("href");
+
 			if (this.current_media.type == "youtube-video") {
 				// Timer
 				if (this.current_media.progress_timer !== null) {
@@ -4685,6 +4692,8 @@ MediaPlayer.prototype = {
 		this.title.html(this.current_media.title);
 		this.current_media.loaded_offset = 0.0;
 		this.current_media.loaded_percent = 0.0;
+		// Image target
+		this.video_mask.attr("href", this.current_media.mask_click_target);
 
 		if (this.current_media.type == "image-audio") {
 			// Play this sound
@@ -4807,6 +4816,9 @@ MediaPlayer.prototype = {
 					fn(params);
 				}
 			}
+
+			// Image target
+			this.video_mask.attr("href", this.current_media.image_url);
 		}
 		else if (this.current_media.type == "vimeo-video") {
 			// Old player
@@ -5810,6 +5822,7 @@ MediaPlayer.prototype = {
 			"image_name": ((playlist_data ? playlist_data.image_name : null) || url.split("/").pop()),
 			"audio_blob": null,
 			"audio_blob_url": null,
+			"mask_click_target": null,
 		};
 
 		// Create ogg audio
@@ -5832,6 +5845,7 @@ MediaPlayer.prototype = {
 			playlist_item.image_blob_url = (window.webkitURL || window.URL).createObjectURL(playlist_item.image_blob);
 			playlist_item.image_url = playlist_item.image_blob_url;
 		}
+		playlist_item.mask_click_target = playlist_item.image_url;
 
 		// html setup
 		this.playlist_container.append( //{ DOM creation
@@ -6002,8 +6016,10 @@ MediaPlayer.prototype = {
 			"controls": [ null , null , null , null ],
 			"progress_timer": null,
 			"loaded_offset": 0.0,
-			"loaded_percent": 0.0
+			"loaded_percent": 0.0,
+			"mask_click_target": null,
 		};
+		playlist_item.mask_click_target = "//www.youtube.com/watch?v=" + playlist_item.vid_id + (playlist_item.start == 0.0 ? "" : ("&t=" + Math.floor(playlist_item.start) + "s"));
 
 		// html setup
 		this.playlist_container.append( //{ DOM creation
@@ -6052,7 +6068,7 @@ MediaPlayer.prototype = {
 						(playlist_item.controls[3] = this.E("a", "MPPlaylistControlLink"))
 						.html("Y")
 						.attr("title", "Youtube Link")
-						.attr("href", "//www.youtube.com/watch?v=" + playlist_item.vid_id + (playlist_item.start == 0.0 ? "" : ("&t=" + Math.floor(playlist_item.start) + "s")))
+						.attr("href", playlist_item.mask_click_target)
 					)
 				)
 			)
@@ -6145,8 +6161,10 @@ MediaPlayer.prototype = {
 			"controls": [ null , null , null , null ],
 			"progress_timer": null,
 			"loaded_offset": 0.0,
-			"loaded_percent": 0.0
+			"loaded_percent": 0.0,
+			"mask_click_target": null,
 		};
+		playlist_item.mask_click_target = "//vimeo.com/" + playlist_item.vid_id + (playlist_item.start == 0.0 ? "" : ("?t=" + Math.floor(playlist_item.start)));
 
 		// html setup
 		this.playlist_container.append( //{ DOM creation
@@ -6195,7 +6213,7 @@ MediaPlayer.prototype = {
 						(playlist_item.controls[3] = this.E("a", "MPPlaylistControlLink"))
 						.html("V")
 						.attr("title", "Vimeo Link")
-						.attr("href", "//vimeo.com/" + playlist_item.vid_id + (playlist_item.start == 0.0 ? "" : ("?t=" + Math.floor(playlist_item.start))))
+						.attr("href", playlist_item.mask_click_target)
 					)
 				)
 			)
@@ -6282,7 +6300,8 @@ MediaPlayer.prototype = {
 			"progress_timer": null,
 			"loaded_offset": 0.0,
 			"loaded_percent": 0.0,
-			"embed_code": embed_code
+			"embed_code": embed_code,
+			"mask_click_target": "//soundcloud.com/" + vid_id,
 		};
 
 		// html setup
@@ -6332,7 +6351,7 @@ MediaPlayer.prototype = {
 						(playlist_item.controls[3] = this.E("a", "MPPlaylistControlLink"))
 						.html("S")
 						.attr("title", "Soundcloud Link")
-						.attr("href", "//soundcloud.com/" + playlist_item.vid_id)
+						.attr("href", playlist_item.mask_click_target)
 					)
 				)
 			)
@@ -6950,10 +6969,12 @@ MediaPlayer.prototype = {
 		event.data.playlist_item.info_container.html(length_str);
 	},
 	on_temp_audio_error: function (event) {
-		event.data.playlist_item.temp_audio.removeAttr("src").remove();
-		event.data.playlist_item.temp_audio = null;
+		if (event.data.playlist_item.temp_audio !== null) {
+			event.data.playlist_item.temp_audio.removeAttr("src").remove();
+			event.data.playlist_item.temp_audio = null;
 
-		event.data.media_player.remove(event.data.playlist_item.index);
+			event.data.media_player.remove(event.data.playlist_item.index);
+		}
 	},
 
 	on_main_container_mouseover: function (event) {
@@ -7218,6 +7239,12 @@ MediaPlayer.prototype = {
 			event.data.media_player.mouse_moved = false;
 
 			// Done
+			return false;
+		}
+		return true;
+	},
+	on_image_resize_click: function (event) {
+		if (event.which == 1) {
 			return false;
 		}
 		return true;
