@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.0.1
+// @version     2.0.1.1
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -5173,6 +5173,11 @@ MediaPlayer.prototype={
 				"durationchange."+this.namespace,
 				{"media_player":this,"playlist_item":playlist_item},
 				this.on_temp_audio_durationchange
+			)
+			.on(
+				"error."+this.namespace,
+				{"media_player":this,"playlist_item":playlist_item},
+				this.on_temp_audio_error
 			);
 		playlist_item.temp_audio[0].volume=0.0;
 		playlist_item.temp_audio[0].play();
@@ -5456,8 +5461,13 @@ MediaPlayer.prototype={
 		}
 		else{
 			title=info_json.title;
-			if(info_json.author_name.length>0&&title.length>4+info_json.author_name.length){
-				title=title.substr(0,title.length-4-info_json.author_name.length);
+			var match=" by "+info_json.author_name;
+			if(
+				info_json.author_name.length>0&&
+				title.length>match.length&&
+				title.substr(title.length-match.length,match.length)==match
+			){
+				title=title.substr(0,title.length-match.length);
 			}
 			title=this.text_to_html(title);
 			embed_code=info_json.html;
@@ -6014,6 +6024,11 @@ MediaPlayer.prototype={
 		event.data.playlist_item.temp_audio=null;
 		var length_str=event.data.media_player.duration_to_string(duration);
 		event.data.playlist_item.info_container.html(length_str);
+	},
+	on_temp_audio_error:function(event){
+		event.data.playlist_item.temp_audio.removeAttr("src").remove();
+		event.data.playlist_item.temp_audio=null;
+		event.data.media_player.remove(event.data.playlist_item.index);
 	},
 	on_main_container_mouseover:function(event){
 		event.data.media_player.resize_container_hovered=true;
@@ -8829,8 +8844,13 @@ InlineManager.prototype={
 	parse_response_soundcloud:function(json,results){
 		json=JSON.parse(json);
 		results.title=json.title;
-		if(json.author_name.length>0&&results.title.length>4+json.author_name.length){
-			results.title=results.title.substr(0,results.title.length-4-json.author_name.length);
+		var match=" by "+json.author_name;
+		if(
+			json.author_name.length>0&&
+			results.title.length>match.length&&
+			results.title.substr(results.title.length-match.length,match.length)==match
+		){
+			results.title=results.title.substr(0,results.title.length-match.length);
 		}
 		results.title=text_to_html(results.title);
 		if("description"in json&&json.description)results.description=text_to_html(json.description.replace(/\r\n/g,"\n"));

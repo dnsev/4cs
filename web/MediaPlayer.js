@@ -4012,6 +4012,11 @@ MediaPlayer.prototype = {
 				"durationchange." + this.namespace,
 				{"media_player": this, "playlist_item": playlist_item},
 				this.on_temp_audio_durationchange
+			)
+			.on(
+				"error." + this.namespace,
+				{"media_player": this, "playlist_item": playlist_item},
+				this.on_temp_audio_error
 			);
 		playlist_item.temp_audio[0].volume = 0.0;
 		playlist_item.temp_audio[0].play();
@@ -4345,8 +4350,13 @@ MediaPlayer.prototype = {
 		}
 		else {
 			title = info_json.title;
-			if (info_json.author_name.length > 0 && title.length > 4 + info_json.author_name.length) {
-				title = title.substr(0, title.length - 4 - info_json.author_name.length);
+			var match = " by " + info_json.author_name;
+			if (
+				info_json.author_name.length > 0 &&
+				title.length > match.length &&
+				title.substr(title.length - match.length, match.length) == match
+			) {
+				title = title.substr(0, title.length - match.length);
 			}
 			title = this.text_to_html(title);
 
@@ -5038,6 +5048,12 @@ MediaPlayer.prototype = {
 
 		var length_str = event.data.media_player.duration_to_string(duration);
 		event.data.playlist_item.info_container.html(length_str);
+	},
+	on_temp_audio_error: function (event) {
+		event.data.playlist_item.temp_audio.removeAttr("src").remove();
+		event.data.playlist_item.temp_audio = null;
+
+		event.data.media_player.remove(event.data.playlist_item.index);
 	},
 
 	on_main_container_mouseover: function (event) {

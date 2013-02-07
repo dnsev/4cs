@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        2.0.1
+// @version        2.0.1.1
 // @namespace      dnsev
 // @description    4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant          GM_xmlhttpRequest
@@ -2119,8 +2119,13 @@ InlineManager.prototype = {
 		json = JSON.parse(json);
 
 		results.title = json.title;
-		if (json.author_name.length > 0 && results.title.length > 4 + json.author_name.length) {
-			results.title = results.title.substr(0, results.title.length - 4 - json.author_name.length);
+		var match = " by " + json.author_name;
+		if (
+			json.author_name.length > 0 &&
+			results.title.length > match.length &&
+			results.title.substr(results.title.length - match.length, match.length) == match
+		) {
+			results.title = results.title.substr(0, results.title.length - match.length);
 		}
 		results.title = text_to_html(results.title);
 		if ("description" in json && json.description) results.description = text_to_html(json.description.replace(/\r\n/g, "\n"));
