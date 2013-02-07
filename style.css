@@ -481,11 +481,6 @@ a.InstallLink:active {
 	font-weight: bold;
 	font-style: italic;
 }
-.AudioTestSource {
-	font-weight: normal !important;
-	color: #97c4e7;
-	margin-bottom: 32px;
-}
 .AudioLogContainer {
 	max-height: 200px;
 	overflow-x: hidden;
@@ -498,5 +493,12 @@ a.InstallLink:active {
 }
 .AudioTestLog + .AudioTestLog {
 	border-top: 1px solid #000;
+}
+.AudioTestSource {
+	color: #97c4e7;
+	margin-bottom: 32px;
+}
+.AudioTestSourceName {
+	font-style: italic;
 }
 
