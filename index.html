@@ -119,6 +119,18 @@
 			<p>Issues can be tracked on <a href="https://github.com/dnsev/4cs/issues" target="_blank">this page</a>.</p>
 			<p>If you come across any problems with the script, please refer to the above url and post a new issue.</p>
 			<p>Try to include information about the problem such as browser, userscript plugin (Greasemonkey, Scriptish, Tampermonkey, etc.), any other userscripts installed which may be conflicting, and a description of the problem.</p>
+
+			<p class="Separated">If you are having issues with sound playback, you can make sure your browser supports the &lt;audio&gt; tag <a href="#issues/audio" class="InternalLink">on this page</a>.</p>
+		</div>
+	</div>
+	<div class="Content ContentWidth" id="content_issues_audio">
+		<div class="ContentHeader" multi_id="audio"><a href="#.." class="InternalLink ContentHeaderTitle">Issues</a> / <span class="HoverShowControl"><span class="ContentHeaderTitle">Audio</span>:<span class="HoverShow"> <a class="InternalLink" href="#.?scroll=audio">Hardlink</a></span></span></div>
+		<div class="ContentBody">
+			<p>This page is for testing if your browser can properly support &lt;audio&gt; tags the way they are used in the player.</p>
+			<p>The audio shouldn't be visible, but playback should still work.<span class="AudioTestContainer"></span></p>
+			<p id="audio_generate_p">Click <a href="#generate" class="AudioTestLink">generate</a> to start the test.</p>
+			<p id="audio_controls_p" style="display:none;"><a href="#play" class="AudioTestLink">play</a> / duration: <span id="audio_duration_span">0</span>s / seek: <span id="audio_time_span">0</span>s</p>
+			<p><div class="AudioTestLogTitle">Log:<span class="AudioTestLogSource"> (audio sampled from ZUN - "Romantic Children")</span></div><div class="AudioLogContainer"></div></p>
 		</div>
 	</div>
 	<div class="Content ContentWidth" id="content_source">

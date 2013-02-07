@@ -24,6 +24,9 @@ p {
 p + p, p + div, p + ol, p + ul, ol + p, ul + p {
 	margin-top: 8px !important;
 }
+p + p.Separated {
+	margin-top: 24px !important;
+}
 
 *::selection {
 	color: #eff4f8;
@@ -469,3 +472,34 @@ a.InstallLink:active {
 .HiddenHoverMaster:hover .HiddenHover {
 	display: inline !important;
 }
+
+.AudioTestContainer {
+}
+.AudioTestLink {
+}
+.AudioTestLogTitle {
+	font-weight: bold;
+	font-style: italic;
+}
+.AudioTestLogSource {
+	font-weight: normal !important;
+	display: none;
+	color: #9ac4dc;
+}
+.AudioTestLogTitle:hover .AudioTestLogSource {
+	display: inline !important;
+}
+.AudioLogContainer {
+	max-height: 200px;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+.AudioTestLog {
+	font-style: italic;
+	font-size: 16px;
+	margin-left: 8px;
+}
+.AudioTestLog + .AudioTestLog {
+	border-top: 1px solid #000;
+}
+

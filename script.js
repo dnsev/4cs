@@ -136,15 +136,12 @@ WindowHash.prototype = {
 	},
 	modify_href: function (href) {
 		if (href == ".") href = this.page;
+		else if (href == "..") {
+			href = this.page.split("/");
+			href = href.slice(0, href.length - 1).join("/");
+		}
 		return href;
 		// TODO
-		/*href = href.split("/");
-		
-		for (var i = 0; i < href.length; ++i) {
-			if (href[i]
-		}
-		
-		return href.join("/");*/
 	}
 };
 var window_hash = new WindowHash();
@@ -190,7 +187,9 @@ var page_list = {
 		},
 		"acknowledgements": null
 	},
-	"issues": null,
+	"issues": {
+		"audio": null
+	},
 	"source": null,
 	"wiki": null,
 	"changes": null
@@ -481,6 +480,140 @@ function version_compare() {
 	}
 }
 
+// Audio testing
+var audio_test = null;
+function get_audio_duration(audio) {
+	try {
+		var d = (isFinite(audio.duration) ? audio.duration : audio.buffered.end(0));
+		return isFinite(d) ? d : 0;
+	}
+	catch (e) {
+		audio_log("Exception: ", e);
+	}
+	return 0;
+}
+function audio_control_event(link, event) {
+	var event_name = link.attr("href").substr(1);
+	audio_log("Interactive event: ", event_name);
+	switch (event_name) {
+		case "generate":
+		{
+			$("#audio_generate_p").css("display", "none");
+			$("#audio_controls_p").css("display", "");
+			$(".AudioTestContainer")
+			.append(
+				(audio_test = jQuery(document.createElement("audio")))
+				.attr("src", "sample.ogg")
+				.css("display", "none")
+				.on("play pause ended timeupdate durationchange", {}, audio_event)
+			);
+
+			try {
+				audio_log("Initial volume: ", audio_test[0].volume);
+				audio_test[0].volume = 0.5;
+			}
+			catch (e) {
+				audio_log("Exception: ", e);
+			}
+		}
+		break;
+		case "play":
+		{
+			var paused = true;
+			try {
+				audio_log("Paused status: ", audio_test[0].paused);
+				paused = audio_test[0].paused;
+			}
+			catch (e) {
+				audio_log("Exception: ", e);
+			}
+
+			if (paused) {
+				try {
+					audio_test[0].play();
+				}
+				catch (e) {
+					audio_log("Exception: ", e);
+				}
+			}
+			else {
+				try {
+					audio_test[0].pause();
+				}
+				catch (e) {
+					audio_log("Exception: ", e);
+				}
+			}
+
+			link.html(paused ? "pause" : "play");
+		}
+		break;
+		default:
+		{
+			audio_log("Unknown event type: ", event_name);
+		}
+		break;
+	}
+}
+function audio_event(event) {
+	var audio;
+
+	switch (event.type) {
+		case "play":
+		{
+			audio_log("Audio event: ", event.type);
+		}
+		break;
+		case "pause":
+		{
+			audio_log("Audio event: ", event.type);
+		}
+		break;
+		case "ended":
+		{
+			audio_log("Audio event: ", event.type);
+			$(".AudioTestLink[href=#play]").html("play");
+		}
+		break;
+		case "timeupdate":
+		{
+			var t = audio_test[0].currentTime || 0;
+			$("#audio_time_span").html(t);
+		}
+		break;
+		case "durationchange":
+		{
+			audio_log("Audio event: ", event.type);
+			$("#audio_duration_span").html(get_audio_duration(audio_test[0]));
+		}
+		break;
+		default:
+		{
+			audio_log("Unknown audio event: ", event.type);
+		}
+		break;
+	}
+}
+function audio_log(label, value) {
+	var str = label;
+	try {
+		str += value;
+	}
+	catch (e) {}
+
+	var c = $(".AudioLogContainer");
+	c.append(
+		$(document.createElement("div"))
+		.addClass("AudioTestLog")
+		.html(text_to_html(str))
+	);
+
+	try {
+		c.scrollTop((c[0].scrollHeight || 0) - c.outerHeight());
+	}
+	catch (e) {}
+}
+
 // Entry
 $(document).ready(function () {
 	// Events
@@ -551,6 +684,13 @@ $(document).ready(function () {
 				maintain_vars(window_hash.vars, ["all","dev","help"]),
 				(href[1] ? window_hash.parse_vars(href[1]) : undefined)
 			);
+			return false;
+		}
+		return true;
+	});
+	$(".AudioTestLink").on("click", {}, function (event) {
+		if (event.which == 1) {
+			audio_control_event($(this), event);
 			return false;
 		}
 		return true;
