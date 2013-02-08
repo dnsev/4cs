@@ -1,4 +1,7 @@
-﻿2.1.2.3
+﻿2.1.2.2
+- Reverted because it was more trouble than it's worth
+
+2.1.2.3
 - Using jQuery animations now; marginally smoother
 
 2.1.2.2
