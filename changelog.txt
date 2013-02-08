@@ -1,4 +1,7 @@
-﻿2.1.2.1
+﻿2.1.2.2
+- Google Chrome is terrible
+
+2.1.2.1
 - Made controls disappear after hovering for a short time in Theatre-View
 - Made player resizers not stay open after entering Theatre-View
 
