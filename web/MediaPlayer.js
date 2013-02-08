@@ -1376,6 +1376,7 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 	this.theatre_mode_target = false;
 	this.theatre_vars = {};
 	this.theatre_mode_animate_time = 0.25;
+	this.theatre_animation_timer = null;
 	this.theatre_position = {};
 	this.theatre_animation_vars = {};
 	this.theatre_offset = 16;
@@ -1384,7 +1385,6 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 	this.theatre_hide_controls_time = 2.0;
 	this.theatre_hide_controls_timer = null;
 	this.theatre_hide_controls_enabled = false;
-	this.theatre_ani_queue = "theatre";
 
 	// CSS
 	this.css = css;
@@ -2205,11 +2205,11 @@ MediaPlayer.prototype = {
 		// Animation
 		if (this.animate_open_time > 0) {
 			this.mp_container_main
+			.stop(true)
 			.animate({
 				"opacity": 1.0
 			},{
 				duration: this.animate_open_time * 1000,
-				queue: false,
 				complete: function () { $(this).css("opacity", ""); }
 			});
 		}
@@ -2220,19 +2220,19 @@ MediaPlayer.prototype = {
 	destroy: function (full) {
 		if (this.animate_close_time > 0) {
 			var self = this;
-			this.theatre_exit({duration: this.animate_close_time});
-
 			this.mp_container_main
+			.stop(true)
 			.animate({
 				"opacity": 0.0
 			},{
 				duration: this.animate_close_time * 1000,
-				queue: false,
 				complete: function () {
 					self.mp_container_main.css("opacity", "");
 					self.full_destroy(full);
 				}
 			});
+
+			this.theatre_exit({duration: this.animate_close_time});
 		}
 		else {
 			this.mp_container_main.css("opacity", "");
@@ -3183,16 +3183,12 @@ MediaPlayer.prototype = {
 
 			// Animate
 			var self = this;
-			this.theatre_animation_vars = {
-				percent: 0.0,
-				tick: new Date().getTime(),
-				total: ("duration" in params ? params.duration : this.theatre_mode_animate_time),
-				offset: ("offset" in params ? params.offset : this.theatre_offset),
-				dim: ("dim" in params ? params.dim : this.theatre_dim),
-				callback_done: ("done" in params ? params.done : null),
-				ani_count: 0,
-				ani_count_max: 4
-			};
+			this.theatre_animation_vars.percent = 0.0;
+			this.theatre_animation_vars.tick = new Date().getTime();
+			this.theatre_animation_vars.total = ("duration" in params ? params.duration : this.theatre_mode_animate_time);
+			this.theatre_animation_vars.offset = ("offset" in params ? params.offset : this.theatre_offset);
+			this.theatre_animation_vars.dim = ("dim" in params ? params.dim : this.theatre_dim);
+			this.theatre_animation_vars.callback_done = ("done" in params ? params.done : null);
 			$("body").append(
 				(this.theatre_animation_vars.dim_div = this.D("MPTheatreDim"))
 				.css({
@@ -3201,40 +3197,17 @@ MediaPlayer.prototype = {
 				})
 			);
 
-			// Animation
-			var off2 = this.theatre_animation_vars.offset * 2;
-			var h_target = $(window).height() - off2 - this.theatre_position.image_height_target_offset - this.theatre_position.playlist_height_target;
-			if (h_target < 0) h_target = 0;
-			var ani = {
-				duration: this.theatre_animation_vars.total * 1000,
-				queue: this.theatre_ani_queue,
-				complete: function () { self.theatre_ani_done(true); }
-			};
-			this.theatre_animation_vars.dim_div.stop(ani.queue, true, false).animate({
-				"opacity": this.theatre_animation_vars.dim
-			}, ani).dequeue(ani.queue);
-			this.mp_container_main.stop(ani.queue, true, false).animate({
-				"right": this.theatre_animation_vars.offset,
-				"bottom": this.theatre_animation_vars.offset,
-				"width": $(window).width() - off2 - (this.mp_container_main.outerWidth() - this.mp_container.outerWidth())
-			}, ani).dequeue(ani.queue);
-			this.playlist_container.stop(ani.queue, true, false).animate({
-				"height": this.theatre_position.playlist_height_target
-			}, ani).dequeue(ani.queue);
-			this.image_container.stop(ani.queue, true, false).animate({
-				"height": h_target
-			}, {
-				duration: ani.duration,
-				queue: ani.queue,
-				complete: ani.complete,
-				step: function () { self.update_image_scale(); }
-			}).dequeue(ani.queue);
+			this.theatre_animation_timer = setInterval(function () {
+				self.theatre_animate();
+			}, 20);
 
-			// Params
+			// Other vars
 			this.theatre_vars = {
 				close_on_finish: params.close_on_finish || false,
 				close_on_finish_interference: params.close_on_finish_interference || false
 			};
+
+			// Params
 			var about = this.mp_container_main.find(".MPMainButtonAboutTheatre");
 			if ("no_info" in params && params.no_info) {
 				about.remove("span").addClass("MPTheatreHidden");
@@ -3252,41 +3225,68 @@ MediaPlayer.prototype = {
 	},
 	theatre_exit: function (params) {
 		params = params || {};
-		if (this.theatre_mode && this.theatre_animation_vars.ani_count == this.theatre_animation_vars.ani_count_max) {
+		if (this.theatre_mode) {
 			// Exit
-			var self = this;
 			this.theatre_mode_target = false;
-			this.theatre_animation_vars.ani_count = 0;
-
 			// Animate
-			var ani = {
-				duration: this.theatre_animation_vars.total * 1000,
-				queue: this.theatre_ani_queue,
-				complete: function () { self.theatre_ani_done(false); }
-			};
-			this.theatre_animation_vars.dim_div.stop(ani.queue, true, false).animate({
-				"opacity": 0.0
-			}, ani).dequeue(ani.queue);
-			this.mp_container_main.stop(ani.queue, true, false).animate({
-				"right": this.theatre_position.init_right,
-				"bottom": this.theatre_position.init_bottom,
-				"width": this.theatre_position.init_width
-			}, ani).dequeue(ani.queue);
-			this.playlist_container.stop(ani.queue, true, false).animate({
-				"height": this.theatre_position.init_playlist_height
-			}, ani).dequeue(ani.queue);
-			this.image_container.stop(ani.queue, true, false).animate({
-				"height": this.theatre_position.init_image_height
-			}, {
-				duration: ani.duration,
-				queue: ani.queue,
-				complete: ani.complete,
-				step: function () { self.update_image_scale(); }
-			}).dequeue(ani.queue);
+			if (this.theatre_animation_timer === null) {
+				var self = this;
+				this.theatre_animation_vars.percent = 1.0;
+				this.theatre_animation_vars.tick = new Date().getTime();
+				this.theatre_animation_vars.total = ("duration" in params ? params.duration : this.theatre_mode_animate_time);
+				this.theatre_animation_timer = setInterval(function () {
+					self.theatre_animate();
+				}, 20);
+			}
 		}
 	},
-	theatre_ani_done: function (mode) {
-		if (mode == this.theatre_mode_target && ++this.theatre_animation_vars.ani_count >= this.theatre_animation_vars.ani_count_max) {
+	theatre_close: function () {
+		if (this.theatre_mode) {
+			this.mp_container_main.removeClass("MPTheatreEnabled");
+			this.theatre_animation_vars.dim_div.remove();
+			this.theatre_hide_controls_enabled = false;
+			this.theatre_reset_controls_timer();
+			this.mp_container_main.removeClass("MPControlsForceHide");
+			this.theatre_mode = false;
+		}
+	},
+	theatre_animate: function () {
+		// Time
+		var tick = new Date().getTime();
+		var time = (tick - this.theatre_animation_vars.tick) / 1000.0;
+		this.theatre_animation_vars.tick = tick;
+
+		// Percent update
+		var stop = false;
+		if (this.theatre_animation_vars.total > 0) {
+			if (this.theatre_mode_target) {
+				this.theatre_animation_vars.percent += (time / this.theatre_animation_vars.total);
+				if (this.theatre_animation_vars.percent >= 1.0) {
+					this.theatre_animation_vars.percent = 1.0;
+					stop = true;
+				}
+			}
+			else {
+				this.theatre_animation_vars.percent -= (time / this.theatre_animation_vars.total);
+				if (this.theatre_animation_vars.percent <= 0.0) {
+					this.theatre_animation_vars.percent = 0.0;
+					stop = true;
+				}
+			}
+		}
+		else {
+			this.theatre_animation_vars.percent = (this.theatre_mode_target ? 1.0 : 0.0);
+			stop = true;
+		}
+
+		// Animate
+		this.theatre_animation_vars.dim_div.css("opacity", (this.theatre_animation_vars.dim * this.theatre_animation_vars.percent).toString());
+		this.theatre_reposition(this.theatre_animation_vars.percent);
+
+		// Stop timer
+		if (stop) {
+			clearInterval(this.theatre_animation_timer);
+			this.theatre_animation_timer = null;
 			if (this.theatre_mode_target) {
 				// Callback
 				if (this.theatre_animation_vars.callback_done !== null) this.theatre_animation_vars.callback_done();
@@ -3297,42 +3297,20 @@ MediaPlayer.prototype = {
 				this.theatre_close();
 			}
 		}
+
 	},
-	theatre_close: function () {
-		if (this.theatre_mode) {
-			this.theatre_animation_vars.dim_div.stop(this.theatre_ani_queue, true, false).remove();
-			this.theatre_animation_vars.dim_div = null;
-			this.playlist_container.stop(this.theatre_ani_queue, true, false);
-			this.image_container.stop(this.theatre_ani_queue, true, false);
-			this.theatre_animation_vars = null;
-			this.mp_container_main
-			.stop(this.theatre_ani_queue, true, false)
-			.removeClass("MPTheatreEnabled")
-			.removeClass("MPControlsForceHide");
-			this.theatre_hide_controls_enabled = false;
-			this.theatre_reset_controls_timer();
-			this.theatre_mode = false;
-		}
-	},
-	theatre_reposition: function () {
+	theatre_reposition: function (percent) {
+		if (percent === undefined) percent = this.theatre_animation_vars.percent;
+
 		// Calculate
 		var off2 = this.theatre_animation_vars.offset * 2;
-		this.theatre_position.playlist_height = this.theatre_position.playlist_height_target;
-		this.theatre_position.image_height = $(window).height() - off2 - this.theatre_position.image_height_target_offset - this.theatre_position.playlist_height;
-		this.theatre_position.width = $(window).width() - off2;
-		this.theatre_position.right = this.theatre_animation_vars.offset;
-		this.theatre_position.bottom = this.theatre_animation_vars.offset;
-		if (this.theatre_position.image_height < 0) this.theatre_position.image_height = 0;
-
-		// Stop animations
-		if (this.theatre_mode_target && this.theatre_animation_vars.ani_count < this.theatre_animation_vars.ani_count_max) {
-			this.theatre_animation_vars.dim_div.stop(this.theatre_ani_queue, true, false);
-			this.mp_container_main.stop(this.theatre_ani_queue, true, false);
-			this.playlist_container.stop(this.theatre_ani_queue, true, false);
-			this.image_container.stop(this.theatre_ani_queue, true, false);
-			this.theatre_animation_vars.ani_count = this.theatre_animation_vars.ani_count_max - 1;
-			this.theatre_ani_done(this.theatre_mode_target);
-		}
+		this.theatre_position.playlist_height = this.merge_values(this.theatre_position.init_playlist_height, this.theatre_position.playlist_height_target, percent);
+		var h_target = $(window).height() - off2 - this.theatre_position.image_height_target_offset - this.theatre_position.playlist_height;
+		if (h_target < 0) h_target = 0;
+		this.theatre_position.image_height = this.merge_values(this.theatre_position.init_image_height, h_target, percent)
+		this.theatre_position.width = this.merge_values(this.theatre_position.init_width, $(window).width() - off2, percent);
+		this.theatre_position.right = this.merge_values(this.theatre_position.init_right, this.theatre_animation_vars.offset, percent);
+		this.theatre_position.bottom = this.merge_values(this.theatre_position.init_bottom, this.theatre_animation_vars.offset, percent);
 
 		// Size
 		this.image_container.outerHeight(this.theatre_position.image_height);
@@ -3387,9 +3365,6 @@ MediaPlayer.prototype = {
 		if (full) this.destructor();
 	},
 	nullify: function () {
-		this.theatre_mode = false;
-		this.theatre_animation_vars = null;
-
 		this.mp_container_main = null;
 		this.mp_container = null;
 		this.alert_container = null;
@@ -3463,6 +3438,12 @@ MediaPlayer.prototype = {
 				this.resize_timers[i] = null;
 			}
 		}
+
+		if (this.theatre_animation_timer !== null) {
+			clearInterval(this.theatre_animation_timer);
+			this.theatre_animation_timer = null;
+		}
+		this.theatre_mode = false;
 
 		this.player_theme_value_updaters = null;
 	},
