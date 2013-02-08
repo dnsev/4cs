@@ -1,4 +1,7 @@
-﻿2.1.1
+﻿2.1.2
+- Changed the "about" info; doesn't appear in the tiny player anymore
+
+2.1.1
 - Adjusted some settings related to Theatre-View
 
 2.1
