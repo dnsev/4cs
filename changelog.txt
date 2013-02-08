@@ -1,4 +1,7 @@
-﻿2.1
+﻿2.1.1
+- Adjusted some settings related to Theatre-View
+
+2.1
 - Added Theatre-View mode
 
 2.0.1.3
