@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        2.0.1.3
+// @version        2.1
 // @namespace      dnsev
 // @description    4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant          GM_xmlhttpRequest
@@ -1386,6 +1386,7 @@ function SettingsManager() {
 	// Management
 	this.section_default = "Other Settings";
 	this.sections = {};
+	this.settings_data = [];
 }
 SettingsManager.prototype = {
 	constructor: SettingsManager,
@@ -1446,7 +1447,40 @@ SettingsManager.prototype = {
 		this.settings_container.addClass("MPSettingsClosed");
 	},
 
+	settings_update_all: function () {
+		for (var i = 0; i < this.settings_data.length; ++i) {
+			if ("values" in this.settings_data[i]) {
+				// Regen
+				this.settings_data[i].update_value.call(this.settings_data[i]);
+				this.setting_update_link(this.settings_data[i]);
+			}
+		}
+	},
+
+	setting_update_link: function (data) {
+		if (data.change_link) {
+			var i;
+			for (i = 0; i < data.values.length; ++i) {
+				if (data.current == data.values[i]) break;
+			}
+
+			data.change_link
+			.off("click")
+			.on("click", {values: data.values, descr: data.descr, current: i % data.values.length, change: data.change}, function (event) {
+				if (event.which == 1) {
+					event.data.current = (event.data.current + 1) % event.data.values.length;
+					$(this).html(event.data.descr[event.data.current]);
+					event.data.change(event.data.values[event.data.current]);
+					return false;
+				}
+				return true;
+			})
+			.html(data.descr[i % data.values.length]);
+		}
+	},
 	setting_add: function (data) {
+		this.settings_data.push(data);
+
 		// Section label
 		var section = data.section || this.section_default;
 		if (!(section in this.sections)) {
@@ -1474,23 +1508,14 @@ SettingsManager.prototype = {
 
 		// Value clickable
 		var value = "";
+		data.change_link = null;
 		if ("values" in data) {
-			var i;
-			for (i = 0; i < data.values.length; ++i) {
-				if (data.current == data.values[i]) break;
-			}
-			(value = E("a"))
-			.attr("href", "#")
-			.on("click", {values: data.values, descr: data.descr, current: i % data.values.length, change: data.change}, function (event) {
-				if (event.which == 1) {
-					event.data.current = (event.data.current + 1) % event.data.values.length;
-					$(this).html(event.data.descr[event.data.current]);
-					event.data.change(event.data.values[event.data.current]);
-					return false;
-				}
-				return true;
-			});
-			value.html(data.descr[i % data.values.length]);
+			// Re-get value
+			data.update_value.call(data);
+			// HTML
+			(value = data.change_link = E("a"))
+			.attr("href", "#");
+			this.setting_update_link(data);
 		}
 		else if ("html" in data) {
 			value = data.html;
@@ -1526,16 +1551,6 @@ SettingsManager.prototype = {
 			);
 		}
 		++this.sections[section][2];
-/*
-		"section": "Video Links",
-		"current": script.settings["inline"]["video_preview_image_space"],
-		"label": "Preview Size",
-		"values": [ 480 , 320 , 240 , 120 ],
-		"descr": [ "Huge (480px)" , "Large (320px)" , "Normal (240px)" , "Small (120px)" ],
-		"change": function (value) {
-			script.settings["inline"]["video_preview_image_space"] = value;
-			script.settings_save();
-		}*/
 
 	},
 };
@@ -1750,7 +1765,7 @@ InlineManager.prototype = {
 					$(this)
 					.html(post_data.sounds[tag_id])
 					.off("click")
-					.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
+					.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_sound_tag_click);
 				});
 				post_data_copy.container.find(".MPLoadAllLink").each(function (index) {
 					$(this)
@@ -1812,7 +1827,7 @@ InlineManager.prototype = {
 					$(this)
 					.attr("href", "#")
 					.attr("_sp_tag_id", tag_id)
-					.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_link_click);
+					.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_sound_tag_click);
 				});
 
 				// Load all
@@ -2490,6 +2505,31 @@ InlineManager.prototype = {
 		// Add to playlist
 		if (event.which == 1) {
 			if (event.data.media_type) {
+				// Theatre-view activation
+				var n = "link_click_theatre_" + event.data.media_type;
+				var skip_to = (media_player_manager.media_player !== null && script.settings["inline"]["link_click_theatre_force_start"]);
+				var tv_activate = (
+					n in script.settings["inline"] &&
+					script.settings["inline"][n] === true
+				);
+
+				// Theatre-view
+				var tv_enable = function () {
+					media_player_manager.media_player.theatre_enter({
+						duration: script.settings["inline"]["link_click_theatre_animate"],
+						no_info: !script.settings["inline"]["link_click_theatre_info"],
+						info_text: (script.settings["inline"]["link_click_theatre_info"] && script.settings["inline"]["link_click_theatre_how_to"] ? "(more options in Global settings) " : ""),
+						close_on_finish: script.settings["inline"]["link_click_theatre_close_on_finish"],
+						close_on_finish_interference: script.settings["inline"]["link_click_theatre_close_on_finish_interference"],
+					});
+					// Disable this
+					if (script.settings["inline"]["link_click_theatre_how_to"]) {
+						script.settings["inline"]["link_click_theatre_how_to"] = false;
+						script.settings_save();
+						script.settings_update();
+					}
+				};
+
 				// Open
 				media_player_manager.open_player(true);
 
@@ -2519,6 +2559,16 @@ InlineManager.prototype = {
 					function (okay, data) {
 					},
 					function (status, data, xml_info) {
+						if (status >= 0 && tv_activate) {
+							if (skip_to) {
+								// Skip to this one
+								tv_enable();
+								media_player_manager.media_player.start(status);
+							}
+							else if (media_player_manager.media_player.playlist_current() == status) {
+								tv_enable();
+							}
+						}
 					}
 				);
 			}
@@ -2526,7 +2576,7 @@ InlineManager.prototype = {
 		}
 		return true;
 	},
-	on_link_click: function (event) {
+	on_sound_tag_click: function (event) {
 		// Change status
 		var load_str = "loading...";
 		$(this).html(load_str);
@@ -3193,6 +3243,7 @@ function HotkeyListener() {
 		[ "player_open" , this.on_player_open , "Open Player" ],
 		[ "player_close" , this.on_player_close , "Close Player" ],
 		[ "player_minmax" , this.on_player_minmax , "Min/Max Player" ],
+		[ "theatre_view_toggle" , this.theatre_view_toggle , "Toggle Theatre-View" ],
 		[ "playlist_play" , this.on_playlist_play , "Play/Pause" ],
 		[ "playlist_next" , this.on_playlist_next , "Next" ],
 		[ "playlist_previous" , this.on_playlist_previous , "Previous" ],
@@ -3361,8 +3412,7 @@ HotkeyListener.prototype = {
 	on_player_close: function () {
 		// Close the player
 		if (media_player_manager.media_player !== null) {
-			media_player_manager.media_player.destructor();
-			media_player_manager.media_player = null;
+			media_player_manager.media_player.destroy(true);
 		}
 	},
 	on_player_minmax: function () {
@@ -3373,6 +3423,17 @@ HotkeyListener.prototype = {
 			}
 			else {
 				media_player_manager.media_player.maximize();
+			}
+		}
+	},
+	theatre_view_toggle: function () {
+		// Theatre-view
+		if (media_player_manager.media_player !== null) {
+			if (media_player_manager.media_player.is_in_theatre()) {
+				media_player_manager.media_player.theatre_exit();
+			}
+			else {
+				media_player_manager.media_player.theatre_enter({no_info: true});
 			}
 		}
 	},
@@ -3662,6 +3723,15 @@ function Script() {
 			"video_preview_animate_open": 0.375,
 			"video_preview_animate_close": 0.375,
 			"video_preview_animate_description": 0.375,
+
+			"link_click_theatre_animate": 0.25,
+			"link_click_theatre_info": true,
+			"link_click_theatre_how_to": true,
+			"link_click_theatre_youtube": true,
+			"link_click_theatre_vimeo": true,
+			"link_click_theatre_force_start": false,
+			"link_click_theatre_close_on_finish": true,
+			"link_click_theatre_close_on_finish_interference": false,
 		}
 	};
 	this.storage_name = "4cs";
@@ -3905,7 +3975,7 @@ Script.prototype = {
 		var extra_options = [ //{
 			{
 				"section": "Link Replacement",
-				"current": script.settings["inline"]["url_replace"],
+				"update_value": function () { this.current = script.settings["inline"]["url_replace"]; },
 				"label": "URL Replacing",
 				"description": "Replace URLs in posts",
 				"values": [ true , false ],
@@ -3917,7 +3987,7 @@ Script.prototype = {
 			},
 			{
 				"section": "Link Replacement",
-				"current": script.settings["inline"]["url_replace_smart"],
+				"update_value": function () { this.current = script.settings["inline"]["url_replace_smart"]; },
 				"label": "Extended URLs",
 				"description": "Attempt to replace urls through spoilers",
 				"values": [ true , false ],
@@ -3929,7 +3999,7 @@ Script.prototype = {
 			},
 			{
 				"section": "Link Replacement",
-				"current": script.settings["inline"]["url_hijack"],
+				"update_value": function () { this.current = script.settings["inline"]["url_hijack"]; },
 				"label": "URL Hijacking",
 				"description": "Take over URLs replaced by other scripts",
 				"values": [ true , false ],
@@ -3941,7 +4011,7 @@ Script.prototype = {
 			},
 			{
 				"section": "Video Links",
-				"current": script.settings["inline"]["video_preview"],
+				"update_value": function () { this.current = script.settings["inline"]["video_preview"]; },
 				"label": "Hover Preview",
 				"description": "When enabled, hovering a video link will display a preview image",
 				"values": [ true , false ],
@@ -3953,7 +4023,7 @@ Script.prototype = {
 			},
 			{
 				"section": "Video Links",
-				"current": script.settings["inline"]["video_preview_timeout"],
+				"update_value": function () { this.current = script.settings["inline"]["video_preview_timeout"]; },
 				"label": "Hover Time",
 				"description": "How long you have to hover a link for the preview to appear",
 				"values": [ 2.0 , 1.5 , 1.0 , 0.75 , 0.5 , 0.25 , 0.125 , 0.0 ],
@@ -3965,7 +4035,7 @@ Script.prototype = {
 			},
 			{
 				"section": "Video Links",
-				"current": script.settings["inline"]["video_preview_image_space"],
+				"update_value": function () { this.current = script.settings["inline"]["video_preview_image_space"]; },
 				"label": "Preview Size",
 				"description": "Size to use for the preview image",
 				"values": [ 480 , 320 , 240 , 120 ],
@@ -3977,7 +4047,7 @@ Script.prototype = {
 			},
 			{
 				"section": "Video Links",
-				"current": script.settings["inline"]["video_preview_description_timeout"],
+				"update_value": function () { this.current = script.settings["inline"]["video_preview_description_timeout"]; },
 				"label": "Description Display",
 				"description": "Time to wait to display the video description",
 				"values": [ 5.0 , 4.0 , 3.0 , 2.0 , 1.0 , 0.75 , 0.5 , 0.375 , 0.25 , 0.125 , 0.0 , -1 ],
@@ -3989,7 +4059,7 @@ Script.prototype = {
 			},
 			{
 				"section": "Video Links",
-				"current": script.settings["inline"]["video_preview_description_font_size"],
+				"update_value": function () { this.current = script.settings["inline"]["video_preview_description_font_size"]; },
 				"label": "Description Font Size",
 				"description": "The scaling of the description text's font size",
 				"values": [ 1.0 , 0.9 , 0.8 , 0.7 , 0.6 , 0.5 ],
@@ -4001,7 +4071,7 @@ Script.prototype = {
 			},
 			{
 				"section": "Video Links",
-				"current": script.settings["inline"]["video_preview_animate_description"],
+				"update_value": function () { this.current = script.settings["inline"]["video_preview_animate_description"]; },
 				"label": "Description Animation",
 				"description": "Display the opening animation for the video description",
 				"values": [ 1.0 , 0.75 , 0.5 , 0.375 , 0.25 , 0.125 , 0.0 ],
@@ -4013,7 +4083,7 @@ Script.prototype = {
 			},
 			{
 				"section": "Video Links",
-				"current": script.settings["inline"]["video_preview_animate_open"],
+				"update_value": function () { this.current = script.settings["inline"]["video_preview_animate_open"]; },
 				"label": "Opening Animation",
 				"description": "Fade the preview window open",
 				"values": [ 1.0 , 0.75 , 0.5 , 0.375 , 0.25 , 0.125 , 0.0 ],
@@ -4025,13 +4095,109 @@ Script.prototype = {
 			},
 			{
 				"section": "Video Links",
-				"current": script.settings["inline"]["video_preview_animate_close"],
+				"update_value": function () { this.current = script.settings["inline"]["video_preview_animate_close"]; },
 				"label": "Closing Animation",
 				"description": "Fade the preview window closed",
 				"values": [ 1.0 , 0.75 , 0.5 , 0.375 , 0.25 , 0.125 , 0.0 ],
 				"descr": [ "1 second" , "0.75 seconds" , "0.5 seconds" , "0.375 seconds" , "0.25 seconds" , "0.125 seconds" , "instant" ],
 				"change": function (value) {
 					script.settings["inline"]["video_preview_animate_close"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Theatre-View",
+				"update_value": function () { this.current = script.settings["inline"]["link_click_theatre_youtube"]; },
+				"label": "Youtube",
+				"description": "Enable Theatre-View on Youtube video links",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["link_click_theatre_youtube"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Theatre-View",
+				"update_value": function () { this.current = script.settings["inline"]["link_click_theatre_vimeo"]; },
+				"label": "Vimeo",
+				"description": "Enable Theatre-View on Vimeo video links",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["link_click_theatre_vimeo"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Theatre-View",
+				"update_value": function () { this.current = script.settings["inline"]["link_click_theatre_animate"]; },
+				"label": "Opening Time",
+				"description": "Time it takes for the theatre view to open",
+				"values": [ 1.0 , 0.75 , 0.5 , 0.375 , 0.25 , 0.125 , 0.0 ],
+				"descr": [ "1 second" , "0.75 seconds" , "0.5 seconds" , "0.375 seconds" , "0.25 seconds" , "0.125 seconds" , "instant" ],
+				"change": function (value) {
+					script.settings["inline"]["link_click_theatre_animate"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Theatre-View",
+				"update_value": function () { this.current = script.settings["inline"]["link_click_theatre_force_start"]; },
+				"label": "Force Start",
+				"description": "Added media will be forced to start playing",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["link_click_theatre_force_start"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Theatre-View",
+				"update_value": function () { this.current = script.settings["inline"]["link_click_theatre_close_on_finish"]; },
+				"label": "Close On Finish",
+				"description": "Theatre-View will close once the added media completes",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["link_click_theatre_close_on_finish"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Theatre-View",
+				"update_value": function () { this.current = script.settings["inline"]["link_click_theatre_close_on_finish_interference"]; },
+				"label": "Close On Finish After Interaction",
+				"description": "Theatre-View will close on finish, even if playback was interacted with",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["link_click_theatre_close_on_finish_interference"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Theatre-View",
+				"update_value": function () { this.current = script.settings["inline"]["link_click_theatre_info"]; },
+				"label": "Display Information",
+				"description": "Show info when entering Theatre-View from video links",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["link_click_theatre_info"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Theatre-View",
+				"update_value": function () { this.current = script.settings["inline"]["link_click_theatre_how_to"]; },
+				"label": "Settings Information",
+				"description": "Show additional information about Theatre-View settings",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["link_click_theatre_how_to"] = value;
 					script.settings_save();
 				}
 			},
@@ -4062,7 +4228,7 @@ Script.prototype = {
 			)
 		); //}
 
-
+		// Hotkeys
 		for (var i = 0; i < hotkey_listener.hotkeys.length; ++i) {
 			extra_options.push(
 				hotkey_listener.create_hotkey_setting(hotkey_listener.hotkeys[i][2],
@@ -4070,10 +4236,14 @@ Script.prototype = {
 			);
 		}
 
+		// Generate
 		for (var i = 0; i < extra_options.length; ++i) {
 			inline_manager.settings_manager.setting_add(extra_options[i]);
 		}
-	}
+	},
+	settings_update: function () {
+		inline_manager.settings_manager.settings_update_all();
+	},
 };
 var script = null;
 
