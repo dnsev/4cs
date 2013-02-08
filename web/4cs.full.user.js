@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.1.2.1
+// @version     2.1.2.2
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -3175,6 +3175,7 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 	this.destruct_callback = destruct_callback;
 
 	this.use_svg = true;
+	this.doc_mouse = {x:0, y:0};
 
 	// Dimension scaling
 	this.scale_factor = 1.0;
@@ -7497,6 +7498,10 @@ MediaPlayer.prototype = {
 		return true;
 	},
 	on_document_mousemove: function (event) {
+		if (event.data.media_player.doc_mouse.x == event.pageX && event.data.media_player.doc_mouse.y == event.pageY) return true;
+		event.data.media_player.doc_mouse.x = event.pageX;
+		event.data.media_player.doc_mouse.y = event.pageY;
+
 		if (event.data.media_player.theatre_mode) {
 			event.data.media_player.on_theatre_mode_mousemove(event);
 		}
