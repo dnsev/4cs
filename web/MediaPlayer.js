@@ -925,6 +925,10 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"text-shadow": "{exp:1,*,font_scale}px {exp:1,*,font_scale}px 1px {hex:color_highlight_light}"
 		},
 
+		".MPControlsForceHide .MPControlContainer, .MPControlsForceHide .MPPlaylistIndexContainer, .MPControlsForceHide .MPVolumeContainer": {
+			"display": "none !important"
+		},
+
 		".MPTheatreEnabled": {
 		},
 		".MPTheatreDim": {
@@ -1377,6 +1381,9 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 	this.theatre_offset = 16;
 	this.theatre_dim = 0.5;
 	this.theatre_dim_color = "#000000";
+	this.theatre_hide_controls_time = 2.0;
+	this.theatre_hide_controls_timer = null;
+	this.theatre_hide_controls_enabled = false;
 
 	// CSS
 	this.css = css;
@@ -3236,6 +3243,9 @@ MediaPlayer.prototype = {
 		if (this.theatre_mode) {
 			this.mp_container_main.removeClass("MPTheatreEnabled");
 			this.theatre_animation_vars.dim_div.remove();
+			this.theatre_hide_controls_enabled = false;
+			this.theatre_reset_controls_timer();
+			this.mp_container_main.removeClass("MPControlsForceHide");
 			this.theatre_mode = false;
 		}
 	},
@@ -3279,6 +3289,8 @@ MediaPlayer.prototype = {
 			if (this.theatre_mode_target) {
 				// Callback
 				if (this.theatre_animation_vars.callback_done !== null) this.theatre_animation_vars.callback_done();
+				this.theatre_hide_controls_enabled = true;
+				this.theatre_reset_controls_timer();
 			}
 			else {
 				this.theatre_close();
@@ -3309,6 +3321,19 @@ MediaPlayer.prototype = {
 		});
 
 		this.update_image_scale();
+	},
+	theatre_reset_controls_timer: function () {
+		if (this.theatre_hide_controls_timer !== null) {
+			clearTimeout(this.theatre_hide_controls_timer);
+			this.theatre_hide_controls_timer = null;
+		}
+
+		if (this.theatre_hide_controls_enabled) {
+			var self = this;
+			this.theatre_hide_controls_timer = setTimeout(function () {
+				self.on_theatre_mode_hide_controls_timeout();
+			}, this.theatre_hide_controls_time * 1000);
+		}
 	},
 
 
@@ -4983,6 +5008,14 @@ MediaPlayer.prototype = {
 		return fname;
 	},
 
+	on_theatre_mode_hide_controls_timeout: function () {
+		this.mp_container_main.addClass("MPControlsForceHide");
+		this.theatre_hide_controls_timer = null;
+	},
+	on_theatre_mode_mousemove: function (event) {
+		event.data.media_player.mp_container_main.removeClass("MPControlsForceHide");
+		event.data.media_player.theatre_reset_controls_timer();
+	},
 
 	on_media_add: function (playlist_item) {
 		if (
@@ -5312,16 +5345,14 @@ MediaPlayer.prototype = {
 		}
 	},
 	on_resize_mouse_update: function (rel_x, rel_y) {
-		if (this.theatre_mode) return;
-
 		if (rel_x !== null) this.resize_mouse_offset[0] = rel_x;
 		else rel_x = this.resize_mouse_offset[0];
 		if (rel_y !== null) this.resize_mouse_offset[1] = rel_y;
 		else rel_y = this.resize_mouse_offset[1];
 
 		var size = [ this.mp_container.outerWidth() , this.mp_container.outerHeight() ];
-		var should_open = this.resizing;
-		if (this.resize_container_hovered && !this.resizing) {
+		var should_open = this.resizing && !this.theatre_mode;
+		if (this.resize_container_hovered && !this.resizing && !this.theatre_mode) {
 			should_open = (
 				rel_x <= this.resize_distance[0] ||
 				rel_y <= this.resize_distance[0] ||
@@ -5566,6 +5597,10 @@ MediaPlayer.prototype = {
 		return true;
 	},
 	on_document_mousemove: function (event) {
+		if (event.data.media_player.theatre_mode) {
+			event.data.media_player.on_theatre_mode_mousemove(event);
+		}
+
 		if (event.data.media_player.moving) {
 			// Dragging window
 			var left = (event.pageX - $(document).scrollLeft()) + event.data.media_player.mouse_offset.left;
