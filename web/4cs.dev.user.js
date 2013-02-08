@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        2.1.1
+// @version        2.1.2
 // @namespace      dnsev
 // @description    4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant          GM_xmlhttpRequest
@@ -1282,17 +1282,8 @@ function SettingsManager() {
 			E("a")
 			.addClass("MPMenuItem")
 			.attr("href", "#")
-			.html("Reload Player")
-			.on("click", {item:1}, function (event) {
-				return self.on_menu_item_click($(this), event);
-			})
-		)
-		.append(
-			E("a")
-			.addClass("MPMenuItem")
-			.attr("href", "#")
 			.html("Settings")
-			.on("click", {item:2}, function (event) {
+			.on("click", {item:1}, function (event) {
 				return self.on_menu_item_click($(this), event);
 			})
 		)
@@ -1302,6 +1293,15 @@ function SettingsManager() {
 			.attr("href", "http://dnsev.github.com/4cs/")
 			.attr("target", "_blank")
 			.html("Homepage")
+			.on("click", {item:2}, function (event) {
+				return self.on_menu_item_click($(this), event);
+			})
+		)
+		.append(
+			E("a")
+			.addClass("MPMenuItem")
+			.attr("href", "#")
+			.html("Help")
 			.on("click", {item:3}, function (event) {
 				return self.on_menu_item_click($(this), event);
 			})
@@ -1402,14 +1402,13 @@ SettingsManager.prototype = {
 			return false;
 			case 1:
 			{
-				media_player_manager.open_player(false);
-				script.settings_save();
+				this.settings_open();
 				this.menu_close();
 			}
 			return false;
-			case 2:
+			case 3:
 			{
-				this.settings_open();
+				inline_manager.display_info("help");
 				this.menu_close();
 			}
 			return false;
@@ -1609,9 +1608,15 @@ function InlineManager() {
 			".MPPopupClosed{display:none !important;}\n" +
 			".MPPopupContainerInner{position:relative;width:100%;height:100%;}\n" +
 			"div.MPPopupBox{display:block !important;position:absolute !important;left:25%;top:15%;right:25%;bottom:15%;border:0px !important;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);border-radius:6px !important;padding:0px !important;margin:0px !important;padding:4px !important;}\n" +
-			".MPPopupInfoContainer{width:100%;height:100%;overflow-x:hidden;overflow-y:auto;}\n" +
-			".MPPopupInfoContainer p{margin:0px !important;padding:0px !important;}\n" +
-			".MPPopupInfoContainer p + p{margin-top:4px !important;}\n"
+			".MPPopupInfoContainer{width:100%;height:100%;overflow-x:hidden;overflow-y:auto;line-height:normal !important;}\n" +
+			".MPPopupInfoContainer p{margin:0px 0px 0px 4px !important;padding:0px !important;}\n" +
+			".MPPopupInfoContainer p + p{margin-top:4px !important;}\n" +
+			".MPPopupInfoContainer p + p.MPPopupInfoLabel{margin-top:16px !important;}\n" +
+			".MPPopupInfoContainer ul{margin:0px 0px 0px 1.25em !important;padding:0px !important;}" +
+			".MPPopupInfoContainer li{margin:0px !important;padding:0px !important;line-height:normal !important;}" +
+			"p.MPPopupInfoLabel{font-weight:bold;margin-left:0px !important;}\n" +
+			"p.MPPopupInfoCentered{text-align:center;}\n" +
+			"p.MPPopupInfoBottom{margin-bottom:16px !important;}\n"
 		)
 	)
 	.append(
@@ -1655,6 +1660,7 @@ function InlineManager() {
 	if (around0[1]) s.after(T(around0[1]));
 
 	// Popups
+	this.popup_easy_close = true;
 	$("body").append( //{
 		(this.popup_container = E("div"))
 		.addClass("MPPopupContainerOuter MPPopupClosed")
@@ -2233,8 +2239,8 @@ InlineManager.prototype = {
 							.attr("href", "#")
 							.css("font-style", "italic")
 						);
-						var label = "And " + file_count + " more...";
-						var hide = "Hide " + file_count + " files";
+						var label = "And " + (file_count - 2) + " more...";
+						var hide = "Hide " + (file_count - 2) + " files";
 						post_data.sounds.about_list_container_toggler
 						.html(label)
 						.on(
@@ -2562,7 +2568,6 @@ InlineManager.prototype = {
 						if (status >= 0 && tv_activate) {
 							if (skip_to) {
 								// Skip to this one
-								tv_enable();
 								media_player_manager.media_player.start(status);
 							}
 							if (media_player_manager.media_player.playlist_current() == status) {
@@ -2945,12 +2950,220 @@ InlineManager.prototype = {
 		}
 	},
 
-	popup_close: function () {
-		this.popup_container.addClass("MPPopupClosed");
+	popup_close: function (forced) {
+		if (forced || this.popup_easy_close) {
+			this.popup_container.addClass("MPPopupClosed");
+		}
 	},
 	display_info: function (index, data) {
+		data = data || {};
+
+		var self = this;
 		this.popup_info_container.html("");
+		this.popup_easy_close = ("easy_close" in data ? data.easy_close : true);
 		switch (index) {
+			case "help":
+			{
+				this.popup_info_container
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Userscript Information")
+				)
+				.append(
+					E("p")
+					.html(
+						"4cs is able to play embedded sound files, Youtube videos, Vimeo videos, and Soundcloud media."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"Once you've closed this message once, it won't appear automatically again; " +
+						"it can be opened again from the [ Media Player ] link."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"The link to close this message is at the "
+					)
+					.append(
+						E("a")
+						.attr("href", "#")
+						.html("bottom")
+						.on("click", {}, function (event) {
+							if (event.which == 1) {
+								var c = $(this).parent().parent();
+								c.scrollTop((c[0].scrollHeight || 0) - c.outerHeight());
+								return false;
+							}
+							return true;
+						})
+					)
+					.append(".")
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Media Player")
+				)
+				.append(
+					E("p")
+					.html(
+						"The player itself can be moved around the screen and resized as desired."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"Clicking and dragging the title bar will move the player, and hovering " +
+						"near the edges of the player window will display the dragging handles for " +
+						"resizing."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"The image/video part can be resized by clicking and dragging on it as well."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"Finally, most of the controls of the player are hidden when not in use. Hover over the left and right side of the title-bar to view the options."
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Playlist")
+				)
+				.append(
+					E("p")
+					.html(
+						"Media can be added to the playlist in the following ways:<ul>" +
+						"<li>Clicking on inline [tags] to load any sounds in the corresponding image</li>" +
+						"<li>Clicking on any media links, denoted with an icon on the left side</li>" +
+						"<li>Clicking and dragging a sounds-image onto the player from your browser</li>" +
+						"<li>Clicking and dragging a sounds-image onto the player from your computer</li>" +
+						"<li>Clicking and dragging a URL onto the player</li>" +
+						"</ul>"
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"Once added to the playlist, there are several control buttons related to that specific media. " +
+						"Hover over the right side of the playlist item to view them; hover a button for info about what it does."
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Settings")
+				)
+				.append(
+					E("p")
+					.html(
+						"There are 2 main locations for settings:<ul>" +
+						"<li>The [ Media Player ] link in the navigation section, for global settings</li>" +
+						"<li>The [S] button in the player, for player-specific settings</li>" +
+						"</ul>"
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Customization")
+				)
+				.append(
+					E("p")
+					.html(
+						"The player's look can be customized on the player's 3 settings pages."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"For simplicity, it comes with 4 default styles that you can easily change between and modify."
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Broken?")
+				)
+				.append(
+					E("p")
+					.html(
+						"If you manage to break the player by messing with the settings, you can reset the player settings by "
+					)
+					.append(
+						E("a")
+						.attr("href", "#")
+						.html("clicking this link")
+						.on("click", {}, function (event) {
+							if (event.which == 1) {
+								// Regen
+								var keep_open = false;
+								if (media_player_manager.media_player !== null) {
+									media_player_manager.media_player.destructor();
+									keep_open = true;
+								}
+								media_player_manager.open_player(false);
+								script.settings_save();
+								if (!keep_open) {
+									media_player_manager.media_player.destructor();
+								}
+								return false;
+							}
+							return true;
+						})
+					)
+					.append(".")
+				)
+				.append(
+					E("p")
+					.html(
+						"If your player has issues playing, you can report a bug on the "
+					)
+					.append(
+						E("a")
+						.html("script's homepage")
+						.attr("href", "http://dnsev.github.com/4cs/")
+						.attr("target", "_blank")
+						.on("click", {}, function (event) {
+							event.stopPropagation();
+							return true;
+						})
+					)
+					.append(".")
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Done")
+				)
+				.append(
+					E("p")
+					.html(
+						"Now that you (presumably) understand what's going on, click the link below to close this message."
+					)
+				)
+				.append(
+					E("p")
+					.addClass("MPPopupInfoCentered MPPopupInfoBottom")
+					.html(
+						E("a")
+						.attr("href", "#")
+						.html("Close Message")
+						.on("click", {}, function (event) {
+							if (event.which == 1) {
+								self.popup_close(true);
+								script.settings["script"]["first_run"] = false;
+								script.settings_save();
+								return false;
+							}
+							return true;
+						})
+					)
+				);
+			}
+			break;
 			case "ajax error":
 			{
 				this.popup_info_container
@@ -2970,8 +3183,7 @@ InlineManager.prototype = {
 			break;
 		}
 		this.popup_container.removeClass("MPPopupClosed");
-//		alert(index+"\n"+data);
-//		console.log(data);
+		this.popup_info_container.scrollTop(0);
 	},
 };
 var inline_manager = null;
@@ -3707,7 +3919,8 @@ function Script() {
 			"update_found": false,
 			"update_version": "",
 			"current_version": "",
-			"update_message": ""
+			"update_message": "",
+			"first_run": true
 		},
 		"hotkeys": {}, // loaded elsewhere
 		"inline": {
@@ -4270,6 +4483,11 @@ $(document).ready(function () {
 
 	// Options
 	script.setup_options(inline_manager);
+
+	// First run
+	if (script.settings["script"]["first_run"]) {
+		inline_manager.display_info("help", {easy_close: false});
+	}
 
 	// Hack move the scope out of sandbox
 	window._unsafe_exec = function () {

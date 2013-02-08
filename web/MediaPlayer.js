@@ -814,50 +814,6 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"margin-top": "{exp:-40,*,font_scale}px !important"
 		},
 
-		".MPFirstRunContainer": {
-			"position": "absolute",
-			"left": "0",
-			"top": "0",
-			"width": "100%",
-			"height": "100%",
-			"overflow-x": "hidden",
-			"overflow-y": "auto",
-			"display": "block",
-			"background": "{rgba:bg_color_light}"
-		},
-		".MPFirstRunLabel": {
-			"display": "block",
-			"text-align": "left",
-			"font-weight": "bold",
-			"color": "{hex:color_standard} !important",
-			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px"
-		},
-		".MPFirstRunTextContainer": {
-			"display": "block",
-			"text-align": "left",
-			"color": "{hex:color_standard} !important",
-			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:4,*,padding_scale}px"
-		},
-		".MPFirstRunTextContainer div": {
-			"color": "{hex:color_standard} !important",
-		},
-		".MPFirstRunLink, a.MPFirstRunLink, .MPFirstRunLink:visited, a.MPFirstRunLink:visited": {
-			"cursor": "pointer",
-			"text-decoration": "underline !important",
-			"color": "{hex:color_standard} !important",
-		},
-		".MPFirstRunLink:hover, a.MPFirstRunLink:hover": {
-			"color": "{hex:color_special_2} !important"
-		},
-		".MPFirstRunLink:active, a.MPFirstRunLink:active": {
-			"color": "{hex:color_special_2} !important"
-		},
-		".MPFirstRunExitLink": {
-			"display": "block",
-			"text-align": "center",
-			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px"
-		},
-
 		".MPResizingSizeOff": {
 			"width": "{exp:bg_outer_size,*,padding_scale}px",
 			"height": "{exp:bg_outer_size,*,padding_scale}px",
@@ -1302,7 +1258,6 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 	this.identifier = ""; // make this dynamic
 	this.is_chrome = ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
 	this.title_default =  "Media Player";
-	this.first_run = true;
 
 	// Loading
 	this.load_callbacks = [];
@@ -1443,7 +1398,6 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 		"playlist_scrollto_onload",
 		"position_offset",
 		"ytvideo_quality_index",
-		"first_run",
 		"use_svg",
 		"animate_open_time",
 		"animate_close_time",
@@ -1640,10 +1594,6 @@ MediaPlayer.prototype = {
 							(this.title_buttons[1] = this.E("a", "MPMainButtonGeneric"))
 							.html("[D]")
 						)
-						.append(
-							(this.title_buttons[2] = this.E("a", "MPMainButtonGeneric"))
-							.html("[?]")
-						)
 					)
 					.append(
 						this.D("MPMainButtonsRight")
@@ -1652,15 +1602,15 @@ MediaPlayer.prototype = {
 							.html("Exit Theatre Mode &rarr;")
 						)
 						.append(
-							(this.title_buttons[3] = this.E("a", "MPMainButtonGeneric"))
+							(this.title_buttons[2] = this.E("a", "MPMainButtonGeneric"))
 							.html("[T]")
 						)
 						.append(
-							(this.title_buttons[4] = this.E("a", "MPMainButtonGeneric"))
+							(this.title_buttons[3] = this.E("a", "MPMainButtonGeneric"))
 							.html("[&#x2012;]")
 						)
 						.append(
-							(this.title_buttons[5] = this.E("a", "MPMainButtonRight"))
+							(this.title_buttons[4] = this.E("a", "MPMainButtonRight"))
 							.html("[&times;]")
 						)
 					)
@@ -2130,145 +2080,6 @@ MediaPlayer.prototype = {
 							)
 						)
 					) //}
-
-					.append( //{ First run
-						(this.first_run_container = this.D("MPFirstRunContainer"))
-						.append(
-							this.D("MPFirstRunLabel")
-							.html("Info")
-						)
-						.append(
-							this.D("MPFirstRunTextContainer")
-							.append(
-								"This player can play embedded sound files in images " +
-								"as well as Youtube videos. Scroll to the "
-							)
-							.append(
-								this.E("a", "MPFirstRunLink")
-								.attr("href", "#")
-								.html("bottom")
-							)
-							.on("click." + this.namespace, {media_player: this}, function (event) {
-								event.data.media_player.first_run_container.scrollTop(
-									(event.data.media_player.first_run_container[0].scrollHeight || 0)
-									- event.data.media_player.first_run_container.outerHeight()
-								);
-								return false;
-							})
-							.append(
-								" for a link to exit this page."
-							)
-						)
-						.append(
-							this.D("MPFirstRunLabel")
-							.html("Player")
-						)
-						.append(
-							this.D("MPFirstRunTextContainer")
-							.append(
-								this.D()
-								.css("padding-bottom", "0.5em")
-								.html("To move, click and drag on the title bar.")
-							)
-							.append(
-								this.D()
-								.css("padding-bottom", "0.5em")
-								.html("To resize, click and drag any edge.")
-							)
-							.append(
-								this.D()
-								.css("padding-bottom", "0.5em")
-								.html("To resize the image/video, click and drag it.")
-							)
-							.append(
-								this.D()
-								.html("There are additional (hidden) buttons on the right " +
-								"and left sides of the title bar.")
-							)
-						)
-						.append(
-							this.D("MPFirstRunLabel")
-							.html("Playlist")
-						)
-						.append(
-							this.D("MPFirstRunTextContainer")
-							.append(
-								this.D()
-								.css("padding-bottom", "0.5em")
-								.html(
-									"You can add media to the player by either " +
-									"clicking on inline media URLs/[tags], or " +
-									"clicking and dragging images/urls into the player " +
-									"from your browser or computer."
-								)
-							)
-							.append(
-								this.D()
-								.html(
-									"Once the media has been loaded, it will appear in " +
-									"the playlist. To remove, change order, or save the source, " +
-									"hover over the right side of the playlist item for controls."
-								)
-							)
-						)
-						.append(
-							this.D("MPFirstRunLabel")
-							.html("Customization")
-						)
-						.append(
-							this.D("MPFirstRunTextContainer")
-							.append(
-								this.D()
-								.css("padding-bottom", "0.5em")
-								.html(
-									"There are 3 settings tabs available for customizing the " +
-									"player. Access them by clicking [S] in the top left."
-								)
-							)
-							.append(
-								this.D()
-								.html(
-									"For simplicity, there are 4 preset stylesheets that you " +
-									"can switch between. If you edit the settings, it will be " +
-									"saved as a new custom stylesheet."
-								)
-							)
-						)
-						.append(
-							this.D("MPFirstRunLabel")
-							.html("Broken?")
-						)
-						.append(
-							this.D("MPFirstRunTextContainer")
-							.append(
-								this.D()
-								.css("padding-bottom", "0.5em")
-								.html(
-									"If you mess up some customization settings such that " +
-									"your player isn't properly useable anymore, close the player, " +
-									"then click the \"Reload\" link next to the [ Media Player ] " +
-									"link at the top of the page."
-								)
-							)
-							.append(
-								this.D()
-								.html(
-									"(By default this option is hidden; hover over the right bracket " +
-									"to make it appear.)"
-								)
-							)
-						)
-						.append(
-							this.D("MPFirstRunLabel")
-							.html("Done")
-						)
-						.append(
-							this.E("a", "MPFirstRunExitLink", "MPFirstRunLink")
-							.attr("href", "#")
-							.on("click." + this.namespace, {media_player: this}, this.on_firstrun_page_exit_click)
-							.html("Exit Page")
-						)
-					) //}
 				) //}
 				.append( //{ Footer
 					(this.footer_container = this.D("MPFooterBarContainer"))
@@ -2368,9 +2179,6 @@ MediaPlayer.prototype = {
 		}
 
 		// Final settings
-		if (!this.first_run) {
-			this.first_run_container.css("display", "none");
-		}
 		for (var i = 0; i < this.title_buttons.length; ++i) {
 			this.title_buttons[i].on("mousedown", this.cancel_event);
 			this.title_buttons[i].on("click." + this.namespace, {media_player: this, control_id: i}, this.on_main_control_click);
@@ -3362,7 +3170,7 @@ MediaPlayer.prototype = {
 			this.theatre_position.width = this.theatre_position.init_width = this.player_width * this.scale_factor;
 			this.theatre_position.image_height = this.theatre_position.init_image_height = this.image_height * this.scale_factor;
 			this.theatre_position.playlist_height = this.theatre_position.init_playlist_height = this.playlist_height * this.scale_factor;
-			this.theatre_position.playlist_height_target = this.playlist_height_default * this.scale_factor;
+			this.theatre_position.playlist_height_target = 0;//this.playlist_height_default * this.scale_factor;
 			this.theatre_position.image_height_target_offset = this.mp_container_main.outerHeight() - this.theatre_position.init_image_height - this.theatre_position.init_playlist_height;
 
 			// Animate
@@ -3579,7 +3387,6 @@ MediaPlayer.prototype = {
 		this.resizing_container = null;
 		this.resizing_controls = null;
 		this.resizing_texts = null;
-		this.first_run_container = null;
 		this.playlist_index_container = null;
 		this.playlist_index_text1 = null;
 		this.playlist_index_text2 = null;
@@ -3918,12 +3725,12 @@ MediaPlayer.prototype = {
 			this.ytvideo_player.setSize(this.video_container.outerWidth(), this.video_container.outerHeight());
 		}
 		else if (this.vimeovideo_player != null) {
-			this.vimeovideo_player.iframe
+			$(this.vimeovideo_player.iframe)
 			.attr("width", this.video_container.outerWidth())
 			.attr("height", this.video_container.outerHeight());
 		}
 		else if (this.soundcloud_player != null) {
-			this.soundcloud_player.iframe
+			$(this.soundcloud_player.iframe)
 			.attr("width", this.video_container.outerWidth())
 			.attr("height", this.video_container.outerHeight());
 		}
@@ -4404,22 +4211,7 @@ MediaPlayer.prototype = {
 		this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
 
 		// Play?
-		if (!this.first_run) {
-			if (
-				(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
-				(this.playlist_play_on_load == 2 &&
-					(this.current_media == null || (
-						this.current_media.index == this.playlist.length - 2 &&
-						this.current_media.position >= this.current_media.duration - 1.0 &&
-						this.is_paused()
-					))
-				) ||
-				(this.playlist_play_on_load == 3 && this.is_paused()) ||
-				(this.playlist_play_on_load == 4)
-			) {
-				this.start(this.playlist.length - 1);
-			}
-		}
+		this.on_media_add(playlist_item);
 
 		// Done
 		return playlist_item.index;
@@ -4552,22 +4344,7 @@ MediaPlayer.prototype = {
 		this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
 
 		// Play?
-		if (!this.first_run) {
-			if (
-				(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
-				(this.playlist_play_on_load == 2 &&
-					(this.current_media == null || (
-						this.current_media.index == this.playlist.length - 2 &&
-						this.current_media.position >= this.current_media.duration - 1.0 &&
-						this.is_paused()
-					))
-				) ||
-				(this.playlist_play_on_load == 3 && this.is_paused()) ||
-				(this.playlist_play_on_load == 4)
-			) {
-				this.start(this.playlist.length - 1);
-			}
-		}
+		this.on_media_add(playlist_item);
 
 		// Done
 		return playlist_item.index;
@@ -4700,22 +4477,7 @@ MediaPlayer.prototype = {
 		this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
 
 		// Play?
-		if (!this.first_run) {
-			if (
-				(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
-				(this.playlist_play_on_load == 2 &&
-					(this.current_media == null || (
-						this.current_media.index == this.playlist.length - 2 &&
-						this.current_media.position >= this.current_media.duration - 1.0 &&
-						this.is_paused()
-					))
-				) ||
-				(this.playlist_play_on_load == 3 && this.is_paused()) ||
-				(this.playlist_play_on_load == 4)
-			) {
-				this.start(this.playlist.length - 1);
-			}
-		}
+		this.on_media_add(playlist_item);
 
 		// Done
 		return playlist_item.index;
@@ -4841,22 +4603,7 @@ MediaPlayer.prototype = {
 		this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
 
 		// Play?
-		if (!this.first_run) {
-			if (
-				(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
-				(this.playlist_play_on_load == 2 &&
-					(this.current_media == null || (
-						this.current_media.index == this.playlist.length - 2 &&
-						this.current_media.position >= this.current_media.duration - 1.0 &&
-						this.is_paused()
-					))
-				) ||
-				(this.playlist_play_on_load == 3 && this.is_paused()) ||
-				(this.playlist_play_on_load == 4)
-			) {
-				this.start(this.playlist.length - 1);
-			}
-		}
+		this.on_media_add(playlist_item);
 
 		// Done
 		return playlist_item.index;
@@ -5236,6 +4983,23 @@ MediaPlayer.prototype = {
 		return fname;
 	},
 
+
+	on_media_add: function (playlist_item) {
+		if (
+			(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
+			(this.playlist_play_on_load == 2 &&
+				(this.current_media == null || (
+					this.current_media.index == this.playlist.length - 2 &&
+					this.current_media.position >= this.current_media.duration - 1.0 &&
+					this.is_paused()
+				))
+			) ||
+			(this.playlist_play_on_load == 3 && this.is_paused()) ||
+			(this.playlist_play_on_load == 4)
+		) {
+			this.start(playlist_item.index);
+		}
+	},
 	on_media_end: function () {
 		if (this.theatre_mode && this.theatre_vars.close_on_finish) {
 			this.theatre_exit();
@@ -6034,51 +5798,35 @@ MediaPlayer.prototype = {
 	},
 	on_main_control_click: function (event) {
 		switch (event.data.control_id) {
-			case 2:
-			{
-				if (!event.data.media_player.is_maximized()) {
-					event.data.media_player.maximize();
-				}
-				// Info
-				event.data.media_player.first_run_container.css("display", "");
-				for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-					event.data.media_player.help_container[i].css("display", "none");
-				}
-				event.data.media_player.downloads_container.css("display", "none");
-				event.data.media_player.first_run_container.scrollTop(0);
-			}
-			break;
 			case 0:
 			{
 				if (!event.data.media_player.is_maximized()) {
 					event.data.media_player.maximize();
 				}
 				// Options
-				if (event.data.media_player.first_run_container.css("display") == "none") {
-					var open = false;
+				var open = false;
+				for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+					if (event.data.media_player.help_container[i].css("display") != "none") {
+						open = true;
+						break;
+					}
+				}
+				event.data.media_player.downloads_container.css("display", "none");
+				if (open) {
 					for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-						if (event.data.media_player.help_container[i].css("display") != "none") {
-							open = true;
-							break;
-						}
+						event.data.media_player.help_container[i].css("display", "none");
 					}
-					event.data.media_player.downloads_container.css("display", "none");
-					if (open) {
-						for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-							event.data.media_player.help_container[i].css("display", "none");
-						}
-					}
-					else {
-						event.data.media_player.help_container[0].css("display", "");
-						// Bottom offset (so not to be obscured by the footer)
-						if (
-							event.data.media_player.help_container_footer[0] &&
-							event.data.media_player.help_container_inner1[0]
-						) {
-							event.data.media_player.help_container_inner1[0].css(
-								"bottom", (event.data.media_player.help_container_footer[0].height()) + "px"
-							);
-						}
+				}
+				else {
+					event.data.media_player.help_container[0].css("display", "");
+					// Bottom offset (so not to be obscured by the footer)
+					if (
+						event.data.media_player.help_container_footer[0] &&
+						event.data.media_player.help_container_inner1[0]
+					) {
+						event.data.media_player.help_container_inner1[0].css(
+							"bottom", (event.data.media_player.help_container_footer[0].height()) + "px"
+						);
 					}
 				}
 			}
@@ -6096,31 +5844,27 @@ MediaPlayer.prototype = {
 				event.data.media_player.downloads_container.css("display", open ? "" : "none");
 			}
 			break;
+			case 2:
+			{
+				if (event.data.media_player.is_in_theatre()) {
+					event.data.media_player.theatre_exit();
+				}
+				else {
+					event.data.media_player.theatre_enter({no_info: true});
+				}
+			}
+			break;
 			case 3:
 			{
-				if (event.data.media_player.first_run_container.css("display") == "none") {
-					if (event.data.media_player.is_in_theatre()) {
-						event.data.media_player.theatre_exit();
-					}
-					else {
-						event.data.media_player.theatre_enter({no_info: true});
-					}
+				if (event.data.media_player.is_maximized()) {
+					event.data.media_player.minimize();
+				}
+				else {
+					event.data.media_player.maximize();
 				}
 			}
 			break;
 			case 4:
-			{
-				if (event.data.media_player.first_run_container.css("display") == "none") {
-					if (event.data.media_player.is_maximized()) {
-						event.data.media_player.minimize();
-					}
-					else {
-						event.data.media_player.maximize();
-					}
-				}
-			}
-			break;
-			case 5:
 			{
 				// Close
 				event.data.media_player.destroy(true);
@@ -6132,15 +5876,6 @@ MediaPlayer.prototype = {
 		for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
 			event.data.media_player.help_container[i].css("display", (event.data.help_page == i ? "" : "none"));
 		}
-	},
-	on_firstrun_page_exit_click: function (event) {
-		event.data.media_player.first_run_container.css("display", "none");
-		event.data.media_player.first_run = false;
-
-		// Callback
-		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-
-		return false;
 	},
 
 	on_playlist_item_click: function (event) {

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.1.1
+// @version     2.1.2
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -2714,50 +2714,6 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"margin-top": "{exp:-40,*,font_scale}px !important"
 		},
 
-		".MPFirstRunContainer": {
-			"position": "absolute",
-			"left": "0",
-			"top": "0",
-			"width": "100%",
-			"height": "100%",
-			"overflow-x": "hidden",
-			"overflow-y": "auto",
-			"display": "block",
-			"background": "{rgba:bg_color_light}"
-		},
-		".MPFirstRunLabel": {
-			"display": "block",
-			"text-align": "left",
-			"font-weight": "bold",
-			"color": "{hex:color_standard} !important",
-			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px"
-		},
-		".MPFirstRunTextContainer": {
-			"display": "block",
-			"text-align": "left",
-			"color": "{hex:color_standard} !important",
-			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:4,*,padding_scale}px"
-		},
-		".MPFirstRunTextContainer div": {
-			"color": "{hex:color_standard} !important",
-		},
-		".MPFirstRunLink, a.MPFirstRunLink, .MPFirstRunLink:visited, a.MPFirstRunLink:visited": {
-			"cursor": "pointer",
-			"text-decoration": "underline !important",
-			"color": "{hex:color_standard} !important",
-		},
-		".MPFirstRunLink:hover, a.MPFirstRunLink:hover": {
-			"color": "{hex:color_special_2} !important"
-		},
-		".MPFirstRunLink:active, a.MPFirstRunLink:active": {
-			"color": "{hex:color_special_2} !important"
-		},
-		".MPFirstRunExitLink": {
-			"display": "block",
-			"text-align": "center",
-			"padding": "{exp:4,*,padding_scale}px {exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px"
-		},
-
 		".MPResizingSizeOff": {
 			"width": "{exp:bg_outer_size,*,padding_scale}px",
 			"height": "{exp:bg_outer_size,*,padding_scale}px",
@@ -3202,7 +3158,6 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 	this.identifier = ""; // make this dynamic
 	this.is_chrome = ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
 	this.title_default =  "Media Player";
-	this.first_run = true;
 
 	// Loading
 	this.load_callbacks = [];
@@ -3343,7 +3298,6 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 		"playlist_scrollto_onload",
 		"position_offset",
 		"ytvideo_quality_index",
-		"first_run",
 		"use_svg",
 		"animate_open_time",
 		"animate_close_time",
@@ -3540,10 +3494,6 @@ MediaPlayer.prototype = {
 							(this.title_buttons[1] = this.E("a", "MPMainButtonGeneric"))
 							.html("[D]")
 						)
-						.append(
-							(this.title_buttons[2] = this.E("a", "MPMainButtonGeneric"))
-							.html("[?]")
-						)
 					)
 					.append(
 						this.D("MPMainButtonsRight")
@@ -3552,15 +3502,15 @@ MediaPlayer.prototype = {
 							.html("Exit Theatre Mode &rarr;")
 						)
 						.append(
-							(this.title_buttons[3] = this.E("a", "MPMainButtonGeneric"))
+							(this.title_buttons[2] = this.E("a", "MPMainButtonGeneric"))
 							.html("[T]")
 						)
 						.append(
-							(this.title_buttons[4] = this.E("a", "MPMainButtonGeneric"))
+							(this.title_buttons[3] = this.E("a", "MPMainButtonGeneric"))
 							.html("[&#x2012;]")
 						)
 						.append(
-							(this.title_buttons[5] = this.E("a", "MPMainButtonRight"))
+							(this.title_buttons[4] = this.E("a", "MPMainButtonRight"))
 							.html("[&times;]")
 						)
 					)
@@ -4030,145 +3980,6 @@ MediaPlayer.prototype = {
 							)
 						)
 					) //}
-
-					.append( //{ First run
-						(this.first_run_container = this.D("MPFirstRunContainer"))
-						.append(
-							this.D("MPFirstRunLabel")
-							.html("Info")
-						)
-						.append(
-							this.D("MPFirstRunTextContainer")
-							.append(
-								"This player can play embedded sound files in images " +
-								"as well as Youtube videos. Scroll to the "
-							)
-							.append(
-								this.E("a", "MPFirstRunLink")
-								.attr("href", "#")
-								.html("bottom")
-							)
-							.on("click." + this.namespace, {media_player: this}, function (event) {
-								event.data.media_player.first_run_container.scrollTop(
-									(event.data.media_player.first_run_container[0].scrollHeight || 0)
-									- event.data.media_player.first_run_container.outerHeight()
-								);
-								return false;
-							})
-							.append(
-								" for a link to exit this page."
-							)
-						)
-						.append(
-							this.D("MPFirstRunLabel")
-							.html("Player")
-						)
-						.append(
-							this.D("MPFirstRunTextContainer")
-							.append(
-								this.D()
-								.css("padding-bottom", "0.5em")
-								.html("To move, click and drag on the title bar.")
-							)
-							.append(
-								this.D()
-								.css("padding-bottom", "0.5em")
-								.html("To resize, click and drag any edge.")
-							)
-							.append(
-								this.D()
-								.css("padding-bottom", "0.5em")
-								.html("To resize the image/video, click and drag it.")
-							)
-							.append(
-								this.D()
-								.html("There are additional (hidden) buttons on the right " +
-								"and left sides of the title bar.")
-							)
-						)
-						.append(
-							this.D("MPFirstRunLabel")
-							.html("Playlist")
-						)
-						.append(
-							this.D("MPFirstRunTextContainer")
-							.append(
-								this.D()
-								.css("padding-bottom", "0.5em")
-								.html(
-									"You can add media to the player by either " +
-									"clicking on inline media URLs/[tags], or " +
-									"clicking and dragging images/urls into the player " +
-									"from your browser or computer."
-								)
-							)
-							.append(
-								this.D()
-								.html(
-									"Once the media has been loaded, it will appear in " +
-									"the playlist. To remove, change order, or save the source, " +
-									"hover over the right side of the playlist item for controls."
-								)
-							)
-						)
-						.append(
-							this.D("MPFirstRunLabel")
-							.html("Customization")
-						)
-						.append(
-							this.D("MPFirstRunTextContainer")
-							.append(
-								this.D()
-								.css("padding-bottom", "0.5em")
-								.html(
-									"There are 3 settings tabs available for customizing the " +
-									"player. Access them by clicking [S] in the top left."
-								)
-							)
-							.append(
-								this.D()
-								.html(
-									"For simplicity, there are 4 preset stylesheets that you " +
-									"can switch between. If you edit the settings, it will be " +
-									"saved as a new custom stylesheet."
-								)
-							)
-						)
-						.append(
-							this.D("MPFirstRunLabel")
-							.html("Broken?")
-						)
-						.append(
-							this.D("MPFirstRunTextContainer")
-							.append(
-								this.D()
-								.css("padding-bottom", "0.5em")
-								.html(
-									"If you mess up some customization settings such that " +
-									"your player isn't properly useable anymore, close the player, " +
-									"then click the \"Reload\" link next to the [ Media Player ] " +
-									"link at the top of the page."
-								)
-							)
-							.append(
-								this.D()
-								.html(
-									"(By default this option is hidden; hover over the right bracket " +
-									"to make it appear.)"
-								)
-							)
-						)
-						.append(
-							this.D("MPFirstRunLabel")
-							.html("Done")
-						)
-						.append(
-							this.E("a", "MPFirstRunExitLink", "MPFirstRunLink")
-							.attr("href", "#")
-							.on("click." + this.namespace, {media_player: this}, this.on_firstrun_page_exit_click)
-							.html("Exit Page")
-						)
-					) //}
 				) //}
 				.append( //{ Footer
 					(this.footer_container = this.D("MPFooterBarContainer"))
@@ -4268,9 +4079,6 @@ MediaPlayer.prototype = {
 		}
 
 		// Final settings
-		if (!this.first_run) {
-			this.first_run_container.css("display", "none");
-		}
 		for (var i = 0; i < this.title_buttons.length; ++i) {
 			this.title_buttons[i].on("mousedown", this.cancel_event);
 			this.title_buttons[i].on("click." + this.namespace, {media_player: this, control_id: i}, this.on_main_control_click);
@@ -5262,7 +5070,7 @@ MediaPlayer.prototype = {
 			this.theatre_position.width = this.theatre_position.init_width = this.player_width * this.scale_factor;
 			this.theatre_position.image_height = this.theatre_position.init_image_height = this.image_height * this.scale_factor;
 			this.theatre_position.playlist_height = this.theatre_position.init_playlist_height = this.playlist_height * this.scale_factor;
-			this.theatre_position.playlist_height_target = this.playlist_height_default * this.scale_factor;
+			this.theatre_position.playlist_height_target = 0;//this.playlist_height_default * this.scale_factor;
 			this.theatre_position.image_height_target_offset = this.mp_container_main.outerHeight() - this.theatre_position.init_image_height - this.theatre_position.init_playlist_height;
 
 			// Animate
@@ -5479,7 +5287,6 @@ MediaPlayer.prototype = {
 		this.resizing_container = null;
 		this.resizing_controls = null;
 		this.resizing_texts = null;
-		this.first_run_container = null;
 		this.playlist_index_container = null;
 		this.playlist_index_text1 = null;
 		this.playlist_index_text2 = null;
@@ -5818,12 +5625,12 @@ MediaPlayer.prototype = {
 			this.ytvideo_player.setSize(this.video_container.outerWidth(), this.video_container.outerHeight());
 		}
 		else if (this.vimeovideo_player != null) {
-			this.vimeovideo_player.iframe
+			$(this.vimeovideo_player.iframe)
 			.attr("width", this.video_container.outerWidth())
 			.attr("height", this.video_container.outerHeight());
 		}
 		else if (this.soundcloud_player != null) {
-			this.soundcloud_player.iframe
+			$(this.soundcloud_player.iframe)
 			.attr("width", this.video_container.outerWidth())
 			.attr("height", this.video_container.outerHeight());
 		}
@@ -6304,22 +6111,7 @@ MediaPlayer.prototype = {
 		this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
 
 		// Play?
-		if (!this.first_run) {
-			if (
-				(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
-				(this.playlist_play_on_load == 2 &&
-					(this.current_media == null || (
-						this.current_media.index == this.playlist.length - 2 &&
-						this.current_media.position >= this.current_media.duration - 1.0 &&
-						this.is_paused()
-					))
-				) ||
-				(this.playlist_play_on_load == 3 && this.is_paused()) ||
-				(this.playlist_play_on_load == 4)
-			) {
-				this.start(this.playlist.length - 1);
-			}
-		}
+		this.on_media_add(playlist_item);
 
 		// Done
 		return playlist_item.index;
@@ -6452,22 +6244,7 @@ MediaPlayer.prototype = {
 		this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
 
 		// Play?
-		if (!this.first_run) {
-			if (
-				(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
-				(this.playlist_play_on_load == 2 &&
-					(this.current_media == null || (
-						this.current_media.index == this.playlist.length - 2 &&
-						this.current_media.position >= this.current_media.duration - 1.0 &&
-						this.is_paused()
-					))
-				) ||
-				(this.playlist_play_on_load == 3 && this.is_paused()) ||
-				(this.playlist_play_on_load == 4)
-			) {
-				this.start(this.playlist.length - 1);
-			}
-		}
+		this.on_media_add(playlist_item);
 
 		// Done
 		return playlist_item.index;
@@ -6600,22 +6377,7 @@ MediaPlayer.prototype = {
 		this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
 
 		// Play?
-		if (!this.first_run) {
-			if (
-				(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
-				(this.playlist_play_on_load == 2 &&
-					(this.current_media == null || (
-						this.current_media.index == this.playlist.length - 2 &&
-						this.current_media.position >= this.current_media.duration - 1.0 &&
-						this.is_paused()
-					))
-				) ||
-				(this.playlist_play_on_load == 3 && this.is_paused()) ||
-				(this.playlist_play_on_load == 4)
-			) {
-				this.start(this.playlist.length - 1);
-			}
-		}
+		this.on_media_add(playlist_item);
 
 		// Done
 		return playlist_item.index;
@@ -6741,22 +6503,7 @@ MediaPlayer.prototype = {
 		this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
 
 		// Play?
-		if (!this.first_run) {
-			if (
-				(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
-				(this.playlist_play_on_load == 2 &&
-					(this.current_media == null || (
-						this.current_media.index == this.playlist.length - 2 &&
-						this.current_media.position >= this.current_media.duration - 1.0 &&
-						this.is_paused()
-					))
-				) ||
-				(this.playlist_play_on_load == 3 && this.is_paused()) ||
-				(this.playlist_play_on_load == 4)
-			) {
-				this.start(this.playlist.length - 1);
-			}
-		}
+		this.on_media_add(playlist_item);
 
 		// Done
 		return playlist_item.index;
@@ -7136,6 +6883,23 @@ MediaPlayer.prototype = {
 		return fname;
 	},
 
+
+	on_media_add: function (playlist_item) {
+		if (
+			(this.playlist_play_on_load == 1 && this.playlist.length == 1) ||
+			(this.playlist_play_on_load == 2 &&
+				(this.current_media == null || (
+					this.current_media.index == this.playlist.length - 2 &&
+					this.current_media.position >= this.current_media.duration - 1.0 &&
+					this.is_paused()
+				))
+			) ||
+			(this.playlist_play_on_load == 3 && this.is_paused()) ||
+			(this.playlist_play_on_load == 4)
+		) {
+			this.start(playlist_item.index);
+		}
+	},
 	on_media_end: function () {
 		if (this.theatre_mode && this.theatre_vars.close_on_finish) {
 			this.theatre_exit();
@@ -7934,51 +7698,35 @@ MediaPlayer.prototype = {
 	},
 	on_main_control_click: function (event) {
 		switch (event.data.control_id) {
-			case 2:
-			{
-				if (!event.data.media_player.is_maximized()) {
-					event.data.media_player.maximize();
-				}
-				// Info
-				event.data.media_player.first_run_container.css("display", "");
-				for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-					event.data.media_player.help_container[i].css("display", "none");
-				}
-				event.data.media_player.downloads_container.css("display", "none");
-				event.data.media_player.first_run_container.scrollTop(0);
-			}
-			break;
 			case 0:
 			{
 				if (!event.data.media_player.is_maximized()) {
 					event.data.media_player.maximize();
 				}
 				// Options
-				if (event.data.media_player.first_run_container.css("display") == "none") {
-					var open = false;
+				var open = false;
+				for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
+					if (event.data.media_player.help_container[i].css("display") != "none") {
+						open = true;
+						break;
+					}
+				}
+				event.data.media_player.downloads_container.css("display", "none");
+				if (open) {
 					for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-						if (event.data.media_player.help_container[i].css("display") != "none") {
-							open = true;
-							break;
-						}
+						event.data.media_player.help_container[i].css("display", "none");
 					}
-					event.data.media_player.downloads_container.css("display", "none");
-					if (open) {
-						for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
-							event.data.media_player.help_container[i].css("display", "none");
-						}
-					}
-					else {
-						event.data.media_player.help_container[0].css("display", "");
-						// Bottom offset (so not to be obscured by the footer)
-						if (
-							event.data.media_player.help_container_footer[0] &&
-							event.data.media_player.help_container_inner1[0]
-						) {
-							event.data.media_player.help_container_inner1[0].css(
-								"bottom", (event.data.media_player.help_container_footer[0].height()) + "px"
-							);
-						}
+				}
+				else {
+					event.data.media_player.help_container[0].css("display", "");
+					// Bottom offset (so not to be obscured by the footer)
+					if (
+						event.data.media_player.help_container_footer[0] &&
+						event.data.media_player.help_container_inner1[0]
+					) {
+						event.data.media_player.help_container_inner1[0].css(
+							"bottom", (event.data.media_player.help_container_footer[0].height()) + "px"
+						);
 					}
 				}
 			}
@@ -7996,31 +7744,27 @@ MediaPlayer.prototype = {
 				event.data.media_player.downloads_container.css("display", open ? "" : "none");
 			}
 			break;
+			case 2:
+			{
+				if (event.data.media_player.is_in_theatre()) {
+					event.data.media_player.theatre_exit();
+				}
+				else {
+					event.data.media_player.theatre_enter({no_info: true});
+				}
+			}
+			break;
 			case 3:
 			{
-				if (event.data.media_player.first_run_container.css("display") == "none") {
-					if (event.data.media_player.is_in_theatre()) {
-						event.data.media_player.theatre_exit();
-					}
-					else {
-						event.data.media_player.theatre_enter({no_info: true});
-					}
+				if (event.data.media_player.is_maximized()) {
+					event.data.media_player.minimize();
+				}
+				else {
+					event.data.media_player.maximize();
 				}
 			}
 			break;
 			case 4:
-			{
-				if (event.data.media_player.first_run_container.css("display") == "none") {
-					if (event.data.media_player.is_maximized()) {
-						event.data.media_player.minimize();
-					}
-					else {
-						event.data.media_player.maximize();
-					}
-				}
-			}
-			break;
-			case 5:
 			{
 				// Close
 				event.data.media_player.destroy(true);
@@ -8032,15 +7776,6 @@ MediaPlayer.prototype = {
 		for (var i = 0; i < event.data.media_player.help_container.length; ++i) {
 			event.data.media_player.help_container[i].css("display", (event.data.help_page == i ? "" : "none"));
 		}
-	},
-	on_firstrun_page_exit_click: function (event) {
-		event.data.media_player.first_run_container.css("display", "none");
-		event.data.media_player.first_run = false;
-
-		// Callback
-		if (typeof(event.data.media_player.settings_callback) == "function") event.data.media_player.settings_callback(event.data.media_player);
-
-		return false;
 	},
 
 	on_playlist_item_click: function (event) {
@@ -9974,17 +9709,8 @@ function SettingsManager() {
 			E("a")
 			.addClass("MPMenuItem")
 			.attr("href", "#")
-			.html("Reload Player")
-			.on("click", {item:1}, function (event) {
-				return self.on_menu_item_click($(this), event);
-			})
-		)
-		.append(
-			E("a")
-			.addClass("MPMenuItem")
-			.attr("href", "#")
 			.html("Settings")
-			.on("click", {item:2}, function (event) {
+			.on("click", {item:1}, function (event) {
 				return self.on_menu_item_click($(this), event);
 			})
 		)
@@ -9994,6 +9720,15 @@ function SettingsManager() {
 			.attr("href", "http://dnsev.github.com/4cs/")
 			.attr("target", "_blank")
 			.html("Homepage")
+			.on("click", {item:2}, function (event) {
+				return self.on_menu_item_click($(this), event);
+			})
+		)
+		.append(
+			E("a")
+			.addClass("MPMenuItem")
+			.attr("href", "#")
+			.html("Help")
 			.on("click", {item:3}, function (event) {
 				return self.on_menu_item_click($(this), event);
 			})
@@ -10094,14 +9829,13 @@ SettingsManager.prototype = {
 			return false;
 			case 1:
 			{
-				media_player_manager.open_player(false);
-				script.settings_save();
+				this.settings_open();
 				this.menu_close();
 			}
 			return false;
-			case 2:
+			case 3:
 			{
-				this.settings_open();
+				inline_manager.display_info("help");
 				this.menu_close();
 			}
 			return false;
@@ -10301,9 +10035,15 @@ function InlineManager() {
 			".MPPopupClosed{display:none !important;}\n" +
 			".MPPopupContainerInner{position:relative;width:100%;height:100%;}\n" +
 			"div.MPPopupBox{display:block !important;position:absolute !important;left:25%;top:15%;right:25%;bottom:15%;border:0px !important;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);border-radius:6px !important;padding:0px !important;margin:0px !important;padding:4px !important;}\n" +
-			".MPPopupInfoContainer{width:100%;height:100%;overflow-x:hidden;overflow-y:auto;}\n" +
-			".MPPopupInfoContainer p{margin:0px !important;padding:0px !important;}\n" +
-			".MPPopupInfoContainer p + p{margin-top:4px !important;}\n"
+			".MPPopupInfoContainer{width:100%;height:100%;overflow-x:hidden;overflow-y:auto;line-height:normal !important;}\n" +
+			".MPPopupInfoContainer p{margin:0px 0px 0px 4px !important;padding:0px !important;}\n" +
+			".MPPopupInfoContainer p + p{margin-top:4px !important;}\n" +
+			".MPPopupInfoContainer p + p.MPPopupInfoLabel{margin-top:16px !important;}\n" +
+			".MPPopupInfoContainer ul{margin:0px 0px 0px 1.25em !important;padding:0px !important;}" +
+			".MPPopupInfoContainer li{margin:0px !important;padding:0px !important;line-height:normal !important;}" +
+			"p.MPPopupInfoLabel{font-weight:bold;margin-left:0px !important;}\n" +
+			"p.MPPopupInfoCentered{text-align:center;}\n" +
+			"p.MPPopupInfoBottom{margin-bottom:16px !important;}\n"
 		)
 	)
 	.append(
@@ -10347,6 +10087,7 @@ function InlineManager() {
 	if (around0[1]) s.after(T(around0[1]));
 
 	// Popups
+	this.popup_easy_close = true;
 	$("body").append( //{
 		(this.popup_container = E("div"))
 		.addClass("MPPopupContainerOuter MPPopupClosed")
@@ -10925,8 +10666,8 @@ InlineManager.prototype = {
 							.attr("href", "#")
 							.css("font-style", "italic")
 						);
-						var label = "And " + file_count + " more...";
-						var hide = "Hide " + file_count + " files";
+						var label = "And " + (file_count - 2) + " more...";
+						var hide = "Hide " + (file_count - 2) + " files";
 						post_data.sounds.about_list_container_toggler
 						.html(label)
 						.on(
@@ -11254,7 +10995,6 @@ InlineManager.prototype = {
 						if (status >= 0 && tv_activate) {
 							if (skip_to) {
 								// Skip to this one
-								tv_enable();
 								media_player_manager.media_player.start(status);
 							}
 							if (media_player_manager.media_player.playlist_current() == status) {
@@ -11637,12 +11377,220 @@ InlineManager.prototype = {
 		}
 	},
 
-	popup_close: function () {
-		this.popup_container.addClass("MPPopupClosed");
+	popup_close: function (forced) {
+		if (forced || this.popup_easy_close) {
+			this.popup_container.addClass("MPPopupClosed");
+		}
 	},
 	display_info: function (index, data) {
+		data = data || {};
+
+		var self = this;
 		this.popup_info_container.html("");
+		this.popup_easy_close = ("easy_close" in data ? data.easy_close : true);
 		switch (index) {
+			case "help":
+			{
+				this.popup_info_container
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Userscript Information")
+				)
+				.append(
+					E("p")
+					.html(
+						"4cs is able to play embedded sound files, Youtube videos, Vimeo videos, and Soundcloud media."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"Once you've closed this message once, it won't appear automatically again; " +
+						"it can be opened again from the [ Media Player ] link."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"The link to close this message is at the "
+					)
+					.append(
+						E("a")
+						.attr("href", "#")
+						.html("bottom")
+						.on("click", {}, function (event) {
+							if (event.which == 1) {
+								var c = $(this).parent().parent();
+								c.scrollTop((c[0].scrollHeight || 0) - c.outerHeight());
+								return false;
+							}
+							return true;
+						})
+					)
+					.append(".")
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Media Player")
+				)
+				.append(
+					E("p")
+					.html(
+						"The player itself can be moved around the screen and resized as desired."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"Clicking and dragging the title bar will move the player, and hovering " +
+						"near the edges of the player window will display the dragging handles for " +
+						"resizing."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"The image/video part can be resized by clicking and dragging on it as well."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"Finally, most of the controls of the player are hidden when not in use. Hover over the left and right side of the title-bar to view the options."
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Playlist")
+				)
+				.append(
+					E("p")
+					.html(
+						"Media can be added to the playlist in the following ways:<ul>" +
+						"<li>Clicking on inline [tags] to load any sounds in the corresponding image</li>" +
+						"<li>Clicking on any media links, denoted with an icon on the left side</li>" +
+						"<li>Clicking and dragging a sounds-image onto the player from your browser</li>" +
+						"<li>Clicking and dragging a sounds-image onto the player from your computer</li>" +
+						"<li>Clicking and dragging a URL onto the player</li>" +
+						"</ul>"
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"Once added to the playlist, there are several control buttons related to that specific media. " +
+						"Hover over the right side of the playlist item to view them; hover a button for info about what it does."
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Settings")
+				)
+				.append(
+					E("p")
+					.html(
+						"There are 2 main locations for settings:<ul>" +
+						"<li>The [ Media Player ] link in the navigation section, for global settings</li>" +
+						"<li>The [S] button in the player, for player-specific settings</li>" +
+						"</ul>"
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Customization")
+				)
+				.append(
+					E("p")
+					.html(
+						"The player's look can be customized on the player's 3 settings pages."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"For simplicity, it comes with 4 default styles that you can easily change between and modify."
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Broken?")
+				)
+				.append(
+					E("p")
+					.html(
+						"If you manage to break the player by messing with the settings, you can reset the player settings by "
+					)
+					.append(
+						E("a")
+						.attr("href", "#")
+						.html("clicking this link")
+						.on("click", {}, function (event) {
+							if (event.which == 1) {
+								// Regen
+								var keep_open = false;
+								if (media_player_manager.media_player !== null) {
+									media_player_manager.media_player.destructor();
+									keep_open = true;
+								}
+								media_player_manager.open_player(false);
+								script.settings_save();
+								if (!keep_open) {
+									media_player_manager.media_player.destructor();
+								}
+								return false;
+							}
+							return true;
+						})
+					)
+					.append(".")
+				)
+				.append(
+					E("p")
+					.html(
+						"If your player has issues playing, you can report a bug on the "
+					)
+					.append(
+						E("a")
+						.html("script's homepage")
+						.attr("href", "http://dnsev.github.com/4cs/")
+						.attr("target", "_blank")
+						.on("click", {}, function (event) {
+							event.stopPropagation();
+							return true;
+						})
+					)
+					.append(".")
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Done")
+				)
+				.append(
+					E("p")
+					.html(
+						"Now that you (presumably) understand what's going on, click the link below to close this message."
+					)
+				)
+				.append(
+					E("p")
+					.addClass("MPPopupInfoCentered MPPopupInfoBottom")
+					.html(
+						E("a")
+						.attr("href", "#")
+						.html("Close Message")
+						.on("click", {}, function (event) {
+							if (event.which == 1) {
+								self.popup_close(true);
+								script.settings["script"]["first_run"] = false;
+								script.settings_save();
+								return false;
+							}
+							return true;
+						})
+					)
+				);
+			}
+			break;
 			case "ajax error":
 			{
 				this.popup_info_container
@@ -11662,8 +11610,7 @@ InlineManager.prototype = {
 			break;
 		}
 		this.popup_container.removeClass("MPPopupClosed");
-//		alert(index+"\n"+data);
-//		console.log(data);
+		this.popup_info_container.scrollTop(0);
 	},
 };
 var inline_manager = null;
@@ -12399,7 +12346,8 @@ function Script() {
 			"update_found": false,
 			"update_version": "",
 			"current_version": "",
-			"update_message": ""
+			"update_message": "",
+			"first_run": true
 		},
 		"hotkeys": {}, // loaded elsewhere
 		"inline": {
@@ -12962,6 +12910,11 @@ $(document).ready(function () {
 
 	// Options
 	script.setup_options(inline_manager);
+
+	// First run
+	if (script.settings["script"]["first_run"]) {
+		inline_manager.display_info("help", {easy_close: false});
+	}
 
 	// Hack move the scope out of sandbox
 	window._unsafe_exec = function () {
