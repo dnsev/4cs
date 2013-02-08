@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.1
+// @version     2.1.1
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -5252,6 +5252,9 @@ MediaPlayer.prototype = {
 		if (!this.theatre_mode) {
 			this.theatre_mode = true;
 
+			// Maximize
+			if (!this.is_maximized()) this.maximize();
+
 			// Collect vars
 			this.theatre_position.right = this.theatre_position.init_right = this.position_offset[0];
 			this.theatre_position.bottom = this.theatre_position.init_bottom = this.position_offset[1];
@@ -7995,21 +7998,25 @@ MediaPlayer.prototype = {
 			break;
 			case 3:
 			{
-				if (event.data.media_player.is_in_theatre()) {
-					event.data.media_player.theatre_exit();
-				}
-				else {
-					event.data.media_player.theatre_enter({no_info: true});
+				if (event.data.media_player.first_run_container.css("display") == "none") {
+					if (event.data.media_player.is_in_theatre()) {
+						event.data.media_player.theatre_exit();
+					}
+					else {
+						event.data.media_player.theatre_enter({no_info: true});
+					}
 				}
 			}
 			break;
 			case 4:
 			{
-				if (event.data.media_player.is_maximized()) {
-					event.data.media_player.minimize();
-				}
-				else {
-					event.data.media_player.maximize();
+				if (event.data.media_player.first_run_container.css("display") == "none") {
+					if (event.data.media_player.is_maximized()) {
+						event.data.media_player.minimize();
+					}
+					else {
+						event.data.media_player.maximize();
+					}
 				}
 			}
 			break;
@@ -11250,7 +11257,7 @@ InlineManager.prototype = {
 								tv_enable();
 								media_player_manager.media_player.start(status);
 							}
-							else if (media_player_manager.media_player.playlist_current() == status) {
+							if (media_player_manager.media_player.playlist_current() == status) {
 								tv_enable();
 							}
 						}
