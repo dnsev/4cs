@@ -1,4 +1,8 @@
-﻿2.1.2
+﻿2.1.2.1
+- Made controls disappear after hovering for a short time in Theatre-View
+- Made player resizers not stay open after entering Theatre-View
+
+2.1.2
 - Changed the "about" info; doesn't appear in the tiny player anymore
 
 2.1.1
