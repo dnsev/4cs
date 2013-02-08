@@ -1,4 +1,7 @@
-﻿2.1.2.2
+﻿2.1.2.3
+- Using jQuery animations now; marginally smoother
+
+2.1.2.2
 - Google Chrome is terrible
 
 2.1.2.1
