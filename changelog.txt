@@ -1,4 +1,8 @@
-﻿2.1.3
+﻿2.1.3.1
+- Style changes
+- Batch downloading name changes
+
+2.1.3
 - Now using jQuery 1.9.1
 - Some display updates with sounds info
 - Added options for inline sound functionality disabling
