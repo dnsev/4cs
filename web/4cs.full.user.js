@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.1.3
+// @version     2.1.3.1
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -2830,7 +2830,9 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"display": "none !important"
 		},
 
-		".MPTheatreEnabled": {
+		".MPTheatreEnabled": {},
+		".MPTheatreEnabled .MPTitleBarContainer": {
+			"cursor": "default !important"
 		},
 		".MPTheatreDim": {
 			"position": "fixed",
@@ -6842,7 +6844,7 @@ MediaPlayer.prototype = {
 		var name = fn + ext;
 		for (var j = 0; j < files.length; ++j) {
 			if (name == files[j][0]) {
-				name = fn + " (" + (++n) + ")" + ext;
+				name = fn + (fn.length > 0 ? " " : "") + "(" + (++n) + ")" + ext;
 				j = -1;
 				continue;
 			}
@@ -8128,7 +8130,7 @@ MediaPlayer.prototype = {
 					var name = fn + ext;
 					for (var j = 0; j < files.length; ++j) {
 						if (name == files[j][0]) {
-							name = fn + " (" + (++n) + ")" + ext;
+							name = fn + (fn.length > 0 ? " " : "") + "(" + (++n) + ")" + ext;
 							j = -1;
 							continue;
 						}
