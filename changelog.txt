@@ -1,4 +1,10 @@
-﻿2.1.2.2
+﻿2.1.3
+- Now using jQuery 1.9.1
+- Some display updates with sounds info
+- Added options for inline sound functionality disabling
+- Updated how images display in the player (no longer any padding, scaling errors, and they remain centered)
+
+2.1.2.2
 - Reverted because it was more trouble than it's worth
 
 2.1.2.3
