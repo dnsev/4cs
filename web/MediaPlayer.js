@@ -481,7 +481,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 		},
 
 		".MPImageContainerMain": {
-			"padding": "{exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px 0px",
+			"padding": "0px !important",
 			"width": "100%",
 			"text-align": "center",
 			"position": "relative"
@@ -1352,8 +1352,6 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 	this.playlist_index_timer = null;
 
 	// Current
-	this.current_image_width = 0;
-	this.current_image_height = 0;
 	this.current_media = null;
 
 	// html elements
@@ -2643,8 +2641,7 @@ MediaPlayer.prototype = {
 					this.image.css("display", "none");
 					this.image.removeAttr("src");
 					this.no_image.css("display", "");
-					this.current_image_width = 0;
-					this.current_image_height = 0;
+					this.current_media.image_size = [0,0];
 
 					this.title.html(this.title_default);
 				}
@@ -3734,31 +3731,43 @@ MediaPlayer.prototype = {
 		this.update_image_scale();
 	},
 	update_image_scale: function () {
-		var xs = (this.image_container.outerWidth() / this.current_image_width);
-		var ys = (this.image_height * this.scale_factor / this.current_image_height);
-		if (ys < xs) xs = ys;
-		//if (xs > 1.0) xs = 1.0;
+		if (this.current_media !== null) {
+			if (this.current_media.type == "image-audio") {
+				var hh = this.image_container.outerHeight();
+				var xs = (this.image_container.outerWidth() / this.current_media.image_size[0]);
+				var ys = (hh / this.current_media.image_size[1]);
+				if (ys < xs) xs = ys;
 
-		ys = Math.floor(this.current_image_height * xs);
-		xs = Math.floor(this.current_image_width * xs);
+				ys = this.current_media.image_size[1] * xs;
+				xs = this.current_media.image_size[0] * xs;
 
-		// Scale
-		this.image.width(xs);
-		this.image.height(ys);
-
-		// Video
-		if (this.ytvideo_player != null && this.ytvideo_player.setSize) {
-			this.ytvideo_player.setSize(this.video_container.outerWidth(), this.video_container.outerHeight());
-		}
-		else if (this.vimeovideo_player != null) {
-			$(this.vimeovideo_player.iframe)
-			.attr("width", this.video_container.outerWidth())
-			.attr("height", this.video_container.outerHeight());
-		}
-		else if (this.soundcloud_player != null) {
-			$(this.soundcloud_player.iframe)
-			.attr("width", this.video_container.outerWidth())
-			.attr("height", this.video_container.outerHeight());
+				// Scale
+				this.image.width(xs);
+				this.image.height(ys);
+				this.image.css("margin-top", ((hh - ys) / 2) + "px");
+			}
+			else if (this.current_media.type == "youtube-video") {
+				if (this.ytvideo_player != null && this.ytvideo_player.setSize) {
+					this.ytvideo_player.setSize(this.video_container.outerWidth(), this.video_container.outerHeight());
+				}
+			}
+			else if (this.current_media.type == "vimeo-video") {
+				if (this.vimeovideo_player != null) {
+					$(this.vimeovideo_player.iframe)
+					.attr("width", this.video_container.outerWidth())
+					.attr("height", this.video_container.outerHeight());
+				}
+			}
+			else if (this.current_media.type == "soundcloud-sound") {
+				if (this.soundcloud_player != null) {
+					$(this.soundcloud_player.iframe)
+					.attr("width", this.video_container.outerWidth())
+					.attr("height", this.video_container.outerHeight());
+				}
+			}
+			else {
+				console.log(this.current_media.type);
+			}
 		}
 	},
 	resize_image_container: function (height) {
@@ -4110,6 +4119,7 @@ MediaPlayer.prototype = {
 			"image_blob": null,
 			"image_blob_url": null,
 			"image_name": ((playlist_data ? playlist_data.image_name : null) || url.split("/").pop()),
+			"image_size": [0, 0],
 			"audio_blob": null,
 			"audio_blob_url": null,
 			"mask_click_target": null,
@@ -5689,11 +5699,10 @@ MediaPlayer.prototype = {
 	},
 
 	on_image_load: function (event) {
-		var attr = $(this).attr("src");
-		if (typeof(attr) !== "undefined" && attr !== false) {
+		if ($(this).attr("src") && event.data.media_player.current_media != null) {
 			// Loaded; scale
-			event.data.media_player.current_image_width = this.width;
-			event.data.media_player.current_image_height = this.height;
+			event.data.media_player.current_media.image_size[0] = this.width;
+			event.data.media_player.current_media.image_size[1] = this.height;
 
 			event.data.media_player.update_image_scale();
 			$(this).css("display", "");

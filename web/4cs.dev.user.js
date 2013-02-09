@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        2.1.2.2
+// @version        2.1.3
 // @namespace      dnsev
 // @description    4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant          GM_xmlhttpRequest
@@ -1567,6 +1567,10 @@ function InlineManager() {
 		.html(
 			"a.MPNavLink,.MPNavSpan{}\n" +
 
+			".MPSoundsAbout{font-size:0.75em !important;line-height:normal !important;;margin:8px 0px 0px 0px !important;}\n" +
+			".MPSoundsAbout ol{margin:0px 0px 0px 2em !important;padding:0px !important;display:inline-block !important;}" +
+			".MPSoundsAbout li{margin:0px !important;padding:0px !important;line-height:normal !important;}" +
+
 			"a.MPLoadLink,a.MPLoadLink:visited{color: inherit;}\n" +
 			".MPImageSearchingTextContainer{}\n" +
 			".MPImageSearchingText{}\n" +
@@ -1687,7 +1691,7 @@ function InlineManager() {
 
 	// Load all
 	var threads = $(".thread");
-	if (threads.length > 0) {
+	if (threads.length > 0 && script.settings["inline"]["sound_thread_control"]) {
 		$(threads[0]).before(
 			E("div")
 			.append(T("[ "))
@@ -1766,7 +1770,7 @@ InlineManager.prototype = {
 			if (redo) {
 				// Re-replace
 				post_data_copy.post.find(".MPLoadLink").each(function (index) {
-					var tag_id = parseInt($(this).attr("_sp_tag_id"));
+					var tag_id = parseInt($(this).attr("mp_tag_id"));
 
 					$(this)
 					.html(post_data.sounds[tag_id])
@@ -1790,9 +1794,9 @@ InlineManager.prototype = {
 					"loaded": false,
 					"about_container": null,
 					"about_count_label": null,
+					"about_expand_label": null,
 					"about_list_container": null,
 					"about_list_container_inner": null,
-					"about_list_container_toggler": null,
 					"auto_check": {
 						"search_span": null,
 						"search_status": null
@@ -1800,7 +1804,8 @@ InlineManager.prototype = {
 				};
 
 				// Replace tags in post
-				var sounds_found = dom_replace(
+				var sounds_found = script.settings["inline"]["sound_tags_replace"] &&
+				dom_replace(
 					post_data.post,
 					function (tag, old_tags) { // check
 						var name = tag.prop("tagName");
@@ -1826,63 +1831,73 @@ InlineManager.prototype = {
 				);
 
 				// Sounds links
-				post_data.post.find(".MPLoadLink").each(function (index) {
-					var tag_id = post_data.sounds.post_tags.length;
-					post_data.sounds.post_tags.push($(this).html());
+				if (sounds_found) {
+					post_data.post.find(".MPLoadLink").each(function (index) {
+						var tag_id = post_data.sounds.post_tags.length;
+						post_data.sounds.post_tags.push($(this).html());
 
-					$(this)
-					.attr("href", "#")
-					.attr("_sp_tag_id", tag_id)
-					.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_sound_tag_click);
-				});
+						$(this)
+						.attr("href", "#")
+						.attr("mp_tag_id", tag_id)
+						.on("click", {"post_data": post_data, "tag_id": tag_id, "manager": self}, self.on_sound_tag_click);
+					});
+				}
 
 				// Load all
-				if (is_archive) {
-					var file_size_label = post_data.container.find(".post_file_controls").find("a");
-					file_size_label = $(file_size_label[0]);
-					file_size_label.before((post_data.sounds.load_all_link = E("a")).addClass("MPLoadAllLink btnr parent"));
+				if (script.settings["inline"]["sound_source"]) {
+					if (is_archive) {
+						var file_size_label = post_data.container.find(".post_file_controls").find("a");
+						file_size_label = $(file_size_label[0]);
+						file_size_label.before((post_data.sounds.load_all_link = E("a")).addClass("MPLoadAllLink btnr parent"));
+					}
+					else {
+						var file_size_label = post_data.container.find(".fileText");
+						file_size_label.after((post_data.sounds.load_all_link = E("a")).addClass("MPLoadAllLink"));
+						file_size_label.after(T(" "));
+					}
+					post_data.sounds.load_all_link
+					.attr("href", "#")
+					.html(post_data.sounds.load_all_text)
+					.on("click", {"post_data": post_data, "manager": self}, self.on_load_all_click)
+					.after(
+						(post_data.sounds.auto_check.search_span = E("span"))
+						.addClass("MPImageSearchingTextContainer")
+						.css("display", (sound_auto_checker.enabled ? "" :"none"))
+						.html("...")
+						.append(
+							(post_data.sounds.auto_check.search_status = E("span"))
+							.addClass("MPImageSearchingText")
+						)
+					);
 				}
-				else {
-					var file_size_label = post_data.container.find(".fileText");
-					file_size_label.after((post_data.sounds.load_all_link = E("a")).addClass("MPLoadAllLink"));
-					file_size_label.after(T(" "));
-				}
-				post_data.sounds.load_all_link
-				.attr("href", "#")
-				.html(post_data.sounds.load_all_text)
-				.on("click", {"post_data": post_data, "manager": self}, self.on_load_all_click);
 
 				// Status
 				post_data.post
 				.before(
 					(post_data.sounds.about_container = E("div"))
-					.css("font-size", "10px")
-					.css("padding-top", "10px")
+					.addClass("MPSoundsAbout")
 					.css("display", "none")
 					.append(
-						(post_data.sounds.about_count_label = E("div"))
+						E("div")
+						.append(
+							(post_data.sounds.about_count_label = E("span"))
+						)
+						.append(
+							(post_data.sounds.about_expand_label = E("span"))
+						)
 					)
 					.append(
 						(post_data.sounds.about_list_container = E("div"))
 					)
 				);
 
-				// DOM update
-				post_data.sounds.load_all_link
-				.after(
-					(post_data.sounds.auto_check.search_span = E("span"))
-					.addClass("MPImageSearchingTextContainer")
-					.css("display", (sound_auto_checker.enabled ? "" :"none"))
-					.html("...")
-					.append(
-						(post_data.sounds.auto_check.search_status = E("span"))
-						.addClass("MPImageSearchingText")
-					)
-				);
+
 
 				// Queue
-				sound_auto_loader.add_to_queue(post_data);
-				sound_auto_checker.add_to_queue(post_data);
+				if (script.settings["inline"]["sound_thread_control"]) {
+					sound_auto_loader.add_to_queue(post_data);
+					sound_auto_checker.add_to_queue(post_data);
+				}
 			}
 		}
 	},
@@ -2222,48 +2237,63 @@ InlineManager.prototype = {
 
 		// Create a list of sounds (and files)
 		var display_count = 0;
-		var container = post_data.sounds.about_list_container;
-		container.html("");
+		var container, container_outer;
+		post_data.sounds.about_list_container.html(
+			(container_outer = E("div"))
+			.append(
+				container = E("ol")
+			)
+		);
+		post_data.sounds.about_expand_label.html("");
 		for (var sound = true; ; sound = false) {
 			for (var i = 0; i < post_data.sounds.sound_names.length; ++i) {
 				var is_sound = (post_data.sounds.sound_names[i].split(".").pop().toLowerCase() == "ogg");
 				if (sound == is_sound) {
 					// Only display 2 without expansion
 					if (display_count++ == 2 && file_count > 3) {
-						container.append(
-							(container = post_data.sounds.about_list_container_inner = E("div"))
+						var label = "and " + (file_count - 2) + " more not displayed...";
+						var hide = "hide " + (file_count - 2) + " files";
+
+						// New list container
+						post_data.sounds.about_list_container.append(
+							(container_outer = E("div"))
+							.append(
+								(container = post_data.sounds.about_list_container_inner = E("ol"))
+								.attr("start", display_count.toString())
+							)
 							.css("display", "none")
-						)
+						);
+
+						// Toggler
+						post_data.sounds.about_expand_label
+						.append(T(", "))
 						.append(
-							(post_data.sounds.about_list_container_toggler = E("a"))
+							E("a")
 							.attr("href", "#")
 							.css("font-style", "italic")
-						);
-						var label = "And " + (file_count - 2) + " more...";
-						var hide = "Hide " + (file_count - 2) + " files";
-						post_data.sounds.about_list_container_toggler
-						.html(label)
-						.on(
-							"click", {"container": container, "label": label, "hide": hide}, function (event) {
-								if (container.css("display") == "none") {
-									container.css("display", "");
-									$(this).html(hide);
+							.html(label)
+							.on(
+								"click", {"container": container_outer, "label": label, "hide": hide}, function (event) {
+									if (event.data.container.css("display") == "none") {
+										event.data.container.css("display", "");
+										$(this).html(event.data.hide);
+									}
+									else {
+										event.data.container.css("display", "none");
+										$(this).html(event.data.label);
+									}
+									return false;
 								}
-								else {
-									container.css("display", "none");
-									$(this).html(label);
-								}
-								return false;
-							}
+							)
 						);
 					}
 
+					// Append to list
 					if (sound) {
-						if (is_sound) ++sound_count;
+						++sound_count;
 
 						container.append(
-							E("div")
-							.append(T("- "))
+							E("li")
 							.append(
 								E("a")
 								.attr("href", "#")
@@ -2275,8 +2305,7 @@ InlineManager.prototype = {
 					}
 					else {
 						container.append(
-							E("div")
-							.append(T("- "))
+							E("li")
 							.append(
 								E("span")
 								.addClass("MPLoadLinkTopFile")
@@ -2294,10 +2323,10 @@ InlineManager.prototype = {
 		// Found string
 		var str = "";
 		if (sound_count > 0) {
-			str += sound_count + " Sound" + (sound_count == 1 ? "" : "s") + " Found";
+			str += sound_count + " sound" + (sound_count == 1 ? "" : "s") + " found";
 		}
 		if (file_count > sound_count) {
-			str += (str.length == 0 ? "" : " / ") + file_count + " File" + (file_count == 1 ? "" : "s") + " Found";
+			str += (str.length == 0 ? "" : " of ") + file_count + " file" + (file_count == 1 ? "" : "s");
 		}
 
 		post_data.sounds.about_count_label.html(str);
@@ -2306,7 +2335,7 @@ InlineManager.prototype = {
 		// Change status
 		link = link || post_data.sounds.load_all_link;
 		var load_str = "loading";
-		link.html(load_str);
+		if (link) link.html(load_str);
 
 		// Load sound
 		var self = this;
@@ -2323,27 +2352,29 @@ InlineManager.prototype = {
 			},
 			function (event, data) {
 				var progress = Math.floor((event.loaded / event.total) * 100);
-				data.link.html(data.load_str + " (" + progress + ")");
+				if (data.link) data.link.html(data.load_str + " (" + progress + ")");
 			},
 			function (okay, data, response) {
-				data.link.html(data.post_data.sounds.load_all_text);
+				if (data.link) data.link.html(data.post_data.sounds.load_all_text);
 				if (!okay) {
-					data.link
-					.append(" (")
-					.append(
-						E("a")
-						.attr("href", "#")
-						.html("ajax&nbsp;error")
-						.on("click", function (event) {
-							if (event.which == 1) {
-								response.url = post_data.image_url;
-								inline_manager.display_info("ajax error", response);
-								return false;
-							}
-							return true;
-						})
-					)
-					.append(")");
+					if (data.link) {
+						data.link
+						.append(" (")
+						.append(
+							E("a")
+							.attr("href", "#")
+							.html("ajax&nbsp;error")
+							.on("click", function (event) {
+								if (event.which == 1) {
+									response.url = post_data.image_url;
+									inline_manager.display_info("ajax error", response);
+									return false;
+								}
+								return true;
+							})
+						)
+						.append(")");
+					}
 					if (typeof(done_callback) == "function") done_callback(false, data.post_data);
 				}
 			},
@@ -3925,9 +3956,15 @@ function Script() {
 		"hotkeys": {}, // loaded elsewhere
 		"inline": {
 			"highlight_color": "000000",
+
+			"sound_tags_replace": true,
+			"sound_thread_control": false,
+			"sound_source": true,
+
 			"url_replace": true,
 			"url_replace_smart": false,
 			"url_hijack": true,
+
 			"video_preview": true,
 			"video_preview_timeout": 0.5,
 			"video_preview_image_space": 240,
@@ -4186,6 +4223,42 @@ Script.prototype = {
 	setup_options: function (inline_manager) {
 		// Custom settings
 		var extra_options = [ //{
+			{
+				"section": "Sounds",
+				"update_value": function () { this.current = script.settings["inline"]["sound_tags_replace"]; },
+				"label": "Tag Replacing",
+				"description": "Replace [tags] in posts with links to load sounds",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["sound_tags_replace"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Sounds",
+				"update_value": function () { this.current = script.settings["inline"]["sound_source"]; },
+				"label": "Image Link",
+				"description": "Put the \"sounds\" link next to the attributes of images",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["sound_source"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Sounds",
+				"update_value": function () { this.current = script.settings["inline"]["sound_thread_control"]; },
+				"label": "Thread Control Links",
+				"description": "Put the sound thread management links at the top of the thread",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["sound_thread_control"] = value;
+					script.settings_save();
+				}
+			},
 			{
 				"section": "Link Replacement",
 				"update_value": function () { this.current = script.settings["inline"]["url_replace"]; },
