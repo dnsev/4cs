@@ -3139,8 +3139,12 @@ MediaPlayer.prototype = {
 
 		// On screen
 		this.reposition();
+		this.update_image_scale();
 	},
 	minimize: function () {
+		// Can't be in theatre mode
+		if (this.theatre_mode) return;
+
 		// Min/max
 		this.playlist_container.css("display", "none");
 		this.top_container.css("display", "none");
@@ -3167,18 +3171,24 @@ MediaPlayer.prototype = {
 		if (!this.theatre_mode) {
 			this.theatre_mode = true;
 
-			// Maximize
-			if (!this.is_maximized()) this.maximize();
-
 			// Collect vars
 			this.theatre_position.right = this.theatre_position.init_right = this.position_offset[0];
 			this.theatre_position.bottom = this.theatre_position.init_bottom = this.position_offset[1];
 
 			this.theatre_position.width = this.theatre_position.init_width = this.player_width * this.scale_factor;
-			this.theatre_position.image_height = this.theatre_position.init_image_height = this.image_height * this.scale_factor;
-			this.theatre_position.playlist_height = this.theatre_position.init_playlist_height = this.playlist_height * this.scale_factor;
+			this.theatre_position.image_height = this.image_height * this.scale_factor;
+			this.theatre_position.playlist_height = this.playlist_height * this.scale_factor;
 			this.theatre_position.playlist_height_target = 0;//this.playlist_height_default * this.scale_factor;
-			this.theatre_position.image_height_target_offset = this.mp_container_main.outerHeight() - this.theatre_position.init_image_height - this.theatre_position.init_playlist_height;
+			this.theatre_position.init_image_height = [ this.theatre_position.image_height , this.theatre_position.image_height ];
+			this.theatre_position.init_playlist_height = [ this.theatre_position.playlist_height , this.theatre_position.playlist_height ];
+
+			// Maximize
+			if (!this.is_maximized()) {
+				this.maximize();
+				this.theatre_position.init_image_height[0] = 0;
+				this.theatre_position.init_playlist_height[0] = 0;
+			}
+			this.theatre_position.image_height_target_offset = this.mp_container_main.outerHeight() - this.theatre_position.image_height - this.theatre_position.playlist_height;
 
 			// Animate
 			var self = this;
@@ -3195,6 +3205,7 @@ MediaPlayer.prototype = {
 					"background-color": ("dim_color" in params ? params.dim_color : this.theatre_dim_color)
 				})
 			);
+			this.theatre_reposition();
 
 			this.theatre_animation_timer = setInterval(function () {
 				self.theatre_animate();
@@ -3302,11 +3313,12 @@ MediaPlayer.prototype = {
 		if (percent === undefined) percent = this.theatre_animation_vars.percent;
 
 		// Calculate
+		var direction = (this.theatre_mode_target ? 0 : 1);
 		var off2 = this.theatre_animation_vars.offset * 2;
-		this.theatre_position.playlist_height = this.merge_values(this.theatre_position.init_playlist_height, this.theatre_position.playlist_height_target, percent);
+		this.theatre_position.playlist_height = this.merge_values(this.theatre_position.init_playlist_height[direction], this.theatre_position.playlist_height_target, percent);
 		var h_target = $(window).height() - off2 - this.theatre_position.image_height_target_offset - this.theatre_position.playlist_height;
 		if (h_target < 0) h_target = 0;
-		this.theatre_position.image_height = this.merge_values(this.theatre_position.init_image_height, h_target, percent)
+		this.theatre_position.image_height = this.merge_values(this.theatre_position.init_image_height[direction], h_target, percent)
 		this.theatre_position.width = this.merge_values(this.theatre_position.init_width, $(window).width() - off2, percent);
 		this.theatre_position.right = this.merge_values(this.theatre_position.init_right, this.theatre_animation_vars.offset, percent);
 		this.theatre_position.bottom = this.merge_values(this.theatre_position.init_bottom, this.theatre_animation_vars.offset, percent);
