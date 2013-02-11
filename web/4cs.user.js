@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.1.3.2
+// @version     2.1.3.4
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -5690,6 +5690,9 @@ MediaPlayer.prototype={
 	},
 	attempt_load:function(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
 		if(typeof(url_or_file)==typeof("")){
+			if(url_or_file.substr(0,5)=="file:"){
+				return;
+			}
 			if(this.url_get_youtube_video_id(url_or_file)){
 				this.attempt_load_youtube_video(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback);
 				return;
@@ -8922,88 +8925,90 @@ InlineManager.prototype={
 					var response_parse=null;
 					var inline_preview=true;
 					var media_cache_keys=null;
-					if((media_id=MediaPlayer.prototype.url_get_youtube_video_id(href))!==null){
-						media_type="youtube";
-						temp_prefix="Youtube: ";
-						icon_class="MPURLIconYoutube";
-						api_url="//gdata.youtube.com/feeds/api/videos/"+media_id;
-						response_parse=self.parse_response_youtube;
-						media_cache_keys=["title","duration"];
-					}
-					else if((media_id=MediaPlayer.prototype.url_get_vimeo_video_id(href))!==null){
-						media_type="vimeo";
-						temp_prefix="Vimeo: ";
-						icon_class="MPURLIconVimeo";
-						api_url="//vimeo.com/api/v2/video/"+media_id+".xml";
-						response_parse=self.parse_response_vimeo;
-						media_cache_keys=["title","duration"];
-					}
-					else if((media_id=MediaPlayer.prototype.url_get_soundcloud_info(href))!==null){
-						media_type="soundcloud";
-						temp_prefix="Soundcloud: ";
-						icon_class="MPURLIconSoundcloud";
-						api_url="//soundcloud.com/oembed?format=json&iframe=true&show_comments=false&show_artwork=false&show_user=false&show_playcount=false&sharing=false&download=false&liking=false&buying=false&url="+href;
-						response_parse=self.parse_response_soundcloud;
-						media_not_found="Sound not found";
-						inline_preview=false;
-						media_cache_keys=["title","embed_code"];
-					}
-					if(media_type!==null){
-						$(this)
-						.attr("mp_media_type",media_type)
-						.attr("mp_media_id",media_id)
-						.html(
-							$(document.createElement("div")).addClass("MPURLIcon "+icon_class)
-						)
-						.append(
-							E("span").addClass("MPIconedURLText").html(temp_prefix+media_id)
-						);
-						ajax_get(
-							api_url,
-							true,
-							{"link":$(this)},
-							null,
-							function(okay,data,response){
-								if(okay){
-									var results=self.parse_response_init();
-									response_parse(response,results);
-									var media_cache={};
-									for(var i=0;i<media_cache_keys.length;++i){
-										media_cache[media_cache_keys[i]]=results[media_cache_keys[i]];
-									}
-									data.link.find(".MPIconedURLText").html(results.title);
-									data.link
-									.attr("mp_media_cache",JSON.stringify(media_cache))
-									.off("click")
-									.on("click",{
-										"post_data":post_data,
-										"media_type":media_type,
-										"media_id":media_id,
-										"media_cache":media_cache,
-										"url":href
-									},self.on_url_click);
-									if(script.settings["inline"]["video_preview"]&&inline_preview){
-										results.start=/[\!\#\?\&]t=[0-9smh]+/.exec(href);
-										results.start=(results.start?MediaPlayer.prototype.youtube_time_to_number(results.start[0].substr(3,results.start[0].length-3)):0.0);
-										var hover_data={};
+					if(script.settings["inline"]["url_replace_media_links"]){
+						if((media_id=MediaPlayer.prototype.url_get_youtube_video_id(href))!==null){
+							media_type="youtube";
+							temp_prefix="Youtube: ";
+							icon_class="MPURLIconYoutube";
+							api_url="//gdata.youtube.com/feeds/api/videos/"+media_id;
+							response_parse=self.parse_response_youtube;
+							media_cache_keys=["title","duration"];
+						}
+						else if((media_id=MediaPlayer.prototype.url_get_vimeo_video_id(href))!==null){
+							media_type="vimeo";
+							temp_prefix="Vimeo: ";
+							icon_class="MPURLIconVimeo";
+							api_url="//vimeo.com/api/v2/video/"+media_id+".xml";
+							response_parse=self.parse_response_vimeo;
+							media_cache_keys=["title","duration"];
+						}
+						else if((media_id=MediaPlayer.prototype.url_get_soundcloud_info(href))!==null){
+							media_type="soundcloud";
+							temp_prefix="Soundcloud: ";
+							icon_class="MPURLIconSoundcloud";
+							api_url="//soundcloud.com/oembed?format=json&iframe=true&show_comments=false&show_artwork=false&show_user=false&show_playcount=false&sharing=false&download=false&liking=false&buying=false&url="+href;
+							response_parse=self.parse_response_soundcloud;
+							media_not_found="Sound not found";
+							inline_preview=false;
+							media_cache_keys=["title","embed_code"];
+						}
+						if(media_type!==null){
+							$(this)
+							.attr("mp_media_type",media_type)
+							.attr("mp_media_id",media_id)
+							.html(
+								$(document.createElement("div")).addClass("MPURLIcon "+icon_class)
+							)
+							.append(
+								E("span").addClass("MPIconedURLText").html(temp_prefix+media_id)
+							);
+							ajax_get(
+								api_url,
+								true,
+								{"link":$(this)},
+								null,
+								function(okay,data,response){
+									if(okay){
+										var results=self.parse_response_init();
+										response_parse(response,results);
+										var media_cache={};
+										for(var i=0;i<media_cache_keys.length;++i){
+											media_cache[media_cache_keys[i]]=results[media_cache_keys[i]];
+										}
+										data.link.find(".MPIconedURLText").html(results.title);
 										data.link
-										.after(
-											self.attributeify(
-												E("span").addClass("MPVideoInfo"),
-												results
+										.attr("mp_media_cache",JSON.stringify(media_cache))
+										.off("click")
+										.on("click",{
+											"post_data":post_data,
+											"media_type":media_type,
+											"media_id":media_id,
+											"media_cache":media_cache,
+											"url":href
+										},self.on_url_click);
+										if(script.settings["inline"]["video_preview"]&&inline_preview){
+											results.start=/[\!\#\?\&]t=[0-9smh]+/.exec(href);
+											results.start=(results.start?MediaPlayer.prototype.youtube_time_to_number(results.start[0].substr(3,results.start[0].length-3)):0.0);
+											var hover_data={};
+											data.link
+											.after(
+												self.attributeify(
+													E("span").addClass("MPVideoInfo"),
+													results
+												)
 											)
-										)
-										.on("mouseover",hover_data,self.on_video_url_mouseover)
-										.on("mouseout",hover_data,self.on_video_url_mouseout);
+											.on("mouseover",hover_data,self.on_video_url_mouseover)
+											.on("mouseout",hover_data,self.on_video_url_mouseout);
+										}
+									}
+									else{
+										data.link.find(".MPIconedURLText")
+										.addClass("MPIconedURLTextNotFound")
+										.html(temp_prefix+media_not_found);
 									}
 								}
-								else{
-									data.link.find(".MPIconedURLText")
-									.addClass("MPIconedURLTextNotFound")
-									.html(temp_prefix+media_not_found);
-								}
-							}
-						);
+							);
+						}
 					}
 					$(this)
 					.attr("href",href)
@@ -9440,8 +9445,9 @@ InlineManager.prototype={
 						}
 					}
 				);
+				return false;
 			}
-			return false;
+			return(script.settings["inline"]["url_left_click_open"]);
 		}
 		return true;
 	},
@@ -10599,6 +10605,8 @@ function Script(){
 			"url_replace":true,
 			"url_replace_smart":false,
 			"url_hijack":true,
+			"url_replace_media_links":true,
+			"url_left_click_open":false,
 			"video_preview":true,
 			"video_preview_timeout":0.5,
 			"video_preview_image_space":240,
@@ -10901,6 +10909,30 @@ Script.prototype={
 				"descr":["Enabled","Disabled"],
 				"change":function(value){
 					script.settings["inline"]["url_hijack"]=value;
+					script.settings_save();
+				}
+			},
+			{
+				"section":"Link Replacement",
+				"update_value":function(){this.current=script.settings["inline"]["url_replace_media_links"];},
+				"label":"Media URL Replacement",
+				"description":"Transforms media links into links that open in the player",
+				"values":[true,false],
+				"descr":["Enabled","Disabled"],
+				"change":function(value){
+					script.settings["inline"]["url_replace_media_links"]=value;
+					script.settings_save();
+				}
+			},
+			{
+				"section":"Link Replacement",
+				"update_value":function(){this.current=script.settings["inline"]["url_left_click_open"];},
+				"label":"Left Click Open",
+				"description":"Replaced links cannot be left clicked to open; middle click must be used",
+				"values":[true,false],
+				"descr":["Enabled","Disabled"],
+				"change":function(value){
+					script.settings["inline"]["url_left_click_open"]=value;
 					script.settings_save();
 				}
 			},

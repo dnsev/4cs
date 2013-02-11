@@ -4663,6 +4663,9 @@ MediaPlayer.prototype = {
 		// Attempt to load from remote URL or local file
 		if (typeof(url_or_file) == typeof("")) {
 			// Youtube loading
+			if (url_or_file.substr(0, 5) == "file:") {
+				return;
+			}
 			if (this.url_get_youtube_video_id(url_or_file)) {
 				this.attempt_load_youtube_video(url_or_file, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback);
 				return;
