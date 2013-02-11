@@ -1,4 +1,11 @@
-﻿2.1.3.2
+﻿2.1.3.4
+- Disallowed the media player to try and load drag-and-dropped "file:" urls
+- Added more settings for link replacement
+
+2.1.3.3
+- Why was there never one of these?
+
+2.1.3.2
 - Small changes to Theatre-View + minimization
 
 2.1.3.1
