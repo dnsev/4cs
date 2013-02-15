@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.1.4
+// @version     2.1.4.1
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -10532,7 +10532,7 @@ InlineManager.prototype = {
 							// API query
 							var callback_count = 0;
 							var callback_count_max = 3;
-							var callback_multiple_wait = 5000;
+							var callback_multiple_wait = 15000;
 							var ajax_call = null;
 							var callback = function (okay, data, response) {
 								if (okay) {
