@@ -1,4 +1,11 @@
-﻿2.1.3.4
+﻿2.1.4.1
+- Increased timer for 403s
+
+2.1.4
+- Video link icons are now spoilered properly
+- In threads with many Youtube links, ones which get 403'd due to too many requests have 2 retries to find the video
+
+2.1.3.4
 - Disallowed the media player to try and load drag-and-dropped "file:" urls
 - Added more settings for link replacement
 
