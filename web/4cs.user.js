@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.1.4.1
+// @version     2.1.5
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -8258,7 +8258,7 @@ function SettingsManager(){
 	.append(
 		E("style")
 		.html(
-			".MPMenu{display:block !important;position:absolute;left:0;top:0;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);z-index:10001;margin:0px !important;padding:2px !important;}\n"+
+			".MPMenu{display:block !important;position:absolute;left:0;top:0;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);z-index:10001;margin:0px !important;padding:2px !important;width:auto !important;height:auto !important;}\n"+
 			".MPMenuClosed{display:none !important;}\n"+
 			"a.MPMenuItem,a.MPMenuItem:link,a.MPMenuItem:visited{display:block !important;padding:2px !important;text-decoration:none !important;}"+
 			".MPMenuItem + .MPMenuItem{margin-top:1px;}\n"+
@@ -8291,7 +8291,7 @@ function SettingsManager(){
 	$("body").append(
 		(this.menu_list=E("div"))
 		.addClass("MPMenu MPMenuClosed MPHighlightShadow2px")
-		.addClass(is_archive?"post_wrapper":"reply")
+		.addClass(is_archive?"post_wrapper":"reply post")
 		.append(
 			E("a")
 			.addClass("MPMenuItem")
@@ -8362,7 +8362,7 @@ function SettingsManager(){
 			.append(
 				E("div")
 				.addClass("MPSettingsBox MPHighlightShadow2px")
-				.addClass(is_archive?"post_wrapper":"reply")
+				.addClass(is_archive?"post_wrapper":"reply post")
 				.on("click",{},function(event){
 					return false;
 				})
@@ -8624,6 +8624,9 @@ function InlineManager(){
 	}
 	else{
 		$("#navtopright,#navbotright").prepend("<span class=\"MPNavSpan\"></span>");
+		if($("style#layout,style#theme").length>0){
+			$("#boardNavDesktop.desktop").append(" <span class=\"MPNavSpan\"></span>");
+		}
 		around0=[""," "];
 		around1=["[","]"];
 	}
