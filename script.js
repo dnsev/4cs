@@ -212,7 +212,7 @@ PageBrowser.prototype = {
 				if (i == 0) nav_page = p[i];
 			}
 			else {
-				title = "";
+				title = "4chan Media Player";
 				nav_page = page = "install";
 			}
 		}
@@ -700,7 +700,7 @@ $(document).ready(function () {
 	get_change_log();
 
 	// Title
-	default_title = $("title").html();
+	default_title = "dnsev / 4cs";
 
 	// Page display
 	var hashchange = function (event) {
