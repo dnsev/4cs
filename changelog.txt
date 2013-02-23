@@ -1,4 +1,8 @@
-﻿2.1.5
+﻿2.1.6
+- Added some compatability with ihavenoface's 4chan x, with Youtube link replacement:
+  [embed] can be optionally retained while the link can be opened in the player
+
+2.1.5
 - Made [Media Player] appear when using appchan x
 - Style fixes for 4chan style script
 
