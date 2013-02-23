@@ -1,4 +1,7 @@
-﻿2.1.6
+﻿2.1.6.1
+- CSS fixes for some extension
+
+2.1.6
 - Added some compatability with ihavenoface's 4chan x, with Youtube link replacement:
   [embed] can be optionally retained while the link can be opened in the player
 
