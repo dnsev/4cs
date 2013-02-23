@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        2.1.5
+// @version        2.1.6
 // @namespace      dnsev
 // @description    4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant          GM_xmlhttpRequest
@@ -1566,6 +1566,7 @@ function InlineManager() {
 		E("style")
 		.html(
 			"a.MPNavLink,.MPNavSpan{}\n" +
+			".MPHidden{display:none !important;}\n" +
 
 			".MPSoundsAbout{font-size:0.75em !important;line-height:normal !important;;margin:8px 0px 0px 0px !important;}\n" +
 			".MPSoundsAbout ol{margin:0px 0px 0px 2em !important;padding:0px !important;display:inline-block !important;}" +
@@ -1939,6 +1940,31 @@ InlineManager.prototype = {
 					var href = html_to_text(string_remove_tags($(this).html()));
 					if (href == $(this).attr("href")) {
 						$(this).addClass("MPReplacedURL");
+						links_found = true;
+					}
+					else if ($(this).hasClass("youtubeTitle")) {
+						// Hijack from 4chan x
+						href = $(this).attr("href");
+
+						var embed_link = $(this).next();
+						$(this).before(
+							E("a")
+							.addClass("MPReplacedURL")
+							.attr("href", href)
+							.html(href)
+						);
+						if (script.settings["inline"]["url_hijack_remove"]) {
+							if (embed_link.hasClass("embed")) {
+								embed_link.remove();
+							}
+							$(this).remove();
+						}
+						else {
+							if (embed_link.hasClass("embed")) {
+								embed_link.css("vertical-align", "middle");
+							}
+							$(this).addClass("MPHidden");
+						}
 						links_found = true;
 					}
 				});
@@ -3987,6 +4013,7 @@ function Script() {
 			"url_replace": true,
 			"url_replace_smart": false,
 			"url_hijack": true,
+			"url_hijack_remove": false,
 			"url_replace_media_links": true,
 			"url_left_click_open": false,
 
@@ -4317,6 +4344,18 @@ Script.prototype = {
 				"descr": [ "Enabled" , "Disabled" ],
 				"change": function (value) {
 					script.settings["inline"]["url_hijack"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Link Replacement",
+				"update_value": function () { this.current = script.settings["inline"]["url_hijack_remove"]; },
+				"label": "Complete URL Hijacking",
+				"description": "Disabling this may leave certain useful features from the original embed, otherwise they are stripped",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["url_hijack_remove"] = value;
 					script.settings_save();
 				}
 			},
