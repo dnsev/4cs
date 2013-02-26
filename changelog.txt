@@ -1,4 +1,8 @@
-﻿2.1.6.1.1
+﻿2.1.6.1.2
+- span
+- Now the version is a palindrome
+
+2.1.6.1.1
 - CSS
 - This version number might be pushing it
 
