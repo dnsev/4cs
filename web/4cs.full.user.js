@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.1.6.1.1
+// @version     2.1.6.1.2
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -10194,7 +10194,7 @@ function InlineManager() {
 	var threads = $(".thread");
 	if (threads.length > 0 && script.settings["inline"]["sound_thread_control"]) {
 		$(threads[0]).before(
-			E("div")
+			E("span")
 			.addClass("MPThreadControls")
 			.append(T("[ "))
 			.append(
