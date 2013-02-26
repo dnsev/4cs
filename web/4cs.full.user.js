@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.1.6.1
+// @version     2.1.6.1.1
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -10062,6 +10062,8 @@ function InlineManager() {
 			"a.MPNavLink,.MPNavSpan{}\n" +
 			".MPHidden{display:none !important;}\n" +
 
+			".MPThreadControls{}\n" +
+
 			".MPSoundsAbout{font-size:0.75em !important;line-height:normal !important;;margin:8px 0px 0px 0px !important;}\n" +
 			".MPSoundsAbout ol{margin:0px 0px 0px 2em !important;padding:0px !important;display:inline-block !important;}" +
 			".MPSoundsAbout li{margin:0px !important;padding:0px !important;line-height:normal !important;}" +
@@ -10193,6 +10195,7 @@ function InlineManager() {
 	if (threads.length > 0 && script.settings["inline"]["sound_thread_control"]) {
 		$(threads[0]).before(
 			E("div")
+			.addClass("MPThreadControls")
 			.append(T("[ "))
 			.append(
 				(sound_auto_checker.link = E("a"))
