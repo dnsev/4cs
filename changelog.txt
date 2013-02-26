@@ -1,4 +1,8 @@
-﻿2.1.6.1
+﻿2.1.6.1.1
+- CSS
+- This version number might be pushing it
+
+2.1.6.1
 - CSS fixes for some extension
 
 2.1.6
