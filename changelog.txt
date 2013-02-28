@@ -1,4 +1,10 @@
-﻿3.0
+﻿3.0.1
+- Re-ordered some code
+- Made tag updating change the byte count
+- Made this script not ALWAYS block the other script
+- Possibly fixed the submit button disappearing problem
+
+3.0
 - Added an uploader
 - Added unicode filename support
 - Fixed an auto-update issue
