@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     2.1.6.1.2
+// @version     3.0
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -1925,11 +1925,12 @@ DataImageReader.prototype = {
 //   (it is preferrable to have sounds have an .ogg extension in this list)
 // sound_list structure:
 //   Array of data objects, formatted as such:
-//   [ { "title": ..., "flagged": ..., "index": ..., "data": ... } , ... ]
+//   [ { "title": ..., "flagged": ..., "index": ..., "data": ..., "position": ... } , ... ]
 //     title : the title of the song found within the file
 //   flagged : true if the load_tag didn't match the name; false otherwise
 //     index : the index of the sound in the file (0 = first, 1 = second, etc.)
 //      data : an Uint8Array of the sound (.ogg)
+//  position : the position inside the source (in bytes) (negative for not relevant)
 /////////////////////////////////////////////////////////////////////////////*/
 
 
@@ -8659,6 +8660,122 @@ function ajax_get(url, return_as_string, callback_data, progress_callback, done_
 		GM_xmlhttpRequest(arg);
 	}
 }
+function ajax(data) {
+	var on = data.on || {};
+
+	if (is_chrome() || data.force_xhr) {
+		// Create
+		var xhr = new XMLHttpRequest();
+
+		// Open
+		xhr.open(data.method || "GET", data.url, true);
+		if (data.cred) xhr.withCredentials = true;
+
+		// Return type
+		if (data.return_type == "arraybuffer") {
+			xhr.overrideMimeType("text/plain; charset=x-user-defined");
+			xhr.responseType = "arraybuffer";
+		}
+		else {
+			xhr.responseType = "text";
+		}
+
+		// Load
+		if (typeof(on.done) == "function") {
+			xhr.onload = function (event) {
+				if (this.status == 200) {
+					// Convert to array buffer
+					if (data.return_type == "arraybuffer") {
+						this.response = arraybuffer_to_uint8array(this.response);
+					}
+
+					// Good callback
+					on.done(true, data, this.response);
+				}
+				else {
+					// Bad callback
+					on.done(false, data, {
+						status: this.status,
+						response: this.response,
+						status_text: this.statusText
+					});
+				}
+			};
+		}
+
+		// Progress
+		if (typeof(on.progress) == "function") {
+			xhr.onprogress = function (event) {
+				on.progress(event, data);
+			};
+		}
+
+		// Error
+		if (typeof(on.error) == "function") {
+			xhr.onerror = function (event) {
+				on.error(event, data);
+			};
+		}
+
+		// Send
+		if (data.post_data) xhr.send(data.post_data);
+		else xhr.send();
+	}
+	else {
+		// Args
+		var arg = {
+			method: (data.method || "GET"),
+			url: data.url,
+		};
+
+		// Data
+		if (data.post_data) {
+			arg.data = data.post_data;
+		}
+
+		// Return type
+		if (data.return_type == "arraybuffer") {
+			arg.overrideMimeType = "text/plain; charset=x-user-defined";
+		}
+
+		// Load
+		if (typeof(on.done) == "function") {
+			arg.onload = function (event) {
+				if (event.status == 200) {
+					if (data.return_type == "arraybuffer") {
+						event.responseText = arraybuffer_to_uint8array(event.responseText);
+					}
+
+					on.done(true, data, event.responseText);
+				}
+				else {
+					on.done(false, data, {
+						status: event.status,
+						response: event.responseText,
+						status_text: event.statusText
+					});
+				}
+			};
+		}
+
+		// Progress
+		if (typeof(on.progress) == "function") {
+			arg.onprogress = function (event) {
+				on.progress(event, data);
+			};
+		}
+
+		// Error
+		if (typeof(on.error) == "function") {
+			arg.onerror = function (event) {
+				on.error(event, data);
+			};
+		}
+
+		// Send
+		GM_xmlhttpRequest(arg);
+	}
+}
 
 function xml_find_nodes_by_name(xml, name) {
 	// Because chrome is bad
@@ -8741,6 +8858,13 @@ function dom_replace(tag, check_callback, replace_callback) {
 
 	// Done
 	return found;
+}
+
+function decode_utf8(s) {
+	return decodeURIComponent(escape(s));
+}
+function encode_utf8(s) {
+	return unescape(encodeURIComponent(s));
 }
 
 
@@ -8855,7 +8979,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 							temp_tag += String.fromCharCode(raw_ui8_data[j] ^ tag_mask);
 						}
 						if (j < i) {
-							tag = temp_tag;
+							tag = decode_utf8(temp_tag);
 							tag_pos = tag_start;
 						}
 					}
@@ -8868,7 +8992,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 							temp_tag += String.fromCharCode(raw_ui8_data[j]);
 						}
 						if (j < i) {
-							tag = temp_tag;
+							tag = decode_utf8(temp_tag);
 							tag_pos = tag_start;
 						}
 					}
@@ -8894,6 +9018,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 					"title": tag,
 					"flagged": (load_tag != MediaPlayer.ALL_SOUNDS && load_tag.toLowerCase() != tag.toLowerCase()),
 					"index": sound_index,
+					"position": i,
 					"data": null
 				});
 				// Next
@@ -9167,6 +9292,7 @@ function image_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_
 						"title": tag,
 						"flagged": (load_tag != MediaPlayer.ALL_SOUNDS && load_tag.toLowerCase() != tag.toLowerCase()),
 						"index": sound_index,
+						"position": i,
 						"data": null
 					});
 					// Next
@@ -9514,6 +9640,7 @@ function png_load_callback_find_correct(r, load_tag) {
 					"title": filename,
 					"flagged": false,
 					"index": i,
+					"position": -1,
 					"data": r[1][i]
 				});
 				found = true;
@@ -9525,6 +9652,7 @@ function png_load_callback_find_correct(r, load_tag) {
 						"title": filename,
 						"flagged": false,
 						"index": i,
+						"position": -1,
 						"data": r[1][i]
 					});
 					found = true;
@@ -9544,6 +9672,7 @@ function png_load_callback_find_correct(r, load_tag) {
 				"title": earliest_name,
 				"flagged": true,
 				"index": earliest,
+				"position": -1,
 				"data": r[1][earliest]
 			});
 		}
@@ -9587,16 +9716,25 @@ function ThreadManager() {
 		try {
 			var mo = new MutationObserver(function (records) {
 				for (var i = 0; i < records.length; ++i) {
-					if (records[i].type == "childList" && records[i].addedNodes){
-						for (var j = 0; j < records[i].addedNodes.length; ++j) {
-							// Check
-							self.on_dom_mutation($(records[i].addedNodes[j]));
+					if (records[i].type == "childList") {
+						var nodes = records[i].addedNodes;
+						if (nodes){
+							for (var j = 0; j < nodes.length; ++j) {
+								// Check
+								self.on_dom_mutation_add($(nodes[j]));
+							}
+						}
+						if (records[i].removedNodes) {
+							for (var j = 0; j < nodes.length; ++j) {
+								// Check
+								self.on_dom_mutation_remove($(nodes[j]));
+							}
 						}
 					}
 				}
 			});
 			mo.observe(
-				$(is_archive ? "#main" : ".board")[0],
+				$("body")[0], // $(is_archive ? "#main" : ".board")[0],
 				{
 					"childList": true,
 					"subtree": true,
@@ -9611,18 +9749,28 @@ function ThreadManager() {
 	}
 	if (!MutationObserver) {
 		$($(is_archive ? "#main" : ".board")[0]).on("DOMNodeInserted", function (event) {
-			self.on_dom_mutation($(event.target));
+			self.on_dom_mutation_add($(event.target));
 			return true;
 		});
 	}
 }
 ThreadManager.prototype = {
 	constructor: ThreadManager,
-	on_dom_mutation: function (target) {
+	on_dom_mutation_add: function (target) {
 		// Updating
 		if (target.hasClass("postContainer") || target.hasClass("post")) {
 			this.parse_post(target);
 		}
+		else if (target.attr("id") == "qr" || target.attr("id") == "quickReply") {
+			inline_manager.uploader.append_controls(target);
+		}
+		else if (target.attr("id") == "soundsPanel") {
+			inline_manager.uploader.hide_other_panel(target);
+		}
+	},
+	on_dom_mutation_remove: function (target) {
+		// Updating
+		inline_manager.uploader.removal_check(target);
 	},
 	parse_post: function (container) {
 		// Get id
@@ -9733,7 +9881,7 @@ function SettingsManager() {
 			".MPSettingsContainerOuter{position:fixed;left:0;top:0;right:0;bottom:0;z-index:10001;background:rgba(0,0,0,0.25);}\n" +
 			".MPSettingsClosed{display:none !important;}\n" +
 			".MPSettingsContainerInner{position:relative;width:100%;height:100%;}\n" +
-			"div.MPSettingsBox{display:block !important;position:absolute !important;left:25%;top:15%;right:25%;bottom:15%;border:0px !important;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);border-radius:6px !important;padding:0px !important;margin:0px !important;overflow:hidden;}\n" +
+			"div.MPSettingsBox{display:block !important;position:absolute !important;left:25%;top:15%;right:25%;bottom:15%;border:0px !important;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);border-radius:6px !important;padding:0px !important;margin:0px !important;overflow:hidden;width:auto !important;}\n" +
 			"div.MPSettingsTitleContainer{position:relative;z-index:1;padding:4px !important;}\n" +
 			"div.MPSettingsTitle{position:relative;display:inline-block !important;font-size:2em !important;vertical-align:top !important;font-weight:bold;}\n" +
 			"div.MPSettingsTitleVersion{padding-left:4px !important;display:inline-block !important;vertical-align:top !important;font-style:italic;}\n" +
@@ -10051,6 +10199,1389 @@ SettingsManager.prototype = {
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// Uploader
+///////////////////////////////////////////////////////////////////////////////
+function InlineUploader() {
+	this.mode = "";
+	this.open = false;
+	this.auto_opened = false;
+	this.default_no_image_text = "no image selected";
+	this.max_size = parseInt($("input[name=MAX_FILE_SIZE]").val() || "") || 3145728;
+	this.observer = null;
+
+	if (script.settings["upload"]["enabled"]) {
+		// Inline notice (for plebeians)
+		var pf = $("#postForm");
+		if (pf.length > 0) {
+			$($(pf[0]).find("tbody").find(".rules")[0]).before(
+				E("tr")
+				.append(
+					E("td")
+					.html("Sounds")
+				)
+				.append(
+					E("td")
+					.html("Sound posting is only enabled in quick reply.<br />Get a real extension.")
+				)
+			);
+		}
+
+		if (script.settings["upload"]["block_other_scripts"]) {
+			pf.find(".soundsLinkDiv").remove();
+		}
+	}
+
+	this.mime_types = {
+		audio: ["audio/ogg", "video/ogg"],
+		image: ["image/jpeg", "image/png", "image/gif"]
+	};
+
+	// Post data
+	this.post_fields = {
+		"MAX_FILE_SIZE": {type:0, alt:[function (form, container) {
+			var p = $("*[name=MAX_FILE_SIZE]");
+			return (p.length > 0 ? p.val() : null);
+		}]},
+		"mode": {type:1, value:"regist"},
+		"resto": {type:0, missing:true, alt:[function (form, container) {
+			var t = container.find("select[title~=\"thread\"]");
+			return (t.length == 1 && t.val() != "new") ? t.val() : null;
+		},function (form, container) {
+			var p = $("*[name=resto]");
+			return (p.length > 0 ? p.val() : null);
+		}]},
+		"name": {type:0, alt:["name"]},
+		"email": {type:0, alt:["email"]},
+		"sub": {type:0, alt:["sub"]},
+		"com": {type:0, alt:["com"]},
+		"recaptcha_challenge_field": {type:0, alt:[function (form, container) {
+			var x = form.find(".captchaimg").find("img");
+			return (x.length > 0 ? x.attr("src").match(/\?c=([A-Za-z0-9\-_]*)/)[1] : null);
+			return null;
+		}]},
+		"recaptcha_response_field": {type:0, blank:false, blank_error:"Captcha missing", alt:[function (form, container) {
+			var c = form.find(".captchainput").find(".field");
+			return (c.length == 1 ? c.val() : null);
+		}]},
+		"upfile": {type:3, key:"file", missing:true},
+		"filetag": {type:0, alt:["filetag"], missing:true},
+		"spoiler": {type:2, alt:["spoiler"], value:"on", missing:true},
+		"pwd": {type:0, alt:[function (form, container) {
+			var p = document.cookie.match(/4chan_pass=([^;]+)/);
+			return (p ? decodeURIComponent(p[1]) : null);
+		},function (form, container) {
+			var p = $("input[name=pwd]");
+			return (p.length > 0 ? p.val() : null);
+		}]},
+	};
+
+	// Stylesheet
+	$("head")
+	.append( //{ Stylesheet
+		E("style")
+		.html(
+			".MPSoundUploaderSoundLabel{display:inline-block !important;}\n" +
+			"label:not([hidden]) + .MPSoundUploaderSoundLabel{margin:0px 0px 0px 8px !important;}\n" +
+			".MPSoundUploaderSoundLabel + label:not([hidden]) {margin:0px 0px 0px 8px !important;}\n" +
+			"span#qrSpoiler + .MPSoundUploaderSoundLabel{margin:0px 0px 0px 8px !important;}\n" +
+
+			".MPSoundUploaderSoundLabel input[type=checkbox]{vertical-align:middle !important;}\n" +
+
+			".MPSoundUploader{overflow:hidden;position:relative;}\n" +
+
+			".MPSoundUploaderSeparator{margin:4px 0px 0px 0px !important;}\n" +
+			".MPSoundUploaderHeader{text-align:center !important;}\n" +
+
+			".MPSoundUploaderFileSelectorContainer{display:block;overflow:hidden;height:0px !important;width:0px !important;opacity:0.0;}\n" +
+
+			".MPSoundUploaderSoundList{margin:0px !important;}\n" +
+			".MPSoundUploaderSoundList > div:not(.MPSoundUploaderSoundListNone) + div{margin-top:0.25em;}\n" +
+			".MPSoundUploaderSoundListNone{}\n" +
+			".MPSoundUploaderSoundListItem{margin-left:2em;position:relative;}\n" +
+			".MPSoundUploaderSoundListItem > input[type=text]{display:inline-block !important;margin-left:0px !important;width:100%;font-style:italic;}\n" +
+			".MPSoundUploaderSoundListItemCheck{position:absolute;left:-1.75em;top:0px;}\n" +
+			".MPSoundUploaderSoundListItem > .MPSoundUploaderSoundListItemCheck:not(:checked) + input[type=text]{text-decoration:line-through;}\n" +
+			"input[type=text].MPSoundUploaderSoundListItemBad{color:#d00 !important;text-decoration:line-through !important;}\n" +
+			".MPSoundUploaderSoundListItemTagName{font-style:normal !important;width:100% !important;}\n" +
+			".MPSoundUploaderSoundListItemOriginal .MPSoundUploaderSoundListItemTagName{font-weight:bold !important;}\n" +
+
+			".MPSoundUploaderSoundCounter{display:inline-block !important;margin-left:0.5em !important;font-weight:bold;}\n" +
+			".MPSoundUploaderSoundCounter > span{display:inline-block;}\n" +
+			".MPSoundUploaderSoundCounter > span + span{margin-left:0.25em;}\n" +
+
+			".MPSoundUploaderBytesAvailableContainer{display:inline-block !important;margin-left:0.5em !important;opacity:0.75;}\n" +
+			".MPSoundUploaderBytesAvailableContainer > span{display:inline-block;}\n" +
+			".MPSoundUploaderBytesAvailableContainer > span + span{margin-left:0.25em;}\n" +
+			".MPSoundUploaderBytesAvailable{font-weight:bold;font-style:italic;}\n" +
+			".MPSoundUploaderBytesAvailableLabel{font-style:italic;}\n" +
+
+			".MPSoundUploaderImageFilenameContainer{margin-left:2em;position:relative !important;}\n" +
+			".MPSoundUploaderImageFilename{display:inline-block !important;margin-left:0px !important;width:100% !important;}\n" +
+			".MPSoundUploaderImageFilenameNotSet{font-style:italic;cursor:pointer !important;}\n" +
+			"input[type=text].MPSoundUploaderImageFilenameBad{color:#d00 !important;text-decoration:line-through !important;}\n" +
+			".MPSoundUploaderImageFilenameContainer > input[type=checkbox]{position:absolute;left:-1.75em;top:0px;}\n" +
+
+			".MPSoundUploaderSoundFilename{cursor:pointer !important;width:100% !important;}\n" +
+
+			".MPSoundUploaderRelater{position:relative !important;width:100%;height:0px;}\n" +
+
+			".MPSoundUploaderSpacer{height:0.25em;width:100%;}\n" +
+
+			".MPSoundUploaderLinksContainer{margin:0.25em 0.25em 0px 0.25em !important;display:block;text-align:right !important;}\n" +
+			".MPSoundUploaderHelpLink{}\n" +
+
+			((script.settings["upload"]["block_other_scripts"]) ? (
+				"div.soundsLinkDiv{display:none !important}\n" +
+				"div#soundsPanel{display:none !important}\n"
+			) : "")
+		)
+	); //}
+
+	// Search
+	var qr = $("#qr");
+	if (qr.length > 0) this.append_controls(qr);
+	else if ((qr = $("#quickReply")).length > 0) this.append_controls(qr);
+}
+InlineUploader.prototype = {
+	constructor: InlineUploader,
+
+	nullify: function () {
+		this.observer.disconnect();
+		this.observer = null;
+	},
+
+	append_controls: function (target) {
+		if (!script.settings["upload"]["enabled"]) return;
+
+		// Type
+		var form = target.find("form");
+		if (target.attr("id") == "quickReply") this.mode = "inline";
+		else if (target.attr("id") == "qr") {
+			this.mode = "4chanx";
+			if (target.find("#qrtab.move").length > 0) this.mode = "appchanx";
+			else if (form.find("#spoilerLabel").find(".riceCheck").length > 0) this.mode += "+ss";
+		}
+
+		// Alias
+		var self = this;
+
+		// Hide others
+		if (script.settings["upload"]["block_other_scripts"]) form.find(".soundsLinkDiv").css("display", "none");
+
+		// Vars
+		this.auto_load_file = null;
+		this.reply_container = target;
+		this.reply_form = form;
+		this.form_file_select = form.find("input[type=file]");
+		this.form_submit_button = form.find("input[type=submit]");
+		this.form_submit_button_sub = null;
+		this.form_file_select_parent = this.form_file_select.parent();
+		var form_file_select_rice = null;
+
+		if (this.mode == "4chanx") {
+			var sp = form.find("#spoilerLabel");
+			sp.find("input[type=checkbox]").css("vertical-align", "middle"); // why devs
+			sp.after( //{ Sounds checkbox
+				E("label")
+				.addClass("MPSoundUploaderSoundLabel")
+				.append(
+					(this.enable_checkbox = E("input"))
+					.attr("type", "checkbox")
+				)
+				.append(
+					"Sounds"
+				)
+			); //}
+		}
+		else if (this.mode == "4chanx+ss") {
+			var sp = form.find("#spoilerLabel");
+			sp.after(
+				E("label")
+				.addClass("MPSoundUploaderSoundLabel")
+				.append(
+					(this.enable_checkbox = E("input"))
+					.attr("type", "checkbox")
+					.attr("hidden", "true")
+				)
+				.append("<div class=\"riceCheck\"></div>")
+				.append(
+					E("span")
+					.attr("vertical-align", "middle")
+					.html("Sounds")
+				)
+			);
+			sp.css({"position": "relative", "left": "0px", "top": "0px"});
+		}
+		else if (this.mode == "appchanx") {
+			form_file_select_rice = this.form_file_select_parent.find("#file");
+
+			var sp = form.find("#spoilerLabel");
+			var d;
+			sp.before(
+				(d = E("div"))
+				.css("text-align", "left")
+			);
+			d.append(sp);
+			sp.css("width", "auto");
+			sp.before(
+				E("label")
+				.addClass("MPSoundUploaderSoundLabel")
+				.append(
+					(this.enable_checkbox = E("input"))
+					.attr("type", "checkbox")
+					.attr("hidden", "true")
+				)
+				.append("<div class=\"rice\"></div>")
+				.append(
+					E("span")
+					.attr("vertical-align", "middle")
+					.html("Sounds")
+				)
+			);
+			sp.css({"position": "relative", "left": "0px", "top": "0px"});
+		}
+		else if (this.mode == "inline") {
+			var sp = form.find("#qrSpoiler");
+
+			sp.parent().after(sp); // move this
+			sp.nextAll("div:not([class]):not([id])").remove(); // remove the message put in the constructor
+
+			var spc = sp.find("label").contents();
+			$(spc[spc.length - 1]).after($(spc[spc.length - 1]).text().replace(/\]/, " ]")).remove(); // formatting
+			sp.find("input[type=checkbox]").css("vertical-align", "middle"); // why moot
+			sp.after(
+				E("label")
+				.addClass("MPSoundUploaderSoundLabel")
+				.append("[")
+				.append(
+					(this.enable_checkbox = E("input"))
+					.attr("type", "checkbox")
+				)
+				.append(
+					"Sounds ]"
+				)
+			);
+		}
+
+		this.enable_checkbox.on("click", {}, function (event) {
+			self.set_panel_state($(this).is(":checked"), null);
+		})
+
+		// Relation
+		if (this.mode == "4chanx" || this.mode == "appchanx") {
+			form.find(".captchainput").after(
+				(this.relater = E("div"))
+				.addClass("MPSoundUploaderRelater")
+				.append(
+					(this.form_submit_button_sub = E("div"))
+				)
+			);
+		}
+
+		// Controls
+		form.append(
+			(this.control_panel = E("div"))
+			.addClass("MPSoundUploader")
+			.css("display", "none")
+		);
+
+		// Separator
+		if (this.mode == "4chanx" || this.mode == "4chanx+ss") {
+			this.control_panel.append(
+				E("hr")
+				.addClass("abovePostForm MPSoundUploaderSeparator")
+			);
+		}
+		else if (this.mode == "inline") {
+			this.control_panel.append(
+				E("div")
+				.addClass("postblock MPSoundUploaderHeader")
+				.html("Sounds")
+			);
+		}
+
+		// New file select
+		this.control_panel
+		.append(
+			E("div")
+			.addClass("MPSoundUploaderFileSelectorContainer")
+			.append(
+				(this.form_file_select_file = E("input"))
+				.attr("type", "file")
+				.attr("max", (this.form_file_select.attr("max") || this.max_size.toString()))
+				.attr("accept", this.mime_types.image.join(", "))
+			)
+			.append(
+				(this.form_file_select_sound = E("input"))
+				.attr("type", "file")
+				.attr("max", (this.form_file_select.attr("max") || this.max_size.toString()))
+				.attr("accept", this.mime_types.audio.join(", ") + ", " + this.mime_types.image.join(", "))
+				.attr("multiple", "true")
+			)
+		);
+		// Old file select
+		this.form_file_select.on("change",  function (event) { self.on_file_change_old(event, $(this)); });
+
+		// More
+		this.sound_image = null;
+		this.sound_list_items = [];
+		this.control_panel //{
+		.append(
+			E("div").addClass("MPSoundUploaderSpacer")
+		)
+		.append( //{ Stats
+			E("div")
+			.html(
+				"Sounds:"
+			)
+			.append(
+				(this.sound_count_container = E("span"))
+				.addClass("MPSoundUploaderSoundCounter")
+				.attr("title", "0 sounds")
+				.append(
+					(this.sound_count = E("span"))
+					.html("0")
+				)
+				.append(
+					(this.sound_count_sep = E("span"))
+					.css("display", "none")
+					.html("+")
+				)
+				.append(
+					(this.sound_count_original = E("span"))
+					.css("display", "none")
+					.html("0")
+				)
+			)
+			.append(
+				E("span")
+				.addClass("MPSoundUploaderBytesAvailableContainer")
+				.append(
+					E("span")
+					.html("[")
+				)
+				.append(
+					(this.file_size_available = E("span"))
+					.addClass("MPSoundUploaderBytesAvailable")
+					.css("display", "none")
+					.html("?")
+				)
+				.append(
+					(this.file_size_available_sep = E("span"))
+					.css("display", "none")
+					.html("/")
+				)
+				.append(
+					(this.file_size_available_full = E("span"))
+					.addClass("MPSoundUploaderBytesAvailable")
+					.html("?")
+				)
+				.append(
+					E("span")
+					.addClass("MPSoundUploaderBytesAvailableLabel")
+					.html("available")
+				)
+				.append(
+					E("span")
+					.html("]")
+				)
+			)
+		) //}
+		.append(
+			E("div").addClass("MPSoundUploaderSpacer")
+		)
+		.append(
+			E("div")
+			.addClass("MPSoundUploaderImageFilenameContainer")
+			.append(
+				(this.sound_image_display = E("input"))
+				.attr("type", "text")
+				.addClass("MPSoundUploaderImageFilename MPSoundUploaderImageFilenameNotSet field")
+				.attr("readonly", "true")
+				.attr("value", this.default_no_image_text)
+				.on("click", {"obj": this.form_file_select_file}, function (event) {
+					event.data.obj.click();
+					$(this).blur();
+					return false;
+				})
+			)
+			.append(
+				(this.remove_sound_image = E("input"))
+				.attr("type", "checkbox")
+				.css("display", "none")
+				.on("change", {}, function (event) { return self.on_remove_image(event, $(this)); })
+			)
+		)
+		.append(
+			E("div").addClass("MPSoundUploaderSpacer")
+		)
+		.append(
+			(this.sound_list = E("div"))
+			.addClass("MPSoundUploaderSoundList")
+			.html(
+				(this.sound_list_none = E("div"))
+				.addClass("MPSoundUploaderSoundListItem MPSoundUploaderSoundListNone")
+				.append(
+					E("input")
+					.addClass("MPSoundUploaderSoundFilename field")
+					.attr("type", "text")
+					.attr("readonly", "true")
+					.attr("value", "add a new sound")
+					.on("click", {"obj": this.form_file_select_sound}, function (event) {
+						event.data.obj.click();
+						$(this).blur();
+						return false;
+					})
+				)
+			)
+		); //}
+
+		// Help
+		if (script.settings["upload"]["show_help"]) {
+			this.control_panel.append(
+				E("div")
+				.addClass("MPSoundUploaderLinksContainer")
+				.append("[ ")
+				.append(
+					E("a")
+					.attr("href", "#")
+					.html("Help")
+					.addClass("MPSoundUploaderHelpLink")
+					.on("click", function (event) {
+						if (event.which == 1) {
+							inline_manager.display_info("upload help");
+							return false;
+						}
+						return true;
+					})
+				)
+				.append(" ]")
+			);
+		}
+		this.control_panel.append(
+			E("div").addClass("MPSoundUploaderSpacer")
+		);
+
+		// Captcha reloading
+		form.find(".captchaimg .img,#qrCaptcha")
+		.on("load", {form: form}, function (event) {
+			var cv = event.data.form.find(".captchainput").find(".field");
+			if (cv.attr("placeholder_temp") !== undefined) {
+				cv
+				.attr("placeholder", cv.attr("placeholder_temp"))
+				.removeAttr("placeholder_temp")
+				.removeAttr("readonly");
+			}
+		});
+
+		// Events
+		this.form_file_select_file.on("change", {sound: false}, function (event) { self.on_file_change(event, $(this)); });
+		this.form_file_select_sound.on("change", {sound: true}, function (event) { self.on_file_change(event, $(this)); });
+
+		// Observer
+		var MutationObserver = (window.MutationObserver || window.WebKitMutationObserver);
+		if (MutationObserver) {
+			try {
+				this.observer = new MutationObserver(function (records) {
+					for (var i = 0; i < records.length; ++i) {
+						if (records[i].target.hidden) {
+							// Hidden
+							self.set_panel_state(false, {instant: true});
+						}
+					}
+				});
+				this.observer.observe(target[0], {"attributes": true});
+			}
+			catch (e) {
+				console.log(e);
+				this.observer = null;
+			}
+		}
+	},
+	set_panel_state: function (open, vars) {
+		if (open == this.open) return;
+		this.open = open;
+
+		if (this.enable_checkbox.is(":checked") != this.open) {
+			this.enable_checkbox.attr("checked", "checked");
+			if (this.enable_checkbox.is(":checked") != this.open) {
+				this.enable_checkbox.click();
+			}
+		}
+
+		var ani_speed = (vars && vars.instant ? 0 : script.settings["upload"]["animation_time"] * 1000);
+		var self = this;
+
+		if (open) {
+			// Open
+			this.auto_opened = (vars && vars.auto_opened) || false;
+			this.control_panel.css("display", "");
+			this.error("");
+
+			// Animate closed
+			var h = this.form_file_select_parent.height();
+			this.form_file_select_parent.attr("_mp_animate_height", h);
+			this.form_file_select_parent.css({
+				"height": this.form_file_select_parent.height() + "px",
+				"overflow": "hidden"
+			});
+			this.form_file_select_parent.stop(true).animate({
+				"height": 0
+			},{
+				duration: ani_speed,
+				complete: function () { $(this).css({"height": "0px", "display": "none"}); }
+			});
+
+			// Stuff
+			if (this.form_submit_button_sub == null) {
+				// Clone
+				this.form_submit_button.after(
+					(this.form_submit_button_clone = this.form_submit_button.clone())
+				);
+			}
+			else {
+				var o1 = this.relater.offset();
+				var o2 = this.form_submit_button.offset();
+				var s;
+				this.form_submit_button.after(s = E("div"));
+				this.form_submit_button_sub.replaceWith(
+					(this.form_submit_button_clone = this.form_submit_button.clone())
+					.css({
+						"position": "absolute",
+						"left": (o2.left - o1.left) + "px",
+						"top": (o2.top - o1.top) + "px",
+						"margin": "0px",
+						"padding": "0px",
+						"z-index": "1",
+						"width": this.form_submit_button.outerWidth() + "px",
+						"height": this.form_submit_button.outerHeight() + "px"
+					})
+				);
+				this.form_submit_button_sub = s;
+			}
+			this.form_submit_button.css("display", "none");
+			this.form_submit_button_clone.on("click", function (event) { return self.on_form_submit(event, $(this)); });
+
+			// Animate open
+			h = this.control_panel.height();
+			this.control_panel.css("height", "0px").stop(true).animate({
+				"height": h
+			},{
+				duration: ani_speed,
+				complete: function () {
+					$(this).css({"height": ""});
+					if (self.auto_load_file != null && (!vars || vars.auto_load !== false)) self.change_image(self.auto_load_file);
+				}
+			});
+		}
+		else {
+			// Animate open
+			this.form_file_select_parent.css("display", "").stop(true).animate({
+				"height": parseFloat(this.form_file_select_parent.attr("_mp_animate_height"))
+			},{
+				duration: ani_speed,
+				complete: function () { $(this).css("overflow", "").removeAttr("_mp_animate_height"); }
+			});
+
+			// Animate closed
+			this.control_panel.css("height", this.control_panel.height() + "px").stop(true).animate({
+				"height": 0.0
+			},{
+				duration: ani_speed,
+				complete: function () {
+					$(this).css({"height": "", "display": "none"});
+					// Stuff
+					if (self.form_submit_button_sub == null) {
+						self.form_submit_button_clone.remove();
+					}
+					else {
+						var s;
+						self.form_submit_button_clone.after(s = E("div"));
+						self.form_submit_button_clone.remove();
+						self.form_submit_button_sub.remove();
+						self.form_submit_button_sub = s;
+					}
+					self.form_submit_button.css("display", "");
+					// Reset
+					self.reset();
+				}
+			});
+		}
+	},
+
+	hide_other_panel: function (target) {
+		if (!script.settings["upload"]["enabled"]) return;
+
+		if (script.settings["upload"]["block_other_scripts"]) {
+			this.form_submit_button.removeAttr("disabled");
+
+			var self = this;
+			setTimeout(function () {
+				self.error("4cs has blocked another sound uploader");
+			}, 100);
+		}
+	},
+
+	on_file_change: function (event, obj) {
+		if (event.target.files) {
+			var files = [];
+			var e_files = [];
+			var image = null;
+			var errors = 0;
+
+			// Check
+			for (var i = 0; i < event.target.files.length; ++i) {
+				if (!event.data.sound && this.is_mime_type(event.target.files[i].type, "image")) {
+					image = event.target.files[i];
+				}
+				else if (event.data.sound) {
+					if (this.is_mime_type(event.target.files[i].type, "audio")) {
+						files.push(event.target.files[i]);
+					}
+					else if (this.is_mime_type(event.target.files[i].type, "image")) {
+						e_files.push(event.target.files[i]);
+					}
+				}
+				else {
+					++errors;
+				}
+			}
+
+			// Found any?
+			if (files.length > 0 || e_files.length > 0 || image != null) {
+				this.error("");
+
+				if (image != null) {
+					this.change_image(image);
+				}
+				if (files.length > 0) {
+					for (var i = 0; i < files.length; ++i) {
+						this.add_sound(files[i], false);
+					}
+				}
+				if (e_files.length > 0) {
+					for (var i = 0; i < e_files.length; ++i) {
+						this.add_sounds_from_image(e_files[i]);
+					}
+				}
+			}
+			else if (errors > 0) {
+				this.error("Bad file type");
+			}
+			obj.val("");
+		}
+	},
+	on_file_change_old: function (event, obj) {
+		if (event.target.files) {
+			// Check
+			if (event.target.files.length == 0) {
+				this.auto_load_file = null;
+			}
+			else {
+				this.auto_load_file = null;
+				for (var i = 0; i < event.target.files.length; ++i) {
+					if (this.is_mime_type(event.target.files[i].type, "image")) {
+						this.auto_load_file = event.target.files[i];
+						break;
+					}
+				}
+
+				// Auto-detection?
+				if (this.auto_load_file != null && script.settings["upload"]["autodetect_when_not_open"] && !this.open) {
+					var self = this;
+
+					var reader = new FileReader();
+					reader.onload = function (event) {
+						var data = {
+							source: new Uint8Array(event.target.result),
+							file_name: self.auto_load_file.name
+						};
+
+						self.image_check_callback(data, media_player_manager.callbacks, 0, function (data, files) {
+							// Sounds found: auto-open panel
+							self.set_panel_state(true, {auto_load: false, auto_opened: true});
+
+							// Find starting point and load
+							self.change_image(self.auto_load_file, {
+								source: data.source,
+								files: files
+							});
+						});
+					};
+					reader.readAsArrayBuffer(this.auto_load_file);
+				}
+			}
+		}
+		else {
+			this.auto_load_file = null;
+		}
+	},
+
+	change_image: function (file, ext_data) {
+		var self = this;
+
+		this.sound_image = {
+			file_name: file.name,
+			source: null,
+			size: -1,
+			truncate_to: -1,
+			mime_type: file.type,
+		};
+
+		this.sound_image_display.val(this.sound_image.file_name);
+
+		this.sound_image_display
+		.removeClass("MPSoundUploaderImageFilenameBad")
+		.removeClass("MPSoundUploaderImageFilenameNotSet");
+
+		// Checkbox
+		this.remove_sound_image
+		.css("display", "")
+		.attr("checked", "checked");
+		if (!this.remove_sound_image.is(":checked")) this.remove_sound_image.click();
+
+		// Parse callback
+		var files_callback = function (data, files) {
+			// Find starting point and load
+			for (var i = 0; i < files.length; ++i) {
+				if (data.truncate_to < 0 || files[i].position < data.truncate_to) {
+					data.truncate_to = files[i].position;
+				}
+				self.add_sound(files[i], true);
+			}
+		};
+
+		if (ext_data) {
+			// This skips the validation
+			this.sound_image.source = ext_data.source;
+			this.sound_image.size = this.sound_image.source.length;
+
+			files_callback(this.sound_image, ext_data.files);
+			return;
+		}
+
+		// Image complete function
+		var img_good = function () {
+			// Update
+			self.update_sound_count();
+
+			// Check for stuff
+			self.image_check_callback(self.sound_image, media_player_manager.callbacks, 0, files_callback);
+		};
+
+		// Read the file source
+		var reader = new FileReader();
+		reader.onload = function (event) {
+			self.sound_image.source = new Uint8Array(event.target.result);
+			self.sound_image.size = self.sound_image.source.length;
+
+			self.sound_image_display.attr("title", self.bytes_to_size(self.sound_image.size) + " (" + InlineManager.prototype.commaify_number(self.sound_image.size) + " byte" + (self.sound_image.size == 1 ? "" : "s") + ")");
+
+			if (script.settings["upload"]["validate_files"]) {
+				var blob_url = (window.webkitURL || window.URL).createObjectURL(new Blob([self.sound_image.source], {type: self.sound_image.mime_type}));
+
+				// Validation image
+				var img = new Image();
+				img.onload = function() {
+					(window.webkitURL || window.URL).revokeObjectURL(blob_url);
+					img_good();
+				};
+				img.onerror = function() {
+					(window.webkitURL || window.URL).revokeObjectURL(blob_url);
+					self.on_bad_image();
+				}
+				img.src = blob_url;
+			}
+			else {
+				img_good();
+			}
+		};
+		reader.readAsArrayBuffer(file);
+	},
+	add_sound: function (file, original, pseudo_original) {
+		var self = this;
+		var file_tag = (original ? file.title : file.name).replace(/.og[ga]$/i, "");
+
+		// Data
+		var data = {
+			file_name: file.name,
+			is_original: original,
+			source: null,
+			size: -1,
+		};
+
+		var maxlen = 98;
+		(data.item = E("div"))
+		.html(
+			E("div")
+			.addClass("MPSoundUploaderSoundListItem")
+			.append(
+				(data.checkbox = E("input"))
+				.addClass("MPSoundUploaderSoundListItemCheck")
+				.attr("type", "checkbox")
+				.attr("checked", "checked")
+				.on("change", {data: data}, function (event) { return self.on_sound_checkbox(event, $(this)); })
+			)
+			.append(
+				(data.tag_name = E("input"))
+				.addClass("field MPSoundUploaderSoundListItemTagName")
+				.attr("type", "text")
+				.attr("maxlength", maxlen.toString())
+				.val(file_tag)
+				.on("change", function () {
+					var v = $(this).val().replace(/\[/g, "").replace(/\]/g, "");
+					if (v.length > maxlen) v = v.substr(0, maxlen);
+					while (v.length > 0 && encode_utf8(v).length > maxlen) v = v.substr(0, v.length - 1); // uft8 safe
+					$(this).val(v);
+				})
+			)
+		);
+
+		if (data.is_original && !pseudo_original) {
+			this.sound_list.prepend(data.item);
+			data.item.addClass("MPSoundUploaderSoundListItemOriginal");
+		}
+		else {
+			this.sound_list_none.before(data.item);
+		}
+
+		// Add to list
+		this.sound_list_items.push(data);
+		this.update_sound_count();
+
+		// Done callback
+		var sound_good = function () {
+			// Update
+			self.update_sound_count();
+		};
+		// Validate callback
+		var validate = function () {
+			data.item.attr("title", self.bytes_to_size(data.size) + " (" + InlineManager.prototype.commaify_number(data.size) + " byte" + (data.size == 1 ? "" : "s") + ")");
+
+			if (script.settings["upload"]["validate_files"]) {
+				var blob_url = (window.webkitURL || window.URL).createObjectURL(new Blob([data.source], {type: "audio/ogg"}));
+
+				// Validation sound
+				var audio;
+				$("body").append(
+					(audio = E("audio"))
+					.css("display", "none")
+					.on("durationchange", function() {
+						(window.webkitURL || window.URL).revokeObjectURL(blob_url);
+						$(this).remove();
+						sound_good();
+					})
+					.on("error", function() {
+						(window.webkitURL || window.URL).revokeObjectURL(blob_url);
+						$(this).remove();
+						self.on_bad_sound(data);
+					})
+				);
+				audio.attr("src", blob_url);
+			}
+			else {
+				sound_good();
+			}
+		};
+
+		// Read the file source
+		if (data.is_original) {
+			data.source = file.data;
+			data.size = data.source.length;
+			validate();
+
+			if (pseudo_original) data.is_original = false;
+		}
+		else {
+			var reader = new FileReader();
+			reader.onload = function (event) {
+				data.source = new Uint8Array(event.target.result);
+				data.size = data.source.length;
+				validate();
+			};
+			reader.readAsArrayBuffer(file);
+		}
+	},
+	add_sounds_from_image: function (file) {
+		// Read the file source
+		var self = this;
+
+		var reader = new FileReader();
+		reader.onload = function (event) {
+			var data = {
+				source: new Uint8Array(event.target.result),
+				file_name: file.name
+			};
+
+			self.image_check_callback(data, media_player_manager.callbacks, 0, function (data, files) {
+				// Find starting point and load
+				for (var i = 0; i < files.length; ++i) {
+					self.add_sound(files[i], true, true);
+				}
+			});
+		};
+		reader.readAsArrayBuffer(file);
+	},
+
+	image_check_callback: function (data, callbacks, index, found_callback) {
+		if (index >= callbacks.length) {
+			return;
+		}
+
+		var self = this;
+
+		callbacks[index](data.file_name, MediaPlayer.ALL_SOUNDS, data.source, function (files) {
+			if (files == null) {
+				self.image_check_callback(data, callbacks, index + 1, found_callback);
+			}
+			else {
+				if (files[1] != null) {
+					// Done
+					found_callback(data, files[1]);
+				}
+			}
+		});
+	},
+
+	reset: function () {
+		for (var i = 0; i < this.sound_list_items.length; ++i) {
+			this.sound_list_items[i].item.remove();
+		}
+		this.sound_list_items = [];
+
+		this.remove_image();
+	},
+
+	on_bad_image: function () {
+		this.sound_image_display.addClass("MPSoundUploaderImageFilenameBad");
+
+		this.error("Bad image format");
+	},
+	on_bad_sound: function (sound_data) {
+		sound_data.tag_name.addClass("MPSoundUploaderSoundListItemBad");
+	},
+
+	on_form_submit: function (event, obj) {
+		return (this.submit() || false);
+	},
+
+	on_sound_checkbox: function (event, obj) {
+		if (!obj.is(":checked")) {
+			// Remove
+			var i;
+			for (i = 0; i < this.sound_list_items.length; ++i) {
+				if (event.data.data == this.sound_list_items[i]) {
+					if (!this.sound_list_items[i].is_original) {
+						event.data.data.item.remove();
+						this.sound_list_items.splice(i, 1);
+					}
+					break;
+				}
+			}
+		}
+		this.update_sound_count();
+	},
+	on_remove_image: function (event, obj) {
+		if (!obj.is(":checked")) {
+			this.remove_image();
+		}
+	},
+
+	remove_image: function () {
+		if (this.sound_image == null) return;
+
+		this.sound_image_display
+		.removeClass("MPSoundUploaderImageFilenameBad")
+		.addClass("MPSoundUploaderImageFilenameNotSet")
+		.removeAttr("title")
+		.val(this.default_no_image_text);
+
+		this.remove_sound_image.removeAttr("checked")
+		.css("display", "none");
+
+		for (var i = 0; i < this.sound_list_items.length; ++i) {
+			this.sound_list_items[i].is_original = false;
+			this.sound_list_items[i].item.removeClass("MPSoundUploaderSoundListItemOriginal");
+		}
+
+		this.sound_image = null;
+		this.update_sound_count();
+	},
+	removal_check: function (target) {
+		if (this.control_panel && $.contains(target, this.control_panel)) {
+			this.set_panel_state(false, {instant: true});
+			this.nullify();
+		}
+	},
+
+	update_sound_count: function () {
+		var count = 0;
+		var ocount = 0;
+		var bytes = 0;
+		var full_size = (this.sound_image ? (this.sound_image.truncate_to >= 0 ? this.sound_image.truncate_to : this.sound_image.size) : -1);
+
+		// Count
+		var ret = true;
+		for (var b = 0; b == 0 || b == 2; ) {
+			++b;
+
+			// Check
+			for (var i = 0; i < this.sound_list_items.length; ++i) {
+				if (this.sound_list_items[i].checkbox.is(":checked") && !this.sound_list_items[i].tag_name.hasClass("MPSoundUploaderSoundListItemBad") && this.sound_list_items[i].size >= 0) {
+					if (this.sound_list_items[i].is_original) ++ocount;
+					else ++count;
+					bytes += this.sound_list_items[i].size + encode_utf8(this.sound_list_items[i].tag_name.val()).length + 2;
+				}
+			}
+
+			// Validate
+			if ((this.max_size - full_size) - bytes < 0) {
+				ret = (ocount + count == 1);
+				for (var i = 0; i < this.sound_list_items.length; ++i) {
+					if (this.sound_list_items[i].checkbox.is(":checked")) {
+						this.sound_list_items[i].checkbox.removeAttr("checked");
+						if (this.sound_list_items[i].checkbox.is(":checked")) {
+							this.sound_list_items[i].checkbox.click();
+						}
+					}
+				}
+				b = 2;
+				count = 0;
+				ocount = 0;
+				bytes = 0;
+			}
+		}
+
+		// Count
+		this.sound_count.html(count.toString());
+		if (ocount > 0) {
+			this.sound_count_sep.css("display", "");
+			this.sound_count_original.html(ocount.toString()).css("display", "");
+			this.sound_count_container.attr("title", (count + ocount) + " sound" + ((count + ocount) == 1 ? "" : "s") + " total; " + ocount + " embedded in the current image");
+		}
+		else {
+			this.sound_count_container.attr("title", count + " sound" + (count == 1 ? "" : "s"));
+			this.sound_count_sep.css("display", "none");
+			this.sound_count_original.css("display", "none");
+		}
+
+		// Bytes
+		if (full_size < 0) {
+			this.file_size_available_full.html("?");
+			this.file_size_available_sep.css("display", "none");
+			this.file_size_available.css("display", "none");
+		}
+		else if (bytes == 0) {
+			this.file_size_available_full.html(this.bytes_to_size(this.max_size - full_size));
+			this.file_size_available_sep.css("display", "none");
+			this.file_size_available.css("display", "none");
+		}
+		else {
+			this.file_size_available_full.html(this.bytes_to_size(this.max_size - full_size));
+			this.file_size_available_sep.css("display", "");
+			this.file_size_available.html(this.bytes_to_size(Math.max(0, (this.max_size - full_size) - bytes))).css("display", "");
+		}
+
+		return ret;
+	},
+	bytes_to_size: function (b) {
+		if (b < 1000) return b + "B";
+		b = Math.round(b / 102.4) / 10;
+		if (b < 1000) return b + "KB";
+		b = Math.round(b / 102.4) / 10;
+		return b + "MB";
+	},
+
+	submit: function () {
+		var f_data = {file: null, file_name: null};
+		var self = this;
+
+		// Image
+		if (this.sound_image != null) {
+			// 0: Get blob size
+			var image_size = (this.sound_image.truncate_to >= 0 ? this.sound_image.truncate_to : this.sound_image.size);
+			var array_size = image_size;
+			var sounds = [];
+			for (var i = 0; i < this.sound_list_items.length; ++i) {
+				if (this.sound_list_items[i].checkbox.is(":checked") && !this.sound_list_items[i].tag_name.hasClass("MPSoundUploaderSoundListItemBad") && this.sound_list_items[i].size >= 0) {
+					array_size += this.sound_list_items[i].size + encode_utf8(this.sound_list_items[i].tag_name.val()).length + 2;
+					sounds.push(this.sound_list_items[i]);
+				}
+			}
+
+			// 1: Create the array
+			var array = new Uint8Array(new ArrayBuffer(array_size));
+
+			// 2: Copy image
+			var pos = 0;
+			array.set(this.sound_image.source.subarray(0, image_size), pos);
+			pos += image_size;
+
+			// 3: Hash the image
+			var unmask_state = 0, mask;
+			for (var i = 0; i < pos; ++i) {
+				unmask_state = (1664525 * unmask_state + 1013904223) & 0xFFFFFFFF;
+				mask = unmask_state >>> 24;
+				unmask_state += (array[i] ^ mask);
+			}
+
+			// 4: Add the sounds
+			var data, ch;
+			for (var s = 0; s < sounds.length; ++s) {
+				// Encode the key
+				data = string_to_uint8array("[" + encode_utf8(sounds[s].tag_name.val()) + "]");
+				for (var key = true; true; key = false) {
+					// Encode
+					for (var i = 0; i < data.length; ++i) {
+						unmask_state = (1664525 * unmask_state + 1013904223) & 0xFFFFFFFF;
+						mask = unmask_state >>> 24;
+						unmask_state += data[i];
+						array[pos + i] = (data[i] ^ mask);
+					}
+					pos += data.length;
+
+					// Encode the data
+					if (!key) break;
+					data = sounds[s].source;
+				}
+			}
+
+			// 5: Create blob
+			var blob = new Blob([array], {type: this.sound_image.mime_type});
+			//var blob_url = (window.webkitURL || window.URL).createObjectURL(blob);
+
+			// 6: Set data
+			f_data.file = blob;
+			f_data.file_name = this.sound_image.file_name;
+		}
+
+		// 7: Build the form data
+		var data = this.build_form_data(this.reply_form, this.reply_container, this.post_fields, f_data);
+
+		// 7.5: Error
+		if (data.quick_error != null) {
+			this.error(data.quick_error);
+			return false;
+		}
+
+		// 8: Target
+		var f = $("form");
+		var target_url = null
+		if (f.length > 0) {
+			target_url = $(f[0]).attr("action");
+		}
+		else {
+			data.errors.push("Could not find the post target.");
+		}
+
+		// 9: Error checking
+		if (data.errors.length > 0) {
+			this.error("Error acquiring post data");
+			inline_manager.display_info("upload error", {errors: data.errors});
+			return false;
+		}
+
+		// 10: Posting
+		if (this.form_submit_button_clone) this.form_submit_button_clone.val("...");
+		ajax({
+			method: "POST",
+			url: target_url,
+			post_data: data.form_data,
+			cred: true,
+			on: {
+				done: function (okay, data, response) {
+					// Check status
+					if (okay) {
+						var title = /<title>([^<]*)/i.exec(response);
+						title = (title ? title[1] : "");
+
+						var error = /"errmsg"[^>]*>([^<]*)/i.exec(response);
+						error = (error ? error[1] : "");
+
+						if (error != "") {
+							self.error(error);
+						}
+						else if (title.toLowerCase().indexOf("post successful") >= 0) {
+							// Okay
+							self.on_successful_post();
+						}
+					}
+					else {
+						self.error("Posting error (" + response.status + " / " + response.status_text + ")");
+					}
+
+					if (self.form_submit_button_clone) {
+						self.form_submit_button_clone.val(self.form_submit_button.val());
+					}
+				},
+				progress: function (event, data) {
+					var percent = Math.round(event.loaded / event.total * 100);
+
+					if (self.form_submit_button_clone) {
+						self.form_submit_button_clone.val(percent + "%");
+					}
+				},
+				error: function (event, data) {
+					self.error("Connection error");
+
+					if (self.form_submit_button_clone) {
+						self.form_submit_button_clone.val(self.form_submit_button.val());
+					}
+				}
+			}
+		});
+
+		// Done
+		return false;
+	},
+	build_form_data: function (form, container, fields, data) {
+		var s = "";
+		var str_type = typeof("");
+		var form_data = new FormData();
+		var errors = [];
+		var quick_error = null;
+
+		for (var key in fields) {
+			switch (fields[key].type) {
+				case 0: // Search by name
+				{
+					var e = form.find("*[name=\"" + key + "\"]");
+					if (e.length > 0) {
+						if (e.val().length == 0 && fields[key].blank === false) {
+							quick_error = fields[key].blank_error;
+						}
+						form_data.append(key, e.val());
+					}
+					else {
+						var found = false;
+						for (var i = 0; i < fields[key].alt.length; ++i) {
+							if (typeof(fields[key].alt[i]) == str_type) {
+								// Value
+								e = form.find("*[name=\"" + fields[key].alt[i] + "\"]");
+								if (e.length > 0) {
+									if (e.val().length == 0 && fields[key].blank === false) {
+										quick_error = fields[key].blank_error;
+									}
+									form_data.append(key, e.val());
+									found = true;
+									break;
+								}
+							}
+							else {
+								// Function call
+								var v = fields[key].alt[i](form, container);
+								if (v != null) {
+									if (v.length == 0 && fields[key].blank === false) {
+										quick_error = fields[key].blank_error;
+									}
+									form_data.append(key, v);
+									found = true;
+									break;
+								}
+							}
+						}
+
+						if (!found && !fields[key].missing) {
+							errors.push("Submit form key \"" + key + "\" could not be found.");
+						}
+					}
+				}
+				break;
+				case 1: // Direct value
+				{
+					form_data.append(key, fields[key].value);
+				}
+				break;
+				case 2: // Checkbox
+				{
+					var e = form.find("*[name=\"" + key + "\"]");
+					if (e.length > 0) {
+						if (e.is(":checked")) {
+							form_data.append(key, e.val());
+						}
+					}
+					else {
+						e = form.find("#" + key + "");
+						if (e.length > 0 && e.is(":checked")) {
+							form_data.append(key, e.val());
+						}
+						else if (!fields[key].missing) {
+							errors.push("Submit form key \"" + key + "\" could not be found.");
+						}
+					}
+				}
+				break;
+				case 3: // From data
+				{
+					if (fields[key].key in data && data[fields[key].key] != null) {
+						// Assumed to be the file
+						form_data.append(key, data[fields[key].key], data.file_name);
+					}
+					else if (!fields[key].missing) {
+						errors.push("Submit form key \"" + key + "\" could not be found.");
+					}
+				}
+				break;
+			}
+		}
+
+		return {
+			form_data: form_data,
+			errors: errors,
+			quick_error: quick_error,
+		};
+	},
+
+	on_successful_post: function () {
+		// Reset file uploader
+		if (this.auto_opened) {
+			this.set_panel_state(false, null);
+		}
+		else {
+			this.reset();
+		}
+
+		// Clear subject
+		this.reply_form.find("*[name=sub]").val("");
+
+		// Clear comment
+		this.reply_form.find("*[name=com]").val("");
+
+		// De-spoiler
+		var sp = this.reply_form.find("*[name=spoiler],#spoiler");
+		if (sp.length > 0 && sp.is(":checked")) {
+			sp.removeAttr("checked");
+			if (sp.is(":checked")) sp.click();
+		}
+
+		// Force user to reload captcha (doing it automatically can cause userscript conflicts)
+		var cv = this.reply_form.find(".captchainput").find(".field");
+		if (cv.length == 0) cv = this.reply_form.find("#qrCapField");
+		cv.val("").attr("placeholder_temp", cv.attr("placeholder")).attr("placeholder", "Reload your captcha").attr("readonly", "readonly");
+	},
+
+	is_mime_type: function (s, type) {
+		for (var i = 0; i < this.mime_types[type].length; ++i) {
+			if (s == this.mime_types[type][i]) return true;
+		}
+		return false;
+	},
+
+	error: function (status) {
+		if (this.mode == "inline") {
+			if (status) this.reply_container.find("#qrError").css("display", "block").html(status);
+			else this.reply_container.find("#qrError").css("display", "").html("");
+		}
+		else {
+			if (this.reply_container) this.reply_container.find(".warning").html(status || "");
+		}
+	},
+
+};
+
+
+
+///////////////////////////////////////////////////////////////////////////////
 // Inline text
 ///////////////////////////////////////////////////////////////////////////////
 function InlineManager() {
@@ -10085,7 +11616,7 @@ function InlineManager() {
 			".MPReplacedURLContainer{display:inline;position:relative;}\n" +
 
 			".MPVideoInfo{display:none !important;}\n" +
-			".MPVideoInfoDisplay{z-index:1;text-align:center;padding:8px !important;display:block;position:absolute;left:0;top:100%;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);border-radius:4px;}\n" +
+			".MPVideoInfoDisplay{z-index:1;text-align:center;padding:8px !important;display:block;position:absolute;left:0;top:100%;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);border-radius:4px;width:auto !important;}\n" +
 			".MPVideoInfoDisplayHidden{display:none !important}\n" +
 			".MPVideoInfoDisplayContainer{}\n" +
 			".MPVideoInfoDisplayTitle{text-align:left;margin-bottom:2px;}\n" +
@@ -10178,7 +11709,7 @@ function InlineManager() {
 			.append(
 				E("div")
 				.addClass("MPPopupBox MPHighlightShadow2px")
-				.addClass(is_archive ? "post_wrapper" : "reply")
+				.addClass(is_archive ? "post_wrapper" : "post reply")
 				.on("click", {}, function (event) {
 					return false;
 				})
@@ -10213,6 +11744,9 @@ function InlineManager() {
 			.append(T(" ]"))
 		);
 	}
+
+	// Uploader
+	this.uploader = new InlineUploader();
 }
 InlineManager.prototype = {
 	constructor: InlineManager,
@@ -11013,7 +12547,7 @@ InlineManager.prototype = {
 	},
 
 	enable_update: function (url) {
-		this.settings_update_link
+		this.settings_manager.settings_update_link
 		.css("display", "")
 		.attr("href", url);
 		if (!is_archive) {
@@ -11758,6 +13292,121 @@ InlineManager.prototype = {
 				);
 			}
 			break;
+			case "upload error":
+			{
+				var s = "<b>Errors:</b>";
+				for (var i = 0; i < data.errors.length; ++i) {
+					s += "<br />" + data.errors[i];
+				}
+
+				this.popup_info_container
+				.append(
+					E("p")
+					.html("An error occured while attempting to submit your post.")
+				)
+				.append(
+					E("p")
+					.html(
+						"This may happen due to script incompatability. If you want to use this feature, " +
+						"submit an <a href=\"https://github.com/dnsev/4cs/issues\" target=\"_blank\">issue request</a>, or disable " +
+						"this feature and install a different script."
+					)
+				)
+				.append(
+					E("p")
+					.html("You can try to submit your post by closing the sounds panel.")
+				)
+				.append(
+					E("p")
+					.html(s)
+				);
+			}
+			break;
+			case "upload help":
+			{
+				this.popup_info_container
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Uploader Information")
+				)
+				.append(
+					E("p")
+					.html(
+						"The sound uploader is able to put sounds inside of images, along with re-tagging " +
+						"and/or removing sounds from currently embedded images. It also supports masking images " +
+						"in the correct format."
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Basic Features")
+				)
+				.append(
+					E("p")
+					.html(
+						"<ul>" +
+						"<li>Currently only uses the masked format, as the stego format isn't widely used. This will be added " +
+						"if necessary or desired.</li>" +
+						"<li>You can re-tag any (non-stego) sound inside an image on the fly. This is particularly useful " +
+						"for all the images with the [1] tag.</li>" +
+						"<li>You can add sounds to your image from other images with embedded sounds by selecting them from the " +
+						"sound file selection.</li>" +
+						"</ol>"
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Settings")
+				)
+				.append(
+					E("p")
+					.html(
+						"If there are any settings you dislike, or you don't want the sound uploader enabled at all, " +
+						"just about any feature you may or may not want can be enabled/disabled in the settings."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"If you have any other sound uploader(s) enabled and you want to use this uploader, it is " +
+						"suggested that you turn the other one(s) off."
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Availability")
+				)
+				.append(
+					E("p")
+					.html(
+						"The sound uploader is currently only available in the quick reply forms. The main reply form " +
+						"at the top of the page does not currently support it. If this feature is desired, " +
+						"<a href=\"https://github.com/dnsev/4cs/issues\" target=\"_blank\">open a feature request</a> on " +
+						"the source site."
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Having Problems?")
+				)
+				.append(
+					E("p")
+					.html(
+						"If you have problems such as \"<i>Where is my submit button?</i>\", \"<i>Clicking the boxes doesn't let me select files</i>\", " +
+						"or \"<i>Why can't I submit my post?</i>\", you may want to <a href=\"https://github.com/dnsev/4cs/issues\" target=\"_blank\">open an issue</a> " +
+						"on the source site."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"Problems like this occur because it's difficult to add compatability for every browser + " +
+						"userscript combination out there; and that's not even including the ways users might customize " +
+						"the userscripts themselves."
+					)
+				)
+			}
+			break;
 		}
 		this.popup_container.removeClass("MPPopupClosed");
 		this.popup_info_container.scrollTop(0);
@@ -12271,6 +13920,9 @@ var hotkey_listener = null;
 ///////////////////////////////////////////////////////////////////////////////
 function MediaPlayerManager() {
 	this.media_player = null;
+
+	this.callbacks = [ png_load_callback , image_load_callback ];
+
 	this.css_color_presets = {
 		"yotsubab": {
 			"@name": "Yotsuba B",
@@ -12465,7 +14117,7 @@ MediaPlayerManager.prototype = {
 		var self = this;
 		this.media_player = new MediaPlayer(
 			media_player_css,
-			[ png_load_callback , image_load_callback ],
+			this.callbacks,
 			function (data) { inline_manager.on_content_drag(data); },
 			function (media_player) { script.settings_save(); },
 			function (media_player) { self.media_player_destruct_callback(media_player); },
@@ -12531,6 +14183,15 @@ function Script() {
 			"link_click_theatre_force_start": false,
 			"link_click_theatre_close_on_finish": true,
 			"link_click_theatre_close_on_finish_interference": false,
+		},
+		"upload": {
+			"enabled": true,
+			"block_other_scripts": true,
+			"animation_time": 0.25,
+			"validate_files": true,
+			"show_splash": true,
+			"show_help": true,
+			"autodetect_when_not_open": true,
 		}
 	};
 	this.storage_name = "4cs";
@@ -12808,6 +14469,80 @@ Script.prototype = {
 					script.settings_save();
 				}
 			},
+
+			{
+				"section": "Sound Uploading",
+				"update_value": function () { this.current = script.settings["upload"]["enabled"]; },
+				"label": "Enable Sound Uploading Controls",
+				"description": "A sound embedder will be available in the quick reply box",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["upload"]["enabled"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Sound Uploading",
+				"update_value": function () { this.current = script.settings["upload"]["animation_time"]; },
+				"label": "Animation Time",
+				"description": "How long it takes for the upload controls region to appear",
+				"values": [ 1.0 , 0.75 , 0.5 , 0.375 , 0.25 , 0.125 , 0.0 ],
+				"descr": [ "1 second" , "0.75 seconds" , "0.5 seconds" , "0.375 seconds" , "0.25 seconds" , "0.125 seconds" , "instant" ],
+				"change": function (value) {
+					script.settings["upload"]["animation_time"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Sound Uploading",
+				"update_value": function () { this.current = script.settings["upload"]["validate_files"]; },
+				"label": "Validate Files",
+				"description": "Validate any images/audio files as well formatted before uploading",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["upload"]["validate_files"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Sound Uploading",
+				"update_value": function () { this.current = script.settings["upload"]["block_other_scripts"]; },
+				"label": "Block Other Uploaders",
+				"description": "Attempt to block other uploading scripts (STILL A GOOD IDEA TO DISABLE THEM)",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["upload"]["block_other_scripts"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Sound Uploading",
+				"update_value": function () { this.current = script.settings["upload"]["autodetect_when_not_open"]; },
+				"label": "Always Autodetect",
+				"description": "Run autodetection on every image put in the uploader, even when the panel isn't open",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["upload"]["autodetect_when_not_open"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Sound Uploading",
+				"update_value": function () { this.current = script.settings["upload"]["show_help"]; },
+				"label": "Help Link",
+				"description": "Display the help link in the uploader form",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["upload"]["show_help"] = value;
+					script.settings_save();
+				}
+			},
+
 			{
 				"section": "Link Replacement",
 				"update_value": function () { this.current = script.settings["inline"]["url_replace"]; },

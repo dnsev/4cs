@@ -24,11 +24,12 @@
 //   (it is preferrable to have sounds have an .ogg extension in this list)
 // sound_list structure:
 //   Array of data objects, formatted as such:
-//   [ { "title": ..., "flagged": ..., "index": ..., "data": ... } , ... ]
+//   [ { "title": ..., "flagged": ..., "index": ..., "data": ..., "position": ... } , ... ]
 //     title : the title of the song found within the file
 //   flagged : true if the load_tag didn't match the name; false otherwise
 //     index : the index of the sound in the file (0 = first, 1 = second, etc.)
 //      data : an Uint8Array of the sound (.ogg)
+//  position : the position inside the source (in bytes) (negative for not relevant)
 /////////////////////////////////////////////////////////////////////////////*/
 
 
