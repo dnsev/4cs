@@ -1,4 +1,9 @@
-﻿2.1.6.1.2
+﻿3.0
+- Added an uploader
+- Added unicode filename support
+- Fixed an auto-update issue
+
+2.1.6.1.2
 - span
 - Now the version is a palindrome
 
