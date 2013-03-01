@@ -1,4 +1,10 @@
-﻿3.0.2.2
+﻿3.1
+- Added drag + dropping
+- Added the ability for files to not need to be re-encoded
+- Fixed a captcha refresh bug
+- Filesize limits added
+
+3.0.2.2
 - Small changes to how the form data is acquired
 
 3.0.2.1
