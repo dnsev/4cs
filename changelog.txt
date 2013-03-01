@@ -1,4 +1,7 @@
-﻿3.0.2.1
+﻿2.0.2.2
+- Small changes to how the form data is acquired
+
+3.0.2.1
 - Some more old submit button CSS
 - Clear error after successful post
 - Maybe 4chan pass works now?
