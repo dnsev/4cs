@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     3.1.1
+// @version     3.1.2
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -9743,6 +9743,7 @@ InlineUploader.prototype={
 						error=(error?error[1]:"");
 						if(error!=""){
 							self.error(error);
+							self.captcha_reload();
 						}
 						else if(title.toLowerCase().indexOf("post successful")>=0){
 							self.on_successful_post();
@@ -9868,6 +9869,11 @@ InlineUploader.prototype={
 		else{
 			if(this.reply_container)this.reply_container.find(".warning").html(status||"");
 		}
+	},
+	captcha_reload:function(){
+		var cv=this.reply_form.find(".captchainput .field,#qrCapField");
+		cv.val("").attr("placeholder_temp",cv.attr("placeholder")).attr("placeholder","Reload your captcha; click the image!").attr("readonly","readonly");
+		if(this.reply_form)this.reply_form.find(".captchaimg img,.captchaimg,#qrCaptcha").click();
 	},
 	is_mime_type:function(s,type){
 		for(var i=0;i<this.mime_types[type].length;++i){
@@ -10025,9 +10031,7 @@ InlineUploader.prototype={
 			sp.removeAttr("checked");
 			if(sp.is(":checked"))sp.click();
 		}
-		var cv=this.reply_form.find(".captchainput .field,#qrCapField");
-		cv.val("").attr("placeholder_temp",cv.attr("placeholder")).attr("placeholder","Reload your captcha; click the image!").attr("readonly","readonly");
-		this.reply_form.find(".captchaimg img,.captchaimg,#qrCaptcha").click();
+		this.captcha_reload();
 		this.form_file_select.val("");
 	},
 };
