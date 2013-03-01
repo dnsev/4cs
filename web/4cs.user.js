@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     3.0.2
+// @version     3.0.2.1
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -7548,9 +7548,9 @@ function decode_utf8(s){
 function encode_utf8(s){
 	return unescape(encodeURIComponent(s));
 }
-function get_4chan_pass(){
-	var p=document.cookie.match(/4chan_pass=([^;]+)/);
-	return(p?decodeURIComponent(p[1]):null);
+function has_4chan_pass(){
+	var p=document.cookie.match(/pass_enabled=([^;]+)/);
+	return(p?true:false);
 }
 function image_load_callback(url_or_filename,load_tag,raw_ui8_data,done_callback){
 	var ext=url_or_filename.split(".").pop().toLowerCase();
@@ -8728,7 +8728,8 @@ function InlineUploader(){
 		"filetag":{type:0,alt:["filetag"],missing:true},
 		"spoiler":{type:2,alt:["spoiler"],value:"on",missing:true},
 		"pwd":{type:0,alt:["pwd",function(form,container){
-			return get_4chan_pass();
+			var p=document.cookie.match(/4chan_pass=([^;]+)/);
+			return(p?decodeURIComponent(p[1]):null);
 		},function(form,container){
 			var p=$("input[name=pwd]");
 			return(p.length>0?p.val():null);
@@ -8775,7 +8776,8 @@ function InlineUploader(){
 			".MPSoundUploaderSpacer{height:0.25em;width:100%;}\n"+
 			".MPSoundUploaderLinksContainer{margin:0.25em 0.25em 0px 0.25em !important;display:block;text-align:right !important;}\n"+
 			".MPSoundUploaderHelpLink{}\n"+
-			"input[type=submit].MPSoundUploaderOriginalSubmitButtonHidden{display:none !important;}\n"+
+			".MPSoundUploaderOriginalFileUploadHidden{opacity:0 !important;}\n"+
+			"div > input[type=submit].MPSoundUploaderOriginalSubmitButtonHidden{display:none !important;width:0px !important;height:0px !important;max-width:0px !important;max-height:0px !important;opacity:0 !important;overflow:hidden !important;vertical-align:top !important;}\n"+
 			((script.settings["upload"]["enabled"]&&script.settings["upload"]["block_other_scripts"])?(
 				"div.soundsLinkDiv{display:none !important}\n"+
 				"div#soundsPanel{display:none !important}\n"
@@ -9151,14 +9153,18 @@ InlineUploader.prototype={
 					"opacity":0.0
 				},{
 					duration:ani_speed,
-					complete:function(){$(this).css("opacity","0.0");}
+					complete:function(){
+						$(this)
+						.css("opacity","0.0")
+						.addClass("MPSoundUploaderOriginalFileUploadHidden");
+					}
 				});
 			}
 			if(this.form_submit_button_sub==null){
 				this.form_submit_button.after(
 					(this.form_submit_button_clone=this.form_submit_button.clone())
 				);
-				this.form_submit_button.attr("disabled","disabled").css("opacity","0");
+				this.form_submit_button.attr("disabled","disabled");
 			}
 			else{
 				var o1=this.relater.offset();
@@ -9209,6 +9215,7 @@ InlineUploader.prototype={
 					objs.push(o[i]);
 				}
 				$(objs)
+				.removeClass("MPSoundUploaderOriginalFileUploadHidden")
 				.removeAttr("disabled")
 				.stop(true).animate({
 					"opacity":1.0
@@ -9225,7 +9232,7 @@ InlineUploader.prototype={
 					$(this).css({"height":"","display":"none"});
 					if(self.form_submit_button_sub==null){
 						self.form_submit_button_clone.remove();
-						self.form_submit_button.removeAttr("disabled").css("opacity","");
+						self.form_submit_button.removeAttr("disabled");
 					}
 					else{
 						var s;
@@ -9627,7 +9634,7 @@ InlineUploader.prototype={
 		var form_data=new FormData();
 		var errors=[];
 		var quick_error=null;
-		var has_4chan_pass=(get_4chan_pass()!=null);
+		var has_pass=has_4chan_pass();
 		for(var key in fields){
 			switch(fields[key].type){
 				case 0:
@@ -9641,7 +9648,7 @@ InlineUploader.prototype={
 								if(
 									e.val().length==0&&
 									fields[key].blank===false&&
-									(!fields[key].missing_with_pass||has_4chan_pass)
+									(!fields[key].missing_with_pass||has_pass)
 								){
 									quick_error=fields[key].blank_error;
 								}
@@ -9656,7 +9663,7 @@ InlineUploader.prototype={
 								if(
 									v.length==0&&
 									fields[key].blank===false&&
-									(!fields[key].missing_with_pass||has_4chan_pass)
+									(!fields[key].missing_with_pass||has_pass)
 								){
 									quick_error=fields[key].blank_error;
 								}
@@ -9666,7 +9673,7 @@ InlineUploader.prototype={
 							}
 						}
 					}
-					if(!found&&!fields[key].missing&&(!fields[key].missing_with_pass||has_4chan_pass)){
+					if(!found&&!fields[key].missing&&(!fields[key].missing_with_pass||has_pass)){
 						errors.push("Submit form key \""+key+"\" could not be found.");
 					}
 				}
@@ -9689,7 +9696,7 @@ InlineUploader.prototype={
 						if(e.length>0&&e.is(":checked")){
 							form_data.append(key,e.val());
 						}
-						else if(!fields[key].missing&&(!fields[key].missing_with_pass||has_4chan_pass)){
+						else if(!fields[key].missing&&(!fields[key].missing_with_pass||has_pass)){
 							errors.push("Submit form key \""+key+"\" could not be found.");
 						}
 					}
@@ -9700,7 +9707,7 @@ InlineUploader.prototype={
 					if(fields[key].key in data&&data[fields[key].key]!=null){
 						form_data.append(key,data[fields[key].key],data.file_name);
 					}
-					else if(!fields[key].missing&&(!fields[key].missing_with_pass||has_4chan_pass)){
+					else if(!fields[key].missing&&(!fields[key].missing_with_pass||has_pass)){
 						errors.push("Submit form key \""+key+"\" could not be found.");
 					}
 				}
@@ -9853,6 +9860,7 @@ InlineUploader.prototype={
 		else{
 			this.reset();
 		}
+		this.error("");
 		this.reply_form.find("*[name=sub]").val("");
 		this.reply_form.find("*[name=com]").val("");
 		var sp=this.reply_form.find("*[name=spoiler],#spoiler");
