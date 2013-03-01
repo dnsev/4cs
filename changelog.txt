@@ -1,4 +1,9 @@
-﻿3.0.2
+﻿3.0.2.1
+- Some more old submit button CSS
+- Clear error after successful post
+- Maybe 4chan pass works now?
+
+3.0.2
 - CSS fixes
 - Better submit button management?
 - Possible ability to use 4chan pass?
