@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     3.1
+// @version     3.1.1
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -11851,7 +11851,9 @@ InlineUploader.prototype = {
 
 		// Force user to reload captcha (doing it automatically can cause userscript conflicts)
 		var cv = this.reply_form.find(".captchainput .field,#qrCapField");
-		cv.val("").attr("placeholder_temp", cv.attr("placeholder")).attr("placeholder", "Reload your captcha").attr("readonly", "readonly");
+		cv.val("").attr("placeholder_temp", cv.attr("placeholder")).attr("placeholder", "Reload your captcha; click the image!").attr("readonly", "readonly");
+		// Auto-reload (hopefully)
+		this.reply_form.find(".captchaimg img,.captchaimg,#qrCaptcha").click();
 
 		// Clear file
 		this.form_file_select.val("");
