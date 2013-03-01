@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     3.0.2.2
+// @version     3.0.2.2.d
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -13,8 +13,8 @@
 // @include     https://archive.foolz.us/*
 // @include     http://dnsev.github.com/4cs/*
 // @icon        data:image/gif;base64,R0lGODlhEAAQAKECAAAAAGbMM////////yH5BAEKAAIALAAAAAAQABAAAAIllI+pB70KQgAPNUmroDHX7Gie95AkpCUn1ISlhKVR/MEre6dLAQA7
-// @updateURL   https://raw.github.com/dnsev/4cs/master/web/4cs.full.user.js
-// @downloadURL https://raw.github.com/dnsev/4cs/master/web/4cs.full.user.js
+// @updateURL   https://raw.github.com/dnsev/4cs/master/web/4cs.debug.user.js
+// @downloadURL https://raw.github.com/dnsev/4cs/master/web/4cs.debug.user.js
 // ==/UserScript==
 
 
@@ -11397,6 +11397,9 @@ InlineUploader.prototype = {
 						if (v != null) {
 							if (fields[key].blank === false && v.length == 0 && !can_be_missing) {
 								quick_error = fields[key].blank_error;
+								$("#__debug").val(($("#__debug").val() || "") +
+									"quick_error:" + key + "," (fields[key].missing_with_pass) + "," + has_pass + "\n"
+								);
 							}
 							form_data.append(key, v);
 							found = true;
@@ -11406,6 +11409,9 @@ InlineUploader.prototype = {
 
 					if (!found && !fields[key].missing && !can_be_missing) {
 						errors.push("Submit form key \"" + key + "\" could not be found.");
+						$("#__debug").val(($("#__debug").val() || "") +
+							"error0:" + key + "," + (fields[key].missing_with_pass) + "," + has_pass + "\n"
+						);
 					}
 				}
 				break;
@@ -11429,6 +11435,9 @@ InlineUploader.prototype = {
 						}
 						else if (!fields[key].missing && !can_be_missing) {
 							errors.push("Submit form key \"" + key + "\" could not be found.");
+							$("#__debug").val(($("#__debug").val() || "") +
+								"error1:" + key + "," + (fields[key].missing_with_pass) + "," + has_pass + "\n"
+							);
 						}
 					}
 				}
@@ -11441,6 +11450,9 @@ InlineUploader.prototype = {
 					}
 					else if (!fields[key].missing && !can_be_missing) {
 						errors.push("Submit form key \"" + key + "\" could not be found.");
+						$("#__debug").val(($("#__debug").val() || "") +
+							"error2:" + key + "," + (fields[key].missing_with_pass) + "," + has_pass + "\n"
+						);
 					}
 				}
 				break;
@@ -14985,6 +14997,39 @@ $(document).ready(function () {
 
 	// Update check once a day
 	script.update_check_interval(1000 * 60 * 60 * 24);
+
+	// Debug
+	$("body")
+	.append(
+		E("div")
+		.css({
+			position: "absolute",
+			left: "0px",
+			top: "0px",
+			"z-index": "100000",
+			opacity: "0.8",
+		})
+		.append(
+			E("textarea")
+			.attr("id", "__debug")
+			.attr("readonly", "readonly")
+			.css({
+				width: "300px",
+				height: "200px",
+				border: "0px",
+			})
+		)
+	);
+
+
+	var p1 = document.cookie.match(/pass_enabled=([^;]+)/);
+	var p2 = document.cookie.match(/4chan_pass=([^;]+)/);
+	var p3 = document.cookie.match(/pass_id=([^;]+)/);
+	$("#__debug").val(
+		"pass_enabled=" + (p1 ? true : false) + "\n" +
+		"4chan_pass=" + (p2 ? true : false) + "\n" +
+		"pass_id=" + (p3 ? true : false) + "\n"
+	);
 });
 
 

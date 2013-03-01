@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     3.0.2.1
+// @version     3.0.2.2
 // @namespace   dnsev
 // @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
 // @grant       GM_xmlhttpRequest
@@ -9636,44 +9636,34 @@ InlineUploader.prototype={
 		var quick_error=null;
 		var has_pass=has_4chan_pass();
 		for(var key in fields){
+			var can_be_missing=(fields[key].missing_with_pass&&has_pass);
 			switch(fields[key].type){
 				case 0:
 				{
-					var e;
+					var e,v;
 					var found=false;
 					for(var i=0;i<fields[key].alt.length;++i){
+						v=null;
 						if(typeof(fields[key].alt[i])==str_type){
 							e=form.find("*[name=\""+fields[key].alt[i]+"\"]");
 							if(e.length>0){
-								if(
-									e.val().length==0&&
-									fields[key].blank===false&&
-									(!fields[key].missing_with_pass||has_pass)
-								){
-									quick_error=fields[key].blank_error;
-								}
-								form_data.append(key,e.val());
-								found=true;
-								break;
+								v=e.val();
+								if(v===undefined)v=null;
 							}
 						}
 						else{
 							var v=fields[key].alt[i](form,container);
-							if(v!=null){
-								if(
-									v.length==0&&
-									fields[key].blank===false&&
-									(!fields[key].missing_with_pass||has_pass)
-								){
-									quick_error=fields[key].blank_error;
-								}
-								form_data.append(key,v);
-								found=true;
-								break;
+						}
+						if(v!=null){
+							if(fields[key].blank===false&&v.length==0&&!can_be_missing){
+								quick_error=fields[key].blank_error;
 							}
+							form_data.append(key,v);
+							found=true;
+							break;
 						}
 					}
-					if(!found&&!fields[key].missing&&(!fields[key].missing_with_pass||has_pass)){
+					if(!found&&!fields[key].missing&&!can_be_missing){
 						errors.push("Submit form key \""+key+"\" could not be found.");
 					}
 				}
@@ -9696,7 +9686,7 @@ InlineUploader.prototype={
 						if(e.length>0&&e.is(":checked")){
 							form_data.append(key,e.val());
 						}
-						else if(!fields[key].missing&&(!fields[key].missing_with_pass||has_pass)){
+						else if(!fields[key].missing&&!can_be_missing){
 							errors.push("Submit form key \""+key+"\" could not be found.");
 						}
 					}
@@ -9707,7 +9697,7 @@ InlineUploader.prototype={
 					if(fields[key].key in data&&data[fields[key].key]!=null){
 						form_data.append(key,data[fields[key].key],data.file_name);
 					}
-					else if(!fields[key].missing&&(!fields[key].missing_with_pass||has_pass)){
+					else if(!fields[key].missing&&!can_be_missing){
 						errors.push("Submit form key \""+key+"\" could not be found.");
 					}
 				}
