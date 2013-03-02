@@ -1,4 +1,9 @@
-﻿3.1.3.1
+﻿3.1.3.2
+- Added more info to some popups
+- Made playlist items middle-clickable for Youtube, Vimeo, and Soundcloud
+- Adjusted homepage script loading
+
+3.1.3.1
 - Made it so you can't click the submit button while already submitting
 
 3.1.3
