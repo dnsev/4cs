@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     3.1.3
+// @version     3.1.3.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -11517,7 +11517,7 @@ InlineUploader.prototype = {
 		}
 
 		// 10: Posting
-		if (this.form_submit_button_clone) this.form_submit_button_clone.val("...");
+		if (this.form_submit_button_clone) this.form_submit_button_clone.val("...").attr("disabled", "disabled");
 		ajax({
 			method: "POST",
 			url: target_url,
@@ -11548,7 +11548,9 @@ InlineUploader.prototype = {
 					}
 
 					if (self.form_submit_button_clone) {
-						self.form_submit_button_clone.val(self.form_submit_button.val());
+						self.form_submit_button_clone
+						.val(self.form_submit_button.val())
+						.removeAttr("disabled");
 					}
 				},
 				upload: {
@@ -11563,7 +11565,9 @@ InlineUploader.prototype = {
 						self.error("Connection error");
 
 						if (self.form_submit_button_clone) {
-							self.form_submit_button_clone.val(self.form_submit_button.val());
+							self.form_submit_button_clone
+							.val(self.form_submit_button.val())
+							.removeAttr("disabled");
 						}
 					}
 				}
