@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        3.1.2.1
+// @version        3.1.3
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -1750,6 +1750,7 @@ function InlineUploader() {
 	this.max_size = parseInt($("input[name=MAX_FILE_SIZE]").val() || "") || 3145728;
 	this.observer = null;
 	this.upload_modified = false;
+	this.form_submit_button_clone = null;
 
 	this.use_original_animation = false;
 
@@ -1804,7 +1805,7 @@ function InlineUploader() {
 			return null;
 		}]},
 		"recaptcha_response_field": {type:0, blank:false, missing_with_pass:true, blank_error:"Captcha missing", alt:["recaptcha_response_field",function (form, container) {
-			var c = form.find(".captchainput").find(".field");
+			var c = form.find(".captchainput .field");
 			return (c.length == 1 ? c.val() : null);
 		}]},
 		"upfile": {type:3, key:"file", missing:true},
@@ -2250,6 +2251,15 @@ InlineUploader.prototype = {
 		this.form_file_select_file.on("change", {sound: false}, function (event) { self.on_file_change(event, $(this)); });
 		this.form_file_select_sound.on("change", {sound: true}, function (event) { self.on_file_change(event, $(this)); });
 
+		// Make enter in the captcha field work
+		form.find("input[name=recaptcha_response_field],.captchainput .field").on("keydown", function (event) {
+			if (event.which == 13 && self.form_submit_button_clone) {
+				self.form_submit_button_clone.click();
+				return false;
+			}
+			return true;
+		});
+
 		// Observer
 		var MutationObserver = (window.MutationObserver || window.WebKitMutationObserver);
 		if (MutationObserver) {
@@ -2465,6 +2475,7 @@ InlineUploader.prototype = {
 						self.form_submit_button_sub.remove();
 						self.form_submit_button_sub = s;
 					}
+					this.form_submit_button_clone = null;
 					self.form_submit_button.removeClass("MPSoundUploaderOriginalSubmitButtonHidden").removeAttr("hidden");
 					// Reset
 					self.reset();
@@ -3388,6 +3399,9 @@ InlineUploader.prototype = {
 
 		// Clear file
 		this.form_file_select.val("");
+
+		// Update thread
+		$("input[type=button][name=\"Update Now\"]").click();
 	},
 
 };
