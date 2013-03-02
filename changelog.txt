@@ -1,4 +1,8 @@
-﻿3.1.2
+﻿3.1.2.1
+- Fixed a bug where the submit button would disable itself
+- Added info about "blocked uploader"
+
+3.1.2
 - Captcha is now automatically reloaded after a post
 
 3.1.1
