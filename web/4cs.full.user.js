@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     3.1.2
+// @version     3.1.2.1
 // @namespace   dnsev
-// @description 4chan Media Player :: Youtube, Vimeo, Soundcloud, and Sounds playback
+// @description Youtube, Vimeo, Soundcloud, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
 // @grant       GM_getValue
@@ -10987,7 +10987,20 @@ InlineUploader.prototype = {
 
 			var self = this;
 			setTimeout(function () {
-				self.error("4cs has blocked another sound uploader");
+				self.error(
+					E("span")
+					.append("4cs has blocked another ")
+					.append(
+						E("a")
+						.attr("href", "#")
+						.html("uploader userscript")
+						.on("click", function () {
+							inline_manager.display_info("uploader blocked");
+							return false;
+						})
+					),
+					true
+				);
 			}, 100);
 		}
 	},
@@ -11645,13 +11658,21 @@ InlineUploader.prototype = {
 		};
 	},
 
-	error: function (status) {
+	error: function (status, un_disable) {
 		if (this.mode == "inline") {
 			if (status) this.reply_container.find("#qrError").css("display", "block").html(status);
 			else this.reply_container.find("#qrError").css("display", "").html("");
 		}
 		else {
 			if (this.reply_container) this.reply_container.find(".warning").html(status || "");
+		}
+
+		if (un_disable && this.form_submit_button_clone) {
+			var self = this;
+
+			setTimeout(function () {
+				if (self.form_submit_button_clone) self.form_submit_button_clone.removeAttr("disabled");
+			}, 10);
 		}
 	},
 	captcha_reload: function () {
@@ -13693,6 +13714,47 @@ InlineManager.prototype = {
 						"the userscripts themselves."
 					)
 				)
+			}
+			break;
+			case "uploader blocked":
+			{
+				this.popup_info_container
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Uploader Blocked")
+				)
+				.append(
+					E("p")
+					.html(
+						"If you get this message while trying to add a file to the uploader, this means that you have another " +
+						"userscript which tries to upload sounds enabled."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"This message shouldn't affect uploading."
+					)
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Removing This Message")
+				)
+				.append(
+					E("p")
+					.html(
+						"To make this message no longer appear, you have two options:<ul>" +
+						"<li>Disable the other userscript in your browser</li>" +
+						"<li>Disable the integrated uploader in the [ Media Player ] settings link</li>"
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"It is advised to do at least one of the above, as keeping them both enabled can slow down " +
+						"your browser."
+					)
+				);
 			}
 			break;
 		}
