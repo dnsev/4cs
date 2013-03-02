@@ -1,4 +1,7 @@
-﻿3.1.3
+﻿3.1.3.1
+- Made it so you can't click the submit button while already submitting
+
+3.1.3
 - Made threads auto-update on submit
 - Pressing enter in the captcha field now submits
 
