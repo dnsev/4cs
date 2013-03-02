@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     3.1.3.1
+// @version     3.1.3.2
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -5410,7 +5410,9 @@ MediaPlayer.prototype={
 		};
 		playlist_item.mask_click_target="//www.youtube.com/watch?v="+playlist_item.vid_id+(playlist_item.start==0.0?"":("&t="+Math.floor(playlist_item.start)+"s"));
 		this.playlist_container.append(
-			(playlist_item.playlist_item=this.D("MPPlaylistItem"))
+			(playlist_item.playlist_item=this.E("a","MPPlaylistItem"))
+			.attr("href",playlist_item.mask_click_target)
+			.attr("target","_blank")
 			.on("click."+this.namespace,{media_player:this,playlist_item:playlist_item},this.on_playlist_item_click)
 			.on("mousedown",this.cancel_event)
 			.append(
@@ -5521,7 +5523,9 @@ MediaPlayer.prototype={
 		};
 		playlist_item.mask_click_target="//vimeo.com/"+playlist_item.vid_id+(playlist_item.start==0.0?"":("?t="+Math.floor(playlist_item.start)));
 		this.playlist_container.append(
-			(playlist_item.playlist_item=this.D("MPPlaylistItem"))
+			(playlist_item.playlist_item=this.E("a","MPPlaylistItem"))
+			.attr("href",playlist_item.mask_click_target)
+			.attr("target","_blank")
 			.on("click."+this.namespace,{media_player:this,playlist_item:playlist_item},this.on_playlist_item_click)
 			.on("mousedown",this.cancel_event)
 			.append(
@@ -5626,7 +5630,9 @@ MediaPlayer.prototype={
 			"mask_click_target":"//soundcloud.com/"+vid_id,
 		};
 		this.playlist_container.append(
-			(playlist_item.playlist_item=this.D("MPPlaylistItem"))
+			(playlist_item.playlist_item=this.E("a","MPPlaylistItem"))
+			.attr("href",playlist_item.mask_click_target)
+			.attr("target","_blank")
 			.on("click."+this.namespace,{media_player:this,playlist_item:playlist_item},this.on_playlist_item_click)
 			.on("mousedown",this.cancel_event)
 			.append(
@@ -7281,6 +7287,7 @@ SoundcloudManager.prototype={
 	}
 };
 
+var no_load=false;
 if(/http\:\/\/dnsev\.github\.com\/4cs\//.exec(window.location.href+"")){
 	$(document).ready(function(){
 		if(unsafeWindow&&unsafeWindow.version_check){
@@ -7301,6 +7308,7 @@ if(/http\:\/\/dnsev\.github\.com\/4cs\//.exec(window.location.href+"")){
 			}
 		}
 	});
+	no_load=true;
 }
 window.$.prototype.exists=function(){
 	return(this.length>0);
@@ -9142,6 +9150,7 @@ InlineUploader.prototype={
 		form.find("input[name=recaptcha_response_field],.captchainput .field").on("keydown",function(event){
 			if(event.which==13&&self.form_submit_button_clone){
 				self.form_submit_button_clone.click();
+				$(this).blur();
 				return false;
 			}
 			return true;
@@ -11546,8 +11555,20 @@ InlineManager.prototype={
 			{
 				this.popup_info_container
 				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Ajax Error")
+				)
+				.append(
 					E("p")
 					.html("Ajax errors occur when your browser tries to fetch an image using Javascript, but for some reason it can't retrieve it.")
+				)
+				.append(
+					E("p")
+					.html("This might be due to the image being deleted/404'd, server issues, or some sort of browser issue.")
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Error Info")
 				)
 				.append(
 					E("p")
@@ -11561,11 +11582,15 @@ InlineManager.prototype={
 			break;
 			case"upload error":
 			{
-				var s="<b>Errors:</b>";
+				var s="";
 				for(var i=0;i<data.errors.length;++i){
-					s+="<br />"+data.errors[i];
+					s+=(s.length==0?"":"<br />")+data.errors[i];
 				}
 				this.popup_info_container
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Upload Error")
+				)
 				.append(
 					E("p")
 					.html("An error occured while attempting to submit your post.")
@@ -11575,12 +11600,16 @@ InlineManager.prototype={
 					.html(
 						"This may happen due to script incompatability. If you want to use this feature, "+
 						"submit an <a href=\"https://github.com/dnsev/4cs/issues\" target=\"_blank\">issue request</a>, or disable "+
-						"this feature and install a different script."
+						"this feature and install a different upload script."
 					)
 				)
 				.append(
 					E("p")
 					.html("You can try to submit your post by closing the sounds panel.")
+				)
+				.append(
+					E("p").addClass("MPPopupInfoLabel")
+					.html("Errors")
 				)
 				.append(
 					E("p")
@@ -12980,6 +13009,7 @@ Script.prototype={
 };
 var script=null;
 $(document).ready(function(){
+	if(no_load)return;
 	script=new Script();
 	hotkey_listener=new HotkeyListener();
 	hotkey_listener.settings_update();

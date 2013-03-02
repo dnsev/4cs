@@ -4327,7 +4327,9 @@ MediaPlayer.prototype = {
 
 		// html setup
 		this.playlist_container.append( //{ DOM creation
-			(playlist_item.playlist_item = this.D("MPPlaylistItem"))
+			(playlist_item.playlist_item = this.E("a", "MPPlaylistItem"))
+			.attr("href", playlist_item.mask_click_target)
+			.attr("target", "_blank")
 			.on("click." + this.namespace, {media_player: this, playlist_item: playlist_item}, this.on_playlist_item_click)
 			.on("mousedown", this.cancel_event)
 			.append(
@@ -4460,7 +4462,9 @@ MediaPlayer.prototype = {
 
 		// html setup
 		this.playlist_container.append( //{ DOM creation
-			(playlist_item.playlist_item = this.D("MPPlaylistItem"))
+			(playlist_item.playlist_item = this.E("a", "MPPlaylistItem"))
+			.attr("href", playlist_item.mask_click_target)
+			.attr("target", "_blank")
 			.on("click." + this.namespace, {media_player: this, playlist_item: playlist_item}, this.on_playlist_item_click)
 			.on("mousedown", this.cancel_event)
 			.append(
@@ -4586,7 +4590,9 @@ MediaPlayer.prototype = {
 
 		// html setup
 		this.playlist_container.append( //{ DOM creation
-			(playlist_item.playlist_item = this.D("MPPlaylistItem"))
+			(playlist_item.playlist_item = this.E("a", "MPPlaylistItem"))
+			.attr("href", playlist_item.mask_click_target)
+			.attr("target", "_blank")
 			.on("click." + this.namespace, {media_player: this, playlist_item: playlist_item}, this.on_playlist_item_click)
 			.on("mousedown", this.cancel_event)
 			.append(
