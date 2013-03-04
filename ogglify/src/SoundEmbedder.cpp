@@ -29,6 +29,16 @@ string toLowerCase(const string& str) {
 
 	return str2;
 }
+void clean(const string* tempAudioFile, const vector<int>* sounds) {
+	if (tempAudioFile != NULL) remove(tempAudioFile->c_str());
+	if (sounds != NULL) {
+		for (unsigned int i = 0; i < sounds->size(); ++i) {
+			stringstream temp;
+			temp << "temp." << i << ".ogg";
+			remove(temp.str().c_str());
+		}
+	}
+}
 
 
 
@@ -151,6 +161,7 @@ int main(int argc, char** argv) {
 			FILE* stream = popen(cmd.str().c_str(), "r");
 			if (stream == NULL) {
 				cerr << "Error: could not execute ffmpeg" << endl;
+				clean(&tempAudioFile, &sounds);
 				return -1;
 			}
 			cout << "Encoding \"" << argv[sounds[i]] << "\" @ quality=" << (quality < 0 ? 0 : quality);
@@ -163,52 +174,58 @@ int main(int argc, char** argv) {
 			f.open(tempAudioFile.c_str(), ifstream::in | ifstream::binary);
 			if (!f.is_open()) {
 				cerr << "Error: encoding failed" << endl;
+				clean(&tempAudioFile, &sounds);
 				return -1;
 			}
 			f.seekg(0, ifstream::end);
 			size_t fileSize = f.tellg();
 			f.close();
-			cout << "Encoding completed" << endl;;
-
-			// Check if fittable
-			size_t space = maxOutputSize - imageSize;
-			for (unsigned int j = 0; j < sounds.size(); ++j) {
-				assert(soundSizes[j] + soundTags[j].length() <= space);
-				space -= soundSizes[j] + soundTags[j].length();
+			if (fileSize <= 0) {
+				cout << "Encoding failed" << endl;
 			}
+			else {
+				cout << "Encoding completed" << endl;
 
-			// It doesn't...
-			if (fileSize + soundTags[i].length() > space) {
-				// Minimize quality (if the quality hasn't already been increased)
-				if (!qualityIncreased) {
-					if (!qualityMinimized) {
-						// Quality minimize
-						for (unsigned int j = 0; j < sounds.size(); ++j) {
-							soundSizes[j] = 0;
+				// Check if fittable
+				size_t space = maxOutputSize - imageSize;
+				for (unsigned int j = 0; j < sounds.size(); ++j) {
+					assert(soundSizes[j] + soundTags[j].length() <= space);
+					space -= soundSizes[j] + soundTags[j].length();
+				}
+
+				// It doesn't...
+				if (fileSize + soundTags[i].length() > space) {
+					// Minimize quality (if the quality hasn't already been increased)
+					if (!qualityIncreased) {
+						if (!qualityMinimized) {
+							// Quality minimize
+							for (unsigned int j = 0; j < sounds.size(); ++j) {
+								soundSizes[j] = 0;
+							}
+							soundsFit = 0;
+							quality -= 2;
+							qualityMinimized = (quality < -1);
+							cout << "Quality decreased" << endl << endl;
+							break;
 						}
-						soundsFit = 0;
-						quality -= 2;
-						qualityMinimized = (quality < -1);
-						cout << "Quality decreased" << endl << endl;
-						break;
-					}
-					else {
-						// Can't fit
-						cout << "Warning: sound file \"" << argv[sounds[i]] << "\" cannot be fit." << endl;
+						else {
+							// Can't fit
+							cout << "Warning: sound file \"" << argv[sounds[i]] << "\" cannot be fit." << endl;
+						}
 					}
 				}
-			}
-			// It does
-			else {
-				// Fit okay
-				soundSizes[i] = fileSize;
-				++soundsFit;
+				// It does
+				else {
+					// Fit okay
+					soundSizes[i] = fileSize;
+					++soundsFit;
 
-				// Move temp file
-				stringstream temp;
-				temp << "temp." << i << ".ogg";
-				remove(temp.str().c_str());
-				rename(tempAudioFile.c_str(), temp.str().c_str());
+					// Move temp file
+					stringstream temp;
+					temp << "temp." << i << ".ogg";
+					remove(temp.str().c_str());
+					rename(tempAudioFile.c_str(), temp.str().c_str());
+				}
 			}
 		}
 
@@ -240,6 +257,7 @@ int main(int argc, char** argv) {
 		ofstream out(outputFilename.c_str(), ifstream::out | ifstream::binary);
 		if (!out.is_open()) {
 			cerr << "Error: couldn't open \"" << outputFilename.c_str() << "\" for writing" << endl;
+			clean(&tempAudioFile, &sounds);
 			return -1;
 		}
 
@@ -250,6 +268,7 @@ int main(int argc, char** argv) {
 		f.open(argv[imageFile], ifstream::in | ifstream::binary);
 		if (!f.is_open()) {
 			cerr << "Error: couldn't open \"" << argv[imageFile] << "\"" << endl;
+			clean(&tempAudioFile, &sounds);
 			return -1;
 		}
 		while ((count = f.readsome(buffer, sizeof(buffer))) > 0) {
@@ -274,6 +293,7 @@ int main(int argc, char** argv) {
 			f.open(temp.str().c_str(), ifstream::in | ifstream::binary);
 			if (!f.is_open()) {
 				cerr << "Error: couldn't open \"" << temp.str().c_str() << "\"" << endl;
+				clean(&tempAudioFile, &sounds);
 				return -1;
 			}
 
@@ -309,12 +329,7 @@ int main(int argc, char** argv) {
 	}
 
 	// Remove temp files
-	remove(tempAudioFile.c_str());
-	for (unsigned int i = 0; i < sounds.size(); ++i) {
-		stringstream temp;
-		temp << "temp." << i << ".ogg";
-		remove(temp.str().c_str());
-	}
+	clean(&tempAudioFile, &sounds);
 
 	// Done
 	return 0;
