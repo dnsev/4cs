@@ -515,3 +515,16 @@ a.InstallLink:active {
 	font-style: italic;
 }
 
+.DownloadLinkExtension {
+	color: #72b8e1;
+}
+
+.Asterisk {
+	display: inline-block;
+	margin-left: 4px;
+	font-size: 14px;
+	vertical-align: top;
+}
+.AsteriskMessage {
+	font-size: 14px;
+}

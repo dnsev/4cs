@@ -192,7 +192,8 @@ var page_list = {
 	},
 	"source": null,
 	"wiki": null,
-	"changes": null
+	"changes": null,
+	"ogglify": null,
 };
 function PageBrowser() {
 

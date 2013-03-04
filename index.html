@@ -16,7 +16,7 @@
 <div class="TitleContainer">
 	<div class="TitleContainerInner"><a class="Title" href="">4cs</a><div class="AuthorContainer"><a class="AuthorLink" href="https://github.com/dnsev">dnsev</a></div>
 	</div><div class="SubTitleSeparator">/</div><div class="TitleContainerInner"><div class="SubTitleContainer"><div class="SubTitle">4chan Media Player</div><a class="Version" href="#changes"></a></div>
-	<div class="SubTitleDescription"><a class="NavigationLink NavigationLinkCurrent" id="navigation_install" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">install</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_changes" href="changelog.txt">changes</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_issues" href="https://github.com/dnsev/4cs/issues">issues</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_source" href="https://github.com/dnsev/4cs">source</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_about" href="#about">about</a></div>
+	<div class="SubTitleDescription"><a class="NavigationLink NavigationLinkCurrent" id="navigation_install" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">install</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink NavigationLinkCurrent" id="navigation_ogglify" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">ogglify</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_changes" href="changelog.txt">changes</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_issues" href="https://github.com/dnsev/4cs/issues">issues</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_source" href="https://github.com/dnsev/4cs">source</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_about" href="#about">about</a></div>
 	</div>
 </div>
 
@@ -111,6 +111,34 @@
 				<a href="#" id="show_all_browser">Browser not shown</a>
 			</div><div class="Extra NoHelp HelpDisplayOff">
 				<a href="#" id="help_change">Not working?</a>
+			</div>
+		</div>
+	</div>
+	<div class="Content ContentWidth" id="content_ogglify">
+		<div class="ContentHeader"><span class="ContentHeaderTitle">ogglify</span>:</div>
+		<div class="ContentBody">
+			<p><a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify.exe">ogglify</a> is an encoder designed to replace oggchan.</p>
+			<p>Since oggchan is no longer under development, it doesn't encode files to the correct type. Thus, one way or another, the resulting file has to be masked after it's created.</p>
+			<p>This application performs conversion from .mp3, .flac, and similar file types to .ogg and embeds them.</p>
+			<div class="ContentHeader" multi_id="setup"><span class="HoverShowControl"><span class="ContentHeaderTitle">Setup</span>:<span class="HoverShow"> <a class="InternalLink" href="#.?scroll=setup">Hardlink</a></span></span></div>
+			<div class="ContentBody">
+				<p>Create a folder and put the following files inside:</p>
+				<ul>
+					<li><a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify.exe">ogglify.exe</a></li>
+					<li><a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify-fast.bat">ogglify-fast.bat</a></li>
+					<li><a href="http://ffmpeg.zeranoe.com/builds/win32/static/ffmpeg-latest-win32-static.7z" target="_blank">ffmpeg.exe</a><span class="DownloadLinkExtension"> from <i>/bin/ffmpeg.exe</i><span class="Asterisk">*</span></span></li>
+				</ul>
+				<p class="AsteriskMessage">* <a href="http://www.ffmpeg.org/" target="_blank">ffmpeg</a> is not provided on this site as it is too large, and also not mine. If you want to get a version that isn't <i>32-bit static</i>, check their <a href="http://ffmpeg.zeranoe.com/builds/" target="_blank">downloads</a> page for Windows.</p>
+			</div>
+			<div class="ContentHeader" multi_id="embedding"><span class="HoverShowControl"><span class="ContentHeaderTitle">Embedding</span>:<span class="HoverShow"> <a class="InternalLink" href="#.?scroll=embedding">Hardlink</a></span></span></div>
+			<div class="ContentBody">
+				<ol>
+					<li>In your explorer, select your image file, your sound(s) you want to embed</li>
+					<li>Drag them all onto "<a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify.exe">ogglify.exe</a>" <i>or</i> "<a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify-fast.bat">ogglify-fast.bat</a>"</li>
+					<li>Sit back and wait</li>
+					<li>When the command prompt disappears, you should be left with an image named "<i>image</i>-embed<i>.ext</i>"</li>
+				</ol>
+				<p>The only difference between "<a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify.exe">ogglify.exe</a>" and "<a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify-fast.bat">ogglify-fast.bat</a>" is that "<a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify-fast.bat">ogglify-fast.bat</a>" may be quicker and won't try to get the best possible audio quality.</p>
 			</div>
 		</div>
 	</div>
@@ -380,6 +408,7 @@
 				<li class="HiddenHoverMaster"><a class="InternalLink" href="#about/codecs/extract.exe">extract.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/cpp/extract.exe">download</a></span></li>
 				<li class="HiddenHoverMaster"><a class="InternalLink" href="#about/codecs/batch-*.exe">batch-decode.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/batch/batch-decode.exe">download</a></span></li>
 				<li class="HiddenHoverMaster"><a class="InternalLink" href="#about/codecs/batch-*.exe">batch-re-encode.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/batch/batch-re-encode.exe">download</a></span></li>
+				<li class="HiddenHoverMaster"><a class="InternalLink" href="#ogglify">ogglify.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify.exe">download</a></span></li>
 			</ul>
 		</div>
 	</div>
