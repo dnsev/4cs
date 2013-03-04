@@ -168,6 +168,8 @@ pip-log.txt
 *.jpeg
 *.png
 *.ogg
+*.mp3
+*.flac
 *.lnk
 
 test.*
