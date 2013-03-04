@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
 			size_t fileSize = f.tellg();
 			f.close();
 			if (fileSize <= 0) {
-				cout << "Encoding failed" << endl;
+				cout << "Encoding failed" << endl << endl;
 			}
 			else {
 				cout << "Encoding completed" << endl;
