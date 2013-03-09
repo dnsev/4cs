@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        3.1.3.2
+// @version        3.1.3.3
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -3409,7 +3409,9 @@ InlineUploader.prototype = {
 		this.form_file_select.val("");
 
 		// Update thread
-		$("input[type=button][name=\"Update Now\"]").click();
+		setTimeout(function () {
+			$("input[type=button][name=\"Update Now\"]").click();
+		}, 1500);
 	},
 
 };
