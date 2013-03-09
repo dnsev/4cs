@@ -8,7 +8,7 @@ body {
 	overflow-y: scroll;
 }
 ol, ul {
-	margin: 2px 0px 2px 32px;
+	margin: 2px 0px 2px 1.6em;
 	padding: 0px;
 }
 li + li {
@@ -22,10 +22,10 @@ p {
 	padding: 0px;
 }
 p + p, p + div, p + ol, p + ul, ol + p, ul + p {
-	margin-top: 8px !important;
+	margin-top: 0.4em !important;
 }
 p + p.Separated {
-	margin-top: 24px !important;
+	margin-top: 1.2em !important;
 }
 
 *::selection {
@@ -345,6 +345,13 @@ a.Version, a.Version:visited, a.Version:hover, a.Version:active {
 }
 .ContentInstructionList {
 }
+.ContentInstructionListUnordered {
+	list-style-type: disc;
+	margin-left: 0.8em !important;
+}
+.ContentInstructionListSmall {
+	font-size: 14px;
+}
 
 .Notice {
 	font-style: italic;
@@ -378,15 +385,15 @@ a.Version, a.Version:visited, a.Version:hover, a.Version:active {
 	display: inline !important;
 }
 
-.Content a, .Content a:link, .Content a:visited {
+.Content a, .Content a:link, .Content a:visited, .ImagePreviewOverlay a, .ImagePreviewOverlay a:link, .ImagePreviewOverlay a:visited {
 	color: #1c7bb1;
 	text-decoration: none;
 }
-.Content a:hover {
+.Content a:hover, .ImagePreviewOverlay a:hover {
 	color: #034063;
 	text-decoration: underline;
 }
-.Content a:active {
+.Content a:active, .ImagePreviewOverlay a:active {
 	color: #034063;
 	text-decoration: underline;
 }
@@ -527,4 +534,19 @@ a.InstallLink:active {
 }
 .AsteriskMessage {
 	font-size: 14px;
+}
+
+.InstructionsImageLink {
+	display: inline-block;
+	float: right;
+	opacity: 0.0;
+}
+.InstructionsImageLinkContainer:hover > .InstructionsImageLink {
+	opacity: 1.0 !important;
+}
+.InstructionsImageLinkClear {
+	clear: both;
+}
+.SpacedList > li + li{
+	margin-top: 0.6em;
 }
