@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        3.1.3.3
+// @version        3.1.4
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -224,6 +224,13 @@ function ajax(data) {
 			};
 		}
 
+		// Abort
+		if (typeof(on.abort) == "function") {
+			xhr.onabort = function (event) {
+				on.abort(event, data);
+			};
+		}
+
 		// Upload progress
 		if (on.upload && typeof(on.upload.progress) == "function") {
 			xhr.upload.onprogress = function (event) {
@@ -235,6 +242,13 @@ function ajax(data) {
 		if (on.upload && typeof(on.upload.error) == "function") {
 			xhr.upload.onerror = function (event) {
 				on.upload.error(event, data);
+			};
+		}
+
+		// Abort
+		if (typeof(on.upload.abort) == "function") {
+			xhr.upload.onabort = function (event) {
+				on.upload.abort(event, data);
 			};
 		}
 
@@ -293,6 +307,13 @@ function ajax(data) {
 			};
 		}
 
+		// Abort
+		if (typeof(on.abort) == "function") {
+			arg.onabort = function (event) {
+				on.abort(event, data);
+			};
+		}
+
 		// Upload progress
 		if (on.upload && typeof(on.upload.progress) == "function") {
 			arg.upload.onprogress = function (event) {
@@ -304,6 +325,13 @@ function ajax(data) {
 		if (on.upload && typeof(on.upload.error) == "function") {
 			arg.upload.onerror = function (event) {
 				on.upload.error(event, data);
+			};
+		}
+
+		// Upload abort
+		if (typeof(on.upload.abort) == "function") {
+			arg.upload.onabort = function (event) {
+				on.upload.abort(event, data);
 			};
 		}
 
@@ -3407,11 +3435,14 @@ InlineUploader.prototype = {
 
 		// Clear file
 		this.form_file_select.val("");
+		this.reply_form.find("#file.field").html("");
 
 		// Update thread
-		setTimeout(function () {
-			$("input[type=button][name=\"Update Now\"]").click();
-		}, 1500);
+		if (script.settings["upload"]["autoupdate_after_post"]) {
+			setTimeout(function () {
+				$("input[type=button][name=\"Update Now\"]").click();
+			}, 1500);
+		}
 	},
 
 };
@@ -6090,6 +6121,7 @@ function Script() {
 			"show_splash": true,
 			"show_help": true,
 			"autodetect_when_not_open": true,
+			"autoupdate_after_post": true,
 		}
 	};
 	this.storage_name = "4cs";
@@ -6425,6 +6457,18 @@ Script.prototype = {
 				"descr": [ "Enabled" , "Disabled" ],
 				"change": function (value) {
 					script.settings["upload"]["autodetect_when_not_open"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Sound Uploading",
+				"update_value": function () { this.current = script.settings["upload"]["autoupdate_after_post"]; },
+				"label": "Auto-update After Post",
+				"description": "Attempt to auto-update the page after you post using the sounds panel",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["upload"]["autoupdate_after_post"] = value;
 					script.settings_save();
 				}
 			},
