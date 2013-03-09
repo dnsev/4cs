@@ -1,4 +1,7 @@
-﻿3.1.3.2
+﻿3.1.3.3
+- Changed the auto-refresh to have a 1.5 second timeout
+
+3.1.3.2
 - Added more info to some popups
 - Made playlist items middle-clickable for Youtube, Vimeo, and Soundcloud
 - Adjusted homepage script loading
