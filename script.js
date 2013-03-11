@@ -390,7 +390,7 @@ function image_preview(obj) {
 			// Change URL
 			window_hash.goto_page(
 				event.data.href,
-				remove_vars(window_hash.vars, ["activate"])
+				remove_vars(window_hash.vars, ["activate", "scroll"])
 			);
 			return false;
 		}
@@ -640,6 +640,13 @@ $(document).ready(function () {
 		}
 		return true;
 	});
+	$(".Link").on("click", {}, function (event) {
+		if (event.which == 1) {
+			event.stopPropagation();
+			return true;
+		}
+		return true;
+	});
 	$(".Hardlink").on("click", {}, function (event) {
 		if (event.which == 1) {
 			var ex = {};
@@ -693,6 +700,18 @@ $(document).ready(function () {
 	$(".AudioTestLink").on("click", {}, function (event) {
 		if (event.which == 1) {
 			audio_control_event($(this), event);
+			return false;
+		}
+		return true;
+	});
+	$(".GuideLink").on("click", {}, function (event) {
+		if (event.which == 1 && $(this).attr("href")[0] == "#") {
+			var href = $(this).attr("href").substr(1).split("?");
+			window_hash.goto_page(
+				window_hash.modify_href(href[0]),
+				maintain_vars(window_hash.vars, ["all","dev","help"]),
+				(href[1] ? window_hash.parse_vars(href[1]) : undefined)
+			);
 			return false;
 		}
 		return true;

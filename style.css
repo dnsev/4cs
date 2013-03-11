@@ -550,3 +550,10 @@ a.InstallLink:active {
 .SpacedList > li + li{
 	margin-top: 0.6em;
 }
+
+.Link {
+}
+.GuideLink {
+	display: block;
+	cursor: pointer;
+}

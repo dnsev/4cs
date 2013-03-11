@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="description" content="Youtube, Vimeo, Soundcloud, and Sounds playback" />
-	<meta name="keywords" content="4chan,sound,sounds,media,player,youtube,soundcloud,vimeo,embed,embedding,stego,steganography,4cs,dnsev,userscript,greasemonkey,tampermonkey,firefox,chrome" />
+	<meta name="keywords" content="4chan,sound,sounds,media,player,youtube,soundcloud,vimeo,embed,embedding,stego,steganography,4cs,dnsev,userscript,greasemonkey,tampermonkey,firefox,chrome,sound player,4chan sound player,media player,4chan media player" />
 	<meta name="author" content="dnsev" />
 	<link rel="shortcut icon" href="favicon.gif" />
 	<link rel="stylesheet" href="style.css" />
@@ -528,89 +528,102 @@
 	<div class="Content ContentWidth" id="content_oc">
 		<div class="ContentHeader"><span class="ContentHeaderTitle">Original Content</span>:</div>
 		<div class="ContentBody">
-			<p>So you want to create original content?<br />
-			Use these steps and images as a guide:</p>
+			<p>So you want to create original content? Here's a guide:</p>
+			<p class="AsteriskMessage"><i>Be sure to click the </i><a class="InternalLink" href="#oc?activate=image_1">image</a><i> links that appear on the right if you get lost</i></p>
 
 			<div class="ContentHeader" multi_id="sounds_image"><span class="HoverShowControl"><span class="ContentHeaderTitle">Creating the sounds-image</span>:<span class="HoverShow"> <a class="InternalLink" href="#.?scroll=sounds_image">Hardlink</a></span></span></div>
 			<div class="ContentBody">
 			<ol class="SpacedList">
-				<li class="InstructionsImageLinkContainer">
-					<a class="ImageLink InstructionsImageLink" href="image_oc_guide0.png" href_update="#oc?activate=image_1" target="_blank" multi_id="image_1">image</a><div class="ImageDescription">
-						<ul>
-							<li>All 3 files downloaded into the folder</li>
-							<li>ffmpeg.exe hasn't been extracted yet</li>
+				<li multi_id="step_1">
+					<div class="GuideLink InstructionsImageLinkContainer" href="#.?activate=image_1">
+						<a class="ImageLink InstructionsImageLink" href="image_oc_guide0.png" href_update="#oc?activate=image_1" target="_blank" multi_id="image_1">image</a><div class="ImageDescription">
+							<ul>
+								<li>All 3 files downloaded into the folder</li>
+								<li>ffmpeg.exe hasn't been extracted yet</li>
+							</ul>
+						</div>
+
+						<p>Download the <a class="InternalLink" href="#ogglify">ogglify</a> files into a new folder:</p>
+						<ul class="ContentInstructionListUnordered ContentInstructionListSmall">
+							<li><a class="Link" href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify.exe">ogglify.exe</a></li>
+							<li><a class="Link" href="http://ffmpeg.zeranoe.com/builds/win32/static/ffmpeg-latest-win32-static.7z">ffmpeg.exe</a><span class="DownloadLinkExtension"> from <i>/bin/ffmpeg.exe</i></span></li>
 						</ul>
+
+						<div class="InstructionsImageLinkClear"></div>
 					</div>
-
-					Download the <a class="InternalLink" href="#ogglify">ogglify</a> files into a new folder:
-					<ul class="ContentInstructionListUnordered ContentInstructionListSmall">
-						<li><a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify.exe">ogglify.exe</a></li>
-						<li><a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify-fast.bat">ogglify-fast.bat</a></li>
-						<li><a href="http://ffmpeg.zeranoe.com/builds/win32/static/ffmpeg-latest-win32-static.7z">ffmpeg.exe</a><span class="DownloadLinkExtension"> from <i>/bin/ffmpeg.exe</i></span></li>
-					</ul>
-
-					<div class="InstructionsImageLinkClear"></div>
 				</li>
-				<li class="InstructionsImageLinkContainer">
-					<a class="ImageLink InstructionsImageLink" href="image_oc_guide1.png" href_update="#oc?activate=image_2" target="_blank" multi_id="image_2">image</a><div class="ImageDescription">
-						<ul>
-							<li>ffmpeg.exe has now been extracted</li>
-							<li>If you don't have a program to extract from a .7z, visit <a href="http://www.7-zip.org/" target="_blank">7-zip.org</a></li>
-						</ul>
+				<li multi_id="step_2">
+					<div class="GuideLink InstructionsImageLinkContainer" href="#.?activate=image_2">
+						<a class="ImageLink InstructionsImageLink" href="image_oc_guide1.png" href_update="#oc?activate=image_2" target="_blank" multi_id="image_2">image</a><div class="ImageDescription">
+							<ul>
+								<li>ffmpeg.exe has now been extracted</li>
+								<li>You can delete the .7z file after you are done</li>
+								<li>If you don't have a program to extract from a .7z, visit <a href="http://www.7-zip.org/" target="_blank">7-zip.org</a></li>
+							</ul>
+						</div>
+
+						<p>Make sure you extract <a class="Link" href="http://ffmpeg.zeranoe.com/builds/win32/static/ffmpeg-latest-win32-static.7z">ffmpeg.exe</a> from the .7z archive into your folder</p>
+
+						<div class="InstructionsImageLinkClear"></div>
 					</div>
-
-					<p>Make sure you extract <a>ffmpeg.exe</a> from the .7z archive into your folder</p>
-
-					<div class="InstructionsImageLinkClear"></div>
 				</li>
-				<li class="InstructionsImageLinkContainer">
-					<a class="ImageLink InstructionsImageLink" href="image_oc_guide2.png" href_update="#oc?activate=image_3" target="_blank" multi_id="image_3">image</a><div class="ImageDescription">
-						<ul>
-							<li>Image file and sound file have been added to the folder</li>
-							<li>Sound files can be in .mp3, .flac, and other file types ffmpeg supports</li>
-						</ul>
+				<li multi_id="step_3">
+					<div class="GuideLink InstructionsImageLinkContainer" href="#.?activate=image_3">
+						<a class="ImageLink InstructionsImageLink" href="image_oc_guide2.png" href_update="#oc?activate=image_3" target="_blank" multi_id="image_3">image</a><div class="ImageDescription">
+							<ul>
+								<li>Image file and sound file have been added to the folder</li>
+								<li>Sound files can be in .mp3, .flac, and other file types ffmpeg supports</li>
+							</ul>
+						</div>
+
+						<p>Put your image and any sound files you want to embed inside the folder</p>
+
+						<div class="InstructionsImageLinkClear"></div>
 					</div>
-
-					<div>Put your image and any sound files you want to embed inside the folder</div>
-
-					<div class="InstructionsImageLinkClear"></div>
 				</li>
-				<li class="InstructionsImageLinkContainer">
-					<a class="ImageLink InstructionsImageLink" href="image_oc_guide3.png" href_update="#oc?activate=image_4" target="_blank" multi_id="image_4">image</a><div class="ImageDescription">
-						<ul>
-							<li>Dragging the image and sound onto <i>ogglify.exe</i></li>
-							<li>If you don't mind not getting the best sound quality, you can drag them onto <i>ogglify-fast.bat</i> instead</li>
-							<li>Also, the file name of your sound files will be used as the sound tag</li>
-						</ul>
+				<li multi_id="step_4">
+					<div class="GuideLink InstructionsImageLinkContainer" href="#.?activate=image_4">
+						<a class="ImageLink InstructionsImageLink" href="image_oc_guide3.png" href_update="#oc?activate=image_4" target="_blank" multi_id="image_4">image</a><div class="ImageDescription">
+							<ul>
+								<li>Dragging the image and sound onto <i>ogglify.exe</i></li>
+								<li>If you don't mind not getting the best sound quality, you can drag them onto <i>ogglify-fast.bat</i> instead</li>
+								<li>Also, the file name of your sound files will be used as the sound tag</li>
+							</ul>
+						</div>
+
+						<p>Select the image and sound file(s) and drag them onto <a class="Link" href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify.exe">ogglify.exe</a></p>
+
+						<div class="InstructionsImageLinkClear"></div>
 					</div>
-
-					<p>Select the image and sound file(s) and drag them onto <a class="InternalLink" href="#ogglify?scroll=setup">ogglify.exe</a></p>
-
-					<div class="InstructionsImageLinkClear"></div>
 				</li>
-				<li class="InstructionsImageLinkContainer">
-					<a class="ImageLink InstructionsImageLink" href="image_oc_guide4.png" href_update="#oc?activate=image_5" target="_blank" multi_id="image_5">image</a><div class="ImageDescription">
-						<ul>
-							<li>The command prompt shown working its magic</li>
-							<li>Typically takes a few seconds based on how big your sound is</li>
-						</ul>
+				<li multi_id="step_5">
+					<div class="GuideLink InstructionsImageLinkContainer" href="#.?activate=image_5">
+						<a class="ImageLink InstructionsImageLink" href="image_oc_guide4.png" href_update="#oc?activate=image_5" target="_blank" multi_id="image_5">image</a><div class="ImageDescription">
+							<ul>
+								<li>The command prompt shown working its magic</li>
+								<li>Typically takes a few seconds based on how big your sound is</li>
+								<li>The window should automatically open, run, and close; <b>there is no GUI</b></li>
+							</ul>
+						</div>
+
+						<p>A command prompt window should appear; sit back and let the magic happen</p>
+
+						<div class="InstructionsImageLinkClear"></div>
 					</div>
-
-					A command prompt window should appear; sit back and let the magic happen
-
-					<div class="InstructionsImageLinkClear"></div>
 				</li>
-				<li class="InstructionsImageLinkContainer">
-					<a class="ImageLink InstructionsImageLink" href="image_oc_guide5.png" href_update="#oc?activate=image_6" target="_blank" multi_id="image_6">image</a><div class="ImageDescription">
-						<ul>
-							<li>A new file has been created</li>
-							<li>Note how it is much larger than the original</li>
-						</ul>
+				<li multi_id="step_6">
+					<div class="GuideLink InstructionsImageLinkContainer" href="#.?activate=image_6">
+						<a class="ImageLink InstructionsImageLink" href="image_oc_guide5.png" href_update="#oc?activate=image_6" target="_blank" multi_id="image_6">image</a><div class="ImageDescription">
+							<ul>
+								<li>A new file has been created</li>
+								<li>Note how it is much larger than the original</li>
+							</ul>
+						</div>
+
+						<p>After the command prompt closes, you should have a new file named <a><i>something</i>-embed<i>.ext</i></a></p>
+
+						<div class="InstructionsImageLinkClear"></div>
 					</div>
-
-					After the command prompt closes, you should have a new file named "<i>something</i>-embed<i>.png</i>"
-
-					<div class="InstructionsImageLinkClear"></div>
 				</li>
 			</ol>
 			</div>
@@ -618,48 +631,92 @@
 			<div class="ContentHeader" multi_id="posting"><span class="HoverShowControl"><span class="ContentHeaderTitle">Posting your image</span>:<span class="HoverShow"> <a class="InternalLink" href="#.?scroll=posting">Hardlink</a></span></span></div>
 			<div class="ContentBody">
 			<ol class="SpacedList" start="7">
-				<li class="InstructionsImageLinkContainer">
-					<a class="ImageLink InstructionsImageLink" href="image_oc_guide6.png" href_update="#oc?activate=image_7" target="_blank" multi_id="image_7">image</a><div class="ImageDescription">
-						<ul>
-							<li>The quick reply box (using 4chan x) shown with the uploader panel open</li>
-							<li>If you haven't disabled it in the settings, the uploader panel should automatically open</li>
-							<li>However, it shouldn't matter if you use it or not</li>
-						</ul>
+				<li multi_id="step_7">
+					<div class="GuideLink InstructionsImageLinkContainer" href="#.?activate=image_7">
+						<a class="ImageLink InstructionsImageLink" href="image_oc_guide6.png" href_update="#oc?activate=image_7" target="_blank" multi_id="image_7">image</a><div class="ImageDescription">
+							<ul>
+								<li>The quick reply box (using 4chan x) shown with the uploader panel open</li>
+								<li>If you haven't disabled it in the settings, the uploader panel should automatically open</li>
+								<li>However, it shouldn't matter if you use it or not</li>
+							</ul>
+						</div>
+
+						<p>Reply as you normally would to any thread, including your new image of course</p>
+
+						<div class="InstructionsImageLinkClear"></div>
 					</div>
-
-					<p>Reply as you normally would to any thread, including your new image of course</p>
-
-					<div class="InstructionsImageLinkClear"></div>
 				</li>
-				<li class="InstructionsImageLinkContainer">
-					<a class="ImageLink InstructionsImageLink" href="image_oc_guide7.png" href_update="#oc?activate=image_8" target="_blank" multi_id="image_8">image</a><div class="ImageDescription">
-						<ul>
-							<li>The resulting image shown uploaded in a post; the filename has been preserved</li>
-							<li>The sounds link has been clicked and the sound is listed in the post</li>
-							<li>Note: if you change any of the fields in the uploader panel, your image will be re-encoded; if you're using Firefox, you may lose your filename</li>
-						</ul>
+				<li multi_id="step_8">
+					<div class="GuideLink InstructionsImageLinkContainer" href="#.?activate=image_8">
+						<a class="ImageLink InstructionsImageLink" href="image_oc_guide7.png" href_update="#oc?activate=image_8" target="_blank" multi_id="image_8">image</a><div class="ImageDescription">
+							<ul>
+								<li>The resulting image shown uploaded in a post; the filename has been preserved</li>
+								<li>The sounds link has been clicked and the sound is listed in the post</li>
+								<li>Note: if you change any of the fields in the uploader panel, your image will be re-encoded; if you're using Firefox, you may lose your filename</li>
+							</ul>
+						</div>
+
+						<p>Your image should be uploaded with the filename preserved</p>
+
+						<div class="InstructionsImageLinkClear"></div>
 					</div>
-
-					<p>Your image should be uploaded with the filename preserved</p>
-
-					<div class="InstructionsImageLinkClear"></div>
 				</li>
-				<li class="InstructionsImageLinkContainer">
-					<a class="ImageLink InstructionsImageLink" href="image_oc_guide8.png" href_update="#oc?activate=image_9" target="_blank" multi_id="image_9">image</a><div class="ImageDescription">
-						<ul>
-							<li>The sound shown being played in the player</li>
-						</ul>
+				<li multi_id="step_9">
+					<div class="GuideLink InstructionsImageLinkContainer" href="#.?activate=image_9">
+						<a class="ImageLink InstructionsImageLink" href="image_oc_guide8.png" href_update="#oc?activate=image_9" target="_blank" multi_id="image_9">image</a><div class="ImageDescription">
+							<ul>
+								<li>The sound shown being played in the player</li>
+							</ul>
+						</div>
+
+						<p>You can now load your sound-image in the player</p>
+
+						<div class="InstructionsImageLinkClear"></div>
 					</div>
-
-					<p>You can now load your sound-image in the player</p>
-
-					<div class="InstructionsImageLinkClear"></div>
 				</li>
 			</ol>
 			</div>
 
 			<div class="ContentHeader" multi_id="congratulations"><span class="ContentHeaderTitle">Congratulations</span>: You have posted original content!</div>
+			<div class="ContentBodyStub"></div>
+
+			<span class="PageVariableDisplayInv" pvar="tips">
+			<div class="ContentHeader" multi_id="tips"><span class="HoverShowControl"><span class="ContentHeaderTitle">Tips</span>:<span class="HoverShow"> <a class="InternalLink" href="#.?tips&scroll=tips">Hardlink</a></span></span></div>
+			<div class="ContentBody">
+				<p>For anybody who cares enough to view this section, here are some tips for using these applications:</p>
+
+				<ol class="SpacedList">
+					<li multi_id="tip_1">
+						<p>If you want your file to encode faster and don't need the best possible audio quality in your image:</p>
+
+						<ol class="ContentInstructionList ContentInstructionListSmall">
+							<li>Download <a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify-fast.bat">ogglify-fast.bat</a></li>
+							<li>Put it in your folder with <a class="Link" href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify.exe">ogglify.exe</a> <span class="DownloadLinkExtension"><i>(keep ogglify.exe!)</i></span></li>
+							<li>Use <a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify-fast.bat">ogglify-fast.bat</a> in place of <a class="Link" href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify.exe">ogglify.exe</a> in <a class="InternalLink" href="#.?tips&scroll=step_4">step 4</a></li>
+						</ol>
+					</li>
+					<li multi_id="tip_2">
+						<p>The filename of your audio files will be used as the [<a>tag</a>] for playback; rename your files accordingly if desired</p>
+					</li>
+					<li multi_id="tip_3">
+						<p>If you want to test your image before you upload, you can drag the output file from <a class="InternalLink" href="#.?tips&scroll=step_6">step 6</a> onto an open Media Player in your browser</p>
+					</li>
+					<li multi_id="tip_4">
+						<p>If you want a different filename, be sure to rename your file from <a class="InternalLink" href="#.?tips&scroll=step_6">step 6</a> to something different</p>
+					</li>
+				</ol>
+			</div>
+			</span>
+
 		</div>
+
+		<div class="ExtrasContainerPre PageVariableDisplay" pvar="tips"></div>
+		<div class="ExtrasContainer PageVariableDisplay" pvar="tips">
+			<div class="Extra">
+				<a class="InternalLink" href="#.?tips">Usage Tips</a>
+			</div>
+		</div>
+
 	</div>
 </div>
 
