@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     3.1.4
+// @version     3.1.5
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -10310,6 +10310,11 @@ InlineManager.prototype={
 					.html(post_data.sounds.load_all_text)
 					.on("click",{"post_data":post_data,"manager":self},self.on_load_all_click);
 				});
+				post_data_copy.container.find(".MPLoadLinkTop").each(function(index){
+					$(this)
+					.off("click")
+					.on("click",{"post_data":post_data,"sound_id":parseInt($(this).attr("mp_sound_id"))},self.on_link_top_click);
+				});
 			}
 			else{
 				post_data.sounds={
@@ -10782,6 +10787,7 @@ InlineManager.prototype={
 							.append(
 								E("a")
 								.attr("href","#")
+								.attr("mp_sound_id",i.toString())
 								.addClass("MPLoadLinkTop")
 								.html(text_to_html(post_data.sounds.sound_names[i].substr(0,post_data.sounds.sound_names[i].length-4)))
 								.on("click",{"post_data":post_data,"sound_id":i},this.on_link_top_click)
