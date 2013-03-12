@@ -1,4 +1,7 @@
-﻿3.1.4
+﻿3.1.5
+- Made it so sound lists in embedded backlinks are clickable
+
+3.1.4
 - Added an option for auto-update after posting
 - Made the file box clear on appchanx
 
