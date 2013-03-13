@@ -148,7 +148,8 @@ int main(int argc, char** argv) {
 			cmd.str("");
 			cmd << "ffmpeg -y -nostdin -i \""
 				<< argv[sounds[i]]
-				<< "\" -acodec libvorbis -aq "
+				<< "\" -vn"
+				<< " -acodec libvorbis -aq "
 				<< (quality < 0 ? 0 : quality);
 			if (quality < 0) cmd << " -ac 1";
 			cmd << " -map_metadata -1 \""
