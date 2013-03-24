@@ -727,6 +727,7 @@ var Videcode = (function () {
 			// Set
 			if (this.error_message === null) {
 				this.error_message = message;
+				this.malformed = true;
 			}
 
 			return this;
@@ -749,6 +750,7 @@ var Videcode = (function () {
 			// Decoding data
 			this.version = 0;
 
+			this.malformed = false;
 			this.error_message = null;
 			this.status = 0;
 			this.mask = 0x12;
@@ -940,6 +942,7 @@ var Videcode = (function () {
 			}
 			else {
 				this_private.set_error.call(this, "No data found");
+				this.malformed = false;
 			}
 
 			// Error
@@ -972,6 +975,17 @@ var Videcode = (function () {
 		*/
 		has_error: function () {
 			return (this.error_message !== null || this.image === null);
+		},
+
+		/**
+			Check if the decoded data was malformed.
+
+			@return
+				true if not decoded or not malformed,
+				false if an error occured that wasn't "no data found"
+		*/
+		is_malformed: function () {
+			return this.malformed;
 		},
 
 		/**
@@ -1035,6 +1049,16 @@ var Videcode = (function () {
 		*/
 		get_image: function () {
 			return this.image;
+		},
+
+		/**
+			Get the source data.
+
+			@return
+				a Uint8Array of the source file
+		*/
+		get_source: function () {
+			return this.source;
 		},
 
 		/**
@@ -1228,7 +1252,7 @@ var VPlayer = (function () {
 			@return
 				true if found, false otherwise
 		*/
-		return (class_list.match(new RegExp("(\\s|^)" + check + "(\\s|$)")) != null);
+		return (class_list.match(new RegExp("(\\s|^)" + check + "(\\s|$)", "g")) != null);
 	}
 	function remove_class(class_list, remove) {
 		/**
@@ -1241,7 +1265,7 @@ var VPlayer = (function () {
 			@return
 				the class list with the class removed
 		*/
-		return class_list.replace(new RegExp("(\\s|^)" + remove + "(\\s|$)"), " ");
+		return class_list.replace(new RegExp("(\\s|^)" + remove + "(\\s|$)", "g"), " ");
 	}
 	function add_class(class_list, add) {
 		/**
@@ -1359,16 +1383,7 @@ var VPlayer = (function () {
 		this.audio_desync_max = 0.25; // seconds
 
 		// Playback data
-		this.event_listeners = {
-			"load": [],
-			"error": [],
-			"timeupdate": [],
-			"volumechange": [],
-			"seek": [],
-			"play": [],
-			"pause": [],
-			"end": [],
-		};
+		this.clear_listeners();
 
 		// Create data
 		this.sync_timer = null;
@@ -1380,6 +1395,11 @@ var VPlayer = (function () {
 		this.audio_loop_stop_timer = null;
 
 		this.element_container = null;
+		this.video_tag = null;
+		this.audio_tag = null;
+		this.image_tag = null;
+		this.video_callbacks = [];
+		this.audio_callbacks = [];
 
 		this.video_blob = null;
 		this.video_blob_url = null;
@@ -1803,6 +1823,32 @@ var VPlayer = (function () {
 
 
 		/**
+			Add a managed callback to the video tag.
+
+			@param name
+				the event name
+			@param callback
+				the callback function
+		*/
+		add_video_callback: function (name, callback) {
+			this.video_callbacks.push([name,callback]);
+			this.video_tag.addEventListener(name, callback);
+		},
+
+		/**
+			Add a managed callback to the audio tag.
+
+			@param name
+				the event name
+			@param callback
+				the callback function
+		*/
+		add_audio_callback: function (name, callback) {
+			this.audio_callbacks.push([name,callback]);
+			this.audio_tag.addEventListener(name, callback);
+		},
+
+		/**
 			Get how transparent the video should be at time.
 			Should not be called if the video is the main track.
 
@@ -1968,6 +2014,8 @@ var VPlayer = (function () {
 				the duration of the animation in seconds
 		*/
 		video_animate: function (mode, time) {
+			this_private.video_animate_stop.call(this);
+
 			this.video_tag.className = add_class(this.video_tag.className, css_video_opacity_animations[mode]);
 			set_animation_time(this.video_tag, time * 1000);
 		},
@@ -2027,7 +2075,7 @@ var VPlayer = (function () {
 			Called when the video ends.
 		*/
 		on_video_ended: function () {
-			if (this.video_tag.loop) return; // Shouldn't happen, but just in case
+			if (this.video_tag.loop) return;
 
 			if (this.video_main) {
 				// Pause all
@@ -2043,6 +2091,8 @@ var VPlayer = (function () {
 				});
 			}
 			else {
+				if (this.paused) return; // don't want this event triggering
+
 				// Animation
 				if (this.video_play_style[1] == DISPLAY_VIDEO) {
 					// Nothing needs to be done
@@ -2054,8 +2104,12 @@ var VPlayer = (function () {
 					// Video opacity
 					if (this.video_fades[1]) {
 						// Fade out
-						var t = Math.min(this.max_duration - (this.sync_offset + this.min_duration), this.video_animation_time[1]);
-						this_private.video_animate.call(this, 1, t);
+						//var t = Math.min(this.max_duration - (this.sync_offset + this.min_duration), this.video_animation_time[1]);
+						var offset = (this.sync_offset + this.min_duration);
+						var t = Math.min(this.max_duration - offset, this.video_animation_time[1] - (this.audio_tag.currentTime - offset));
+						if (t > 0) {
+							this_private.video_animate.call(this, 1, t);
+						}
 					}
 					else {
 						// Vanish
@@ -2095,7 +2149,7 @@ var VPlayer = (function () {
 			Called when the audio ends.
 		*/
 		on_audio_ended: function () {
-			if (this.audio_tag.loop) return; // Shouldn't happen, but just in case
+			if (this.audio_tag.loop) return;
 
 			if (this.video_main) {
 				// Nothing to do
@@ -2173,9 +2227,16 @@ var VPlayer = (function () {
 
 			// Time callback
 			var self = this;
-			this.main_tag.addEventListener("timeupdate", function () {
-				this_private.on_main_time_update.call(self);
-			});
+			if (this.video_main) {
+				this_private.add_video_callback.call(this, "timeupdate", function () {
+					this_private.on_main_time_update.call(self);
+				});
+			}
+			else {
+				this_private.add_audio_callback.call(this, "timeupdate", function () {
+					this_private.on_main_time_update.call(self);
+				});
+			}
 
 			// Ready
 			this.metadata_ready = true;
@@ -2395,6 +2456,27 @@ var VPlayer = (function () {
 		},
 
 		/**
+			Remove all event listeners.
+
+			@return
+				this
+		*/
+		clear_listeners: function () {
+			this.event_listeners = {
+				"load": [],
+				"error": [],
+				"timeupdate": [],
+				"volumechange": [],
+				"seek": [],
+				"play": [],
+				"pause": [],
+				"end": [],
+			};
+
+			return this;
+		},
+
+		/**
 			Reset the state of the object.
 
 			@return
@@ -2402,16 +2484,8 @@ var VPlayer = (function () {
 		*/
 		reset: function () {
 			// Remove HTML
-			if (this.element_container != null) {
-				if (this.element_container.parentNode != null) {
-					this.element_container.parentNode.removeChild(this.element_container);
-				}
-				this.element_container = null;
-			}
-			this.video_tag = null;
-			this.audio_tag = null;
-			this.image_tag = null;
-			this.main_tag = { "currentTime": 0.0 }; // have defaults so get_time() can work without fail
+			this.remove_html();
+
 			// Clear data
 			if (this.video_blob != null) {
 				this.video_blob = null;
@@ -2430,6 +2504,80 @@ var VPlayer = (function () {
 			}
 
 			// Other settings
+			this.volume = 0.5;
+
+			this.metadata_load_count_required = 0;
+
+			this.sync_offset = 0.0;
+
+			this.video_fades = [ false , false ];
+			this.audio_fades = [ false , false ];
+
+			this.video_play_style = [ DISPLAY_NOTHING , DISPLAY_NOTHING ];
+			this.audio_play_style = [ PLAY_NOTHING , PLAY_NOTHING ];
+
+			return this;
+		},
+
+		/**
+			Check if the object has HTML generated or not.
+
+			@return
+				true if generated, false otherwise
+		*/
+		has_html: function () {
+			return (this.element_container != null);
+		},
+
+		/**
+			Remove all the HTML elements of the object from the document.
+
+			@return
+				this
+		*/
+		remove_html: function () {
+			// Clear timers
+			this_private.clear_timers.call(this);
+			this.pause();
+
+			// Remove HTML
+			if (this.video_tag != null) {
+				for (var i = 0; i < this.video_callbacks.length; ++i) {
+					this.video_tag.removeEventListener(this.video_callbacks[i][0], this.video_callbacks[i][1]);
+				}
+				this.video_callbacks = [];
+
+				if (this.video_tag.parentNode != null) {
+					this.video_tag.parentNode.removeChild(this.video_tag);
+				}
+				this.video_tag = null;
+			}
+			if (this.audio_tag != null) {
+				for (var i = 0; i < this.audio_callbacks.length; ++i) {
+					this.audio_tag.removeEventListener(this.audio_callbacks[i][0], this.audio_callbacks[i][1]);
+				}
+				this.audio_callbacks = [];
+
+				if (this.audio_tag.parentNode != null) {
+					this.audio_tag.parentNode.removeChild(this.audio_tag);
+				}
+				this.audio_tag = null;
+			}
+			if (this.image_tag != null) {
+				if (this.image_tag.parentNode != null) {
+					this.image_tag.parentNode.removeChild(this.image_tag);
+				}
+				this.image_tag = null;
+			}
+			if (this.element_container != null) {
+				if (this.element_container.parentNode != null) {
+					this.element_container.parentNode.removeChild(this.element_container);
+				}
+				this.element_container = null;
+			}
+			this.main_tag = { "currentTime": 0.0 }; // have defaults so get_time() can work without fail
+
+			// Other settings
 			this.paused = true;
 
 			this.video_duration = 0.0;
@@ -2438,23 +2586,9 @@ var VPlayer = (function () {
 			this.min_duration = 0.0;
 			this.video_dimensions = { width: 0, height: 0 };
 			this.metadata_load_count = 0;
-			this.metadata_load_count_required = 0;
 			this.metadata_ready = false;
-			this.volume = 0.5;
 			this.video_main = true;
 			this.has_both = false;
-
-			this.video_animation_end_function = null;
-			this.audio_animation_end_function = null;
-
-			this.sync_offset = 0.0;
-			this_private.clear_timers.call(this);
-
-			this.video_fades = [ false , false ];
-			this.audio_fades = [ false , false ];
-
-			this.video_play_style = [ DISPLAY_NOTHING , DISPLAY_NOTHING ];
-			this.audio_play_style = [ PLAY_NOTHING , PLAY_NOTHING ];
 
 			return this;
 		},
@@ -2476,7 +2610,7 @@ var VPlayer = (function () {
 				this
 		*/
 		create_html: function (container) {
-			if (this.image_blob == null || (this.audio_blob == null && this.video_blob == null)) return this;
+			if (this.image_blob == null || (this.audio_blob == null && this.video_blob == null) || this.element_container != null) return this;
 
 			var self = this;
 
@@ -2509,27 +2643,26 @@ var VPlayer = (function () {
 				this.video_tag.style.width = "100%";
 				this.video_tag.style.height = "100%";
 				this.video_tag.style.opacity = "0.0";
-				this.video_tag.style.zIndex = "1";
 				// Video events
-				this.video_tag.addEventListener("loadedmetadata", function (event) {
+				this_private.add_video_callback.call(this, "loadedmetadata", function (event) {
 					this_private.on_video_loaded_metadata.call(self);
 				});
-				this.video_tag.addEventListener("ended", function (event) {
+				this_private.add_video_callback.call(this, "ended", function (event) {
 					this_private.on_video_ended.call(self);
 				});
-				this.video_tag.addEventListener("error", function (event) {
+				this_private.add_video_callback.call(this, "error", function (event) {
 					this_private.on_video_error.call(self);
 				});
-				this.video_tag.addEventListener("animationend", function (event) {
+				this_private.add_video_callback.call(this, "animationend", function (event) {
 					this_private.on_video_animation_end.call(self);
 				});
-				this.video_tag.addEventListener("webkitAnimationEnd", function (event) {
+				this_private.add_video_callback.call(this, "webkitAnimationEnd", function (event) {
 					this_private.on_video_animation_end.call(self);
 				});
-				this.video_tag.addEventListener("oanimationend", function (event) {
+				this_private.add_video_callback.call(this, "oanimationend", function (event) {
 					this_private.on_video_animation_end.call(self);
 				});
-				this.video_tag.addEventListener("MSAnimationEnd", function (event) {
+				this_private.add_video_callback.call(this, "MSAnimationEnd", function (event) {
 					this_private.on_video_animation_end.call(self);
 				});
 				// Load video
@@ -2542,13 +2675,13 @@ var VPlayer = (function () {
 				this.audio_tag = document.createElement("audio");
 				this.audio_tag.style.display = "none";
 				// Audio events
-				this.audio_tag.addEventListener("loadedmetadata", function (event) {
+				this_private.add_audio_callback.call(this, "loadedmetadata", function (event) {
 					this_private.on_audio_loaded_metadata.call(self);
 				});
-				this.audio_tag.addEventListener("ended", function (event) {
+				this_private.add_audio_callback.call(this, "ended", function (event) {
 					this_private.on_audio_ended.call(self);
 				});
-				this.audio_tag.addEventListener("error", function (event) {
+				this_private.add_audio_callback.call(this, "error", function (event) {
 					this_private.on_audio_error.call(self);
 				});
 				// Load audio
@@ -2585,6 +2718,36 @@ var VPlayer = (function () {
 		*/
 		get_container: function () {
 			return this.element_container;
+		},
+
+		/**
+			Get the generated image URL.
+
+			@return
+				the blob URL
+		*/
+		get_image: function () {
+			return this.image_blob_url;
+		},
+
+		/**
+			Get the generated video URL.
+
+			@return
+				the blob URL, or null if no video
+		*/
+		get_video: function () {
+			return this.video_blob_url;
+		},
+
+		/**
+			Get the generated audio URL.
+
+			@return
+				the blob URL, or null if no audio
+		*/
+		get_audio: function () {
+			return this.audio_blob_url;
 		},
 
 		/**

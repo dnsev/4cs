@@ -347,7 +347,7 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"background": "{rgba:bg_color_dark}"
 		},
 		".MPControlLinkSvg": {
-			"width": "{exp:14,*,font_scale}px", 
+			"width": "{exp:14,*,font_scale}px",
 			"height": "{exp:14,*,font_scale}px"
 		},
 		".MPControlLinkSvgMainGroup": {
@@ -1439,7 +1439,7 @@ MediaPlayer.prototype = {
 		var array_type = typeof([]);
 		for (var i = 0; i < this.save_data.length; ++i) {
 			if (typeof(this[this.save_data[i]]) == array_type) {
-				data[this.save_data[i]] = this[this.save_data[i]].slice(0);			
+				data[this.save_data[i]] = this[this.save_data[i]].slice(0);
 			}
 			else {
 				data[this.save_data[i]] = this[this.save_data[i]];
@@ -1958,7 +1958,7 @@ MediaPlayer.prototype = {
 								.append(
 									this.D("MPHelpLabelDiv")
 									.html("More Settings")
-								) 
+								)
 								.append(
 									this.D("MPHelpSectionDiv")
 									.append(
@@ -2265,6 +2265,9 @@ MediaPlayer.prototype = {
 			if (this.current_media.type == "image-audio") {
 				this.audio[0].play();
 			}
+			else if (this.current_media.type == "ve") {
+				this.current_media.vplayer.play();
+			}
 			else if (this.current_media.type == "youtube-video") {
 				if (this.ytvideo_player != null) {
 					if (this.ytvideo_unsafe) {
@@ -2331,6 +2334,9 @@ MediaPlayer.prototype = {
 			if (this.current_media.type == "image-audio") {
 				this.audio[0].pause();
 			}
+			else if (this.current_media.type == "ve") {
+				this.current_media.vplayer.pause();
+			}
 			else if (this.current_media.type == "youtube-video") {
 				if (this.ytvideo_player != null) {
 					if (this.ytvideo_unsafe) {
@@ -2393,6 +2399,9 @@ MediaPlayer.prototype = {
 			if (this.current_media.type == "image-audio") {
 				return this.audio[0].paused;
 			}
+			else if (this.current_media.type == "ve") {
+				return this.current_media.vplayer.is_paused();
+			}
 			else if (this.current_media.type == "youtube-video") {
 				if (this.ytvideo_player != null) {
 					if (this.ytvideo_unsafe) {
@@ -2414,7 +2423,7 @@ MediaPlayer.prototype = {
 				}
 			}
 			else if (this.current_media.type == "vimeo-video") {
-				if (this.vimeovideo_player != null) {	
+				if (this.vimeovideo_player != null) {
 					// Query
 					if (this.vimeovideo_unsafe) {
 						_unsafe_exec(function (data) {
@@ -2478,6 +2487,15 @@ MediaPlayer.prototype = {
 					}
 
 					this.audio[0].currentTime = this.current_media.position;
+				}
+				else if (this.current_media.type == "ve") {
+					if (seconds !== null) {
+						if (seconds < 0.0) seconds = 0.0;
+						else if (seconds > this.current_media.duration) seconds = this.current_media.duration;
+						this.current_media.position = seconds;
+					}
+
+					this.current_media.vplayer.seek(this.current_media.position);
 				}
 				else if (this.current_media.type == "youtube-video") {
 					if (this.ytvideo_player != null) {
@@ -2551,6 +2569,10 @@ MediaPlayer.prototype = {
 			if (this.current_media.type == "image-audio") {
 				// Set volume
 				this.audio[0].volume = this.volume;
+			}
+			else if (this.current_media.type == "ve") {
+				// Set volume
+				this.current_media.vplayer.set_volume(this.volume);
 			}
 			else if (this.current_media.type == "youtube-video") {
 				// Set volume
@@ -2636,18 +2658,23 @@ MediaPlayer.prototype = {
 					this.current_media.progress_timer = null;
 				}
 			}
+			else if (this.current_media.type == "ve") {
+				this.current_media.vplayer.remove_html().clear_listeners();
+				this.current_media.html_container = null;
+				this.video_container.html("");
+			}
 
 			if (this.current_media.type !== old_type) {
 				// Stop
 				this.stop();
+
+				this.title.html(this.title_default);
 
 				if (this.current_media.type == "image-audio") {
 					this.image.css("display", "none");
 					this.image.removeAttr("src");
 					this.no_image.css("display", "");
 					this.current_media.image_size = [0,0];
-
-					this.title.html(this.title_default);
 				}
 				else if (this.current_media.type == "youtube-video") {
 					this.ytvideo_player = null;
@@ -2665,6 +2692,9 @@ MediaPlayer.prototype = {
 					this.soundcloud_player_paused = true;
 					this.video_container.html("");
 				}
+				else if (this.current_media.type == "ve") {
+					// Taken care of elsewhere
+				}
 				else {
 					console.log(this.current_media.type);
 				}
@@ -2679,7 +2709,7 @@ MediaPlayer.prototype = {
 				this.seek_time_end_label.html(this.duration_to_string(0.0));
 				this.current_media = null;
 				this.set_loaded();
-				
+
 				// Title
 				this.title.html(this.title_default);
 
@@ -2733,6 +2763,31 @@ MediaPlayer.prototype = {
 			this.image.css("display", "none");
 			this.image.removeAttr("src");
 			this.image.attr("src", this.current_media.image_url);
+
+			this.current_media.loaded_percent = 1.0;
+		}
+		else if (this.current_media.type == "ve") {
+			var self = this;
+			var playlist_item = this.current_media;
+
+			// Clear temp
+			if (this.current_media.temp_container != null) {
+				this.current_media.vplayer.remove_html().clear_listeners();
+				this.current_media.temp_container.remove();
+				this.current_media.temp_container = null;
+			}
+
+			// Embed the player
+			this.video_container.html("");
+			this.current_media.vplayer.set_volume(this.volume);
+			this.current_media.vplayer
+			.on("load", function () { self.on_ve_load(playlist_item); })
+			.on("error", function () { self.on_ve_error(playlist_item); })
+			.on("play", function () { self.on_ve_play(playlist_item); })
+			.on("pause", function () { self.on_ve_pause(playlist_item); })
+			.on("end", function () { self.on_ve_end(playlist_item); })
+			.on("timeupdate", function (data) { self.on_ve_timeupdate(playlist_item, data); })
+			.create_html(this.video_container[0]);
 
 			this.current_media.loaded_percent = 1.0;
 		}
@@ -2883,7 +2938,7 @@ MediaPlayer.prototype = {
 						)
 					);
 					data.self.vimeovideo_player = new data.VimeoManager(iframe[0]);
-				
+
 					for (var e in events) {
 						data.self.vimeovideo_player.add_event(e, events[e]);
 					}
@@ -2935,7 +2990,7 @@ MediaPlayer.prototype = {
 					};
 
 					data.self.soundcloud_player = new data.SoundcloudManager(data.iframe[0]);
-				
+
 					for (var e in events) {
 						data.self.soundcloud_player.add_event(e, events[e]);
 					}
@@ -2952,7 +3007,7 @@ MediaPlayer.prototype = {
 						iframe: iframe,
 						SoundcloudManager: SoundcloudManager
 					};
-					
+
 					if (params.SoundcloudManager) {
 						// 2 types of execution
 						if (this.soundcloud_unsafe) {
@@ -3056,10 +3111,10 @@ MediaPlayer.prototype = {
 			percent = 0.0;
 			offset = 0.0;
 		}
+
 		// Update html
-		var w = this.load_percent_bar_container.outerWidth();
-		this.load_percent_bar_mover.width(offset * w);
-		this.load_percent_bar.width(percent * w);
+		this.load_percent_bar_mover.width((offset * 100) + "%");
+		this.load_percent_bar.width((percent * 100) + "%");
 	},
 	get_loaded_offset: function () {
 		if (this.current_media !== null) {
@@ -3087,6 +3142,20 @@ MediaPlayer.prototype = {
 
 			// Revoke url
 			(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].audio_blob_url);
+			if (this.playlist[index].image_blob_url != null) {
+				(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].image_blob_url);
+			}
+		}
+		else if (this.playlist[index].type == "ve") {
+			// Remove elements
+			if (this.playlist[index].temp_container != null) {
+				this.playlist[index].temp_container.remove();
+			}
+			if (this.playlist[index].vplayer != null) {
+				this.playlist[index].vplayer.reset();
+			}
+
+			// Revoke url
 			if (this.playlist[index].image_blob_url != null) {
 				(window.webkitURL || window.URL).revokeObjectURL(this.playlist[index].image_blob_url);
 			}
@@ -3335,6 +3404,7 @@ MediaPlayer.prototype = {
 		});
 
 		this.update_image_scale();
+		this.seek_to(null, true);
 	},
 	theatre_reset_controls_timer: function () {
 		if (this.theatre_hide_controls_timer !== null) {
@@ -3762,6 +3832,27 @@ MediaPlayer.prototype = {
 				this.image.height(ys);
 				this.image.css("margin-top", ((hh - ys) / 2) + "px");
 			}
+			else if (this.current_media.type == "ve") {
+				if (this.current_media.vplayer.get_container() != null) {
+					var size = this.current_media.vplayer.get_video_size();
+					if (size.width > 0 && size.height > 0) {
+						var hh = this.video_container.outerHeight();
+						var xs = (this.video_container.outerWidth() / size.width);
+						var ys = (hh / size.height);
+						if (ys < xs) xs = ys;
+
+						ys = size.height * xs;
+						xs = size.width * xs;
+
+						// Scale
+						$(this.current_media.vplayer.get_container()).css({
+							"width": xs + "px",
+							"height": ys + "px",
+							"margin-top": ((hh - ys) / 2) + "px"
+						});
+					}
+				}
+			}
 			else if (this.current_media.type == "youtube-video") {
 				if (this.ytvideo_player != null && this.ytvideo_player.setSize) {
 					this.ytvideo_player.setSize(this.video_container.outerWidth(), this.video_container.outerHeight());
@@ -3801,7 +3892,7 @@ MediaPlayer.prototype = {
 
 		this.image_height = image_height_target;
 		this.playlist_height = playlist_height_target;
-		//if (update_max) 
+		//if (update_max)
 		this.image_height_max = this.image_height;
 
 		// Update
@@ -3970,7 +4061,7 @@ MediaPlayer.prototype = {
 			color_edit.css("background", "rgb(" + value[0] + "," + value[1] + "," + value[2] + ")");
 		}
 		else {
-			color_edit.css("background", "rgba(" + value[0] + "," + value[1] + "," + value[2] + "," + value[3] + ")");	
+			color_edit.css("background", "rgba(" + value[0] + "," + value[1] + "," + value[2] + "," + value[3] + ")");
 		}
 
 		this.player_theme_value_updaters.push([
@@ -4250,6 +4341,152 @@ MediaPlayer.prototype = {
 			);
 		playlist_item.temp_audio[0].volume = 0.0;
 		playlist_item.temp_audio[0].play();
+
+		// Add
+		this.playlist.push(playlist_item);
+
+		// Scroll to?
+		if (this.playlist_scrollto_onload) {
+			this.scroll_to(this.playlist.length - 1);
+		}
+
+		// Index display
+		this.update_index_display((this.current_media != null ? this.current_media.index : -1), this.playlist.length, true);
+
+		// Play?
+		this.on_media_add(playlist_item);
+
+		// Done
+		return playlist_item.index;
+	},
+	add_to_playlist_ve: function (videcode, tag, original_image_url, playlist_data) {
+		// Setup playlist settings
+		var playlist_item = {
+			"type": "ve",
+			"videcode": videcode,
+			"vplayer": null,
+			"title": videcode.get_tag(),
+			"tag": tag,
+			"flagged": false,
+			"url": original_image_url,
+			"index": this.playlist.length,
+			"duration": 0.0,
+			"position": 0.0,
+			"controls": [ null , null , null , null , null ],
+			"loaded_offset": 0.0,
+			"loaded_percent": 1.0,
+			"image_name": ((playlist_data ? playlist_data.image_name : null) || (original_image_url != null ? original_image_url.split("/").pop() : "image")),
+			"image_size": [0, 0],
+			"mask_click_target": null,
+			"image_url": null,
+			"image_blob": null,
+			"image_blob_url": null,
+			"temp_container": null
+		};
+
+		// Create vplayer
+		playlist_item.vplayer = new VPlayer(videcode);
+		// Image URL
+		if (playlist_item.url == null) {
+			playlist_item.image_blob = new Blob([videcode.get_source()], {type: videcode.get_image_mime_type()});
+			playlist_item.image_blob_url = (window.webkitURL || window.URL).createObjectURL(playlist_item.image_blob);
+			playlist_item.image_url = playlist_item.image_blob_url;
+		}
+		else {
+			playlist_item.image_url = playlist_item.url;
+		}
+		playlist_item.mask_click_target = playlist_item.image_url;
+
+		// html setup
+		var final_separators = [ null , null ];
+		this.playlist_container.append( //{ DOM creation
+			(playlist_item.playlist_item = this.E("a", "MPPlaylistItem"))
+			.attr("href", playlist_item.image_url)
+			.attr("target", "_blank")
+			.on("click." + this.namespace, {media_player: this, playlist_item: playlist_item}, this.on_playlist_item_click)
+			.on("mousedown", this.cancel_event)
+			.attr("title", tag != MediaPlayer.ALL_SOUNDS ? tag : "")
+			.append(
+				this.D("MPPlaylistSoundName")
+				.text(playlist_item.title)
+			)
+			.append(
+				(playlist_item.info_container = this.D("MPPlaylistItemInfo"))
+				.html(this.duration_to_string(playlist_item.duration))
+			)
+			.append(
+				this.D("MPPlaylistControlsContainer")
+				.on("mousedown", this.cancel_event)
+				.append(
+					this.D("MPPlaylistControls")
+					.on("click", this.cancel_event)
+					.append(
+						(playlist_item.controls[0] = this.E("a", "MPPlaylistControlLink"))
+						.html("&times;")
+						.attr("title", "Delete")
+					)
+					.append(
+						this.D("MPPlaylistControlLinkSeparator")
+					)
+					.append(
+						(playlist_item.controls[1] = this.E("a", "MPPlaylistControlLink"))
+						.html("&uarr;")
+						.attr("title", "Move up")
+					)
+					.append(
+						this.D("MPPlaylistControlLinkSeparator")
+					)
+					.append(
+						(playlist_item.controls[2] = this.E("a", "MPPlaylistControlLink"))
+						.html("&darr;")
+						.attr("title", "Move down")
+					)
+					.append(
+						(final_separators[0] = this.D("MPPlaylistControlLinkSeparator"))
+					)
+					.append(
+						(playlist_item.controls[3] = this.E("a", "MPPlaylistControlLink"))
+						.html("A")
+						.attr("title", "Save audio...")
+						.attr("href", playlist_item.vplayer.get_audio() || "")
+					)
+					.append(
+						(final_separators[1] = this.D("MPPlaylistControlLinkSeparator"))
+					)
+					.append(
+						(playlist_item.controls[4] = this.E("a", "MPPlaylistControlLink"))
+						.html("V")
+						.attr("title", "Save video...")
+						.attr("href", playlist_item.vplayer.get_video() || "")
+					)
+				)
+			)
+		); //}
+
+		// Custom
+		if (playlist_item.vplayer.get_audio() == null) {
+			final_separators[0].css("display", "none");
+			playlist_item.controls[3].css("display", "none");
+		}
+		if (playlist_item.vplayer.get_video() == null) {
+			final_separators[1].css("display", "none");
+			playlist_item.controls[4].css("display", "none");
+		}
+		for (var i = 0; i < playlist_item.controls.length; ++i) {
+			playlist_item.controls[i].on("click." + this.namespace, {control_id: i, media_player: this, playlist_item: playlist_item}, this.on_playlist_control_click);
+			playlist_item.controls[i].on("mousedown", this.cancel_event);
+		}
+
+		// Automatic length detection
+		var self = this;
+		(playlist_item.temp_container = this.D()).css("display", "none");
+		playlist_item.vplayer.on("load", function () {
+			self.on_temp_ve_load(playlist_item);
+		});
+		playlist_item.vplayer.on("error", function () {
+			self.on_temp_ve_error(playlist_item);
+		});
+		playlist_item.vplayer.create_html(playlist_item.temp_container[0]);
 
 		// Add
 		this.playlist.push(playlist_item);
@@ -4696,7 +4933,7 @@ MediaPlayer.prototype = {
 				if (okay) {
 					media_player.attempt_load_raw(false, url_or_file, load_tag, playlist_data, response, 0, function (status, files) {
 						if (typeof(status_callback) == "function") status_callback(status, callback_data, files);
-					});
+					}, {});
 				}
 			};
 
@@ -4713,15 +4950,30 @@ MediaPlayer.prototype = {
 				var ui8_data = new Uint8Array(this.result);
 				self.attempt_load_raw(true, url_or_file.name, load_tag, playlist_data, ui8_data, 0, function (status, files) {
 					if (typeof(status_callback) == "function") status_callback(status, callback_data, files);
-				});
+				}, {});
 			}
 			// Start
 			reader.readAsArrayBuffer(url_or_file);
 		}
 	},
-	attempt_load_raw: function (is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id, done_callback) {
+	attempt_load_raw: function (is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id, done_callback, extra_data) {
 		callback_id = callback_id || 0;
+
+		// Videncode check first if filename resembles format
+		if (callback_id == 0 && this.filename_might_be_ve(url_or_filename) && !extra_data.ve_checked) {
+			extra_data.ve_checked = true;
+			this.attempt_load_ve(is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id, done_callback, extra_data);
+			return;
+		}
+
 		if (callback_id >= this.load_callbacks.length) {
+			// Videncode check last if not done yet
+			if (!extra_data.ve_checked) {
+				extra_data.ve_checked = true;
+				this.attempt_load_ve(is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id, done_callback, extra_data);
+				return;
+			}
+
 			if (typeof(done_callback) == "function") done_callback(false, null);
 			return;
 		}
@@ -4751,9 +5003,39 @@ MediaPlayer.prototype = {
 			}
 			else {
 				// Next
-				self.attempt_load_raw(is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id + 1, done_callback);
+				self.attempt_load_raw(is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id + 1, done_callback, extra_data);
 			}
 		});
+	},
+	attempt_load_ve: function (is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id, done_callback, extra_data) {
+		var videcode = new Videcode(raw_ui8_data, url_or_filename);
+		if (!videcode.decode().has_error()) {
+			// Create availability list
+			var available = null;
+			if (videcode.has_video()) {
+				available = [ (videcode.get_tag() || "?") + ".webm" ];
+			}
+			else {
+				available = [ (videcode.get_tag() || "?") + ".ogg" ];
+			}
+
+			// Add
+			this.add_to_playlist_ve(
+				videcode,
+				load_tag,
+				(is_local ? null : url_or_filename),
+				playlist_data
+			);
+
+			// Callback
+			if (typeof(done_callback) == "function") done_callback(true, available);
+
+			// Don't continue
+			return;
+		}
+
+		// Nothing detected
+		this.attempt_load_raw(is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id, done_callback, extra_data);
 	},
 	attempt_load_youtube_video: function (url, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback) {
 		var vid_id = this.url_get_youtube_video_id(url);
@@ -4925,6 +5207,10 @@ MediaPlayer.prototype = {
 		}
 
 		return null;
+	},
+
+	filename_might_be_ve: function (url) {
+		return /\.(ve|ev)\.(png|gif|jpg|jpeg)$/i.test(url);
 	},
 
 	downloads_generate_image_list: function (files, about, gen_function, use_original, index) {
@@ -5267,6 +5553,77 @@ MediaPlayer.prototype = {
 		}
 	},
 
+	on_ve_load: function (playlist_item) {
+		// Update image
+		this.update_image_scale();
+
+		// Update time
+		var duration = playlist_item.vplayer.get_duration();
+
+		// Seek
+		this.set_duration(duration);
+		this.seek_to(null, true);
+
+		// Play
+		playlist_item.vplayer.play();
+	},
+	on_ve_error: function (playlist_item) {
+		// On error, remove
+		if (playlist_item.temp_container != null) {
+			playlist_item.vplayer.remove_html().clear_listeners();
+			playlist_item.temp_container.remove();
+			playlist_item.temp_container = null;
+
+			this.remove(playlist_item.index);
+		}
+	},
+	on_ve_play: function (playlist_item) {
+		// Update playing status
+		this.update_playing_status();
+	},
+	on_ve_pause: function (playlist_item) {
+		// Update playing status
+		this.update_playing_status();
+	},
+	on_ve_end: function (playlist_item) {
+		if (!this.seek_exacting && !this.seek_dragging) {
+			// Update playing status
+			this.update_playing_status();
+			// Next
+			this.on_media_end();
+			this.next(true);
+		}
+	},
+	on_ve_timeupdate: function (playlist_item, data) {
+		// Update seek bar
+		this.seek_to(data.time, true);
+	},
+	on_temp_ve_load: function (playlist_item) {
+		// On success, set the duration
+		if (playlist_item.temp_container != null) {
+			var duration = playlist_item.vplayer.get_duration();
+			playlist_item.vplayer.remove_html().clear_listeners();
+			playlist_item.temp_container.remove();
+			playlist_item.temp_container = null;
+
+			// Set
+			playlist_item.duration = duration;
+
+			var length_str = this.duration_to_string(duration);
+			playlist_item.info_container.html(length_str);
+		}
+	},
+	on_temp_ve_error: function (playlist_item) {
+		// On error, remove
+		if (playlist_item.temp_container != null) {
+			playlist_item.vplayer.remove_html().clear_listeners();
+			playlist_item.temp_container.remove();
+			playlist_item.temp_container = null;
+
+			this.remove(playlist_item.index);
+		}
+	},
+
 	on_custom_option_click: function (event) {
 		var v_id = 0;
 		for (var j = 0; j < event.data.custom_data["values"].length; ++j) {
@@ -5278,7 +5635,7 @@ MediaPlayer.prototype = {
 		v_id = (v_id + 1) % event.data.custom_data["values"].length;
 
 		$(this).html(event.data.custom_data["descr"][v_id]);
-		
+
 		event.data.custom_data["current"] = event.data.custom_data["values"][v_id];
 		event.data.custom_data["change"](event.data.custom_data["values"][v_id]);
 	},
@@ -6019,6 +6376,13 @@ MediaPlayer.prototype = {
 					else if (event.data.playlist_item.type == "youtube-video" || event.data.playlist_item.type == "vimeo-video") {
 						prompt("Right click/middle click to open. Original:", event.data.playlist_item.original_url);
 					}
+					else if (event.data.playlist_item.type == "ve") {
+						prompt(
+							"Right click and save as, or open in a new tab and save.\n" +
+							"(Be sure to save as .ogg)",
+							$(this).attr("href")
+						);
+					}
 					else {
 						console.log(event.data.playlist_item.type);
 					}
@@ -6034,6 +6398,13 @@ MediaPlayer.prototype = {
 				if (event.which == 1) {
 					if (event.data.playlist_item.type == "image-audio") {
 						alert("Right click and save as, or open in a new tab.");
+					}
+					else if (event.data.playlist_item.type == "ve") {
+						prompt(
+							"Right click and save as, or open in a new tab and save.\n" +
+							"(Be sure to save as .webm)",
+							$(this).attr("href")
+						);
 					}
 					else {
 						console.log(event.data.playlist_item.type);
@@ -6086,7 +6457,7 @@ MediaPlayer.prototype = {
 			event.data.color_display.css("background", "rgb(" + value[0] + "," + value[1] + "," + value[2] + ")");
 		}
 		else {
-			event.data.color_display.css("background", "rgba(" + value[0] + "," + value[1] + "," + value[2] + "," + value[3] + ")");	
+			event.data.color_display.css("background", "rgba(" + value[0] + "," + value[1] + "," + value[2] + "," + value[3] + ")");
 		}
 
 		// Update stylesheet
@@ -6273,7 +6644,7 @@ MediaPlayer.prototype = {
 			about = function (files) {
 				return " to download " + files.length + " image" + (files.length == 1 ? "" : "s") + " (save as .zip)";
 			};
-		
+
 			mp.downloads_generate_image_list(files, about, gen_function, (event.data.type == "images2"), 0);
 		}
 
@@ -6436,7 +6807,7 @@ function VimeoManager (iframe) {
 	this.iframe = iframe;
 	this.is_ready = false;
 	this.ready_called = false;
-	
+
 	this.url = this.iframe.getAttribute("src").split("?")[0].split("#")[0];
 	if (this.url.substr(0, 2) == "//") this.url = window.location.protocol + this.url;
 
@@ -6531,7 +6902,7 @@ function SoundcloudManager (iframe) {
 	this.iframe = iframe;
 	this.is_ready = false;
 	this.ready_called = false;
-	
+
 	this.url = this.iframe.getAttribute("src").split("?")[0].split("#")[0];
 	if (this.url.substr(0, 2) == "//") this.url = window.location.protocol + this.url;
 	this.url = this.url.replace(/^http:/, "https:");

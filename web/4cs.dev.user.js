@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        3.1.5.d
+// @version        4.0
 // @namespace      dnsev
-// @description    Youtube, Vimeo, Soundcloud, and Sounds playback + Sound uploading support
+// @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
 // @grant          GM_info
 // @grant          GM_getValue
@@ -33,30 +33,37 @@
 // Base site version comparing
 ///////////////////////////////////////////////////////////////////////////////
 var no_load = false;
-if (/http\:\/\/dnsev\.github\.com\/4cs\//.exec(window.location.href + "")) {
-	$(document).ready(function () {
-		if (unsafeWindow && unsafeWindow.version_check) {
-			// Get the version
-			var version = "";
-			try {
-				version = GM_info.script.version;
-			}
-			catch (e) {
+var is_homepage = false;
+if (/http\:\/\/dnsev\.github\.com\/4cs\//.test(window.location.href + "")) {
+	is_homepage = true;
+
+	if (/http\:\/\/dnsev\.github\.com\/4cs\/play/.test(window.location.href + "")) {
+		// play
+	}
+	else {
+		$(document).ready(function () {
+			if (unsafeWindow && unsafeWindow.version_check) {
+				// Get the version
+				var version = "";
 				try {
-					version = GM_getMetadata("version").toString();
+					version = GM_info.script.version;
 				}
 				catch (e) {
-					version = null;
+					try {
+						version = GM_getMetadata("version").toString();
+					}
+					catch (e) {
+						version = null;
+					}
+				}
+				if (version !== null) {
+					// Perform an update check
+					unsafeWindow.version_check(version);
 				}
 			}
-			if (version !== null) {
-				// Perform an update check
-				unsafeWindow.version_check(version);
-			}
-		}
-	});
-
-	no_load = true;
+		});
+		no_load = true;
+	}
 }
 
 
@@ -435,6 +442,7 @@ function has_4chan_pass() {
 	var p = document.cookie.match(/pass_enabled=([^;]+)/);
 	return (p ? true : false);
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2027,6 +2035,7 @@ InlineUploader.prototype = {
 		}
 		else if (this.mode == "inline") {
 			var sp = form.find("#qrSpoiler");
+			if (sp.length == 0) sp = form.find("#qrFile");
 
 			sp.parent().after(sp); // move this
 			sp.nextAll("div:not([class]):not([id])").remove(); // remove the message put in the constructor
@@ -2619,7 +2628,7 @@ InlineUploader.prototype = {
 			}
 
 			self.sound_image_display.attr("title", self.bytes_to_size(self.sound_image.size) + " (" + InlineManager.prototype.commaify_number(self.sound_image.size) + " byte" + (self.sound_image.size == 1 ? "" : "s") + ")");
-			
+
 			if (script.settings["upload"]["validate_files"]) {
 				var blob_url = (window.webkitURL || window.URL).createObjectURL(new Blob([self.sound_image.source], {type: self.sound_image.mime_type}));
 
@@ -3233,7 +3242,7 @@ InlineUploader.prototype = {
 		cv.val("").attr("placeholder_temp", cv.attr("placeholder")).attr("placeholder", "Reload your captcha; click the image!").attr("readonly", "readonly");
 
 		// Auto-reload (hopefully)
-		if (this.reply_form) this.reply_form.find(".captchaimg img,.captchaimg,#qrCaptcha").click();	
+		if (this.reply_form) this.reply_form.find(".captchaimg img,.captchaimg,#qrCaptcha").click();
 	},
 
 	is_mime_type: function (s, type) {
@@ -3529,7 +3538,12 @@ function InlineManager() {
 	// Insert navigation link
 	var self = this;
 	var around0, around1;
-	if (is_archive) {
+	if (is_homepage) {
+		$("body").append("<span class=\"MPNavSpan\"></span>");
+		around0 = [ "" , "" ];
+		around1 = [ "[ " , " ]" ];
+	}
+	else if (is_archive) {
 		$(".letters").append("<span class=\"MPNavSpan\"></span>");
 		around0 = [ " " , "" ];
 		around1 = [ "[ " , " ]" ];
@@ -6105,8 +6119,8 @@ function Script() {
 			"video_preview": true,
 			"video_preview_timeout": 0.5,
 			"video_preview_image_space": 240,
-			"video_preview_description_font_size": 0.8, 
-			"video_preview_description_timeout": 0.5, 
+			"video_preview_description_font_size": 0.8,
+			"video_preview_description_timeout": 0.5,
 			"video_preview_animate_open": 0.375,
 			"video_preview_animate_close": 0.375,
 			"video_preview_animate_description": 0.375,
