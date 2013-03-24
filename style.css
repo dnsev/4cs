@@ -149,6 +149,9 @@ p + p.Separated {
 .TextIconUpload {
 	background-image: url(icon_upload.png);
 }
+.TextIconVidencode {
+	background-image: url(icon_videncode.png);
+}
 .TextIconText {
 	vertical-align: middle;
 }

@@ -1,4 +1,11 @@
-﻿3.1.5
+﻿4.0
+- Added Videncode playback
+- Added ability to play on the blank /play page on the homepage, for testing
+- Fixed an issue when using the inline extension on a board without spoilers, the sounds checkbox wouldn't appear
+- Fixed the seek bar not updating on resize
+- Fixed the loaded progress bar not updating on resize
+
+3.1.5
 - Made it so sound lists in embedded backlinks are clickable
 
 3.1.4
