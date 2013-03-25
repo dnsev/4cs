@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.0
+// @version     4.0.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -3301,6 +3301,7 @@ var VPlayer = (function () {
 		this.image_tag = null;
 		this.video_callbacks = [];
 		this.audio_callbacks = [];
+		this.image_callbacks = [];
 
 		this.video_blob = null;
 		this.video_blob_url = null;
@@ -3750,6 +3751,20 @@ var VPlayer = (function () {
 		},
 
 		/**
+			Add a managed callback to the image tag.
+
+			@param name
+				the event name
+			@param callback
+				the callback function
+		*/
+		add_image_callback: function (name, callback) {
+			this.image_callbacks.push([name,callback]);
+			this.image_tag.addEventListener(name, callback);
+		},
+
+
+		/**
 			Get how transparent the video should be at time.
 			Should not be called if the video is the main track.
 
@@ -3896,7 +3911,10 @@ var VPlayer = (function () {
 				a number between 0.0 and 1.0 representing the opacity
 		*/
 		get_image_opacity_at_time: function (time) {
-			if (time >= this.sync_offset + this.min_duration) {
+			if (this.video_tag == null) {
+				return 1.0;
+			}
+			else if (time >= this.sync_offset + this.min_duration) {
 				return (this.video_play_style[1] == DISPLAY_NOTHING ? 0.0 : 1.0);
 			}
 			else {
@@ -4094,6 +4112,38 @@ var VPlayer = (function () {
 			});
 		},
 
+		/**
+			Event callback for the image tag.
+			Called when the image loads.
+		*/
+		on_image_load: function () {
+			this.image_dimensions.width = this.image_tag.width;
+			this.image_dimensions.height = this.image_tag.height;
+
+			this.image_tag.style.display = "";
+			this.image_tag.style.left = "0";
+			this.image_tag.style.top = "0";
+			this.image_tag.style.right = "0";
+			this.image_tag.style.bottom = "0";
+			this.image_tag.style.width = "100%";
+			this.image_tag.style.height = "100%";
+
+			if (++this.metadata_load_count == this.metadata_load_count_required) {
+				this_private.on_metadata_ready.call(this);
+			}
+		},
+
+		/**
+			Event callback for the image tag.
+			Called when the image generates an error.
+		*/
+		on_image_error: function () {
+			// Event
+			this_private.trigger.call(this, "error", {
+				"source": "image"
+			});
+		},
+
 
 		/**
 			Callback for when all metadata is loaded.
@@ -4142,8 +4192,8 @@ var VPlayer = (function () {
 			// Ready
 			this.metadata_ready = true;
 			this_private.trigger.call(this, "load", {
-				"width": this.video_dimensions.width,
-				"height": this.video_dimensions.height,
+				"video_size": this.get_video_size(),
+				"image_size": this.get_image_size(),
 				"duration": this.max_duration
 			});
 		},
@@ -4339,6 +4389,7 @@ var VPlayer = (function () {
 			// Create image blob and url
 			this.image_blob = new Blob([ this.videcode.get_image() ], {type: this.videcode.get_image_mime_type()});
 			this.image_blob_url = (window.webkitURL || window.URL).createObjectURL(this.image_blob);
+			++this.metadata_load_count_required;
 
 			// Get other settings
 			this.sync_offset = this.videcode.get_sync_offset();
@@ -4465,6 +4516,11 @@ var VPlayer = (function () {
 				this.audio_tag = null;
 			}
 			if (this.image_tag != null) {
+				for (var i = 0; i < this.image_callbacks.length; ++i) {
+					this.image_tag.removeEventListener(this.image_callbacks[i][0], this.image_callbacks[i][1]);
+				}
+				this.image_callbacks = [];
+
 				if (this.image_tag.parentNode != null) {
 					this.image_tag.parentNode.removeChild(this.image_tag);
 				}
@@ -4486,6 +4542,7 @@ var VPlayer = (function () {
 			this.max_duration = 0.0;
 			this.min_duration = 0.0;
 			this.video_dimensions = { width: 0, height: 0 };
+			this.image_dimensions = { width: 0, height: 0 };
 			this.metadata_load_count = 0;
 			this.metadata_ready = false;
 			this.video_main = true;
@@ -4524,12 +4581,15 @@ var VPlayer = (function () {
 			// Create image
 			this.image_tag = document.createElement("img");
 			this.image_tag.style.position = "absolute";
-			this.image_tag.style.left = "0";
-			this.image_tag.style.top = "0";
-			this.image_tag.style.right = "0";
-			this.image_tag.style.bottom = "0";
-			this.image_tag.style.width = "100%";
-			this.image_tag.style.height = "100%";
+			this.image_tag.style.display = "none";
+			// Image events
+			this_private.add_image_callback.call(this, "load", function () {
+				this_private.on_image_load.call(self);
+			});
+			this_private.add_image_callback.call(this, "error", function () {
+				this_private.on_image_error.call(self);
+			});
+			// Load
 			this.image_tag.setAttribute("src", this.image_blob_url);
 			this.element_container.appendChild(this.image_tag);
 
@@ -4545,25 +4605,25 @@ var VPlayer = (function () {
 				this.video_tag.style.height = "100%";
 				this.video_tag.style.opacity = "0.0";
 				// Video events
-				this_private.add_video_callback.call(this, "loadedmetadata", function (event) {
+				this_private.add_video_callback.call(this, "loadedmetadata", function () {
 					this_private.on_video_loaded_metadata.call(self);
 				});
-				this_private.add_video_callback.call(this, "ended", function (event) {
+				this_private.add_video_callback.call(this, "ended", function () {
 					this_private.on_video_ended.call(self);
 				});
-				this_private.add_video_callback.call(this, "error", function (event) {
+				this_private.add_video_callback.call(this, "error", function () {
 					this_private.on_video_error.call(self);
 				});
-				this_private.add_video_callback.call(this, "animationend", function (event) {
+				this_private.add_video_callback.call(this, "animationend", function () {
 					this_private.on_video_animation_end.call(self);
 				});
-				this_private.add_video_callback.call(this, "webkitAnimationEnd", function (event) {
+				this_private.add_video_callback.call(this, "webkitAnimationEnd", function () {
 					this_private.on_video_animation_end.call(self);
 				});
-				this_private.add_video_callback.call(this, "oanimationend", function (event) {
+				this_private.add_video_callback.call(this, "oanimationend", function () {
 					this_private.on_video_animation_end.call(self);
 				});
-				this_private.add_video_callback.call(this, "MSAnimationEnd", function (event) {
+				this_private.add_video_callback.call(this, "MSAnimationEnd", function () {
 					this_private.on_video_animation_end.call(self);
 				});
 				// Load video
@@ -4576,13 +4636,13 @@ var VPlayer = (function () {
 				this.audio_tag = document.createElement("audio");
 				this.audio_tag.style.display = "none";
 				// Audio events
-				this_private.add_audio_callback.call(this, "loadedmetadata", function (event) {
+				this_private.add_audio_callback.call(this, "loadedmetadata", function () {
 					this_private.on_audio_loaded_metadata.call(self);
 				});
-				this_private.add_audio_callback.call(this, "ended", function (event) {
+				this_private.add_audio_callback.call(this, "ended", function () {
 					this_private.on_audio_ended.call(self);
 				});
-				this_private.add_audio_callback.call(this, "error", function (event) {
+				this_private.add_audio_callback.call(this, "error", function () {
 					this_private.on_audio_error.call(self);
 				});
 				// Load audio
@@ -4841,7 +4901,20 @@ var VPlayer = (function () {
 		get_video_size: function () {
 			return {
 				"width": this.video_dimensions.width,
-				"height": this.video_dimensions.height,
+				"height": this.video_dimensions.height
+			};
+		},
+
+		/**
+			Get the size of the image.
+
+			@return
+				an object in the form of { width:? , height:? }
+		*/
+		get_image_size: function () {
+			return {
+				"width": this.image_dimensions.width,
+				"height": this.image_dimensions.height
 			};
 		},
 
@@ -4928,6 +5001,26 @@ var VPlayer = (function () {
 		*/
 		get_sync_offset: function () {
 			return this.sync_offset;
+		},
+
+		/**
+			Check if the object has a video tag.
+
+			@return
+				true if it has video, false otherwise
+		*/
+		has_video: function () {
+			return (this.video_tag != null);
+		},
+
+		/**
+			Check if the object has a audio tag.
+
+			@return
+				true if it has audio, false otherwise
+		*/
+		has_audio: function () {
+			return (this.audio_tag != null);
 		},
 
 		/**
@@ -8791,7 +8884,7 @@ MediaPlayer.prototype = {
 			}
 			else if (this.current_media.type == "ve") {
 				if (this.current_media.vplayer.get_container() != null) {
-					var size = this.current_media.vplayer.get_video_size();
+					var size = (this.current_media.vplayer.has_video() ? this.current_media.vplayer.get_video_size() : this.current_media.vplayer.get_image_size())
 					if (size.width > 0 && size.height > 0) {
 						var hh = this.video_container.outerHeight();
 						var xs = (this.video_container.outerWidth() / size.width);

@@ -3834,7 +3834,7 @@ MediaPlayer.prototype = {
 			}
 			else if (this.current_media.type == "ve") {
 				if (this.current_media.vplayer.get_container() != null) {
-					var size = this.current_media.vplayer.get_video_size();
+					var size = (this.current_media.vplayer.has_video() ? this.current_media.vplayer.get_video_size() : this.current_media.vplayer.get_image_size())
 					if (size.width > 0 && size.height > 0) {
 						var hh = this.video_container.outerHeight();
 						var xs = (this.video_container.outerWidth() / size.width);
