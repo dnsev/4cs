@@ -505,6 +505,31 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"display": "none"
 		},
 
+		".MPSeekIndicatorContainer": {
+			"display": "block",
+			"position": "absolute",
+			"bottom": "0",
+			"left": "0",
+			"right": "0",
+			"text-align": "left"
+		},
+		".MPSeekIndicatorContainer.MPSeekIndicatorContainerDisabled": {
+			"display": "none"
+		},
+		".MPSeekIndicatorContainer.MPSeekIndicatorContainerDragging, .MPSeekIndicatorContainer.MPSeekIndicatorContainerDisabled.MPSeekIndicatorContainerDragging": {
+			"display": "block"
+		},
+		".MPSeekIndicator": {
+			"display": "inline-block",
+			"padding": "{exp:2,*,padding_scale}px {exp:3,*,padding_scale}px {exp:2,*,padding_scale}px {exp:3,*,padding_scale}px",
+			"border-top-left-radius": "{exp:border_radius_small,*,border_scale}px",
+			"border-top-right-radius": "{exp:border_radius_small,*,border_scale}px",
+			"background": "{rgba:bg_color_lightest,1.0}",
+			"position": "absolute",
+			"left": "0",
+			"bottom": "0"
+		},
+
 		".MPPlaylistContainer": {
 			"cursor": "default",
 			"overflow-x": "hidden",
@@ -1665,6 +1690,12 @@ MediaPlayer.prototype = {
 									(this.playback_control_container = this.D("MPControlContainerInner"))
 								)
 							) //}
+							.append( //{ Seek indicator
+								(this.playback_seek_indicator_container = this.D("MPSeekIndicatorContainer", "MPSeekIndicatorContainerDisabled"))
+								.append(
+									(this.playback_seek_indicator = this.D("MPSeekIndicator"))
+								)
+							) //}
 						)
 						.append( //{ Audio
 							(this.audio = this.E("audio"))
@@ -1757,6 +1788,9 @@ MediaPlayer.prototype = {
 								.on("mousedown." + this.namespace, {media_player: this}, this.on_seekbar_mousedown)
 							)
 						)
+						.on("mouseover." + this.namespace, {media_player: this}, this.on_seekbar_mouseover)
+						.on("mouseout." + this.namespace, {media_player: this}, this.on_seekbar_mouseout)
+						.on("mousemove." + this.namespace, {media_player: this}, this.on_seekbar_mousemove)
 					) //}
 					.append( //{ Resize
 						this.D("MPSeekContainerBottom")
@@ -3469,6 +3503,8 @@ MediaPlayer.prototype = {
 		this.playlist_container = null;
 		this.playback_controls = null;
 		this.playback_controls_svg = null;
+		this.playback_seek_indicator = null;
+		this.playback_seek_indicator_container = null;
 		this.help_container = null;
 		this.help_container_inner1 = null;
 		this.help_container_footer = null;
@@ -3902,6 +3938,24 @@ MediaPlayer.prototype = {
 	},
 	update_player_theme_name: function (data) {
 		data.media_player.player_theme_name.html(data.media_player.css.css_color_presets[data.media_player.css.preset]["@name"] || data.media_player.css.preset);
+	},
+	update_seek_indicator: function (time) {
+		if (this.current_media == null) return;
+
+		if (time < 0.0) time = 0.0;
+		else if (time > this.current_media.duration) time = this.current_media.duration;
+
+		this.playback_seek_indicator.html(this.duration_to_string(time));
+		if (time > 0.0) time /= this.current_media.duration;
+
+		var c_width = this.playback_seek_indicator_container.width();
+		var width = this.playback_seek_indicator.outerWidth();
+
+		time = ((time * c_width) - width / 2);
+		if (time < 0.0) time = 0.0;
+		else if (time > c_width - width) time = c_width - width;
+
+		this.playback_seek_indicator.css("left", time + "px");
 	},
 
 	E: function (elem) {
@@ -5011,13 +5065,14 @@ MediaPlayer.prototype = {
 		var videcode = new Videcode(raw_ui8_data, url_or_filename);
 		if (!videcode.decode().has_error()) {
 			// Create availability list
-			var available = null;
+			/*var available = null;
 			if (videcode.has_video()) {
 				available = [ (videcode.get_tag() || "?") + ".webm" ];
 			}
 			else {
 				available = [ (videcode.get_tag() || "?") + ".ogg" ];
-			}
+			}*/
+			var available = [ (videcode.get_tag() || "?") + ".ogg" ];
 
 			// Add
 			this.add_to_playlist_ve(
@@ -5864,6 +5919,7 @@ MediaPlayer.prototype = {
 		if (event.which == 1) {
 			// Mouse offset
 			event.data.media_player.C(event.data.media_player.seek_bar, "MPSeekBarActive");
+			event.data.media_player.C(event.data.media_player.playback_seek_indicator_container, "MPSeekIndicatorContainerDragging");
 			event.data.media_player.seek_dragging = true;
 			if ((event.data.media_player.seek_was_playing = !event.data.media_player.is_paused())) {
 				event.data.media_player.pause();
@@ -5876,10 +5932,36 @@ MediaPlayer.prototype = {
 		}
 		return true;
 	},
+	on_seekbar_mouseover: function (event) {
+		if (event.data.media_player.current_media != null) {
+			event.data.media_player.unC(event.data.media_player.playback_seek_indicator_container, "MPSeekIndicatorContainerDisabled");
+			event.data.media_player.on_seekbar_mousemove.call(this, event);
+		}
+
+		return true;
+	},
+	on_seekbar_mouseout: function (event) {
+		event.data.media_player.C(event.data.media_player.playback_seek_indicator_container, "MPSeekIndicatorContainerDisabled");
+
+		return true;
+	},
+	on_seekbar_mousemove: function (event) {
+		if (!event.data.media_player.seek_dragging && !event.data.media_player.seek_exacting && event.data.media_player.current_media != null) {
+			var w = $(this).width();
+			if (w > 0.0) {
+				var time = (event.pageX - $(this).offset().left) / w * event.data.media_player.current_media.duration;
+
+				event.data.media_player.update_seek_indicator(time);
+			}
+		}
+
+		return true;
+	},
 	on_seekbar_container_mousedown: function (event) {
 		if (event.which == 1) {
 			// Mouse offset
 			event.data.media_player.C(event.data.media_player.seek_bar, "MPSeekBarActive");
+			event.data.media_player.C(event.data.media_player.playback_seek_indicator_container, "MPSeekIndicatorContainerDragging");
 			event.data.media_player.seek_exacting = true;
 			if ((event.data.media_player.seek_was_playing = !event.data.media_player.is_paused())) {
 				event.data.media_player.pause();
@@ -5970,6 +6052,7 @@ MediaPlayer.prototype = {
 		else if (event.data.media_player.seek_dragging) {
 			event.data.media_player.seek_dragging = false;
 			event.data.media_player.unC(event.data.media_player.seek_bar, "MPSeekBarActive");
+			event.data.media_player.unC(event.data.media_player.playback_seek_indicator_container, "MPSeekIndicatorContainerDragging");
 
 			event.data.media_player.seek_to(null, false, false);
 
@@ -5980,6 +6063,7 @@ MediaPlayer.prototype = {
 		else if (event.data.media_player.seek_exacting) {
 			event.data.media_player.seek_exacting = false;
 			event.data.media_player.unC(event.data.media_player.seek_bar, "MPSeekBarActive");
+			event.data.media_player.unC(event.data.media_player.playback_seek_indicator_container, "MPSeekIndicatorContainerDragging");
 
 			event.data.media_player.seek_to(null, false, false);
 
@@ -6055,6 +6139,8 @@ MediaPlayer.prototype = {
 			// Seek
 			if (max_offset > 0.0) offset = offset / max_offset * event.data.media_player.get_duration();
 			event.data.media_player.seek_to(offset, false, true);
+			// Seek time
+			event.data.media_player.update_seek_indicator(offset);
 		}
 		else if (event.data.media_player.seek_exacting) {
 			// Seeking
@@ -6063,6 +6149,8 @@ MediaPlayer.prototype = {
 			// Seek
 			if (max_offset > 0.0) offset = offset / max_offset * event.data.media_player.get_duration();
 			event.data.media_player.seek_to(offset, false, true);
+			// Seek time
+			event.data.media_player.update_seek_indicator(offset);
 		}
 
 		if (event.data.media_player.resize_container_hovered) {

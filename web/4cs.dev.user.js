@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.0.1
+// @version        4.1
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -1273,7 +1273,14 @@ function png_load_callback_find_correct(r, load_tag) {
 function ThreadManager() {
 	// Manager
 	this.posts = {};
+	this.post_queue = [];
+	this.post_queue_timeout = null;
 	var self = this;
+
+	/*
+				"post_parse_group_size": -1,
+			"post_parse_group_delay": 0.25,
+	*/
 
 	// Update content
 	if (is_archive) {
@@ -1281,14 +1288,14 @@ function ThreadManager() {
 		.each(function (index) {
 			if ($(this).attr("id")) { // needs an id
 				if (index == 0) {
-					self.parse_post($(this));
+					self.post_queue.push($(this));
 				}
 			}
 		});
 	}
 	$(is_archive ? ".post" : ".postContainer")
 	.each(function (index) {
-		self.parse_post($(this));
+		self.post_queue.push($(this));
 	});
 
 	// Mutation manager
@@ -1299,10 +1306,14 @@ function ThreadManager() {
 				for (var i = 0; i < records.length; ++i) {
 					if (records[i].type == "childList") {
 						var nodes = records[i].addedNodes;
-						if (nodes){
+						if (nodes) {
 							for (var j = 0; j < nodes.length; ++j) {
 								// Check
 								self.on_dom_mutation_add($(nodes[j]));
+							}
+							// Parse
+							if (self.post_queue.length > 0) {
+								self.parse_group();
 							}
 						}
 						if (records[i].removedNodes) {
@@ -1334,13 +1345,39 @@ function ThreadManager() {
 			return true;
 		});
 	}
+
+	// Parse posts
+	this.parse_group();
 }
 ThreadManager.prototype = {
 	constructor: ThreadManager,
+	parse_group: function () {
+		if (this.post_queue_timeout == null) {
+			// Execute
+			var len = this.post_queue.length;
+			if (script.settings["inline"]["post_parse_group_size"] > 0 && len > script.settings["inline"]["post_parse_group_size"]) {
+				len = script.settings["inline"]["post_parse_group_size"];
+			}
+			for (var i = 0; i < len; ++i) {
+				this.parse_post(this.post_queue[i]);
+			}
+			this.post_queue.splice(0, len);
+
+			// Create timer if more exist
+			if (this.post_queue.length > 0) {
+				var self = this;
+				this.post_queue_timeout = setTimeout(function () {
+					self.post_queue_timeout = null;
+					self.parse_group();
+				}, script.settings["inline"]["post_parse_group_delay"] * 1000);
+			}
+		}
+	},
+
 	on_dom_mutation_add: function (target) {
 		// Updating
 		if (target.hasClass("postContainer") || target.hasClass("post")) {
-			this.parse_post(target);
+			this.post_queue.push(target);
 		}
 		else if (target.attr("id") == "qr" || target.attr("id") == "quickReply") {
 			inline_manager.uploader.append_controls(target);
@@ -2587,7 +2624,7 @@ InlineUploader.prototype = {
 		if (!this.remove_sound_image.is(":checked")) this.remove_sound_image.click();
 
 		// Parse callback
-		var files_callback = function (data, files) {
+		var files_callback = function (data, files, type) { // TODO
 			// Find starting point and load
 			for (var i = 0; i < files.length; ++i) {
 				if (data.truncate_to < 0 || files[i].position < data.truncate_to) {
@@ -2784,7 +2821,7 @@ InlineUploader.prototype = {
 				file_name: file.name
 			};
 
-			self.image_check_callback(data, media_player_manager.callbacks, 0, function (data, files) {
+			self.image_check_callback(data, media_player_manager.callbacks, 0, function (data, files, type) { // TODO
 				// Find starting point and load
 				for (var i = 0; i < files.length; ++i) {
 					self.add_sound(files[i], true, true);
@@ -3360,7 +3397,7 @@ InlineUploader.prototype = {
 							file_name: self.auto_load_file.name
 						};
 
-						self.image_check_callback(data, media_player_manager.callbacks, 0, function (data, files) {
+						self.image_check_callback(data, media_player_manager.callbacks, 0, function (data, files, type) { // TODO
 							// Sounds found: auto-open panel
 							self.set_panel_state(true, {auto_load: false, auto_opened: true});
 
@@ -6109,6 +6146,9 @@ function Script() {
 			"sound_thread_control": false,
 			"sound_source": true,
 
+			"post_parse_group_size": 20,
+			"post_parse_group_delay": 0.125,
+
 			"url_replace": true,
 			"url_replace_smart": false,
 			"url_hijack": true,
@@ -6507,6 +6547,31 @@ Script.prototype = {
 			},
 
 			{
+				"section": "Post Parsing",
+				"update_value": function () { this.current = script.settings["inline"]["post_parse_group_size"]; },
+				"label": "Group Size",
+				"description": "The number of posts to parse at one time; may decrease lag time when loading a page",
+				"values": [ -1 , 100 , 75 , 50 , 40 , 30 , 20 , 15 , 10 , 5 , 2 , 1 ],
+				"descr": [ "All" , "100" , "75" , "50" , "40" , "30" , "20" , "15" , "10" , "5" , "2" , "1" ],
+				"change": function (value) {
+					script.settings["inline"]["post_parse_group_size"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Post Parsing",
+				"update_value": function () { this.current = script.settings["inline"]["post_parse_group_delay"]; },
+				"label": "Group Delay",
+				"description": "The delay between parsing a group of posts",
+				"values": [ 1.0 , 0.75 , 0.5 , 0.375 , 0.25 , 0.125 , 1.0 / 128.0 ],
+				"descr": [ "1 second" , "0.75 seconds" , "0.5 seconds" , "0.375 seconds" , "0.25 seconds" , "0.125 seconds" , "ASAP" ],
+				"change": function (value) {
+					script.settings["inline"]["post_parse_group_delay"] = value;
+					script.settings_save();
+				}
+			},
+
+			{
 				"section": "Link Replacement",
 				"update_value": function () { this.current = script.settings["inline"]["url_replace"]; },
 				"label": "URL Replacing",
@@ -6578,6 +6643,7 @@ Script.prototype = {
 					script.settings_save();
 				}
 			},
+
 			{
 				"section": "Video Links",
 				"update_value": function () { this.current = script.settings["inline"]["video_preview"]; },
@@ -6674,6 +6740,7 @@ Script.prototype = {
 					script.settings_save();
 				}
 			},
+
 			{
 				"section": "Theatre-View",
 				"update_value": function () { this.current = script.settings["inline"]["link_click_theatre_youtube"]; },
