@@ -1,4 +1,9 @@
-﻿4.0.1
+﻿4.1
+- Made Videncode images show up properly in the "list" section when a video is present
+- Added a seek time indicator to the player
+- Made the thread parser use a queue to possibly decrease lag time on load
+
+4.0.1
 - Using updated ve_api; now shows the image on sound-only files
 
 4.0
