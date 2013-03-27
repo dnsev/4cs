@@ -1,4 +1,9 @@
-﻿4.1.1
+﻿4.2
+- Upgrades to the downloading system; now uses filenames for the files
+- Some bugfixes for group/post parsing; still disabled by default though
+- ve_api update; uses CSS transitions vs animations
+
+4.1.1
 - Disabled post group parsing by default so it can be debugged more
 
 4.1
