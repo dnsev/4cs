@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.1
+// @version     4.1.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -10332,8 +10332,8 @@ function ThreadManager(){
 			var mo=new MutationObserver(function(records){
 				for(var i=0;i<records.length;++i){
 					if(records[i].type=="childList"){
-						var nodes=records[i].addedNodes;
-						if(nodes){
+						var nodes;
+						if((nodes=records[i].addedNodes)){
 							for(var j=0;j<nodes.length;++j){
 								self.on_dom_mutation_add($(nodes[j]));
 							}
@@ -10341,7 +10341,7 @@ function ThreadManager(){
 								self.parse_group();
 							}
 						}
-						if(records[i].removedNodes){
+						if((nodes=records[i].removedNodes)){
 							for(var j=0;j<nodes.length;++j){
 								self.on_dom_mutation_remove($(nodes[j]));
 							}
@@ -10364,8 +10364,16 @@ function ThreadManager(){
 		}
 	}
 	if(!MutationObserver){
-		$($(is_archive?"#main":".board")[0]).on("DOMNodeInserted",function(event){
+		$("body")
+		.on("DOMNodeInserted",function(event){
 			self.on_dom_mutation_add($(event.target));
+			if(self.post_queue.length>0){
+				self.parse_group();
+			}
+			return true;
+		})
+		.on("DOMNodeRemoved",function(event){
+			self.on_dom_mutation_remove($(event.target));
 			return true;
 		});
 	}
@@ -14442,7 +14450,7 @@ function Script(){
 			"sound_tags_replace":true,
 			"sound_thread_control":false,
 			"sound_source":true,
-			"post_parse_group_size":20,
+			"post_parse_group_size":-1,
 			"post_parse_group_delay":0.125,
 			"url_replace":true,
 			"url_replace_smart":false,
