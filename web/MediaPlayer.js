@@ -4297,10 +4297,10 @@ MediaPlayer.prototype = {
 			playlist_item.image_blob_url = null;
 		}
 		else {
-			var ext = url.split(".").pop().toLowerCase();
+			var image_ext = url.split(".").pop().toLowerCase();
 			var mime = "image/jpeg"
-			if (ext == "png") mime = "image/png";
-			else if (ext == "gif") mime = "image/gif";
+			if (image_ext == "png") mime = "image/png";
+			else if (image_ext == "gif") mime = "image/gif";
 
 			playlist_item.image_blob = new Blob([image_src], {type: mime});
 			playlist_item.image_blob_url = (window.webkitURL || window.URL).createObjectURL(playlist_item.image_blob);
@@ -4309,6 +4309,10 @@ MediaPlayer.prototype = {
 		playlist_item.mask_click_target = playlist_item.image_url;
 
 		// html setup
+		var image_file_name = playlist_item.image_name.split(".");
+		var image_file_ext = image_file_name.pop().toLowerCase();
+		image_file_name = image_file_name.join(".");
+
 		this.playlist_container.append( //{ DOM creation
 			(playlist_item.playlist_item = this.E("a", "MPPlaylistItem"))
 			.attr("href", playlist_item.audio_blob_url)
@@ -4359,6 +4363,8 @@ MediaPlayer.prototype = {
 						.html("S")
 						.attr("title", "Save...")
 						.attr("href", playlist_item.audio_blob_url)
+						.attr("download", playlist_item.title + ".ogg")
+						.attr("target", "_blank")
 					)
 					.append(
 						this.D("MPPlaylistControlLinkSeparator")
@@ -4368,6 +4374,8 @@ MediaPlayer.prototype = {
 						.html("I")
 						.attr("title", "Image...")
 						.attr("href", playlist_item.image_url)
+						.attr("download", image_file_name + ".[" + playlist_item.title + "]." + image_file_ext)
+						.attr("target", "_blank")
 					)
 				)
 			)
@@ -4503,6 +4511,8 @@ MediaPlayer.prototype = {
 						.html("A")
 						.attr("title", "Save audio...")
 						.attr("href", playlist_item.vplayer.get_audio() || "")
+						.attr("download", playlist_item.title + ".ogg")
+						.attr("target", "_blank")
 					)
 					.append(
 						(final_separators[1] = this.D("MPPlaylistControlLinkSeparator"))
@@ -4512,6 +4522,8 @@ MediaPlayer.prototype = {
 						.html("V")
 						.attr("title", "Save video...")
 						.attr("href", playlist_item.vplayer.get_video() || "")
+						.attr("download", playlist_item.title + ".webm")
+						.attr("target", "_blank")
 					)
 				)
 			)
@@ -4666,6 +4678,7 @@ MediaPlayer.prototype = {
 						.html("Y")
 						.attr("title", "Youtube Link")
 						.attr("href", playlist_item.mask_click_target)
+						.attr("target", "_blank")
 					)
 				)
 			)
@@ -4801,6 +4814,7 @@ MediaPlayer.prototype = {
 						.html("V")
 						.attr("title", "Vimeo Link")
 						.attr("href", playlist_item.mask_click_target)
+						.attr("target", "_blank")
 					)
 				)
 			)
@@ -4929,6 +4943,7 @@ MediaPlayer.prototype = {
 						.html("S")
 						.attr("title", "Soundcloud Link")
 						.attr("href", playlist_item.mask_click_target)
+						.attr("target", "_blank")
 					)
 				)
 			)
@@ -5352,6 +5367,8 @@ MediaPlayer.prototype = {
 			this.downloads_ready_container.css("display", "");
 			this.downloads_about.html(about(files));
 			this.downloads_link.attr("href", this.batch_download_blob_url);
+			this.downloads_link.attr("download", "batch.zip");
+			this.downloads_link.attr("target", "_blank");
 			// Done
 			return;
 		}
@@ -6455,21 +6472,27 @@ MediaPlayer.prototype = {
 				// URL
 				if (event.which == 1) {
 					if (event.data.playlist_item.type == "image-audio") {
-						prompt(
+						event.stopPropagation();
+						return true;
+						/*prompt(
 							"Right click and save as, or open in a new tab and save.\n" +
 							"(Be sure to save as .ogg)",
 							$(this).attr("href")
-						);
+						);*/
 					}
 					else if (event.data.playlist_item.type == "youtube-video" || event.data.playlist_item.type == "vimeo-video") {
-						prompt("Right click/middle click to open. Original:", event.data.playlist_item.original_url);
+						event.stopPropagation();
+						return true;
+						//prompt("Right click/middle click to open. Original:", event.data.playlist_item.original_url);
 					}
 					else if (event.data.playlist_item.type == "ve") {
-						prompt(
+						event.stopPropagation();
+						return true;
+						/*prompt(
 							"Right click and save as, or open in a new tab and save.\n" +
 							"(Be sure to save as .ogg)",
 							$(this).attr("href")
-						);
+						);*/
 					}
 					else {
 						console.log(event.data.playlist_item.type);
@@ -6485,14 +6508,21 @@ MediaPlayer.prototype = {
 				// URL
 				if (event.which == 1) {
 					if (event.data.playlist_item.type == "image-audio") {
-						alert("Right click and save as, or open in a new tab.");
+						event.stopPropagation();
+						return true;
+						/*prompt(
+							"Right click and save as, or open in a new tab and save.\n",
+							$(this).attr("href")
+						);*/
 					}
 					else if (event.data.playlist_item.type == "ve") {
-						prompt(
+						event.stopPropagation();
+						return true;
+						/*prompt(
 							"Right click and save as, or open in a new tab and save.\n" +
 							"(Be sure to save as .webm)",
 							$(this).attr("href")
-						);
+						);*/
 					}
 					else {
 						console.log(event.data.playlist_item.type);
@@ -6741,12 +6771,8 @@ MediaPlayer.prototype = {
 	},
 	on_downloads_link_click: function (event) {
 		if (event.which == 1) {
-			prompt(
-				"Right click and save as, middle click, or visit the URL below.\n" +
-				"(Be sure to save as .zip)",
-				event.data.media_player.batch_download_blob_url
-			);
-			return false;
+			event.stopPropagation();
+			return true;
 		}
 		return true;
 	},

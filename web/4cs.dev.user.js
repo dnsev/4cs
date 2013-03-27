@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.1.1
+// @version        4.2
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -1365,7 +1365,9 @@ ThreadManager.prototype = {
 				len = script.settings["inline"]["post_parse_group_size"];
 			}
 			for (var i = 0; i < len; ++i) {
-				this.parse_post(this.post_queue[i]);
+				var p = this.post_queue[i];
+				this.post_queue[i] = null;
+				this.parse_post(p);
 			}
 			this.post_queue.splice(0, len);
 
@@ -1379,10 +1381,19 @@ ThreadManager.prototype = {
 			}
 		}
 	},
+	post_exists: function (post_id) {
+		if (post_id in this.posts) return true;
+		for (var i = 0; i < this.post_queue.length; ++i) {
+			if (this.post_queue[i] == null) continue;
 
+			var id = (this.post_queue[i].attr("id") || "0").replace(/(\w+_)?[^0-9]/g, "");
+			if (id == post_id) return true;
+		}
+		return false;
+	},
 	on_dom_mutation_add: function (target) {
 		// Updating
-		if (target.hasClass("postContainer") || target.hasClass("post")) {
+		if ((target.hasClass("postContainer") || target.hasClass("post")) && target.attr("id") !== undefined) {
 			this.post_queue.push(target);
 		}
 		else if (target.attr("id") == "qr" || target.attr("id") == "quickReply") {
@@ -1399,7 +1410,7 @@ ThreadManager.prototype = {
 	parse_post: function (container) {
 		// Get id
 		var post_id = (container.attr("id") || "0").replace(/(\w+_)?[^0-9]/g, "");
-		var redo = (post_id in this.posts);
+		var redo = this.post_exists(post_id);
 
 		var image = container.find(is_archive ? ".thread_image_link" : ".fileThumb");
 		var post = container.find(is_archive ? ".text" : ".postMessage");
@@ -1469,6 +1480,10 @@ ThreadManager.prototype = {
 		};
 		if (!redo) {
 			this.posts[post_id] = post_data_copy;
+		}
+		if(post_data_copy.post==null){
+			console.log("ERROR");
+			console.log(container.html());
 		}
 
 		// Auto checking images

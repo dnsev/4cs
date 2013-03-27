@@ -1172,183 +1172,8 @@ var Videcode = (function () {
 // Playback API
 var VPlayer = (function () {
 
-	// Helper functions
-	function add_css_rule(rule) {
-		/**
-			Add a CSS rule to the document.
-
-			@param rule
-				the single rule to add
-		*/
-		if (document.styleSheets && document.styleSheets.length) {
-			try {
-				document.styleSheets[0].insertRule(rule, 0);
-			}
-			catch (e) {}
-		}
-		else {
-			var style = document.createElement("style");
-			style.innerHTML = rule;
-			document.head.appendChild(style);
-		}
-	}
-	function create_animation(css, ms_time, method) {
-		/**
-			Create a CSS animation.
-
-			@param css
-				an object of key-value pairs of the targeted animation
-			@param ms_time
-				the time in milliseconds
-			@param method
-				the CSS animation method
-			@return
-				the class name of the animation
-		*/
-		if (ms_time === undefined) {
-			ms_time = 500;
-		}
-		if (method === undefined) {
-			method = "linear";
-		}
-
-		// Build styles
-		var class_name = css_animation_prefix + "Class" + css_animation_id;
-		var animation_name = css_animation_prefix + (css_animation_id++);
-
-		var style = "";
-		for (var key in css) {
-			style += key + ":" + css[key] + ";";
-		}
-
-		// Animation
-		var stylesheet;
-		for (var i = 0; i < css_prefixes.length; ++i) {
-			stylesheet = "@" + css_prefixes[i] + "keyframes " + animation_name + " {\n" +
-					"from{}\n" +
-					"to{" + style + "}\n" +
-					"}\n";
-			add_css_rule(stylesheet);
-		}
-
-		// Class
-		style = animation_name + " " + ms_time + "ms " + method;
-		for (var i = 0; i < css_prefixes.length; ++i) {
-			stylesheet += css_prefixes[i] + "animation:" + style + ";"
-		}
-		add_css_rule("." + class_name + "{\n" + stylesheet + "}\n");
-
-		// Okay
-		return class_name;
-	}
-	function has_class(class_list, check) {
-		/**
-			Check if a class list has a certain class in it.
-
-			@param class_list
-				the class list to check
-			@param check
-				the class to find
-			@return
-				true if found, false otherwise
-		*/
-		return (class_list.match(new RegExp("(\\s|^)" + check + "(\\s|$)", "g")) != null);
-	}
-	function remove_class(class_list, remove) {
-		/**
-			Remove a class from a class list.
-
-			@param class_list
-				the class list to use
-			@param remove
-				the class to remove
-			@return
-				the class list with the class removed
-		*/
-		return class_list.replace(new RegExp("(\\s|^)" + remove + "(\\s|$)", "g"), " ");
-	}
-	function add_class(class_list, add) {
-		/**
-			Add a class to a class list.
-
-			@param class_list
-				the class list to use
-			@param add
-				the class to add
-			@return
-				the class list with the class added
-		*/
-		return class_list + " " + add;
-	}
-	function set_animation_time(elem, ms_time) {
-		/**
-			Sets the animation duration of an element.
-
-			@param elem
-				the DOM element to modify
-			@param ms_time
-				the time in milliseconds
-		*/
-		var str = "animation-duration:" + ms_time + "ms;";
-		str += "-webkit-animation-duration:" + ms_time + "ms;";
-		elem.setAttribute("style", elem.getAttribute("style") + str);
-	}
-	function clear_animation_time(elem) {
-		/**
-			Clears the animation duration of an element.
-
-			@param elem
-				the DOM element to modify
-		*/
-		clear_animation_time_single(elem, "animationDuration");
-		clear_animation_time_single(elem, "webkitAnimationDuration");
-		clear_animation_time_single(elem, "animation");
-		clear_animation_time_single(elem, "webkitAnimation");
-	}
-	function clear_animation_time_single(elem, name) {
-		/**
-			Clears the animation duration of an element.
-
-			@param elem
-				the DOM element to modify
-			@param name
-				the style name to clear
-		*/
-		try {
-			elem.style[name] = "";
-		}
-		catch (e) {}
-	}
-	function init_once() {
-		/**
-			A function to be called only once before VPlayer's can be used.
-			Sets some stuff up.
-		*/
-		if (css_video_opacity_animations != null) return;
-
-		css_video_opacity_animations = [
-			create_animation({ "opacity": "1.0" }),
-			create_animation({ "opacity": "0.0" })
-		];
-	}
-	function get_computed_style(elem) {
-		/**
-			Get the computed style of an object.
-
-			@return
-				the computed style
-		*/
-		return window.getComputedStyle(elem, null);
-	}
-
-	// Variables
-	var css_animation_prefix = "VeAPIVPlayerAnimation";
-
 	// Variables
 	var function_type = typeof(function(){});
-	var css_animation_id = 0;
-	var css_prefixes = [ "" , "-o-" , "-moz-" , "-webkit-" ];
-	var css_video_opacity_animations = null;
 	var DISPLAY_NOTHING = 0;
 	var DISPLAY_LOOPED = 1;
 	var DISPLAY_VIDEO = 2;
@@ -1368,9 +1193,6 @@ var VPlayer = (function () {
 			new VPlayer object
 	*/
 	function vp(videcode) {
-		// Init
-		init_once();
-
 		// Set vars
 		this.videcode = (videcode === undefined ? null : videcode);
 
@@ -1381,6 +1203,17 @@ var VPlayer = (function () {
 
 		this.video_desync_max = 0.25; // seconds
 		this.audio_desync_max = 0.25; // seconds
+
+		var css_styles = [ "transition" , "webkitTransition" , "MozTransition" , "OTransition" , "msTransition" ];
+		var good_type = typeof("");
+		var d = document.createElement("div");
+		for (var i = 0; i < css_styles.length; ++i) {
+			if (typeof(d.style[css_styles[i]]) == good_type || (i == css_styles.length - 1 && (i = 0) == 0)) {
+				this.transition_css = css_styles[i];
+				this.transition_end_event_name = this.transition_css + (i == 0 ? "end" : "End");
+				break;
+			}
+		}
 
 		// Playback data
 		this.clear_listeners();
@@ -2033,24 +1866,26 @@ var VPlayer = (function () {
 		*/
 		video_animate: function (mode, time) {
 			this_private.video_animate_stop.call(this);
-
-			this.video_tag.className = add_class(this.video_tag.className, css_video_opacity_animations[mode]);
-			set_animation_time(this.video_tag, time * 1000);
+			this.video_tag.style.opacity = (1 - mode);
+			this.video_tag.style[this.transition_css] = "opacity " + time + "s linear";
 		},
 
 		/**
 			Remove any CSS animations from the video.
 		*/
 		video_animate_stop: function () {
-			if (has_class(this.video_tag.className, css_video_opacity_animations[0])) {
-				this.video_tag.style.opacity = get_computed_style(this.video_tag).opacity;
-				this.video_tag.className = remove_class(this.video_tag.className, css_video_opacity_animations[0]);
-			}
-			else if (has_class(this.video_tag.className, css_video_opacity_animations[1])) {
-				this.video_tag.style.opacity = get_computed_style(this.video_tag).opacity;
-				this.video_tag.className = remove_class(this.video_tag.className, css_video_opacity_animations[1]);
-			}
-			clear_animation_time(this.video_tag);
+			this.video_tag.style.opacity = this_private.get_computed_style.call(this, this.video_tag).opacity;
+			this.video_tag.style[this.transition_css] = "";
+		},
+
+		/**
+			Get the computed style of an object.
+
+			@return
+				the computed style
+		*/
+		get_computed_style: function (elem) {
+			return window.getComputedStyle(elem, null);
 		},
 
 
@@ -2075,17 +1910,7 @@ var VPlayer = (function () {
 			Called when any CSS animations have completed.
 		*/
 		on_video_animation_end: function () {
-			if (has_class(this.video_tag.className, css_video_opacity_animations[0])) {
-				// Fade in
-				this.video_tag.className = remove_class(this.video_tag.className, css_video_opacity_animations[0]);
-				this.video_tag.style.opacity = "1.0";
-			}
-			else if (has_class(this.video_tag.className, css_video_opacity_animations[1])) {
-				// Fade out
-				this.video_tag.className = remove_class(this.video_tag.className, css_video_opacity_animations[1]);
-				this.video_tag.style.opacity = "0.0";
-			}
-			clear_animation_time(this.video_tag);
+			this.video_tag.style[this.transition_css] = "";
 		},
 
 		/**
@@ -2713,16 +2538,7 @@ var VPlayer = (function () {
 				this_private.add_video_callback.call(this, "error", function () {
 					this_private.on_video_error.call(self);
 				});
-				this_private.add_video_callback.call(this, "animationend", function () {
-					this_private.on_video_animation_end.call(self);
-				});
-				this_private.add_video_callback.call(this, "webkitAnimationEnd", function () {
-					this_private.on_video_animation_end.call(self);
-				});
-				this_private.add_video_callback.call(this, "oanimationend", function () {
-					this_private.on_video_animation_end.call(self);
-				});
-				this_private.add_video_callback.call(this, "MSAnimationEnd", function () {
+				this_private.add_video_callback.call(this, this.transition_end_event_name, function () {
 					this_private.on_video_animation_end.call(self);
 				});
 				// Load video

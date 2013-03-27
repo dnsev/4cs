@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.1.1
+// @version     4.2
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -2123,88 +2123,7 @@ var Videcode=(function(){
 	return ve;
 })();
 var VPlayer=(function(){
-	function add_css_rule(rule){
-		if(document.styleSheets&&document.styleSheets.length){
-			try{
-				document.styleSheets[0].insertRule(rule,0);
-			}
-			catch(e){}
-		}
-		else{
-			var style=document.createElement("style");
-			style.innerHTML=rule;
-			document.head.appendChild(style);
-		}
-	}
-	function create_animation(css,ms_time,method){
-		if(ms_time===undefined){
-			ms_time=500;
-		}
-		if(method===undefined){
-			method="linear";
-		}
-		var class_name=css_animation_prefix+"Class"+css_animation_id;
-		var animation_name=css_animation_prefix+(css_animation_id++);
-		var style="";
-		for(var key in css){
-			style+=key+":"+css[key]+";";
-		}
-		var stylesheet;
-		for(var i=0;i<css_prefixes.length;++i){
-			stylesheet="@"+css_prefixes[i]+"keyframes "+animation_name+" {\n"+
-					"from{}\n"+
-					"to{"+style+"}\n"+
-					"}\n";
-			add_css_rule(stylesheet);
-		}
-		style=animation_name+" "+ms_time+"ms "+method;
-		for(var i=0;i<css_prefixes.length;++i){
-			stylesheet+=css_prefixes[i]+"animation:"+style+";"
-		}
-		add_css_rule("."+class_name+"{\n"+stylesheet+"}\n");
-		return class_name;
-	}
-	function has_class(class_list,check){
-		return(class_list.match(new RegExp("(\\s|^)"+check+"(\\s|$)","g"))!=null);
-	}
-	function remove_class(class_list,remove){
-		return class_list.replace(new RegExp("(\\s|^)"+remove+"(\\s|$)","g")," ");
-	}
-	function add_class(class_list,add){
-		return class_list+" "+add;
-	}
-	function set_animation_time(elem,ms_time){
-		var str="animation-duration:"+ms_time+"ms;";
-		str+="-webkit-animation-duration:"+ms_time+"ms;";
-		elem.setAttribute("style",elem.getAttribute("style")+str);
-	}
-	function clear_animation_time(elem){
-		clear_animation_time_single(elem,"animationDuration");
-		clear_animation_time_single(elem,"webkitAnimationDuration");
-		clear_animation_time_single(elem,"animation");
-		clear_animation_time_single(elem,"webkitAnimation");
-	}
-	function clear_animation_time_single(elem,name){
-		try{
-			elem.style[name]="";
-		}
-		catch(e){}
-	}
-	function init_once(){
-		if(css_video_opacity_animations!=null)return;
-		css_video_opacity_animations=[
-			create_animation({"opacity":"1.0"}),
-			create_animation({"opacity":"0.0"})
-		];
-	}
-	function get_computed_style(elem){
-		return window.getComputedStyle(elem,null);
-	}
-	var css_animation_prefix="VeAPIVPlayerAnimation";
 	var function_type=typeof(function(){});
-	var css_animation_id=0;
-	var css_prefixes=["","-o-","-moz-","-webkit-"];
-	var css_video_opacity_animations=null;
 	var DISPLAY_NOTHING=0;
 	var DISPLAY_LOOPED=1;
 	var DISPLAY_VIDEO=2;
@@ -2212,13 +2131,22 @@ var VPlayer=(function(){
 	var PLAY_NOTHING=0;
 	var PLAY_LOOPED=1;
 	function vp(videcode){
-		init_once();
 		this.videcode=(videcode===undefined?null:videcode);
 		this.video_animation_time=[1.0,1.0];
 		this.audio_animation_time=[1.0,1.0];
 		this.audio_animation_interval=50;
 		this.video_desync_max=0.25;
 		this.audio_desync_max=0.25;
+		var css_styles=["transition","webkitTransition","MozTransition","OTransition","msTransition"];
+		var good_type=typeof("");
+		var d=document.createElement("div");
+		for(var i=0;i<css_styles.length;++i){
+			if(typeof(d.style[css_styles[i]])==good_type||(i==css_styles.length-1&&(i=0)==0)){
+				this.transition_css=css_styles[i];
+				this.transition_end_event_name=this.transition_css+(i==0?"end":"End");
+				break;
+			}
+		}
 		this.clear_listeners();
 		this.sync_timer=null;
 		this.video_animate_timer=null;
@@ -2642,19 +2570,15 @@ var VPlayer=(function(){
 		},
 		video_animate:function(mode,time){
 			this_private.video_animate_stop.call(this);
-			this.video_tag.className=add_class(this.video_tag.className,css_video_opacity_animations[mode]);
-			set_animation_time(this.video_tag,time*1000);
+			this.video_tag.style.opacity=(1-mode);
+			this.video_tag.style[this.transition_css]="opacity "+time+"s linear";
 		},
 		video_animate_stop:function(){
-			if(has_class(this.video_tag.className,css_video_opacity_animations[0])){
-				this.video_tag.style.opacity=get_computed_style(this.video_tag).opacity;
-				this.video_tag.className=remove_class(this.video_tag.className,css_video_opacity_animations[0]);
-			}
-			else if(has_class(this.video_tag.className,css_video_opacity_animations[1])){
-				this.video_tag.style.opacity=get_computed_style(this.video_tag).opacity;
-				this.video_tag.className=remove_class(this.video_tag.className,css_video_opacity_animations[1]);
-			}
-			clear_animation_time(this.video_tag);
+			this.video_tag.style.opacity=this_private.get_computed_style.call(this,this.video_tag).opacity;
+			this.video_tag.style[this.transition_css]="";
+		},
+		get_computed_style:function(elem){
+			return window.getComputedStyle(elem,null);
 		},
 		on_video_loaded_metadata:function(){
 			this.video_dimensions.width=this.video_tag.videoWidth;
@@ -2666,15 +2590,7 @@ var VPlayer=(function(){
 			}
 		},
 		on_video_animation_end:function(){
-			if(has_class(this.video_tag.className,css_video_opacity_animations[0])){
-				this.video_tag.className=remove_class(this.video_tag.className,css_video_opacity_animations[0]);
-				this.video_tag.style.opacity="1.0";
-			}
-			else if(has_class(this.video_tag.className,css_video_opacity_animations[1])){
-				this.video_tag.className=remove_class(this.video_tag.className,css_video_opacity_animations[1]);
-				this.video_tag.style.opacity="0.0";
-			}
-			clear_animation_time(this.video_tag);
+			this.video_tag.style[this.transition_css]="";
 		},
 		on_video_ended:function(){
 			if(this.video_tag.loop)return;
@@ -3051,16 +2967,7 @@ var VPlayer=(function(){
 				this_private.add_video_callback.call(this,"error",function(){
 					this_private.on_video_error.call(self);
 				});
-				this_private.add_video_callback.call(this,"animationend",function(){
-					this_private.on_video_animation_end.call(self);
-				});
-				this_private.add_video_callback.call(this,"webkitAnimationEnd",function(){
-					this_private.on_video_animation_end.call(self);
-				});
-				this_private.add_video_callback.call(this,"oanimationend",function(){
-					this_private.on_video_animation_end.call(self);
-				});
-				this_private.add_video_callback.call(this,"MSAnimationEnd",function(){
+				this_private.add_video_callback.call(this,this.transition_end_event_name,function(){
 					this_private.on_video_animation_end.call(self);
 				});
 				this.video_tag.setAttribute("src",this.video_blob_url);
@@ -7042,15 +6949,18 @@ MediaPlayer.prototype={
 			playlist_item.image_blob_url=null;
 		}
 		else{
-			var ext=url.split(".").pop().toLowerCase();
+			var image_ext=url.split(".").pop().toLowerCase();
 			var mime="image/jpeg"
-			if(ext=="png")mime="image/png";
-			else if(ext=="gif")mime="image/gif";
+			if(image_ext=="png")mime="image/png";
+			else if(image_ext=="gif")mime="image/gif";
 			playlist_item.image_blob=new Blob([image_src],{type:mime});
 			playlist_item.image_blob_url=(window.webkitURL||window.URL).createObjectURL(playlist_item.image_blob);
 			playlist_item.image_url=playlist_item.image_blob_url;
 		}
 		playlist_item.mask_click_target=playlist_item.image_url;
+		var image_file_name=playlist_item.image_name.split(".");
+		var image_file_ext=image_file_name.pop().toLowerCase();
+		image_file_name=image_file_name.join(".");
 		this.playlist_container.append(
 			(playlist_item.playlist_item=this.E("a","MPPlaylistItem"))
 			.attr("href",playlist_item.audio_blob_url)
@@ -7101,6 +7011,8 @@ MediaPlayer.prototype={
 						.html("S")
 						.attr("title","Save...")
 						.attr("href",playlist_item.audio_blob_url)
+						.attr("download",playlist_item.title+".ogg")
+						.attr("target","_blank")
 					)
 					.append(
 						this.D("MPPlaylistControlLinkSeparator")
@@ -7110,6 +7022,8 @@ MediaPlayer.prototype={
 						.html("I")
 						.attr("title","Image...")
 						.attr("href",playlist_item.image_url)
+						.attr("download",image_file_name+".["+playlist_item.title+"]."+image_file_ext)
+						.attr("target","_blank")
 					)
 				)
 			)
@@ -7225,6 +7139,8 @@ MediaPlayer.prototype={
 						.html("A")
 						.attr("title","Save audio...")
 						.attr("href",playlist_item.vplayer.get_audio()||"")
+						.attr("download",playlist_item.title+".ogg")
+						.attr("target","_blank")
 					)
 					.append(
 						(final_separators[1]=this.D("MPPlaylistControlLinkSeparator"))
@@ -7234,6 +7150,8 @@ MediaPlayer.prototype={
 						.html("V")
 						.attr("title","Save video...")
 						.attr("href",playlist_item.vplayer.get_video()||"")
+						.attr("download",playlist_item.title+".webm")
+						.attr("target","_blank")
 					)
 				)
 			)
@@ -7364,6 +7282,7 @@ MediaPlayer.prototype={
 						.html("Y")
 						.attr("title","Youtube Link")
 						.attr("href",playlist_item.mask_click_target)
+						.attr("target","_blank")
 					)
 				)
 			)
@@ -7477,6 +7396,7 @@ MediaPlayer.prototype={
 						.html("V")
 						.attr("title","Vimeo Link")
 						.attr("href",playlist_item.mask_click_target)
+						.attr("target","_blank")
 					)
 				)
 			)
@@ -7584,6 +7504,7 @@ MediaPlayer.prototype={
 						.html("S")
 						.attr("title","Soundcloud Link")
 						.attr("href",playlist_item.mask_click_target)
+						.attr("target","_blank")
 					)
 				)
 			)
@@ -7895,6 +7816,8 @@ MediaPlayer.prototype={
 			this.downloads_ready_container.css("display","");
 			this.downloads_about.html(about(files));
 			this.downloads_link.attr("href",this.batch_download_blob_url);
+			this.downloads_link.attr("download","batch.zip");
+			this.downloads_link.attr("target","_blank");
 			return;
 		}
 		if(files[index][1]instanceof Uint8Array){
@@ -8794,21 +8717,16 @@ MediaPlayer.prototype={
 			{
 				if(event.which==1){
 					if(event.data.playlist_item.type=="image-audio"){
-						prompt(
-							"Right click and save as, or open in a new tab and save.\n"+
-							"(Be sure to save as .ogg)",
-							$(this).attr("href")
-						);
+						event.stopPropagation();
+						return true;
 					}
 					else if(event.data.playlist_item.type=="youtube-video"||event.data.playlist_item.type=="vimeo-video"){
-						prompt("Right click/middle click to open. Original:",event.data.playlist_item.original_url);
+						event.stopPropagation();
+						return true;
 					}
 					else if(event.data.playlist_item.type=="ve"){
-						prompt(
-							"Right click and save as, or open in a new tab and save.\n"+
-							"(Be sure to save as .ogg)",
-							$(this).attr("href")
-						);
+						event.stopPropagation();
+						return true;
 					}
 					else{
 						console.log(event.data.playlist_item.type);
@@ -8823,14 +8741,12 @@ MediaPlayer.prototype={
 			{
 				if(event.which==1){
 					if(event.data.playlist_item.type=="image-audio"){
-						alert("Right click and save as, or open in a new tab.");
+						event.stopPropagation();
+						return true;
 					}
 					else if(event.data.playlist_item.type=="ve"){
-						prompt(
-							"Right click and save as, or open in a new tab and save.\n"+
-							"(Be sure to save as .webm)",
-							$(this).attr("href")
-						);
+						event.stopPropagation();
+						return true;
 					}
 					else{
 						console.log(event.data.playlist_item.type);
@@ -9027,12 +8943,8 @@ MediaPlayer.prototype={
 	},
 	on_downloads_link_click:function(event){
 		if(event.which==1){
-			prompt(
-				"Right click and save as, middle click, or visit the URL below.\n"+
-				"(Be sure to save as .zip)",
-				event.data.media_player.batch_download_blob_url
-			);
-			return false;
+			event.stopPropagation();
+			return true;
 		}
 		return true;
 	},
@@ -10388,7 +10300,9 @@ ThreadManager.prototype={
 				len=script.settings["inline"]["post_parse_group_size"];
 			}
 			for(var i=0;i<len;++i){
-				this.parse_post(this.post_queue[i]);
+				var p=this.post_queue[i];
+				this.post_queue[i]=null;
+				this.parse_post(p);
 			}
 			this.post_queue.splice(0,len);
 			if(this.post_queue.length>0){
@@ -10400,8 +10314,17 @@ ThreadManager.prototype={
 			}
 		}
 	},
+	post_exists:function(post_id){
+		if(post_id in this.posts)return true;
+		for(var i=0;i<this.post_queue.length;++i){
+			if(this.post_queue[i]==null)continue;
+			var id=(this.post_queue[i].attr("id")||"0").replace(/(\w+_)?[^0-9]/g,"");
+			if(id==post_id)return true;
+		}
+		return false;
+	},
 	on_dom_mutation_add:function(target){
-		if(target.hasClass("postContainer")||target.hasClass("post")){
+		if((target.hasClass("postContainer")||target.hasClass("post"))&&target.attr("id")!==undefined){
 			this.post_queue.push(target);
 		}
 		else if(target.attr("id")=="qr"||target.attr("id")=="quickReply"){
@@ -10416,7 +10339,7 @@ ThreadManager.prototype={
 	},
 	parse_post:function(container){
 		var post_id=(container.attr("id")||"0").replace(/(\w+_)?[^0-9]/g,"");
-		var redo=(post_id in this.posts);
+		var redo=this.post_exists(post_id);
 		var image=container.find(is_archive?".thread_image_link":".fileThumb");
 		var post=container.find(is_archive?".text":".postMessage");
 		image=(image.length>0?(image.attr("href")||""):null);
@@ -10472,6 +10395,10 @@ ThreadManager.prototype={
 		};
 		if(!redo){
 			this.posts[post_id]=post_data_copy;
+		}
+		if(post_data_copy.post==null){
+			console.log("ERROR");
+			console.log(container.html());
 		}
 		inline_manager.parse_post(this.posts[post_id],redo,post_data_copy);
 		if(script.settings["inline"]["url_replace"]){
