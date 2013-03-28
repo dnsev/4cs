@@ -599,6 +599,8 @@ var Videncode = (function () {
 var Videcode = (function () {
 
 	// Variables
+	var function_type = typeof(function(){});
+	var object_type = typeof({});
 	var signature = ".ve.snd\0";
 	var signature_array = new Uint8Array(new ArrayBuffer(signature.length));
 	for (i = 0; i < signature.length; ++i) signature_array[i] = signature.charCodeAt(i);
@@ -625,6 +627,7 @@ var Videcode = (function () {
 		else this.mime = "image/jpeg"
 
 		// Status
+		this.async_timer = null;
 		this.reset();
 	}
 
@@ -731,6 +734,348 @@ var Videcode = (function () {
 			}
 
 			return this;
+		},
+
+		/**
+
+		*/
+		decode_async_internal: function (async_settings, callback, progress, callback_data, sd) {
+			// Vars
+			var self = this;
+			this.async_timer = null;
+			var len = this.source.length, b, data;
+
+			// Reset
+			if (sd.reset === undefined) {
+				this.reset();
+				sd.i = 0;
+				sd.j = 0;
+				sd.pos = 0;
+				sd.reset = true;
+			}
+			var i_start = sd.i;
+
+			// Find signature
+			if (sd.signature_check_done === undefined) {
+				while (sd.i < len) {
+					b = this_private.mask_update.call(this, this.source[sd.i]);
+
+					if (b == signature_array[sd.pos]) {
+						// Found
+						if (++sd.pos >= signature_array.length) {
+							++sd.i;
+							this.data_offset = sd.i - signature_array.length;
+							break;
+						}
+					}
+					else {
+						// Reset
+						sd.pos = 0;
+					}
+
+					// Async
+					if ((++sd.i) - i_start >= async_settings.steps) {
+						if (progress != null) progress.call(this, {percent: (sd.i / len)}, callback_data);
+						this.async_timer = setTimeout(function () { this_private.decode_async_internal.call(self, async_settings, callback, progress, callback_data, sd); }, async_settings.delay);
+						return;
+					}
+				}
+				sd.signature_check_done = true;
+			}
+
+			// No errors
+			if (this.error_message === null) {
+				// Signature found
+				if (sd.i < len) {
+					// Version
+					if (sd.version === undefined) {
+						this.version = this_private.mask_update_checked.call(this, this.source[sd.i++]);
+						sd.version = true;
+					}
+
+					// Async
+					if (sd.i - i_start >= async_settings.steps) {
+						if (progress != null) progress.call(this, {percent: (sd.i / len)}, callback_data);
+						this.async_timer = setTimeout(function () { this_private.decode_async_internal.call(self, async_settings, callback, progress, callback_data, sd); }, async_settings.delay);
+						return;
+					}
+
+					// Flags1
+					if (sd.flags1 === undefined) {
+						sd.flags1 = this_private.mask_update_checked.call(this, this.source[sd.i++]);
+						this.multiplexed = ((sd.flags1 & 0x04) != 0);
+						this.video_fades[0] = ((sd.flags1 & 0x10) != 0);
+						this.video_fades[1] = ((sd.flags1 & 0x20) != 0);
+						this.audio_fades[0] = ((sd.flags1 & 0x40) != 0);
+						this.audio_fades[1] = ((sd.flags1 & 0x80) != 0);
+					}
+
+					// Async
+					if (sd.i - i_start >= async_settings.steps) {
+						if (progress != null) progress.call(this, {percent: (sd.i / len)}, callback_data);
+						this.async_timer = setTimeout(function () { this_private.decode_async_internal.call(self, async_settings, callback, progress, callback_data, sd); }, async_settings.delay);
+						return;
+					}
+
+					// Flags2
+					if (sd.flags2 === undefined) {
+						sd.flags2 = 0;
+						if ((sd.flags1 & 0x03) == 0x03) {
+							sd.flags2 = this_private.mask_update_checked.call(this, this.source[sd.i++]);
+							this.video_play_style[0] = (sd.flags2 & 0x03);
+							this.video_play_style[1] = (sd.flags2 & 0x0C) >> 2;
+							this.audio_play_style[0] = (sd.flags2 & 0x10) >> 4;
+							this.audio_play_style[1] = (sd.flags2 & 0x20) >> 5;
+							this.video_is_longer = ((sd.flags2 & 0x40) != 0);
+						}
+					}
+
+					// Async
+					if (sd.i - i_start >= async_settings.steps) {
+						if (progress != null) progress.call(this, {percent: (sd.i / len)}, callback_data);
+						this.async_timer = setTimeout(function () { this_private.decode_async_internal.call(self, async_settings, callback, progress, callback_data, sd); }, async_settings.delay);
+						return;
+					}
+
+					// Var-length tag
+					if (sd.tag_found === undefined) {
+						// Length
+						if (sd.tag_length === undefined) {
+							data = this_private.read_varlen_int.call(this, sd.i, 5);
+							if (data !== null) {
+								sd.i += data[1];
+								sd.tag_length = data[0];
+							}
+							else {
+								sd.tag_length = -1;
+							}
+
+							if (sd.tag_length >= 0) {
+								if (sd.tag_length + sd.i <= this.source.length) {
+									sd.i_end = sd.i + sd.tag_length;
+								}
+								else {
+									// Error
+									this_private.set_error.call(this, "End of file");
+								}
+							}
+						}
+
+						// Async
+						if (sd.i - i_start >= async_settings.steps) {
+							if (progress != null) progress.call(this, {percent: (sd.i / len)}, callback_data);
+							this.async_timer = setTimeout(function () { this_private.decode_async_internal.call(self, async_settings, callback, progress, callback_data, sd); }, async_settings.delay);
+							return;
+						}
+
+						// No errors
+						if (this.error_message === null) {
+							// Tag
+							while (sd.i < sd.i_end) {
+								this.tag += String.fromCharCode(this_private.mask_update.call(this, this.source[sd.i]));
+
+								// Async
+								if ((++sd.i) - i_start >= async_settings.steps) {
+									if (progress != null) progress.call(this, {percent: (sd.i / len)}, callback_data);
+									this.async_timer = setTimeout(function () { this_private.decode_async_internal.call(self, async_settings, callback, progress, callback_data, sd); }, async_settings.delay);
+									return;
+								}
+							}
+
+							// Decode UTF-8
+							try {
+								this.tag = decodeURIComponent(escape(this.tag));
+							}
+							catch (e) {}
+						}
+
+						sd.tag_found = true;
+					}
+
+					// No errors
+					if (this.error_message === null) {
+
+						// Sync offsets
+						if (sd.sync_offset === undefined) {
+							if ((sd.flags1 & 0x03) == 0x03) {
+								// Integer part
+								data = this_private.read_varlen_int.call(this, sd.i, 5);
+								if (data != null) {
+									sd.i += data[1];
+									this.sync_offset = data[0];
+
+									// Decimal part
+									var dec = [ 0 , 0 ];
+									var dec_val = 0.5;
+									var fraction = 0.0;
+									dec[0] = this_private.mask_update_checked.call(this, this.source[sd.i++]);
+									dec[1] = this_private.mask_update_checked.call(this, this.source[sd.i++]);
+
+									for (var j = 0; j < dec.length; ++j) {
+										for (var k = 0; k < 8; ++k) {
+											if ((dec[j] & (1 << k)) != 0) fraction += dec_val;
+											dec_val /= 2.0;
+										}
+									}
+
+									this.sync_offset += fraction;
+								}
+							}
+							sd.sync_offset = true;
+						}
+
+						// Async
+						if (sd.i - i_start >= async_settings.steps) {
+							if (progress != null) progress.call(this, {percent: (sd.i / len)}, callback_data);
+							this.async_timer = setTimeout(function () { this_private.decode_async_internal.call(self, async_settings, callback, progress, callback_data, sd); }, async_settings.delay);
+							return;
+						}
+
+						// No errors
+						if (this.error_message === null) {
+
+							// Video
+							if (sd.video_found === undefined) {
+								if ((sd.flags1 & 0x01) != 0) {
+									// Length
+									if (sd.video_length === undefined) {
+										data = this_private.read_varlen_int.call(this, sd.i, 5);
+										if (data !== null) {
+											sd.i += data[1];
+											sd.video_length = data[0];
+										}
+										else {
+											sd.video_length = -1;
+										}
+
+										if (sd.video_length >= 0) {
+											if (sd.video_length + sd.i <= this.source.length) {
+												this.video = new Uint8Array(new ArrayBuffer(sd.video_length));
+												sd.j = 0;
+												sd.i_end = sd.i + sd.video_length;
+											}
+											else {
+												// Error
+												this_private.set_error.call(this, "End of file");
+											}
+										}
+									}
+
+									// Async
+									if (sd.i - i_start >= async_settings.steps) {
+										if (progress != null) progress.call(this, {percent: (sd.i / len)}, callback_data);
+										this.async_timer = setTimeout(function () { this_private.decode_async_internal.call(self, async_settings, callback, progress, callback_data, sd); }, async_settings.delay);
+										return;
+									}
+
+									// No errors
+									if (this.error_message === null) {
+										// Video data
+										while (sd.i < sd.i_end) {
+											this.video[sd.j++] = this_private.mask_update.call(this, this.source[sd.i]);
+
+											// Async
+											if ((++sd.i) - i_start >= async_settings.steps) {
+												if (progress != null) progress.call(this, {percent: (sd.i / len)}, callback_data);
+												this.async_timer = setTimeout(function () { this_private.decode_async_internal.call(self, async_settings, callback, progress, callback_data, sd); }, async_settings.delay);
+												return;
+											}
+										}
+									}
+								}
+
+								sd.video_found = true;
+							}
+
+							// No errors
+							if (this.error_message === null) {
+
+								// Audio
+								if (sd.audio_found === undefined) {
+									if ((sd.flags1 & 0x02) != 0) {
+										// Length
+										if (sd.audio_length === undefined) {
+											data = this_private.read_varlen_int.call(this, sd.i, 5);
+											if (data !== null) {
+												sd.i += data[1];
+												sd.audio_length = data[0];
+											}
+											else {
+												sd.audio_length = -1;
+											}
+
+											// Checking
+											if (sd.audio_length >= 0) {
+												if (sd.audio_length + sd.i <= this.source.length) {
+													this.audio = new Uint8Array(new ArrayBuffer(sd.audio_length));
+													sd.j = 0;
+													sd.i_end = sd.i + sd.audio_length;
+												}
+												else {
+													this_private.set_error.call(this, "End of file");
+												}
+											}
+										}
+
+										// Async
+										if (sd.i - i_start >= async_settings.steps) {
+											if (progress != null) progress.call(this, {percent: (sd.i / len)}, callback_data);
+											this.async_timer = setTimeout(function () { this_private.decode_async_internal.call(self, async_settings, callback, progress, callback_data, sd); }, async_settings.delay);
+											return;
+										}
+
+										// No errors
+										if (this.error_message === null) {
+
+											// Video data
+											while (sd.i < sd.i_end) {
+												this.audio[sd.j++] = this_private.mask_update.call(this, this.source[sd.i]);
+
+												// Async
+												if ((++sd.i) - i_start >= async_settings.steps) {
+													if (progress != null) progress.call(this, {percent: (sd.i / len)}, callback_data);
+													this.async_timer = setTimeout(function () { this_private.decode_async_internal.call(self, async_settings, callback, progress, callback_data, sd); }, async_settings.delay);
+													return;
+												}
+											}
+
+										}
+
+									}
+
+									sd.audio_found = true;
+								}
+
+								// Image
+								this.image = this.source.subarray(0, this.data_offset);
+
+							}
+
+						}
+
+					}
+
+				}
+				else {
+					this_private.set_error.call(this, "No data found");
+					this.malformed = false;
+				}
+			}
+
+			// Error
+			if (this.error_message !== null) {
+				this.video = null;
+				this.audio = null;
+				this.image = null;
+			}
+
+			// Async: done
+			if (progress != null) {
+				progress.call(this, {percent: 1.0}, callback_data);
+			}
+			if (callback != null) {
+				callback.call(this, callback_data);
+			}
 		}
 
 	};
@@ -752,7 +1097,6 @@ var Videcode = (function () {
 
 			this.malformed = false;
 			this.error_message = null;
-			this.status = 0;
 			this.mask = 0x12;
 			this.mask_value = 0xABCDEF;
 
@@ -767,6 +1111,11 @@ var Videcode = (function () {
 			this.video = null;
 			this.audio = null;
 			this.image = null;
+
+			if (this.async_timer != null) {
+				clearTimeout(this.async_timer);
+				this.async_timer = null;
+			}
 
 			this.video_fades = [ false , false ];
 			this.audio_fades = [ false , false ];
@@ -812,9 +1161,6 @@ var Videcode = (function () {
 
 			// Signature found
 			if (i < len) {
-				// Status update
-				this.status = 1;
-
 				// Version
 				this.version = this_private.mask_update_checked.call(this, this.source[i++]);
 
@@ -954,6 +1300,54 @@ var Videcode = (function () {
 
 			// Done
 			return this;
+		},
+
+		/**
+			Decode the source image; image is guaranteed to be decoded on return.
+
+			@param [async_settings]
+				optional; object containing the asynchronous settings
+			@param callback
+				a callback to be executed, in the form of:
+					function (callback_data) {...}
+				where the this object = the videcode object
+				callback_data is the last argument
+			@param [progress]
+				a callback to be executed on status updates, in the form of:
+					function (progress_data, callback_data) {...}
+				where the this object = the videcode object
+				progress_data is in the form of {percent:?}
+				callback_data is the next argument
+			@param [callback_data]
+				optional; data to be passed as the first argument into the callback function
+		*/
+		decode_async: function (async_settings, callback, progress, callback_data) {
+			// Arguments
+			if (arguments.length <= 1 || typeof(async_settings) == function_type) {
+				// Shift if omitted
+				callback_data = progress;
+				progress = callback;
+				callback = async_settings;
+				async_settings = null;
+			}
+			if (typeof(callback) != function_type) {
+				callback = null
+			}
+			if (typeof(progress) != function_type) {
+				progress = null
+			}
+
+			// Async settings
+			if (async_settings == null || typeof(async_settings) != object_type) {
+				async_settings = {};
+			}
+			async_settings.steps = async_settings.steps || 100;
+			async_settings.delay = async_settings.delay || 100;
+			if (async_settings.steps < 0) async_settings.steps = 0;
+			if (async_settings.delay < 1) async_settings.delay = 1;
+
+			// Call
+			this_private.decode_async_internal.call(this, async_settings, callback, progress, callback_data, {});
 		},
 
 		/**

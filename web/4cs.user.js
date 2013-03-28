@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.2
+// @version     4.3
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -436,8 +436,8 @@ var FlateStream=(function(){
 		APNG_DISPOSE_OP_PREVIOUS=2;
 		APNG_BLEND_OP_SOURCE=0;
 		APNG_BLEND_OP_OVER=1;
-		function PNG(data,slow,slow_callback){
-			if(slow)this.initSlow(data,slow_callback);
+		function PNG(data,asynchronous,asynchronous_callback){
+			if(asynchronous)this.initAsynchronous(data,asynchronous_callback);
 			else this.init(data);
 		}
 		PNG.prototype.init=function(data){
@@ -572,10 +572,17 @@ var FlateStream=(function(){
 			}
 			return;
 		}
-		PNG.prototype.initSlow=function(data,slow_callback){
+		PNG.prototype.initAsynchronous=function(data,asynchronous_callback,loop_param){
 			try{
 				var loop=new Loop();
-				loop.steps=1024*64;
+				if(loop_param===undefined){
+					loop.steps=1024*64;
+					loop.timeout=1;
+				}
+				else{
+					loop.steps=loop_param.steps;
+					loop.timeout=loop_param.timeout;
+				}
 			}
 			catch(e){
 				return this.init(data);
@@ -714,7 +721,7 @@ var FlateStream=(function(){
 				},
 				function(unused,data,loop){
 					try{
-						slow_callback(self);
+						asynchronous_callback(self);
 					}
 					catch(e){}
 				}
@@ -822,10 +829,17 @@ var FlateStream=(function(){
 			}
 			return pixels;
 		};
-		PNG.prototype.decodePixelsSlow=function(data,done_callback){
+		PNG.prototype.decodePixelsAsynchronous=function(data,done_callback,loop_param){
 			try{
 				var loop=new Loop();
-				loop.steps=1024*64;
+				if(loop_param===undefined){
+					loop.steps=1024*64;
+					loop.timeout=1;
+				}
+				else{
+					loop.steps=loop_param.steps;
+					loop.timeout=loop_param.timeout;
+				}
 			}
 			catch(e){
 				return this.decodePixels(data);
@@ -1206,7 +1220,7 @@ Loop.prototype={
 	}
 };
 
-function DataImage(source_location,callback_data,load_callback,slow){
+function DataImage(source_location,callback_data,load_callback,asynchronous,loop){
 	this.load_callback=load_callback;
 	this.width=0;
 	this.height=0;
@@ -1227,17 +1241,17 @@ function DataImage(source_location,callback_data,load_callback,slow){
 			});
 		}
 		else{
-			if(slow){
+			if(asynchronous){
 				png=new PNG(source_location,true,function(png){
-					png.decodePixelsSlow(null,function(png,pixels){
+					png.decodePixelsAsynchronous(null,function(png,pixels){
 						self.image=png;
 						self.pixels=pixels;
 						self.width=self.image.width;
 						self.height=self.image.height;
 						self.color_depth=(png.hasAlphaChannel?4:3);
 						if(typeof(self.load_callback)=="function")self.load_callback(self,callback_data);
-					});
-				});
+					},loop);
+				},loop);
 			}
 			else{
 				var png=new PNG(source_location);
@@ -1295,9 +1309,9 @@ DataImageReader.prototype={
 			return"Error extracting data; image file likely doesn't contain data";
 		}
 	},
-	unpack_slow:function(callback){
+	unpack_asynchronous:function(callback,loop){
 		try{
-			this.__unpack_slow(callback);
+			this.__unpack_asynchronous(callback,loop);
 		}
 		catch(e){
 			callback("Error extracting data; image file likely doesn't contain data");
@@ -1400,10 +1414,13 @@ DataImageReader.prototype={
 		this.hashmask_value=null;
 		return[filenames,sources];
 	},
-	__unpack_slow:function(callback){
+	__unpack_asynchronous:function(callback,loop){
 		try{
-			var loop=new Loop();
-			loop.steps=1024*64;
+			if(loop===undefined){
+				loop=new Loop();
+				loop.steps=1024*64;
+				loop.timeout=1;
+			}
 		}
 		catch(e){
 			return this.__unpack(callback);
@@ -1418,7 +1435,7 @@ DataImageReader.prototype={
 			0,file_count,1,
 			{},
 			function(i,data,loop){
-				self.__extract_data_slow(
+				self.__extract_data_asynchronous(
 					file_sizes[i],
 					loop,
 					function(src){
@@ -1466,7 +1483,7 @@ DataImageReader.prototype={
 		}
 		return src;
 	},
-	__extract_data_slow:function(byte_length,loop,done_callback){
+	__extract_data_asynchronous:function(byte_length,loop,done_callback){
 		var src=new Uint8Array(byte_length);
 		var j=0;
 		var self=this;
@@ -1865,6 +1882,8 @@ var Videncode=(function(){
 	return ve;
 })();
 var Videcode=(function(){
+	var function_type=typeof(function(){});
+	var object_type=typeof({});
 	var signature=".ve.snd\0";
 	var signature_array=new Uint8Array(new ArrayBuffer(signature.length));
 	for(i=0;i<signature.length;++i)signature_array[i]=signature.charCodeAt(i);
@@ -1875,6 +1894,7 @@ var Videcode=(function(){
 		if(ext=="png")this.mime="image/png";
 		else if(ext=="gif")this.mime="image/gif";
 		else this.mime="image/jpeg"
+		this.async_timer=null;
 		this.reset();
 	}
 	var this_private={
@@ -1918,6 +1938,251 @@ var Videcode=(function(){
 				this.malformed=true;
 			}
 			return this;
+		},
+		decode_async_internal:function(async_settings,callback,progress,callback_data,sd){
+			var self=this;
+			this.async_timer=null;
+			var len=this.source.length,b,data;
+			if(sd.reset===undefined){
+				this.reset();
+				sd.i=0;
+				sd.j=0;
+				sd.pos=0;
+				sd.reset=true;
+			}
+			var i_start=sd.i;
+			if(sd.signature_check_done===undefined){
+				while(sd.i<len){
+					b=this_private.mask_update.call(this,this.source[sd.i]);
+					if(b==signature_array[sd.pos]){
+						if(++sd.pos>=signature_array.length){
+							++sd.i;
+							this.data_offset=sd.i-signature_array.length;
+							break;
+						}
+					}
+					else{
+						sd.pos=0;
+					}
+					if((++sd.i)-i_start>=async_settings.steps){
+						if(progress!=null)progress.call(this,{percent:(sd.i/len)},callback_data);
+						this.async_timer=setTimeout(function(){this_private.decode_async_internal.call(self,async_settings,callback,progress,callback_data,sd);},async_settings.delay);
+						return;
+					}
+				}
+				sd.signature_check_done=true;
+			}
+			if(this.error_message===null){
+				if(sd.i<len){
+					if(sd.version===undefined){
+						this.version=this_private.mask_update_checked.call(this,this.source[sd.i++]);
+						sd.version=true;
+					}
+					if(sd.i-i_start>=async_settings.steps){
+						if(progress!=null)progress.call(this,{percent:(sd.i/len)},callback_data);
+						this.async_timer=setTimeout(function(){this_private.decode_async_internal.call(self,async_settings,callback,progress,callback_data,sd);},async_settings.delay);
+						return;
+					}
+					if(sd.flags1===undefined){
+						sd.flags1=this_private.mask_update_checked.call(this,this.source[sd.i++]);
+						this.multiplexed=((sd.flags1&0x04)!=0);
+						this.video_fades[0]=((sd.flags1&0x10)!=0);
+						this.video_fades[1]=((sd.flags1&0x20)!=0);
+						this.audio_fades[0]=((sd.flags1&0x40)!=0);
+						this.audio_fades[1]=((sd.flags1&0x80)!=0);
+					}
+					if(sd.i-i_start>=async_settings.steps){
+						if(progress!=null)progress.call(this,{percent:(sd.i/len)},callback_data);
+						this.async_timer=setTimeout(function(){this_private.decode_async_internal.call(self,async_settings,callback,progress,callback_data,sd);},async_settings.delay);
+						return;
+					}
+					if(sd.flags2===undefined){
+						sd.flags2=0;
+						if((sd.flags1&0x03)==0x03){
+							sd.flags2=this_private.mask_update_checked.call(this,this.source[sd.i++]);
+							this.video_play_style[0]=(sd.flags2&0x03);
+							this.video_play_style[1]=(sd.flags2&0x0C)>>2;
+							this.audio_play_style[0]=(sd.flags2&0x10)>>4;
+							this.audio_play_style[1]=(sd.flags2&0x20)>>5;
+							this.video_is_longer=((sd.flags2&0x40)!=0);
+						}
+					}
+					if(sd.i-i_start>=async_settings.steps){
+						if(progress!=null)progress.call(this,{percent:(sd.i/len)},callback_data);
+						this.async_timer=setTimeout(function(){this_private.decode_async_internal.call(self,async_settings,callback,progress,callback_data,sd);},async_settings.delay);
+						return;
+					}
+					if(sd.tag_found===undefined){
+						if(sd.tag_length===undefined){
+							data=this_private.read_varlen_int.call(this,sd.i,5);
+							if(data!==null){
+								sd.i+=data[1];
+								sd.tag_length=data[0];
+							}
+							else{
+								sd.tag_length=-1;
+							}
+							if(sd.tag_length>=0){
+								if(sd.tag_length+sd.i<=this.source.length){
+									sd.i_end=sd.i+sd.tag_length;
+								}
+								else{
+									this_private.set_error.call(this,"End of file");
+								}
+							}
+						}
+						if(sd.i-i_start>=async_settings.steps){
+							if(progress!=null)progress.call(this,{percent:(sd.i/len)},callback_data);
+							this.async_timer=setTimeout(function(){this_private.decode_async_internal.call(self,async_settings,callback,progress,callback_data,sd);},async_settings.delay);
+							return;
+						}
+						if(this.error_message===null){
+							while(sd.i<sd.i_end){
+								this.tag+=String.fromCharCode(this_private.mask_update.call(this,this.source[sd.i]));
+								if((++sd.i)-i_start>=async_settings.steps){
+									if(progress!=null)progress.call(this,{percent:(sd.i/len)},callback_data);
+									this.async_timer=setTimeout(function(){this_private.decode_async_internal.call(self,async_settings,callback,progress,callback_data,sd);},async_settings.delay);
+									return;
+								}
+							}
+							try{
+								this.tag=decodeURIComponent(escape(this.tag));
+							}
+							catch(e){}
+						}
+						sd.tag_found=true;
+					}
+					if(this.error_message===null){
+						if(sd.sync_offset===undefined){
+							if((sd.flags1&0x03)==0x03){
+								data=this_private.read_varlen_int.call(this,sd.i,5);
+								if(data!=null){
+									sd.i+=data[1];
+									this.sync_offset=data[0];
+									var dec=[0,0];
+									var dec_val=0.5;
+									var fraction=0.0;
+									dec[0]=this_private.mask_update_checked.call(this,this.source[sd.i++]);
+									dec[1]=this_private.mask_update_checked.call(this,this.source[sd.i++]);
+									for(var j=0;j<dec.length;++j){
+										for(var k=0;k<8;++k){
+											if((dec[j]&(1<<k))!=0)fraction+=dec_val;
+											dec_val/=2.0;
+										}
+									}
+									this.sync_offset+=fraction;
+								}
+							}
+							sd.sync_offset=true;
+						}
+						if(sd.i-i_start>=async_settings.steps){
+							if(progress!=null)progress.call(this,{percent:(sd.i/len)},callback_data);
+							this.async_timer=setTimeout(function(){this_private.decode_async_internal.call(self,async_settings,callback,progress,callback_data,sd);},async_settings.delay);
+							return;
+						}
+						if(this.error_message===null){
+							if(sd.video_found===undefined){
+								if((sd.flags1&0x01)!=0){
+									if(sd.video_length===undefined){
+										data=this_private.read_varlen_int.call(this,sd.i,5);
+										if(data!==null){
+											sd.i+=data[1];
+											sd.video_length=data[0];
+										}
+										else{
+											sd.video_length=-1;
+										}
+										if(sd.video_length>=0){
+											if(sd.video_length+sd.i<=this.source.length){
+												this.video=new Uint8Array(new ArrayBuffer(sd.video_length));
+												sd.j=0;
+												sd.i_end=sd.i+sd.video_length;
+											}
+											else{
+												this_private.set_error.call(this,"End of file");
+											}
+										}
+									}
+									if(sd.i-i_start>=async_settings.steps){
+										if(progress!=null)progress.call(this,{percent:(sd.i/len)},callback_data);
+										this.async_timer=setTimeout(function(){this_private.decode_async_internal.call(self,async_settings,callback,progress,callback_data,sd);},async_settings.delay);
+										return;
+									}
+									if(this.error_message===null){
+										while(sd.i<sd.i_end){
+											this.video[sd.j++]=this_private.mask_update.call(this,this.source[sd.i]);
+											if((++sd.i)-i_start>=async_settings.steps){
+												if(progress!=null)progress.call(this,{percent:(sd.i/len)},callback_data);
+												this.async_timer=setTimeout(function(){this_private.decode_async_internal.call(self,async_settings,callback,progress,callback_data,sd);},async_settings.delay);
+												return;
+											}
+										}
+									}
+								}
+								sd.video_found=true;
+							}
+							if(this.error_message===null){
+								if(sd.audio_found===undefined){
+									if((sd.flags1&0x02)!=0){
+										if(sd.audio_length===undefined){
+											data=this_private.read_varlen_int.call(this,sd.i,5);
+											if(data!==null){
+												sd.i+=data[1];
+												sd.audio_length=data[0];
+											}
+											else{
+												sd.audio_length=-1;
+											}
+											if(sd.audio_length>=0){
+												if(sd.audio_length+sd.i<=this.source.length){
+													this.audio=new Uint8Array(new ArrayBuffer(sd.audio_length));
+													sd.j=0;
+													sd.i_end=sd.i+sd.audio_length;
+												}
+												else{
+													this_private.set_error.call(this,"End of file");
+												}
+											}
+										}
+										if(sd.i-i_start>=async_settings.steps){
+											if(progress!=null)progress.call(this,{percent:(sd.i/len)},callback_data);
+											this.async_timer=setTimeout(function(){this_private.decode_async_internal.call(self,async_settings,callback,progress,callback_data,sd);},async_settings.delay);
+											return;
+										}
+										if(this.error_message===null){
+											while(sd.i<sd.i_end){
+												this.audio[sd.j++]=this_private.mask_update.call(this,this.source[sd.i]);
+												if((++sd.i)-i_start>=async_settings.steps){
+													if(progress!=null)progress.call(this,{percent:(sd.i/len)},callback_data);
+													this.async_timer=setTimeout(function(){this_private.decode_async_internal.call(self,async_settings,callback,progress,callback_data,sd);},async_settings.delay);
+													return;
+												}
+											}
+										}
+									}
+									sd.audio_found=true;
+								}
+								this.image=this.source.subarray(0,this.data_offset);
+							}
+						}
+					}
+				}
+				else{
+					this_private.set_error.call(this,"No data found");
+					this.malformed=false;
+				}
+			}
+			if(this.error_message!==null){
+				this.video=null;
+				this.audio=null;
+				this.image=null;
+			}
+			if(progress!=null){
+				progress.call(this,{percent:1.0},callback_data);
+			}
+			if(callback!=null){
+				callback.call(this,callback_data);
+			}
 		}
 	};
 	ve.prototype={
@@ -1926,7 +2191,6 @@ var Videcode=(function(){
 			this.version=0;
 			this.malformed=false;
 			this.error_message=null;
-			this.status=0;
 			this.mask=0x12;
 			this.mask_value=0xABCDEF;
 			this.data_offset=0;
@@ -1937,6 +2201,10 @@ var Videcode=(function(){
 			this.video=null;
 			this.audio=null;
 			this.image=null;
+			if(this.async_timer!=null){
+				clearTimeout(this.async_timer);
+				this.async_timer=null;
+			}
 			this.video_fades=[false,false];
 			this.audio_fades=[false,false];
 			this.video_play_style=[0,0];
@@ -1962,7 +2230,6 @@ var Videcode=(function(){
 				}
 			}
 			if(i<len){
-				this.status=1;
 				this.version=this_private.mask_update_checked.call(this,this.source[i++]);
 				var flags1=this_private.mask_update_checked.call(this,this.source[i++]);
 				this.multiplexed=((flags1&0x04)!=0);
@@ -2064,6 +2331,28 @@ var Videcode=(function(){
 				this.image=null;
 			}
 			return this;
+		},
+		decode_async:function(async_settings,callback,progress,callback_data){
+			if(arguments.length<=1||typeof(async_settings)==function_type){
+				callback_data=progress;
+				progress=callback;
+				callback=async_settings;
+				async_settings=null;
+			}
+			if(typeof(callback)!=function_type){
+				callback=null
+			}
+			if(typeof(progress)!=function_type){
+				progress=null
+			}
+			if(async_settings==null||typeof(async_settings)!=object_type){
+				async_settings={};
+			}
+			async_settings.steps=async_settings.steps||100;
+			async_settings.delay=async_settings.delay||100;
+			if(async_settings.steps<0)async_settings.steps=0;
+			if(async_settings.delay<1)async_settings.delay=1;
+			this_private.decode_async_internal.call(this,async_settings,callback,progress,callback_data,{});
 		},
 		get_error:function(){
 			return(this.error_message!==null?this.error_message:(this.image===null?"Not decoded":null));
@@ -3353,15 +3642,49 @@ function MediaPlayerCSS(preset,css_color_presets,css_size_presets){
 			"font-size":"{exp:font_size_small,*,font_scale}px",
 			"color":"{hex:color_standard} !important",
 		},
-		".MPPlaylistIndexContainer":{
+		".MPLoadedStatusContainer":{
 			"position":"absolute",
 			"right":"0",
 			"top":"0",
+			"cursor":"default"
+		},
+		".MPLoadedStatusContainer.MPLoadedStatusContainerActive > .MPPlaylistIndexContainer":{
+			"opacity":"1.0 !important"
+		},
+		".MPLoadedStatusContainer.MPLoadedStatusContainerActive > .MPPlaylistLoadingContainer":{
+			"opacity":"1.0 !important"
+		},
+		".MPPlaylistLoadingContainer":{
+			"display":"inline-block",
+			"cursor":"default",
+			"opacity":"0.0",
+			"padding":"{exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px {exp:2,*,padding_scale}px",
+		},
+		".MPPlaylistLoadingContainerInner":{
+			"padding":"{exp:2,*,padding_scale}px",
+			"border-radius":"{exp:2,*,padding_scale}px",
+			"background":"{rgba:bg_color_lightest}",
+		},
+		".MPPlaylistLoadingText1":{
+			"color":"{hex:color_standard} !important",
+			"display":"inline-block"
+		},
+		".MPPlaylistLoadingText2":{
+			"color":"{hex:color_standard} !important",
+			"display":"inline-block",
+			"padding":"0px 0px 0px {exp:2,*,padding_scale}px"
+		},
+		".MPPlaylistLoadingText3":{
+			"color":"{hex:color_standard} !important",
+			"display":"inline-block"
+		},
+		".MPPlaylistIndexContainer":{
+			"display":"inline-block",
 			"cursor":"default",
 			"opacity":"0.0",
 			"padding":"{exp:2,*,padding_scale}px",
 		},
-		".MPPlaylistIndexContainerActive":{
+		".MPPlaylistIndexContainer.MPPlaylistIndexContainerActive":{
 			"opacity":"1.0 !important"
 		},
 		".MPContainerMain:hover .MPPlaylistIndexContainer":{
@@ -4325,15 +4648,14 @@ function MediaPlayer(css,load_callbacks,drag_callback,settings_callback,destruct
 	this.identifier="";
 	this.is_chrome=((navigator.userAgent+"").indexOf(" Chrome/")>=0);
 	this.title_default="Media Player";
-	this.load_callbacks=[];
-	if(load_callbacks){
-		for(var i=0;i<load_callbacks.length;++i){
-			this.load_callbacks.push(load_callbacks[i]);
-		}
-	}
+	this.set_load_callbacks(load_callbacks);
 	this.drag_callback=drag_callback;
 	this.settings_callback=settings_callback;
 	this.destruct_callback=destruct_callback;
+	this.use_load_buffer=true;
+	this.load_buffer=[];
+	this.load_buffer_timer=null;
+	this.load_buffer_active=false;
 	this.use_svg=true;
 	this.doc_mouse={x:0,y:0};
 	this.scale_factor=1.0;
@@ -4348,6 +4670,9 @@ function MediaPlayer(css,load_callbacks,drag_callback,settings_callback,destruct
 	this.soundcloud_player=null;
 	this.soundcloud_player_paused=true;
 	this.soundcloud_unsafe=this.is_chrome;
+	this.videcode_async=true;
+	this.videcode_steps=1024*64;
+	this.videcode_delay=1;
 	this.image_height_min=64;
 	this.image_height_max=225;
 	this.image_height_default=this.image_height_max;
@@ -4686,21 +5011,38 @@ MediaPlayer.prototype={
 							.on("durationchange."+this.namespace,{media_player:this},this.on_audio_durationchange)
 						)
 						.append(
-							(this.playlist_index_container=this.D("MPPlaylistIndexContainer"))
+							(this.loaded_status_container=this.D("MPLoadedStatusContainer"))
 							.on("mousedown",this.cancel_event)
 							.append(
-								this.D("MPPlaylistIndexContainerInner")
+								(this.playlist_index_container=this.D("MPPlaylistLoadingContainer"))
 								.append(
-									(this.playlist_index_text1=this.D("MPPlaylistIndexText1"))
-									.html("-")
+									this.D("MPPlaylistLoadingContainerInner")
+									.append(
+										this.D("MPPlaylistLoadingText1")
+										.html("Loading:")
+									)
+									.append(
+										(this.loaded_status_count=this.D("MPPlaylistLoadingText2"))
+										.html("5")
+									)
 								)
+							)
+							.append(
+								(this.playlist_index_container=this.D("MPPlaylistIndexContainer"))
 								.append(
-									this.D("MPPlaylistIndexText2")
-									.html("/")
-								)
-								.append(
-									(this.playlist_index_text2=this.D("MPPlaylistIndexText3"))
-									.html("-")
+									this.D("MPPlaylistIndexContainerInner")
+									.append(
+										(this.playlist_index_text1=this.D("MPPlaylistIndexText1"))
+										.html("-")
+									)
+									.append(
+										this.D("MPPlaylistIndexText2")
+										.html("/")
+									)
+									.append(
+										(this.playlist_index_text2=this.D("MPPlaylistIndexText3"))
+										.html("-")
+									)
 								)
 							)
 						)
@@ -6040,6 +6382,19 @@ MediaPlayer.prototype={
 		}
 		return-1;
 	},
+	set_async_state:function(enabled,steps,delay){
+		this.videcode_async=enabled;
+		this.videcode_steps=steps;
+		this.videcode_delay=delay;
+	},
+	set_load_callbacks:function(load_callbacks){
+		this.load_callbacks=[];
+		if(load_callbacks){
+			for(var i=0;i<load_callbacks.length;++i){
+				this.load_callbacks.push(load_callbacks[i]);
+			}
+		}
+	},
 	is_maximized:function(){
 		return(this.playlist_container.css("display")!="none");
 	},
@@ -6271,6 +6626,8 @@ MediaPlayer.prototype={
 		this.player_theme_name=null;
 		this.video_container=null;
 		this.video_mask=null;
+		this.loaded_status_count=null;
+		this.loaded_status_container=null;
 		this.ytvideo_player=null;
 		if(this.vimeovideo_player!==null){
 			this.vimeovideo_player.destructor();
@@ -6294,6 +6651,10 @@ MediaPlayer.prototype={
 		this.downloads_link=null;
 		this.downloads_about=null;
 		this.title_buttons=null;
+		if(this.load_buffer_timer!==null){
+			clearTimeout(this.load_buffer_timer);
+			this.load_buffer_timer=null;
+		}
 		if(this.playlist_index_timer!==null){
 			clearTimeout(this.playlist_index_timer);
 			this.playlist_index_timer=null;
@@ -7521,9 +7882,44 @@ MediaPlayer.prototype={
 		this.on_media_add(playlist_item);
 		return playlist_item.index;
 	},
+	queue_load:function(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
+		if(this.use_load_buffer){
+			this.load_buffer.push([url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback]);
+			this.queue_item_load();
+		}
+		else{
+			this.attempt_load(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback);
+		}
+	},
+	queue_item_load:function(){
+		if(this.load_buffer.length>0){
+			if(!this.load_buffer_active){
+				this.load_buffer_active=true;
+				this.C(this.loaded_status_container,"MPLoadedStatusContainerActive");
+				var item=this.load_buffer[0];
+				this.attempt_load(item[0],item[1],item[2],item[3],item[4],item[5],item[6]);
+			}
+			this.loaded_status_count.html(this.load_buffer.length);
+		}
+	},
+	queue_item_done:function(okay){
+		this.load_buffer.shift();
+		var self=this;
+		this.load_buffer_timer=setTimeout(function(){
+			self.load_buffer_timer=null;
+			self.load_buffer_active=false;
+			if(self.load_buffer.length>0){
+				self.queue_item_load();
+			}
+			else{
+				self.unC(self.loaded_status_container,"MPLoadedStatusContainerActive");
+			}
+		},1);
+	},
 	attempt_load:function(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
 		if(typeof(url_or_file)==typeof("")){
 			if(url_or_file.substr(0,5)=="file:"){
+				this.queue_item_done(false);
 				return;
 			}
 			if(this.url_get_youtube_video_id(url_or_file)){
@@ -7538,13 +7934,16 @@ MediaPlayer.prototype={
 				this.attempt_load_soundcloud_sound(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback);
 				return;
 			}
-			var media_player=this;
+			var self=this;
 			var dcb=function(okay,callback_data,response){
 				if(typeof(done_callback)=="function")done_callback(okay,callback_data,(okay?null:response));
 				if(okay){
-					media_player.attempt_load_raw(false,url_or_file,load_tag,playlist_data,response,0,function(status,files){
+					self.attempt_load_raw(false,url_or_file,load_tag,playlist_data,response,0,function(status,files){
 						if(typeof(status_callback)=="function")status_callback(status,callback_data,files);
 					},{});
+				}
+				else{
+					self.queue_item_done(false);
 				}
 			};
 			this.ajax_get(url_or_file,false,callback_data,progress_callback,dcb);
@@ -7575,6 +7974,7 @@ MediaPlayer.prototype={
 				return;
 			}
 			if(typeof(done_callback)=="function")done_callback(false,null);
+			this.queue_item_done(false);
 			return;
 		}
 		var self=this;
@@ -7597,6 +7997,7 @@ MediaPlayer.prototype={
 					}
 				}
 				if(typeof(done_callback)=="function")done_callback(true,available);
+				self.queue_item_done(r!=null);
 			}
 			else{
 				self.attempt_load_raw(is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id+1,done_callback,extra_data);
@@ -7604,24 +8005,36 @@ MediaPlayer.prototype={
 		});
 	},
 	attempt_load_ve:function(is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data){
+		var self=this;
 		var videcode=new Videcode(raw_ui8_data,url_or_filename);
-		if(!videcode.decode().has_error()){
-			var available=[(videcode.get_tag()||"?")+".ogg"];
-			this.add_to_playlist_ve(
-				videcode,
-				load_tag,
-				(is_local?null:url_or_filename),
-				playlist_data
-			);
-			if(typeof(done_callback)=="function")done_callback(true,available);
-			return;
+		var callback=function(){
+			if(!videcode.has_error()){
+				var available=[(videcode.get_tag()||"?")+".ogg"];
+				self.add_to_playlist_ve(
+					videcode,
+					load_tag,
+					(is_local?null:url_or_filename),
+					playlist_data
+				);
+				if(typeof(done_callback)=="function")done_callback(true,available);
+				self.queue_item_done(true);
+				return;
+			}
+			self.attempt_load_raw(is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data);
+		};
+		if(this.videcode_async){
+			videcode.decode_async({steps:this.videcode_steps,delay:this.videcode_delay},callback);
 		}
-		this.attempt_load_raw(is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data);
+		else{
+			videcode.decode();
+			callback.call(this);
+		}
 	},
 	attempt_load_youtube_video:function(url,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
 		var vid_id=this.url_get_youtube_video_id(url);
 		if(vid_id===null){
 			if(typeof(done_callback)=="function")done_callback(false,callback_data,null);
+			this.queue_item_done(false);
 			return;
 		}
 		if("media_cache"in playlist_data){
@@ -7629,6 +8042,7 @@ MediaPlayer.prototype={
 			var xml=null;
 			var status=this.add_to_playlist_ytvideo(url,vid_id,null,false,xml,playlist_data);
 			if(typeof(status_callback)=="function")status_callback(status,callback_data,xml);
+			this.queue_item_done(true);
 			return;
 		}
 		var self=this;
@@ -7647,6 +8061,7 @@ MediaPlayer.prototype={
 				}
 				else{
 				}
+				self.queue_item_done(okay);
 			}
 		);
 	},
@@ -7654,6 +8069,7 @@ MediaPlayer.prototype={
 		var vid_id=this.url_get_vimeo_video_id(url);
 		if(vid_id===null){
 			if(typeof(done_callback)=="function")done_callback(false,callback_data,null);
+			this.queue_item_done(false);
 			return;
 		}
 		if("media_cache"in playlist_data){
@@ -7661,6 +8077,7 @@ MediaPlayer.prototype={
 			var xml=null;
 			var status=this.add_to_playlist_vimeovideo(url,vid_id,null,false,xml,playlist_data);
 			if(typeof(status_callback)=="function")status_callback(status,callback_data,xml);
+			this.queue_item_done(true);
 			return;
 		}
 		var self=this;
@@ -7679,6 +8096,7 @@ MediaPlayer.prototype={
 				}
 				else{
 				}
+				self.queue_item_done(okay);
 			}
 		);
 	},
@@ -7686,6 +8104,7 @@ MediaPlayer.prototype={
 		var vid_id=this.url_get_soundcloud_info(url);
 		if(vid_id===null){
 			if(typeof(done_callback)=="function")done_callback(false,callback_data,null);
+			this.queue_item_done(false);
 			return;
 		}
 		if("media_cache"in playlist_data){
@@ -7693,6 +8112,7 @@ MediaPlayer.prototype={
 			var json=null;
 			var status=this.add_to_playlist_soundcloud_sound(url,vid_id,null,false,json,playlist_data);
 			if(typeof(status_callback)=="function")status_callback(status,callback_data,json);
+			this.queue_item_done(true);
 			return;
 		}
 		var self=this;
@@ -7711,6 +8131,7 @@ MediaPlayer.prototype={
 				}
 				else{
 				}
+				self.queue_item_done(okay);
 			}
 		);
 	},
@@ -8834,7 +9255,7 @@ MediaPlayer.prototype={
 		}
 		if(event.originalEvent.dataTransfer.files.length>0){
 			for(var i=0;i<event.originalEvent.dataTransfer.files.length;++i){
-				event.data.media_player.attempt_load(
+				event.data.media_player.queue_load(
 					event.originalEvent.dataTransfer.files[i],
 					MediaPlayer.ALL_SOUNDS,
 					null,null,null,null,null
@@ -8851,7 +9272,7 @@ MediaPlayer.prototype={
 			};
 			event.data.media_player.drag_callback(data);
 			if(data.text){
-				event.data.media_player.attempt_load(
+				event.data.media_player.queue_load(
 					data.text,
 					MediaPlayer.ALL_SOUNDS,
 					{},
@@ -9558,7 +9979,7 @@ function image_load_callback(url_or_filename,load_tag,raw_ui8_data,done_callback
 	}
 	var sounds=[];
 	if(has_footer){
-		alert("Footer sound");
+		done_callback(null);
 	}
 	else{
 		var magic_strings=["OggS\x00\x02","moot\x00\x02","Krni\x00\x02"];
@@ -9730,10 +10151,11 @@ function image_load_callback(url_or_filename,load_tag,raw_ui8_data,done_callback
 	}
 	done_callback([sound_names,sounds]);
 }
-function image_load_callback_slow(url_or_filename,load_tag,raw_ui8_data,done_callback){
+function image_load_callback_asynchronous(url_or_filename,load_tag,raw_ui8_data,done_callback){
 	try{
 		var loop=new Loop();
-		loop.steps=1024*64;
+		loop.steps=script.settings["performance"]["async_rate"];
+		loop.timeout=script.settings["performance"]["async_delay"];
 	}
 	catch(e){
 		console.log(e);
@@ -9784,7 +10206,7 @@ function image_load_callback_slow(url_or_filename,load_tag,raw_ui8_data,done_cal
 		done_callback([sound_names,sounds]);
 	};
 	if(has_footer){
-		alert("Footer sound");
+		done_callback(null);
 	}
 	else{
 		var magic_strings=["OggS\x00\x02","moot\x00\x02","Krni\x00\x02"];
@@ -9964,7 +10386,8 @@ function image_check_callback(url_or_filename,raw_ui8_data,callback_data,done_ca
 		var imax=raw_ui8_data.length-magic_strings_ui8[0].length;
 		var ms,t1;
 		var loop=new Loop();
-		loop.steps=1024*64;
+		loop.steps=script.settings["performance"]["async_rate"];
+		loop.timeout=script.settings["performance"]["async_delay"];
 		loop.for_lt(
 			0,imax,1,
 			{},
@@ -10107,26 +10530,33 @@ function png_load_callback(url_or_filename,load_tag,raw_ui8_data,done_callback){
 	}
 	done_callback(png_load_callback_find_correct(r,load_tag));
 }
-function png_load_callback_slow(url_or_filename,load_tag,raw_ui8_data,done_callback){
+function png_load_callback_asynchronous(url_or_filename,load_tag,raw_ui8_data,done_callback){
 	if(url_or_filename.split(".").pop().toLowerCase()!="png"){
 		done_callback(null);
 		return;
 	}
+	var i_loop=new Loop();
+	i_loop.steps=script.settings["performance"]["async_rate"];
+	i_loop.timeout=script.settings["performance"]["async_delay"];
 	var img=new DataImage(
 		raw_ui8_data,
 		{},
 		function(img,data){
+			var loop=new Loop();
+			loop.steps=script.settings["performance"]["async_rate"];
+			loop.timeout=script.settings["performance"]["async_delay"];
 			var reader=new DataImageReader(img);
-			reader.unpack_slow(function(r){
+			reader.unpack_asynchronous(function(r){
 				if(typeof(r)==typeof("")){
 					done_callback(null);
 				}
 				else{
 					done_callback(png_load_callback_find_correct(r,load_tag));
 				}
-			});
+			},loop);
 		},
-		true
+		true,
+		i_loop
 	);
 }
 function png_check_callback(url_or_filename,raw_ui8_data,callback_data,done_callback){
@@ -10135,6 +10565,9 @@ function png_check_callback(url_or_filename,raw_ui8_data,callback_data,done_call
 		return;
 	}
 	try{
+		var i_loop=new Loop();
+		i_loop.steps=script.settings["performance"]["async_rate"];
+		i_loop.timeout=script.settings["performance"]["async_delay"];
 		var img=new DataImage(
 			raw_ui8_data,
 			{},
@@ -10148,7 +10581,8 @@ function png_check_callback(url_or_filename,raw_ui8_data,callback_data,done_call
 					done_callback(null,callback_data);
 				}
 			},
-			true
+			true,
+			i_loop
 		);
 	}
 	catch(e){
@@ -10296,8 +10730,8 @@ ThreadManager.prototype={
 	parse_group:function(){
 		if(this.post_queue_timeout==null){
 			var len=this.post_queue.length;
-			if(script.settings["inline"]["post_parse_group_size"]>0&&len>script.settings["inline"]["post_parse_group_size"]){
-				len=script.settings["inline"]["post_parse_group_size"];
+			if(script.settings["performance"]["post_parse_group_size"]>0&&len>script.settings["performance"]["post_parse_group_size"]){
+				len=script.settings["performance"]["post_parse_group_size"];
 			}
 			for(var i=0;i<len;++i){
 				var p=this.post_queue[i];
@@ -10310,7 +10744,7 @@ ThreadManager.prototype={
 				this.post_queue_timeout=setTimeout(function(){
 					self.post_queue_timeout=null;
 					self.parse_group();
-				},script.settings["inline"]["post_parse_group_delay"]*1000);
+				},script.settings["performance"]["post_parse_group_delay"]*1000);
 			}
 		}
 	},
@@ -10397,7 +10831,6 @@ ThreadManager.prototype={
 			this.posts[post_id]=post_data_copy;
 		}
 		if(post_data_copy.post==null){
-			console.log("ERROR");
 			console.log(container.html());
 		}
 		inline_manager.parse_post(this.posts[post_id],redo,post_data_copy);
@@ -12821,7 +13254,7 @@ InlineManager.prototype={
 		var self=this;
 		post_data.sounds.loaded=true;
 		media_player_manager.open_player(true);
-		media_player_manager.media_player.attempt_load(
+		media_player_manager.media_player.queue_load(
 			post_data.image_url,
 			MediaPlayer.ALL_SOUNDS,
 			{"image_name":post_data.image_name},
@@ -13011,16 +13444,7 @@ InlineManager.prototype={
 					}
 				};
 				media_player_manager.open_player(true);
-				var fn;
-				if(event.data.media_type==="youtube"){
-					fn=media_player_manager.media_player.attempt_load_youtube_video;
-				}
-				else if(event.data.media_type==="vimeo"){
-					fn=media_player_manager.media_player.attempt_load_vimeo_video;
-				}
-				else{
-					fn=media_player_manager.media_player.attempt_load_soundcloud_sound;
-				}
+				var fn=media_player_manager.media_player.queue_load;
 				var pl_data={};
 				if(event.data.media_cache)pl_data.media_cache=event.data.media_cache;
 				fn.call(
@@ -13056,7 +13480,7 @@ InlineManager.prototype={
 		var self=event.data.manager;
 		event.data.post_data.sounds.loaded=true;
 		media_player_manager.open_player(true);
-		media_player_manager.media_player.attempt_load(
+		media_player_manager.media_player.queue_load(
 			event.data.post_data.image_url,
 			event.data.post_data.sounds.post_tags[event.data.tag_id],
 			{"image_name":event.data.post_data.image_name},
@@ -13110,7 +13534,7 @@ InlineManager.prototype={
 		var self=this;
 		event.data.post_data.sounds.loaded=true;
 		media_player_manager.open_player(true);
-		media_player_manager.media_player.attempt_load(
+		media_player_manager.media_player.queue_load(
 			event.data.post_data.image_url,
 			tag,
 			{"image_name":event.data.post_data.image_name},
@@ -14195,7 +14619,7 @@ HotkeyListener.prototype={
 var hotkey_listener=null;
 function MediaPlayerManager(){
 	this.media_player=null;
-	this.callbacks=[png_load_callback,image_load_callback];
+	this.update_callbacks();
 	this.css_color_presets={
 		"yotsubab":{
 			"@name":"Yotsuba B",
@@ -14353,9 +14777,20 @@ MediaPlayerManager.prototype={
 			extra_options
 		);
 		if(load_settings)this.media_player.load(script.settings["player"]);
+		this.media_player.set_async_state(script.settings["performance"]["async_videcode_load"],script.settings["performance"]["async_rate"],script.settings["performance"]["async_delay"]);
 		this.media_player.create();
 		return this.media_player;
-	}
+	},
+	update_callbacks:function(){
+		this.callbacks=[
+			(script.settings["performance"]["async_image_load"]?image_load_callback_asynchronous:image_load_callback),
+			(script.settings["performance"]["async_png_load"]?png_load_callback_asynchronous:png_load_callback)
+		];
+		if(this.media_player!=null){
+			this.media_player.set_load_callbacks(this.callbacks);
+			this.media_player.set_async_state(script.settings["performance"]["async_videcode_load"],script.settings["performance"]["async_rate"],script.settings["performance"]["async_delay"]);
+		}
+	},
 };
 var media_player_manager=null;
 function Script(){
@@ -14372,13 +14807,20 @@ function Script(){
 			"first_run":true
 		},
 		"hotkeys":{},
+		"performance":{
+			"post_parse_group_size":-1,
+			"post_parse_group_delay":0.125,
+			"async_image_load":true,
+			"async_png_load":true,
+			"async_videcode_load":true,
+			"async_rate":64000,
+			"async_delay":1
+		},
 		"inline":{
 			"highlight_color":"000000",
 			"sound_tags_replace":true,
 			"sound_thread_control":false,
 			"sound_source":true,
-			"post_parse_group_size":-1,
-			"post_parse_group_delay":0.125,
 			"url_replace":true,
 			"url_replace_smart":false,
 			"url_hijack":true,
@@ -14749,26 +15191,91 @@ Script.prototype={
 				}
 			},
 			{
-				"section":"Post Parsing",
-				"update_value":function(){this.current=script.settings["inline"]["post_parse_group_size"];},
-				"label":"Group Size",
-				"description":"The number of posts to parse at one time; may decrease lag time when loading a page",
-				"values":[-1,100,75,50,40,30,20,15,10,5,2,1],
-				"descr":["All","100","75","50","40","30","20","15","10","5","2","1"],
+				"section":"Performance",
+				"update_value":function(){this.current=script.settings["performance"]["async_image_load"];},
+				"label":"Asynchronous Image Loading",
+				"description":"When enabled, may reduce browser lag when loading an image; when disabled, the image loads as quickly as possible",
+				"values":[true,false],
+				"descr":["Enabled","Disabled"],
 				"change":function(value){
-					script.settings["inline"]["post_parse_group_size"]=value;
+					script.settings["performance"]["async_image_load"]=value;
+					media_player_manager.update_callbacks();
+					script.settings_save();
+				}
+			},
+			{
+				"section":"Performance",
+				"update_value":function(){this.current=script.settings["performance"]["async_png_load"];},
+				"label":"Asynchronous Stego-Image Loading",
+				"description":"When enabled, may reduce browser lag when loading an image; when disabled, the image loads as quickly as possible",
+				"values":[true,false],
+				"descr":["Enabled","Disabled"],
+				"change":function(value){
+					script.settings["performance"]["async_png_load"]=value;
+					media_player_manager.update_callbacks();
+					script.settings_save();
+				}
+			},
+			{
+				"section":"Performance",
+				"update_value":function(){this.current=script.settings["performance"]["async_videcode_load"];},
+				"label":"Asynchronous Videcode Image Loading",
+				"description":"When enabled, may reduce browser lag when loading an image; when disabled, the image loads as quickly as possible",
+				"values":[true,false],
+				"descr":["Enabled","Disabled"],
+				"change":function(value){
+					script.settings["performance"]["async_videcode_load"]=value;
+					media_player_manager.update_callbacks();
+					script.settings_save();
+				}
+			},
+			{
+				"section":"Performance",
+				"update_value":function(){this.current=script.settings["performance"]["async_rate"];},
+				"label":"Asynchronous Step Size",
+				"description":"The approximate number of loop iterations to perform at a time; larger = faster, but browser may lag; smaller = less lag, but longer",
+				"values":[1024000,512000,256000,128000,64000,32000,16000,8000,4000],
+				"descr":["1024K","512K","256K","128K","64K","32K","16K","8K","4K"],
+				"change":function(value){
+					script.settings["performance"]["async_rate"]=value;
+					media_player_manager.update_callbacks();
+					script.settings_save();
+				}
+			},
+			{
+				"section":"Performance",
+				"update_value":function(){this.current=script.settings["performance"]["async_delay"];},
+				"label":"Asynchronous Delay",
+				"description":"The delay between groups of async data parsing; higher = longer",
+				"values":[500,400,300,200,100,75,50,25,15,1],
+				"descr":["500ms","400ms","300ms","200ms","100ms","75ms","50ms","25ms","15ms","ASAP"],
+				"change":function(value){
+					script.settings["performance"]["async_delay"]=value;
+					media_player_manager.update_callbacks();
 					script.settings_save();
 				}
 			},
 			{
 				"section":"Post Parsing",
-				"update_value":function(){this.current=script.settings["inline"]["post_parse_group_delay"];},
+				"update_value":function(){this.current=script.settings["performance"]["post_parse_group_size"];},
+				"label":"Group Size",
+				"description":"The number of posts to parse at one time; may decrease lag time when loading a page",
+				"values":[-1,100,75,50,40,30,20,15,10,5,2,1],
+				"descr":["All","100","75","50","40","30","20","15","10","5","2","1"],
+				"change":function(value){
+					script.settings["performance"]["post_parse_group_size"]=value;
+					script.settings_save();
+				}
+			},
+			{
+				"section":"Post Parsing",
+				"update_value":function(){this.current=script.settings["performance"]["post_parse_group_delay"];},
 				"label":"Group Delay",
 				"description":"The delay between parsing a group of posts",
 				"values":[1.0,0.75,0.5,0.375,0.25,0.125,1.0/128.0],
 				"descr":["1 second","0.75 seconds","0.5 seconds","0.375 seconds","0.25 seconds","0.125 seconds","ASAP"],
 				"change":function(value){
-					script.settings["inline"]["post_parse_group_delay"]=value;
+					script.settings["performance"]["post_parse_group_delay"]=value;
 					script.settings_save();
 				}
 			},

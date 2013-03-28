@@ -3,20 +3,20 @@
 /*
 # MIT LICENSE
 # Copyright (c) 2011 Devon Govett
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-# software and associated documentation files (the "Software"), to deal in the Software 
-# without restriction, including without limitation the rights to use, copy, modify, merge, 
-# publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this
+# software and associated documentation files (the "Software"), to deal in the Software
+# without restriction, including without limitation the rights to use, copy, modify, merge,
+# publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 # to whom the Software is furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all copies or 
+#
+# The above copyright notice and this permission notice shall be included in all copies or
 # substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING 
-# BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
-# DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+# BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+# DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
@@ -58,8 +58,8 @@
 
 		APNG_BLEND_OP_OVER = 1;
 
-		function PNG(data, slow, slow_callback) {
-			if (slow) this.initSlow(data, slow_callback);
+		function PNG(data, asynchronous, asynchronous_callback) {
+			if (asynchronous) this.initAsynchronous(data, asynchronous_callback);
 			else this.init(data);
 		}
 		PNG.prototype.init = function (data) {
@@ -194,10 +194,17 @@
 			}
 			return;
 		}
-		PNG.prototype.initSlow = function (data, slow_callback) {
+		PNG.prototype.initAsynchronous = function (data, asynchronous_callback, loop_param) {
 			try {
 				var loop = new Loop();
-				loop.steps = 1024 * 64;
+				if (loop_param === undefined) {
+					loop.steps = 1024 * 64;
+					loop.timeout = 1;
+				}
+				else {
+					loop.steps = loop_param.steps;
+					loop.timeout = loop_param.timeout;
+				}
 			}
 			catch (e) {
 				// Error
@@ -338,7 +345,7 @@
 				},
 				function (unused, data, loop) {
 					try {
-						slow_callback(self);
+						asynchronous_callback(self);
 					}
 					catch (e) {}
 				}
@@ -450,10 +457,17 @@
 			}
 			return pixels;
 		};
-		PNG.prototype.decodePixelsSlow = function(data, done_callback) {
+		PNG.prototype.decodePixelsAsynchronous = function(data, done_callback, loop_param) {
 			try {
 				var loop = new Loop();
-				loop.steps = 1024 * 64;
+				if (loop_param === undefined) {
+					loop.steps = 1024 * 64;
+					loop.timeout = 1;
+				}
+				else {
+					loop.steps = loop_param.steps;
+					loop.timeout = loop_param.timeout;
+				}
 			}
 			catch (e) {
 				// Error

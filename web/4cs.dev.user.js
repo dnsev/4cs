@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.2
+// @version        4.3
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -469,8 +469,8 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 	// Search image
 	var sounds = [];
 	if (has_footer) {
-		// TODO
-		alert("Footer sound");
+		// Not supported
+		done_callback(null);
 	}
 	else {
 		// No footer
@@ -669,10 +669,11 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 	// Done
 	done_callback([ sound_names , sounds ]);
 }
-function image_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_callback) {
+function image_load_callback_asynchronous(url_or_filename, load_tag, raw_ui8_data, done_callback) {
 	try {
 		var loop = new Loop();
-		loop.steps = 1024 * 64;
+		loop.steps = script.settings["performance"]["async_rate"];
+		loop.timeout = script.settings["performance"]["async_delay"];
 	}
 	catch (e) {
 		console.log(e);
@@ -740,8 +741,8 @@ function image_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_
 	};
 
 	if (has_footer) {
-		// TODO
-		alert("Footer sound");
+		// Not supported
+		done_callback(null);
 	}
 	else {
 		// No footer
@@ -934,7 +935,7 @@ function image_check_callback(url_or_filename, raw_ui8_data, callback_data, done
 
 	// Search image
 	if (has_footer) {
-		// TODO
+		// Not supported
 		done_callback(null, done_callback);
 	}
 	else {
@@ -951,7 +952,8 @@ function image_check_callback(url_or_filename, raw_ui8_data, callback_data, done
 		var ms, t1;
 
 		var loop = new Loop();
-		loop.steps = 1024 * 64;
+		loop.steps = script.settings["performance"]["async_rate"];
+		loop.timeout = script.settings["performance"]["async_delay"];
 		loop.for_lt(
 			0, imax, 1,
 			{},
@@ -1131,21 +1133,31 @@ function png_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callbac
 	// Done
 	done_callback(png_load_callback_find_correct(r, load_tag));
 }
-function png_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_callback) {
+function png_load_callback_asynchronous(url_or_filename, load_tag, raw_ui8_data, done_callback) {
 	// Not a PNG
 	if (url_or_filename.split(".").pop().toLowerCase() != "png") {
 		done_callback(null);
 		return;
 	}
 
+	// Loop for image decoding
+	var i_loop = new Loop();
+	i_loop.steps = script.settings["performance"]["async_rate"];
+	i_loop.timeout = script.settings["performance"]["async_delay"];
+
 	// Load image from data
 	var img = new DataImage(
 		raw_ui8_data,
 		{},
 		function (img, data) {
+			// Loop
+			var loop = new Loop();
+			loop.steps = script.settings["performance"]["async_rate"];
+			loop.timeout = script.settings["performance"]["async_delay"];
+
 			// Unpack files
 			var reader = new DataImageReader(img);
-			reader.unpack_slow(function (r) {
+			reader.unpack_asynchronous(function (r) {
 				if (typeof(r) == typeof("")) {
 					// Error
 					done_callback(null);
@@ -1154,9 +1166,10 @@ function png_load_callback_slow(url_or_filename, load_tag, raw_ui8_data, done_ca
 					// Loaded
 					done_callback(png_load_callback_find_correct(r, load_tag));
 				}
-			});
+			}, loop);
 		},
-		true
+		true,
+		i_loop
 	);
 }
 
@@ -1168,6 +1181,11 @@ function png_check_callback(url_or_filename, raw_ui8_data, callback_data, done_c
 	}
 
 	try {
+		// Loop for image decoding
+		var i_loop = new Loop();
+		i_loop.steps = script.settings["performance"]["async_rate"];
+		i_loop.timeout = script.settings["performance"]["async_delay"];
+
 		var img = new DataImage(
 			raw_ui8_data,
 			{},
@@ -1183,7 +1201,8 @@ function png_check_callback(url_or_filename, raw_ui8_data, callback_data, done_c
 					done_callback(null, callback_data);
 				}
 			},
-			true
+			true,
+			i_loop
 		);
 	}
 	catch (e) {
@@ -1361,8 +1380,8 @@ ThreadManager.prototype = {
 		if (this.post_queue_timeout == null) {
 			// Execute
 			var len = this.post_queue.length;
-			if (script.settings["inline"]["post_parse_group_size"] > 0 && len > script.settings["inline"]["post_parse_group_size"]) {
-				len = script.settings["inline"]["post_parse_group_size"];
+			if (script.settings["performance"]["post_parse_group_size"] > 0 && len > script.settings["performance"]["post_parse_group_size"]) {
+				len = script.settings["performance"]["post_parse_group_size"];
 			}
 			for (var i = 0; i < len; ++i) {
 				var p = this.post_queue[i];
@@ -1377,7 +1396,7 @@ ThreadManager.prototype = {
 				this.post_queue_timeout = setTimeout(function () {
 					self.post_queue_timeout = null;
 					self.parse_group();
-				}, script.settings["inline"]["post_parse_group_delay"] * 1000);
+				}, script.settings["performance"]["post_parse_group_delay"] * 1000);
 			}
 		}
 	},
@@ -1481,8 +1500,7 @@ ThreadManager.prototype = {
 		if (!redo) {
 			this.posts[post_id] = post_data_copy;
 		}
-		if(post_data_copy.post==null){
-			console.log("ERROR");
+		if (post_data_copy.post == null) {
 			console.log(container.html());
 		}
 
@@ -4367,7 +4385,7 @@ InlineManager.prototype = {
 		var self = this;
 		post_data.sounds.loaded = true;
 		media_player_manager.open_player(true);
-		media_player_manager.media_player.attempt_load(
+		media_player_manager.media_player.queue_load(
 			post_data.image_url,
 			MediaPlayer.ALL_SOUNDS,
 			{ "image_name": post_data.image_name },
@@ -4597,7 +4615,7 @@ InlineManager.prototype = {
 				media_player_manager.open_player(true);
 
 				// Custom
-				var fn;
+				/*var fn;
 				if (event.data.media_type === "youtube") {
 					fn = media_player_manager.media_player.attempt_load_youtube_video;
 				}
@@ -4606,7 +4624,8 @@ InlineManager.prototype = {
 				}
 				else { // if (event.data.media_type === "soundcloud") {
 					fn = media_player_manager.media_player.attempt_load_soundcloud_sound;
-				}
+				}*/
+				var fn = media_player_manager.media_player.queue_load;
 
 				// Generic
 				var pl_data = {};
@@ -4648,7 +4667,7 @@ InlineManager.prototype = {
 		var self = event.data.manager;
 		event.data.post_data.sounds.loaded = true;
 		media_player_manager.open_player(true);
-		media_player_manager.media_player.attempt_load(
+		media_player_manager.media_player.queue_load(
 			event.data.post_data.image_url,
 			event.data.post_data.sounds.post_tags[event.data.tag_id],
 			{ "image_name": event.data.post_data.image_name },
@@ -4708,7 +4727,7 @@ InlineManager.prototype = {
 		var self = this;
 		event.data.post_data.sounds.loaded = true;
 		media_player_manager.open_player(true);
-		media_player_manager.media_player.attempt_load(
+		media_player_manager.media_player.queue_load(
 			event.data.post_data.image_url,
 			tag,
 			{ "image_name": event.data.post_data.image_name },
@@ -5929,7 +5948,7 @@ var hotkey_listener = null;
 function MediaPlayerManager() {
 	this.media_player = null;
 
-	this.callbacks = [ png_load_callback , image_load_callback ];
+	this.update_callbacks();
 
 	this.css_color_presets = {
 		"yotsubab": {
@@ -6133,11 +6152,24 @@ MediaPlayerManager.prototype = {
 		);
 		// Load settings
 		if (load_settings) this.media_player.load(script.settings["player"]);
+		// Async
+		this.media_player.set_async_state(script.settings["performance"]["async_videcode_load"], script.settings["performance"]["async_rate"], script.settings["performance"]["async_delay"]);
 		// Display
 		this.media_player.create();
 
 		return this.media_player;
-	}
+	},
+	update_callbacks: function () {
+		this.callbacks = [
+			(script.settings["performance"]["async_image_load"] ? image_load_callback_asynchronous : image_load_callback),
+			(script.settings["performance"]["async_png_load"] ? png_load_callback_asynchronous : png_load_callback)
+		];
+		
+		if (this.media_player != null) {
+			this.media_player.set_load_callbacks(this.callbacks);
+			this.media_player.set_async_state(script.settings["performance"]["async_videcode_load"], script.settings["performance"]["async_rate"], script.settings["performance"]["async_delay"]);
+		}
+	},
 };
 var media_player_manager = null;
 
@@ -6160,15 +6192,22 @@ function Script() {
 			"first_run": true
 		},
 		"hotkeys": {}, // loaded elsewhere
+		"performance": {
+			"post_parse_group_size": -1,
+			"post_parse_group_delay": 0.125,
+
+			"async_image_load": true,
+			"async_png_load": true,
+			"async_videcode_load": true,
+			"async_rate": 64000,
+			"async_delay": 1
+		},
 		"inline": {
 			"highlight_color": "000000",
 
 			"sound_tags_replace": true,
 			"sound_thread_control": false,
 			"sound_source": true,
-
-			"post_parse_group_size": -1,
-			"post_parse_group_delay": 0.125,
 
 			"url_replace": true,
 			"url_replace_smart": false,
@@ -6568,26 +6607,92 @@ Script.prototype = {
 			},
 
 			{
+				"section": "Performance",
+				"update_value": function () { this.current = script.settings["performance"]["async_image_load"]; },
+				"label": "Asynchronous Image Loading",
+				"description": "When enabled, may reduce browser lag when loading an image; when disabled, the image loads as quickly as possible",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["performance"]["async_image_load"] = value;
+					media_player_manager.update_callbacks();
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Performance",
+				"update_value": function () { this.current = script.settings["performance"]["async_png_load"]; },
+				"label": "Asynchronous Stego-Image Loading",
+				"description": "When enabled, may reduce browser lag when loading an image; when disabled, the image loads as quickly as possible",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["performance"]["async_png_load"] = value;
+					media_player_manager.update_callbacks();
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Performance",
+				"update_value": function () { this.current = script.settings["performance"]["async_videcode_load"]; },
+				"label": "Asynchronous Videcode Image Loading",
+				"description": "When enabled, may reduce browser lag when loading an image; when disabled, the image loads as quickly as possible",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["performance"]["async_videcode_load"] = value;
+					media_player_manager.update_callbacks();
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Performance",
+				"update_value": function () { this.current = script.settings["performance"]["async_rate"]; },
+				"label": "Asynchronous Step Size",
+				"description": "The approximate number of loop iterations to perform at a time; larger = faster, but browser may lag; smaller = less lag, but longer",
+				"values": [ 1024000 , 512000 , 256000 , 128000 , 64000 , 32000 , 16000 , 8000 , 4000 ],
+				"descr": [ "1024K" , "512K" , "256K" , "128K" , "64K" , "32K" , "16K" , "8K" , "4K" ],
+				"change": function (value) {
+					script.settings["performance"]["async_rate"] = value;
+					media_player_manager.update_callbacks();
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Performance",
+				"update_value": function () { this.current = script.settings["performance"]["async_delay"]; },
+				"label": "Asynchronous Delay",
+				"description": "The delay between groups of async data parsing; higher = longer",
+				"values": [ 500 , 400 , 300 , 200 , 100 , 75 , 50 , 25 , 15 , 1 ],
+				"descr": [ "500ms" , "400ms" , "300ms" , "200ms" , "100ms" , "75ms" , "50ms" , "25ms" , "15ms" , "ASAP" ],
+				"change": function (value) {
+					script.settings["performance"]["async_delay"] = value;
+					media_player_manager.update_callbacks();
+					script.settings_save();
+				}
+			},
+
+			{
 				"section": "Post Parsing",
-				"update_value": function () { this.current = script.settings["inline"]["post_parse_group_size"]; },
+				"update_value": function () { this.current = script.settings["performance"]["post_parse_group_size"]; },
 				"label": "Group Size",
 				"description": "The number of posts to parse at one time; may decrease lag time when loading a page",
 				"values": [ -1 , 100 , 75 , 50 , 40 , 30 , 20 , 15 , 10 , 5 , 2 , 1 ],
 				"descr": [ "All" , "100" , "75" , "50" , "40" , "30" , "20" , "15" , "10" , "5" , "2" , "1" ],
 				"change": function (value) {
-					script.settings["inline"]["post_parse_group_size"] = value;
+					script.settings["performance"]["post_parse_group_size"] = value;
 					script.settings_save();
 				}
 			},
 			{
 				"section": "Post Parsing",
-				"update_value": function () { this.current = script.settings["inline"]["post_parse_group_delay"]; },
+				"update_value": function () { this.current = script.settings["performance"]["post_parse_group_delay"]; },
 				"label": "Group Delay",
 				"description": "The delay between parsing a group of posts",
 				"values": [ 1.0 , 0.75 , 0.5 , 0.375 , 0.25 , 0.125 , 1.0 / 128.0 ],
 				"descr": [ "1 second" , "0.75 seconds" , "0.5 seconds" , "0.375 seconds" , "0.25 seconds" , "0.125 seconds" , "ASAP" ],
 				"change": function (value) {
-					script.settings["inline"]["post_parse_group_delay"] = value;
+					script.settings["performance"]["post_parse_group_delay"] = value;
 					script.settings_save();
 				}
 			},

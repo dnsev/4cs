@@ -2,7 +2,7 @@
 // Steganographic .png decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-function DataImage (source_location, callback_data, load_callback, slow) {
+function DataImage (source_location, callback_data, load_callback, asynchronous, loop) {
 	this.load_callback = load_callback;
 
 	this.width = 0;
@@ -30,9 +30,9 @@ function DataImage (source_location, callback_data, load_callback, slow) {
 			});
 		}
 		else {
-			if (slow) {
+			if (asynchronous) {
 				png = new PNG(source_location, true, function (png) {
-					png.decodePixelsSlow(null, function (png, pixels) {
+					png.decodePixelsAsynchronous(null, function (png, pixels) {
 						self.image = png;
 						self.pixels = pixels;
 						self.width = self.image.width;
@@ -41,8 +41,8 @@ function DataImage (source_location, callback_data, load_callback, slow) {
 						self.color_depth = (png.hasAlphaChannel ? 4 : 3);
 
 						if (typeof(self.load_callback) == "function") self.load_callback(self, callback_data);
-					});
-				});
+					}, loop);
+				}, loop);
 			}
 			else {
 				var png = new PNG(source_location);
@@ -104,9 +104,9 @@ DataImageReader.prototype = {
 			return "Error extracting data; image file likely doesn't contain data";
 		}
 	},
-	unpack_slow: function (callback) {
+	unpack_asynchronous: function (callback, loop) {
 		try {
-			this.__unpack_slow(callback);
+			this.__unpack_asynchronous(callback, loop);
 		}
 		catch (e) {
 			callback("Error extracting data; image file likely doesn't contain data");
@@ -249,10 +249,13 @@ DataImageReader.prototype = {
 		this.hashmask_value = null;
 		return [ filenames , sources ];
 	},
-	__unpack_slow: function (callback) {
+	__unpack_asynchronous: function (callback, loop) {
 		try {
-			var loop = new Loop();
-			loop.steps = 1024 * 64;
+			if (loop === undefined) {
+				loop = new Loop();
+				loop.steps = 1024 * 64;
+				loop.timeout = 1;
+			}
 		}
 		catch (e) {
 			// Error
@@ -272,7 +275,7 @@ DataImageReader.prototype = {
 			{},
 			function (i, data, loop) {
 				// Read source
-				self.__extract_data_slow(
+				self.__extract_data_asynchronous(
 					file_sizes[i],
 					loop,
 					function (src) {
@@ -322,7 +325,7 @@ DataImageReader.prototype = {
 		}
 		return src;
 	},
-	__extract_data_slow: function (byte_length, loop, done_callback) {
+	__extract_data_asynchronous: function (byte_length, loop, done_callback) {
 		var src = new Uint8Array(byte_length);
 		var j = 0;
 		var self = this;

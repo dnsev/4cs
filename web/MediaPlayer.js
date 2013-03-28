@@ -244,15 +244,51 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"color": "{hex:color_standard} !important",
 		},
 
-		".MPPlaylistIndexContainer": {
+		".MPLoadedStatusContainer": {
 			"position": "absolute",
 			"right": "0",
 			"top": "0",
+			"cursor": "default"
+		},
+		".MPLoadedStatusContainer.MPLoadedStatusContainerActive > .MPPlaylistIndexContainer": {
+			"opacity": "1.0 !important"
+		},
+		".MPLoadedStatusContainer.MPLoadedStatusContainerActive > .MPPlaylistLoadingContainer": {
+			"opacity": "1.0 !important"
+		},
+
+		".MPPlaylistLoadingContainer": {
+			"display": "inline-block",
+			"cursor": "default",
+			"opacity": "0.0",
+			"padding": "{exp:2,*,padding_scale}px 0px {exp:2,*,padding_scale}px {exp:2,*,padding_scale}px",
+		},
+		".MPPlaylistLoadingContainerInner": {
+			"padding": "{exp:2,*,padding_scale}px",
+			"border-radius": "{exp:2,*,padding_scale}px",
+			"background": "{rgba:bg_color_lightest}",
+		},
+		".MPPlaylistLoadingText1": {
+			"color": "{hex:color_standard} !important",
+			"display": "inline-block"
+		},
+		".MPPlaylistLoadingText2": {
+			"color": "{hex:color_standard} !important",
+			"display": "inline-block",
+			"padding": "0px 0px 0px {exp:2,*,padding_scale}px"
+		},
+		".MPPlaylistLoadingText3": {
+			"color": "{hex:color_standard} !important",
+			"display": "inline-block"
+		},
+
+		".MPPlaylistIndexContainer": {
+			"display": "inline-block",
 			"cursor": "default",
 			"opacity": "0.0",
 			"padding": "{exp:2,*,padding_scale}px",
 		},
-		".MPPlaylistIndexContainerActive": {
+		".MPPlaylistIndexContainer.MPPlaylistIndexContainerActive": {
 			"opacity": "1.0 !important"
 		},
 		".MPContainerMain:hover .MPPlaylistIndexContainer": {
@@ -1293,15 +1329,15 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 	this.title_default =  "Media Player";
 
 	// Loading
-	this.load_callbacks = [];
-	if (load_callbacks) {
-		for (var i = 0; i < load_callbacks.length; ++i) {
-			this.load_callbacks.push(load_callbacks[i]);
-		}
-	}
+	this.set_load_callbacks(load_callbacks);
 	this.drag_callback = drag_callback;
 	this.settings_callback = settings_callback;
 	this.destruct_callback = destruct_callback;
+
+	this.use_load_buffer = true;
+	this.load_buffer = [];
+	this.load_buffer_timer = null;
+	this.load_buffer_active = false;
 
 	this.use_svg = true;
 	this.doc_mouse = {x:0, y:0};
@@ -1323,6 +1359,10 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 	this.soundcloud_player = null;
 	this.soundcloud_player_paused = true;
 	this.soundcloud_unsafe = this.is_chrome;
+
+	this.videcode_async = true;
+	this.videcode_steps = 1024 * 64;
+	this.videcode_delay = 1;
 
 	// Image
 	this.image_height_min = 64;
@@ -1706,24 +1746,41 @@ MediaPlayer.prototype = {
 							.on("timeupdate." + this.namespace, {media_player: this}, this.on_audio_timeupdate)
 							.on("durationchange." + this.namespace, {media_player: this}, this.on_audio_durationchange)
 						) //}
-						.append( //{ Playlist index
-							(this.playlist_index_container = this.D("MPPlaylistIndexContainer"))
+						.append( //{ Playlist index/etc
+							(this.loaded_status_container = this.D("MPLoadedStatusContainer"))
 							.on("mousedown", this.cancel_event)
-							.append(
-								this.D("MPPlaylistIndexContainerInner")
+							.append( //{ Playlist index
+								(this.playlist_index_container = this.D("MPPlaylistLoadingContainer"))
 								.append(
-									(this.playlist_index_text1 = this.D("MPPlaylistIndexText1"))
-									.html("-")
+									this.D("MPPlaylistLoadingContainerInner")
+									.append(
+										this.D("MPPlaylistLoadingText1")
+										.html("Loading:")
+									)
+									.append(
+										(this.loaded_status_count = this.D("MPPlaylistLoadingText2"))
+										.html("5")
+									)
 								)
+							) //}
+							.append( //{ Playlist index
+								(this.playlist_index_container = this.D("MPPlaylistIndexContainer"))
 								.append(
-									this.D("MPPlaylistIndexText2")
-									.html("/")
+									this.D("MPPlaylistIndexContainerInner")
+									.append(
+										(this.playlist_index_text1 = this.D("MPPlaylistIndexText1"))
+										.html("-")
+									)
+									.append(
+										this.D("MPPlaylistIndexText2")
+										.html("/")
+									)
+									.append(
+										(this.playlist_index_text2 = this.D("MPPlaylistIndexText3"))
+										.html("-")
+									)
 								)
-								.append(
-									(this.playlist_index_text2 = this.D("MPPlaylistIndexText3"))
-									.html("-")
-								)
-							)
+							) //}
 						) //}
 						.append( //{ Volume
 							(this.volume_container = this.D("MPVolumeContainer"))
@@ -3225,6 +3282,20 @@ MediaPlayer.prototype = {
 		return -1;
 	},
 
+	set_async_state: function (enabled, steps, delay) {
+		this.videcode_async = enabled;
+		this.videcode_steps = steps;
+		this.videcode_delay = delay;
+	},
+	set_load_callbacks: function (load_callbacks) {
+		this.load_callbacks = [];
+		if (load_callbacks) {
+			for (var i = 0; i < load_callbacks.length; ++i) {
+				this.load_callbacks.push(load_callbacks[i]);
+			}
+		}
+	},
+
 	is_maximized: function () {
 		return (this.playlist_container.css("display") != "none");
 	},
@@ -3515,6 +3586,8 @@ MediaPlayer.prototype = {
 		this.player_theme_name = null;
 		this.video_container = null;
 		this.video_mask = null;
+		this.loaded_status_count = null;
+		this.loaded_status_container = null;
 
 		this.ytvideo_player = null;
 		if (this.vimeovideo_player !== null) {
@@ -3540,6 +3613,11 @@ MediaPlayer.prototype = {
 		this.downloads_link = null;
 		this.downloads_about = null;
 		this.title_buttons = null;
+
+		if (this.load_buffer_timer !== null) {
+			clearTimeout(this.load_buffer_timer);
+			this.load_buffer_timer = null;
+		}
 
 		if (this.playlist_index_timer !== null) {
 			clearTimeout(this.playlist_index_timer);
@@ -4973,11 +5051,61 @@ MediaPlayer.prototype = {
 		return playlist_item.index;
 	},
 
+	queue_load: function (url_or_file, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback) {
+		if (this.use_load_buffer) {
+			// Queue load
+			this.load_buffer.push([ url_or_file, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback ]);
+
+			// Timer
+			this.queue_item_load();
+		}
+		else {
+			// Immediate load
+			this.attempt_load(url_or_file, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback);
+		}
+	},
+	queue_item_load: function () {
+		if (this.load_buffer.length > 0) {
+			if (!this.load_buffer_active) {
+				this.load_buffer_active = true;
+
+				// Status
+				this.C(this.loaded_status_container, "MPLoadedStatusContainerActive");
+
+				// Item
+				var item = this.load_buffer[0];
+
+				// Load
+				this.attempt_load(item[0], item[1], item[2], item[3], item[4], item[5], item[6]);
+			}
+			this.loaded_status_count.html(this.load_buffer.length);
+		}
+	},
+	queue_item_done: function (okay) {
+		// Remove
+		this.load_buffer.shift();
+
+		// Next
+		var self = this;
+		this.load_buffer_timer = setTimeout(function () {
+			self.load_buffer_timer = null;
+			self.load_buffer_active = false;
+
+			// Next
+			if (self.load_buffer.length > 0) {
+				self.queue_item_load();
+			}
+			else {
+				self.unC(self.loaded_status_container, "MPLoadedStatusContainerActive");
+			}
+		}, 1);
+	},
 	attempt_load: function (url_or_file, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback) {
 		// Attempt to load from remote URL or local file
 		if (typeof(url_or_file) == typeof("")) {
 			// Youtube loading
 			if (url_or_file.substr(0, 5) == "file:") {
+				this.queue_item_done(false);
 				return;
 			}
 			if (this.url_get_youtube_video_id(url_or_file)) {
@@ -4994,15 +5122,18 @@ MediaPlayer.prototype = {
 			}
 
 			// Other
-			var media_player = this;
+			var self = this;
 
 			var dcb = function (okay, callback_data, response) {
 				if (typeof(done_callback) == "function") done_callback(okay, callback_data, (okay ? null : response));
 
 				if (okay) {
-					media_player.attempt_load_raw(false, url_or_file, load_tag, playlist_data, response, 0, function (status, files) {
+					self.attempt_load_raw(false, url_or_file, load_tag, playlist_data, response, 0, function (status, files) {
 						if (typeof(status_callback) == "function") status_callback(status, callback_data, files);
 					}, {});
+				}
+				else {
+					self.queue_item_done(false);
 				}
 			};
 
@@ -5044,6 +5175,7 @@ MediaPlayer.prototype = {
 			}
 
 			if (typeof(done_callback) == "function") done_callback(false, null);
+			this.queue_item_done(false);
 			return;
 		}
 
@@ -5069,6 +5201,7 @@ MediaPlayer.prototype = {
 					}
 				}
 				if (typeof(done_callback) == "function") done_callback(true, available);
+				self.queue_item_done(r != null);
 			}
 			else {
 				// Next
@@ -5077,35 +5210,43 @@ MediaPlayer.prototype = {
 		});
 	},
 	attempt_load_ve: function (is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id, done_callback, extra_data) {
+		var self = this;
 		var videcode = new Videcode(raw_ui8_data, url_or_filename);
-		if (!videcode.decode().has_error()) {
-			// Create availability list
-			/*var available = null;
-			if (videcode.has_video()) {
-				available = [ (videcode.get_tag() || "?") + ".webm" ];
+
+
+		var callback = function () {
+			if (!videcode.has_error()) {
+				// Create availability list
+				var available = [ (videcode.get_tag() || "?") + ".ogg" ];
+
+				// Add
+				self.add_to_playlist_ve(
+					videcode,
+					load_tag,
+					(is_local ? null : url_or_filename),
+					playlist_data
+				);
+
+				// Callback
+				if (typeof(done_callback) == "function") done_callback(true, available);
+				self.queue_item_done(true);
+
+				// Don't continue
+				return;
 			}
-			else {
-				available = [ (videcode.get_tag() || "?") + ".ogg" ];
-			}*/
-			var available = [ (videcode.get_tag() || "?") + ".ogg" ];
 
-			// Add
-			this.add_to_playlist_ve(
-				videcode,
-				load_tag,
-				(is_local ? null : url_or_filename),
-				playlist_data
-			);
+			// Nothing detected
+			self.attempt_load_raw(is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id, done_callback, extra_data);
+		};
 
-			// Callback
-			if (typeof(done_callback) == "function") done_callback(true, available);
 
-			// Don't continue
-			return;
+		if (this.videcode_async) {
+			videcode.decode_async({steps: this.videcode_steps, delay: this.videcode_delay}, callback);
 		}
-
-		// Nothing detected
-		this.attempt_load_raw(is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id, done_callback, extra_data);
+		else {
+			videcode.decode();
+			callback.call(this);
+		}
 	},
 	attempt_load_youtube_video: function (url, load_tag, playlist_data, callback_data, progress_callback, done_callback, status_callback) {
 		var vid_id = this.url_get_youtube_video_id(url);
@@ -5113,6 +5254,7 @@ MediaPlayer.prototype = {
 		// Not found
 		if (vid_id === null) {
 			if (typeof(done_callback) == "function") done_callback(false, callback_data, null);
+			this.queue_item_done(false);
 			return;
 		}
 
@@ -5123,6 +5265,7 @@ MediaPlayer.prototype = {
 			var xml = null;
 			var status = this.add_to_playlist_ytvideo(url, vid_id, null, false, xml, playlist_data);
 			if (typeof(status_callback) == "function") status_callback(status, callback_data, xml);
+			this.queue_item_done(true);
 
 			return;
 		}
@@ -5146,6 +5289,7 @@ MediaPlayer.prototype = {
 				else {
 					// Missing
 				}
+				self.queue_item_done(okay);
 			}
 		);
 	},
@@ -5155,6 +5299,7 @@ MediaPlayer.prototype = {
 		// Not found
 		if (vid_id === null) {
 			if (typeof(done_callback) == "function") done_callback(false, callback_data, null);
+			this.queue_item_done(false);
 			return;
 		}
 
@@ -5165,6 +5310,7 @@ MediaPlayer.prototype = {
 			var xml = null;
 			var status = this.add_to_playlist_vimeovideo(url, vid_id, null, false, xml, playlist_data);
 			if (typeof(status_callback) == "function") status_callback(status, callback_data, xml);
+			this.queue_item_done(true);
 
 			return;
 		}
@@ -5188,6 +5334,7 @@ MediaPlayer.prototype = {
 				else {
 					// Missing
 				}
+				self.queue_item_done(okay);
 			}
 		);
 	},
@@ -5197,6 +5344,7 @@ MediaPlayer.prototype = {
 		// Not found
 		if (vid_id === null) {
 			if (typeof(done_callback) == "function") done_callback(false, callback_data, null);
+			this.queue_item_done(false);
 			return;
 		}
 
@@ -5207,6 +5355,7 @@ MediaPlayer.prototype = {
 			var json = null;
 			var status = this.add_to_playlist_soundcloud_sound(url, vid_id, null, false, json, playlist_data);
 			if (typeof(status_callback) == "function") status_callback(status, callback_data, json);
+			this.queue_item_done(true);
 
 			return;
 		}
@@ -5230,6 +5379,7 @@ MediaPlayer.prototype = {
 				else {
 					// Missing
 				}
+				self.queue_item_done(okay);
 			}
 		);
 	},
@@ -6638,7 +6788,7 @@ MediaPlayer.prototype = {
 		// Load
 		if (event.originalEvent.dataTransfer.files.length > 0) {
 			for (var i = 0; i < event.originalEvent.dataTransfer.files.length; ++i) {
-				event.data.media_player.attempt_load(
+				event.data.media_player.queue_load(
 					event.originalEvent.dataTransfer.files[i],
 					MediaPlayer.ALL_SOUNDS,
 					null, null, null, null, null
@@ -6656,7 +6806,7 @@ MediaPlayer.prototype = {
 			};
 			event.data.media_player.drag_callback(data);
 			if (data.text) {
-				event.data.media_player.attempt_load(
+				event.data.media_player.queue_load(
 					data.text,
 					MediaPlayer.ALL_SOUNDS,
 					{},
