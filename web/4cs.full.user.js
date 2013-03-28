@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.3
+// @version     4.3.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -18705,7 +18705,7 @@ function Script() {
 		},
 		"hotkeys": {}, // loaded elsewhere
 		"performance": {
-			"post_parse_group_size": -1,
+			"post_parse_group_size": 25,
 			"post_parse_group_delay": 0.125,
 
 			"async_image_load": true,
@@ -19189,8 +19189,8 @@ Script.prototype = {
 				"update_value": function () { this.current = script.settings["performance"]["post_parse_group_size"]; },
 				"label": "Group Size",
 				"description": "The number of posts to parse at one time; may decrease lag time when loading a page",
-				"values": [ -1 , 100 , 75 , 50 , 40 , 30 , 20 , 15 , 10 , 5 , 2 , 1 ],
-				"descr": [ "All" , "100" , "75" , "50" , "40" , "30" , "20" , "15" , "10" , "5" , "2" , "1" ],
+				"values": [ -1 , 100 , 75 , 50 , 40 , 30 , 25 , 20 , 15 , 10 , 5 , 2 , 1 ],
+				"descr": [ "All" , "100" , "75" , "50" , "40" , "30" , "25" , "20" , "15" , "10" , "5" , "2" , "1" ],
 				"change": function (value) {
 					script.settings["performance"]["post_parse_group_size"] = value;
 					script.settings_save();
