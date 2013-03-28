@@ -1,4 +1,7 @@
-﻿4.3
+﻿4.3.1
+- Defaulted post group parsing to 25 posts at a time, with a delay of 1/8 seconds
+
+4.3
 - Asynchronous options for loading sounds
 - The media player now uses a queue to load items
 - Changed some naming conventions
