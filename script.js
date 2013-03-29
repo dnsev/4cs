@@ -265,6 +265,7 @@ PageBrowser.prototype = {
 	}
 };
 var page_browser = new PageBrowser();
+var page_vars_maintain = ["all","dev","help"];
 
 // Change log
 var change_log_version = null;
@@ -663,9 +664,11 @@ $(document).ready(function () {
 	});
 	$(".NavigationLink").on("click", {}, function (event) {
 		if (event.which == 1) {
+			var v = $(this).attr("maintain");
+			v = (v === undefined ? page_vars_maintain : page_vars_maintain.concat(v.split(",")));
 			window_hash.goto_page(
 				$(this).attr("href")[0] == "#" ? $(this).attr("href").substr(1) : $(this).attr("id").substr("navigation_".length),
-				maintain_vars(window_hash.vars, ["all","dev","help"])
+				maintain_vars(window_hash.vars, v)
 			);
 			return false;
 		}
@@ -674,9 +677,11 @@ $(document).ready(function () {
 	$(".ImageLink").on("click", {}, function (event) {
 		if (event.which == 1 || event.which === undefined) {
 			var href = $(this).attr("href_update").substr(1).split("?");
+			var v = $(this).attr("maintain");
+			v = (v === undefined ? page_vars_maintain : page_vars_maintain.concat(v.split(","))).concat(["scroll"]);
 			window_hash.goto_page(
 				window_hash.modify_href(href[0]),
-				maintain_vars(window_hash.vars, ["all","dev","help","scroll"]),
+				maintain_vars(window_hash.vars, v),
 				(href[1] ? window_hash.parse_vars(href[1]) : undefined)
 			);
 
@@ -688,9 +693,11 @@ $(document).ready(function () {
 	$(".InternalLink").on("click", {}, function (event) {
 		if (event.which == 1 && $(this).attr("href")[0] == "#") {
 			var href = $(this).attr("href").substr(1).split("?");
+			var v = $(this).attr("maintain");
+			v = (v === undefined ? page_vars_maintain : page_vars_maintain.concat(v.split(",")));
 			window_hash.goto_page(
 				window_hash.modify_href(href[0]),
-				maintain_vars(window_hash.vars, ["all","dev","help"]),
+				maintain_vars(window_hash.vars, v),
 				(href[1] ? window_hash.parse_vars(href[1]) : undefined)
 			);
 			return false;
@@ -707,9 +714,11 @@ $(document).ready(function () {
 	$(".GuideLink").on("click", {}, function (event) {
 		if (event.which == 1 && $(this).attr("href")[0] == "#") {
 			var href = $(this).attr("href").substr(1).split("?");
+			var v = $(this).attr("maintain");
+			v = (v === undefined ? page_vars_maintain : page_vars_maintain.concat(v.split(",")));
 			window_hash.goto_page(
 				window_hash.modify_href(href[0]),
-				maintain_vars(window_hash.vars, ["all","dev","help"]),
+				maintain_vars(window_hash.vars, v),
 				(href[1] ? window_hash.parse_vars(href[1]) : undefined)
 			);
 			return false;
@@ -733,4 +742,3 @@ $(document).ready(function () {
 });
 
 
- 
