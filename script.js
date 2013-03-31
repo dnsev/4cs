@@ -194,7 +194,7 @@ var page_list = {
 	"wiki": null,
 	"changes": null,
 	"ogglify": null,
-	"oc": null,
+	"guide": null,
 };
 function PageBrowser() {
 
