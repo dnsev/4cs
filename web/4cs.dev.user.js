@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.4
+// @version        4.4.1
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -106,6 +106,15 @@ function string_to_uint8array(str) {
 }
 function arraybuffer_to_uint8array(buffer) {
 	return new Uint8Array(buffer);
+}
+function uint8array_compare(a1, a2, start1, start2, len) {
+	if (a1.length < start1 + len || a2.length < start2 + len) return false;
+
+	for (var i = 0; i < len; ++i) {
+		if (a1[start1 + i] != a2[start2 + i]) return false;
+	}
+
+	return true;
 }
 
 function is_chrome() {
@@ -1406,7 +1415,7 @@ ThreadManager.prototype = {
 			for (var i = 0; i < len; ++i) {
 				var p = this.post_queue[i];
 				this.post_queue[i] = null;
-				this.parse_post(p);
+				if (p != null) this.parse_post(p);
 			}
 			this.post_queue.splice(0, len);
 
@@ -1890,6 +1899,7 @@ function InlineUploader() {
 	this.form_submit_button_clone = null;
 	this.uploading = false;
 	this.abortable_upload = null;
+	this.good_header = string_to_uint8array("OggS\x00\x02");
 
 	this.use_original_animation = false;
 
@@ -2834,6 +2844,11 @@ InlineUploader.prototype = {
 			if (data.size > self.max_size) {
 				self.remove_sound(data, true);
 				self.error("Sound file too large");
+				return;
+			}
+			if (!uint8array_compare(self.good_header, data.source, 0, 0, self.good_header.length)) {
+				self.remove_sound(data, true);
+				self.error("Invalid .ogg file");
 				return;
 			}
 

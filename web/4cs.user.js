@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.4
+// @version     4.4.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -5033,6 +5033,10 @@ MediaPlayer.prototype={
 										.html("5")
 									)
 								)
+								.on("click."+this.namespace,{media_player:this},function(event){
+									event.data.media_player.queue_item_skip();
+									return false;
+								})
 							)
 							.append(
 								(this.playlist_index_container=this.D("MPPlaylistIndexContainer"))
@@ -7909,7 +7913,7 @@ MediaPlayer.prototype={
 			this.queue_item_load();
 		}
 		else{
-			this.attempt_load(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback);
+			this.attempt_load(null,url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback);
 		}
 	},
 	queue_item_load:function(){
@@ -7918,53 +7922,69 @@ MediaPlayer.prototype={
 				this.load_buffer_active=true;
 				this.C(this.loaded_status_container,"MPLoadedStatusContainerActive");
 				var item=this.load_buffer[0];
-				this.attempt_load(item[0],item[1],item[2],item[3],item[4],item[5],item[6]);
+				this.attempt_load(item,item[0],item[1],item[2],item[3],item[4],item[5],item[6]);
 			}
 			this.loaded_status_count.html(this.load_buffer.length);
 		}
 	},
-	queue_item_done:function(okay){
-		this.load_buffer.shift();
-		var self=this;
-		this.load_buffer_timer=setTimeout(function(){
-			self.load_buffer_timer=null;
-			self.load_buffer_active=false;
-			if(self.load_buffer.length>0){
-				self.queue_item_load();
+	queue_item_skip:function(){
+		if(this.load_buffer.length>0){
+			if(this.load_buffer_active){
+				this.load_buffer.shift();
+				this.load_buffer_active=false;
+				if(this.load_buffer.length>0){
+					this.queue_item_load();
+				}
+				else{
+					this.unC(this.loaded_status_container,"MPLoadedStatusContainerActive");
+				}
 			}
-			else{
-				self.unC(self.loaded_status_container,"MPLoadedStatusContainerActive");
-			}
-		},1);
+		}
 	},
-	attempt_load:function(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
+	queue_item_done:function(buffer_item,okay){
+		if(buffer_item==this.load_buffer[0]){
+			this.load_buffer.shift();
+			var self=this;
+			this.load_buffer_timer=setTimeout(function(){
+				self.load_buffer_timer=null;
+				self.load_buffer_active=false;
+				if(self.load_buffer.length>0){
+					self.queue_item_load();
+				}
+				else{
+					self.unC(self.loaded_status_container,"MPLoadedStatusContainerActive");
+				}
+			},1);
+		}
+	},
+	attempt_load:function(buffer_item,url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
 		if(typeof(url_or_file)==typeof("")){
 			if(url_or_file.substr(0,5)=="file:"){
-				this.queue_item_done(false);
+				this.queue_item_done(buffer_item,false);
 				return;
 			}
 			if(this.url_get_youtube_video_id(url_or_file)){
-				this.attempt_load_youtube_video(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback);
+				this.attempt_load_youtube_video(buffer_item,url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback);
 				return;
 			}
 			if(this.url_get_vimeo_video_id(url_or_file)){
-				this.attempt_load_vimeo_video(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback);
+				this.attempt_load_vimeo_video(buffer_item,url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback);
 				return;
 			}
 			if(this.url_get_soundcloud_info(url_or_file)){
-				this.attempt_load_soundcloud_sound(url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback);
+				this.attempt_load_soundcloud_sound(buffer_item,url_or_file,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback);
 				return;
 			}
 			var self=this;
 			var dcb=function(okay,callback_data,response){
 				if(typeof(done_callback)=="function")done_callback(okay,callback_data,(okay?null:response));
 				if(okay){
-					self.attempt_load_raw(false,url_or_file,load_tag,playlist_data,response,0,function(status,files){
+					self.attempt_load_raw(buffer_item,false,url_or_file,load_tag,playlist_data,response,0,function(status,files){
 						if(typeof(status_callback)=="function")status_callback(status,callback_data,files);
 					},{});
 				}
 				else{
-					self.queue_item_done(false);
+					self.queue_item_done(buffer_item,false);
 				}
 			};
 			this.ajax_get(url_or_file,false,callback_data,progress_callback,dcb);
@@ -7974,28 +7994,28 @@ MediaPlayer.prototype={
 			var self=this;
 			reader.onload=function(){
 				var ui8_data=new Uint8Array(this.result);
-				self.attempt_load_raw(true,url_or_file.name,load_tag,playlist_data,ui8_data,0,function(status,files){
+				self.attempt_load_raw(buffer_item,true,url_or_file.name,load_tag,playlist_data,ui8_data,0,function(status,files){
 					if(typeof(status_callback)=="function")status_callback(status,callback_data,files);
 				},{});
 			}
 			reader.readAsArrayBuffer(url_or_file);
 		}
 	},
-	attempt_load_raw:function(is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data){
+	attempt_load_raw:function(buffer_item,is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data){
 		callback_id=callback_id||0;
 		if(callback_id==0&&this.filename_might_be_ve(url_or_filename)&&!extra_data.ve_checked){
 			extra_data.ve_checked=true;
-			this.attempt_load_ve(is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data);
+			this.attempt_load_ve(buffer_item,is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data);
 			return;
 		}
 		if(callback_id>=this.load_callbacks.length){
 			if(!extra_data.ve_checked){
 				extra_data.ve_checked=true;
-				this.attempt_load_ve(is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data);
+				this.attempt_load_ve(buffer_item,is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data);
 				return;
 			}
 			if(typeof(done_callback)=="function")done_callback(false,null);
-			this.queue_item_done(false);
+			this.queue_item_done(buffer_item,false);
 			return;
 		}
 		var self=this;
@@ -8018,14 +8038,14 @@ MediaPlayer.prototype={
 					}
 				}
 				if(typeof(done_callback)=="function")done_callback(true,available);
-				self.queue_item_done(r!=null);
+				self.queue_item_done(buffer_item,r!=null);
 			}
 			else{
-				self.attempt_load_raw(is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id+1,done_callback,extra_data);
+				self.attempt_load_raw(buffer_item,is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id+1,done_callback,extra_data);
 			}
 		});
 	},
-	attempt_load_ve:function(is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data){
+	attempt_load_ve:function(buffer_item,is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data){
 		var self=this;
 		var videcode=new Videcode(raw_ui8_data,url_or_filename);
 		var callback=function(){
@@ -8038,10 +8058,10 @@ MediaPlayer.prototype={
 					playlist_data
 				);
 				if(typeof(done_callback)=="function")done_callback(true,available);
-				self.queue_item_done(true);
+				self.queue_item_done(buffer_item,true);
 				return;
 			}
-			self.attempt_load_raw(is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data);
+			self.attempt_load_raw(buffer_item,is_local,url_or_filename,load_tag,playlist_data,raw_ui8_data,callback_id,done_callback,extra_data);
 		};
 		if(this.videcode_async){
 			videcode.decode_async({steps:this.videcode_steps,delay:this.videcode_delay},callback);
@@ -8051,11 +8071,11 @@ MediaPlayer.prototype={
 			callback.call(this);
 		}
 	},
-	attempt_load_youtube_video:function(url,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
+	attempt_load_youtube_video:function(buffer_item,url,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
 		var vid_id=this.url_get_youtube_video_id(url);
 		if(vid_id===null){
 			if(typeof(done_callback)=="function")done_callback(false,callback_data,null);
-			this.queue_item_done(false);
+			this.queue_item_done(buffer_item,false);
 			return;
 		}
 		if("media_cache"in playlist_data){
@@ -8063,7 +8083,7 @@ MediaPlayer.prototype={
 			var xml=null;
 			var status=this.add_to_playlist_ytvideo(url,vid_id,null,false,xml,playlist_data);
 			if(typeof(status_callback)=="function")status_callback(status,callback_data,xml);
-			this.queue_item_done(true);
+			this.queue_item_done(buffer_item,true);
 			return;
 		}
 		var self=this;
@@ -8082,15 +8102,15 @@ MediaPlayer.prototype={
 				}
 				else{
 				}
-				self.queue_item_done(okay);
+				self.queue_item_done(buffer_item,okay);
 			}
 		);
 	},
-	attempt_load_vimeo_video:function(url,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
+	attempt_load_vimeo_video:function(buffer_item,url,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
 		var vid_id=this.url_get_vimeo_video_id(url);
 		if(vid_id===null){
 			if(typeof(done_callback)=="function")done_callback(false,callback_data,null);
-			this.queue_item_done(false);
+			this.queue_item_done(buffer_item,false);
 			return;
 		}
 		if("media_cache"in playlist_data){
@@ -8098,7 +8118,7 @@ MediaPlayer.prototype={
 			var xml=null;
 			var status=this.add_to_playlist_vimeovideo(url,vid_id,null,false,xml,playlist_data);
 			if(typeof(status_callback)=="function")status_callback(status,callback_data,xml);
-			this.queue_item_done(true);
+			this.queue_item_done(buffer_item,true);
 			return;
 		}
 		var self=this;
@@ -8117,15 +8137,15 @@ MediaPlayer.prototype={
 				}
 				else{
 				}
-				self.queue_item_done(okay);
+				self.queue_item_done(buffer_item,okay);
 			}
 		);
 	},
-	attempt_load_soundcloud_sound:function(url,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
+	attempt_load_soundcloud_sound:function(buffer_item,url,load_tag,playlist_data,callback_data,progress_callback,done_callback,status_callback){
 		var vid_id=this.url_get_soundcloud_info(url);
 		if(vid_id===null){
 			if(typeof(done_callback)=="function")done_callback(false,callback_data,null);
-			this.queue_item_done(false);
+			this.queue_item_done(buffer_item,false);
 			return;
 		}
 		if("media_cache"in playlist_data){
@@ -8133,7 +8153,7 @@ MediaPlayer.prototype={
 			var json=null;
 			var status=this.add_to_playlist_soundcloud_sound(url,vid_id,null,false,json,playlist_data);
 			if(typeof(status_callback)=="function")status_callback(status,callback_data,json);
-			this.queue_item_done(true);
+			this.queue_item_done(buffer_item,true);
 			return;
 		}
 		var self=this;
@@ -8152,7 +8172,7 @@ MediaPlayer.prototype={
 				}
 				else{
 				}
-				self.queue_item_done(okay);
+				self.queue_item_done(buffer_item,okay);
 			}
 		);
 	},
@@ -9720,6 +9740,13 @@ function string_to_uint8array(str){
 function arraybuffer_to_uint8array(buffer){
 	return new Uint8Array(buffer);
 }
+function uint8array_compare(a1,a2,start1,start2,len){
+	if(a1.length<start1+len||a2.length<start2+len)return false;
+	for(var i=0;i<len;++i){
+		if(a1[start1+i]!=a2[start2+i])return false;
+	}
+	return true;
+}
 function is_chrome(){
 	return((navigator.userAgent+"").indexOf(" Chrome/")>=0);
 }
@@ -10772,7 +10799,7 @@ ThreadManager.prototype={
 			for(var i=0;i<len;++i){
 				var p=this.post_queue[i];
 				this.post_queue[i]=null;
-				this.parse_post(p);
+				if(p!=null)this.parse_post(p);
 			}
 			this.post_queue.splice(0,len);
 			if(this.post_queue.length>0){
@@ -11191,6 +11218,7 @@ function InlineUploader(){
 	this.form_submit_button_clone=null;
 	this.uploading=false;
 	this.abortable_upload=null;
+	this.good_header=string_to_uint8array("OggS\x00\x02");
 	this.use_original_animation=false;
 	if(script.settings["upload"]["enabled"]){
 		var pf=$("#postForm");
@@ -11981,6 +12009,11 @@ InlineUploader.prototype={
 			if(data.size>self.max_size){
 				self.remove_sound(data,true);
 				self.error("Sound file too large");
+				return;
+			}
+			if(!uint8array_compare(self.good_header,data.source,0,0,self.good_header.length)){
+				self.remove_sound(data,true);
+				self.error("Invalid .ogg file");
 				return;
 			}
 			data.item.attr("title",self.bytes_to_size(data.size)+" ("+InlineManager.prototype.commaify_number(data.size)+" byte"+(data.size==1?"":"s")+")");
