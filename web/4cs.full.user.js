@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.3.1
+// @version     4.4
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -6304,14 +6304,14 @@ MediaPlayerCSS.prototype = {
 		var key, style, css_key, css_value;
 		for (key in this.css) {
 			// Add the key
-			stylesheet += key + "{";
+			stylesheet += (this.css_suffix.length == 0 ? key : this.form_key(key)) + "{";
 			// Iterate over its style elements
 			style = this.css[key];
 			for (css_key in style) {
 				// Value
 				css_value = this.parse_out_values(style[css_key]);
 				// Add the style
-				stylesheet += css_key + this.css_suffix + ":" + css_value + ";";
+				stylesheet += css_key + ":" + css_value + ";";
 			}
 			// Finish
 			stylesheet += "}";
@@ -6589,7 +6589,10 @@ MediaPlayerCSS.prototype = {
 			this.load_preset(data["key"]);
 		}
 
-	}
+	},
+	form_key: function (key) {
+		return key.replace(/(\.[a-zA-Z0-9_-]+)/g, "$1" + this.css_suffix);
+	},
 };
 
 
@@ -6600,8 +6603,8 @@ MediaPlayerCSS.prototype = {
 function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, destruct_callback, additional_options) {
 	// Not setup
 	this.created = false;
-	this.namespace = "media_player";
-	this.identifier = ""; // make this dynamic
+	this.identifier = this.random_string(8);
+	this.namespace = "mp_" + this.identifier;
 	this.is_chrome = ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
 	this.title_default =  "Media Player";
 
@@ -6732,9 +6735,14 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 
 	// CSS
 	this.css = css;
+	//this.css.css_suffix = "_" + this.random_string(4);
 	this.css.on_theme_change_callback = this.update_player_theme_name;
 	this.css.on_theme_change_callback_data = {media_player: this};
-	$("head").append((this.head_css = this.E("style").html(this.css.create_stylesheet())));
+	$("head").append(
+		(this.head_css = this.E("style"))
+		.attr("id", "MPStyleMediaPlayer") // this.random_string(16 + this.random_integer(17)))
+		.html(this.css.create_stylesheet())
+	);
 
 	// Saving
 	this.save_data = [
@@ -8673,17 +8681,17 @@ MediaPlayer.prototype = {
 			// Params
 			var about = this.mp_container_main.find(".MPMainButtonAboutTheatre");
 			if ("no_info" in params && params.no_info) {
-				about.remove("span").addClass("MPTheatreHidden");
+				this.C(about.remove("span"), "MPTheatreHidden");
 			}
 			else {
-				about.remove("span").removeClass("MPTheatreHidden");
+				this.unC(about.remove("span"), "MPTheatreHidden");
 			}
 			if ("info_text" in params) {
 				about.prepend(
 					this.E("span").html(params.info_text)
 				);
 			}
-			this.mp_container_main.addClass("MPTheatreEnabled");
+			this.C(this.mp_container_main, "MPTheatreEnabled");
 		}
 	},
 	theatre_exit: function (params) {
@@ -8705,11 +8713,11 @@ MediaPlayer.prototype = {
 	},
 	theatre_close: function () {
 		if (this.theatre_mode) {
-			this.mp_container_main.removeClass("MPTheatreEnabled");
+			this.unC(this.mp_container_main, "MPTheatreEnabled");
 			this.theatre_animation_vars.dim_div.remove();
 			this.theatre_hide_controls_enabled = false;
 			this.theatre_reset_controls_timer();
-			this.mp_container_main.removeClass("MPControlsForceHide");
+			this.unC(this.mp_container_main, "MPControlsForceHide");
 			this.theatre_mode = false;
 		}
 	},
@@ -8971,22 +8979,22 @@ MediaPlayer.prototype = {
 						// Back
 						this.playback_controls_svg[i][j].rect(g,
 							0.125, 0.0, 0.25, 1.0,
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.875 , 0.0] , [0.875 , 1.0] , [0.375 , 0.5] ],
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 					}
 					else if (i == 1) {
 						// RW
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.5 , 0.0] , [0.5 , 1.0] , [0.125 , 0.5] ],
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.875 , 0.0] , [0.875 , 1.0] , [0.5 , 0.5] ],
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 					}
 					else if (i == 2) {
@@ -8994,17 +9002,17 @@ MediaPlayer.prototype = {
 						if (j == 1) {
 							this.playback_controls_svg[i][j].rect(g,
 								0.125, 0.0, 0.25, 1.0,
-								{"class": "MPControlLinkSvgShapeColor"}
+								{"class": this.CC("MPControlLinkSvgShapeColor")}
 							);
 							this.playback_controls_svg[i][j].rect(g,
 								0.625, 0.0, 0.25, 1.0,
-								{"class": "MPControlLinkSvgShapeColor"}
+								{"class": this.CC("MPControlLinkSvgShapeColor")}
 							);
 						}
 						else {
 							this.playback_controls_svg[i][j].polygon(g,
 								[ [0.25 , 0.0] , [0.25 , 1.0] , [0.75 , 0.5] ],
-								{"class": "MPControlLinkSvgShapeColor"}
+								{"class": this.CC("MPControlLinkSvgShapeColor")}
 							);
 						}
 					}
@@ -9012,22 +9020,22 @@ MediaPlayer.prototype = {
 						// FFW
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.125 , 0.0] , [0.125 , 1.0] , [0.5 , 0.5] ],
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.5 , 0.0] , [0.5 , 1.0] , [0.875 , 0.5] ],
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 					}
 					else {
 						// Next
 						this.playback_controls_svg[i][j].rect(g,
 							0.625, 0.0, 0.25, 1.0,
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.125 , 0.0] , [0.125 , 1.0] , [0.625 , 0.5] ],
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 					}
 				}
@@ -9080,7 +9088,7 @@ MediaPlayer.prototype = {
 
 		if (!activate) return;
 
-		this.playlist_index_container.addClass("MPPlaylistIndexContainerActive");
+		this.C(this.playlist_index_container, "MPPlaylistIndexContainerActive");
 		if (this.playlist_index_timer !== null) {
 			clearTimeout(this.playlist_index_timer);
 			this.playlist_index_timer = null;
@@ -9088,7 +9096,7 @@ MediaPlayer.prototype = {
 		var self = this;
 		this.playlist_index_timer = setTimeout(function () {
 			self.playlist_index_timer = null;
-			self.playlist_index_container.removeClass("MPPlaylistIndexContainerActive");
+			self.unC(self.playlist_index_container, "MPPlaylistIndexContainerActive");
 		}, 1000);
 	},
 
@@ -9328,10 +9336,24 @@ MediaPlayer.prototype = {
 	C: function (elem, cls) {
 		elem.addClass(cls + this.css.css_suffix);
 	},
+	CC: function (cls) {
+		return cls + this.css.css_suffix;
+	},
 	unC: function (elem, cls) {
 		elem.removeClass(cls + this.css.css_suffix);
 	},
 
+	random_integer: function (max) {
+		return Math.floor(Math.random() * max);
+	},
+	random_string: function (len, chars) {
+		var s = "";
+		chars = chars || "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		for (var i = 0; i < len; ++i) {
+			s += chars[Math.floor(Math.random() * chars.length)];
+		}
+		return s;
+	},
 	text_to_html: function (str) {
 		return str.replace(/&/g, "&amp;")
 			.replace(/>/g, "&gt;")
@@ -10830,11 +10852,11 @@ MediaPlayer.prototype = {
 	},
 
 	on_theatre_mode_hide_controls_timeout: function () {
-		this.mp_container_main.addClass("MPControlsForceHide");
+		this.C(this.mp_container_main, "MPControlsForceHide");
 		this.theatre_hide_controls_timer = null;
 	},
 	on_theatre_mode_mousemove: function (event) {
-		event.data.media_player.mp_container_main.removeClass("MPControlsForceHide");
+		event.data.media_player.unC(event.data.media_player.mp_container_main, "MPControlsForceHide");
 		event.data.media_player.theatre_reset_controls_timer();
 	},
 
@@ -11174,7 +11196,7 @@ MediaPlayer.prototype = {
 			this.resize_side_sizes = [ this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0] ];
 
 			// CSS update
-			this.mp_container_main.removeClass("MPContainerMainBorders");
+			this.unC(this.mp_container_main, "MPContainerMainBorders");
 			this.resizing_container.css("display", "");
 
 			// Size update loop
@@ -11230,7 +11252,7 @@ MediaPlayer.prototype = {
 
 			this.resize_container_border_hovered = false;
 
-			this.mp_container_main.addClass("MPContainerMainBorders");
+			this.C(this.mp_container_main, "MPContainerMainBorders");
 			this.resizing_container.css("display", "none");
 
 			return;
@@ -12549,7 +12571,7 @@ var is_homepage = false;
 if (/http\:\/\/dnsev\.github\.com\/4cs\//.test(window.location.href + "")) {
 	is_homepage = true;
 
-	if (/http\:\/\/dnsev\.github\.com\/4cs\/play/.test(window.location.href + "")) {
+	if (/http\:\/\/dnsev\.github\.com\/4cs\/play($|\/.*)/.test(window.location.href + "")) {
 		// play
 	}
 	else {
@@ -12654,6 +12676,8 @@ function ajax_get(url, return_as_string, callback_data, progress_callback, done_
 			};
 		}
 		xhr.send();
+
+		return xhr;
 	}
 	else {
 		var arg = {
@@ -12684,7 +12708,8 @@ function ajax_get(url, return_as_string, callback_data, progress_callback, done_
 				progress_callback(event, callback_data);
 			};
 		}
-		GM_xmlhttpRequest(arg);
+		var g = GM_xmlhttpRequest(arg);
+		return g;
 	}
 }
 function ajax(data) {
@@ -12775,6 +12800,9 @@ function ajax(data) {
 		// Send
 		if (data.post_data) xhr.send(data.post_data);
 		else xhr.send();
+
+		// Return
+		return xhr;
 	}
 	else {
 		// Args
@@ -12856,7 +12884,10 @@ function ajax(data) {
 		}
 
 		// Send
-		GM_xmlhttpRequest(arg);
+		var g = GM_xmlhttpRequest(arg);
+
+		// Return
+		return g;
 	}
 }
 
@@ -12955,6 +12986,17 @@ function has_4chan_pass() {
 	return (p ? true : false);
 }
 
+function random_string(len, chars) {
+	var s = "";
+	chars = chars || "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	for (var i = 0; i < len; ++i) {
+		s += chars[Math.floor(Math.random() * chars.length)];
+	}
+	return s;
+}
+function random_integer(max) {
+	return Math.floor(Math.random() * max);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -13361,7 +13403,7 @@ function image_load_callback_asynchronous(url_or_filename, load_tag, raw_ui8_dat
 							}
 						}
 					}
-					tag = tag || "?";
+					tag = (tag && tag !== true ? tag : "?");
 
 					// If there was an old sound, complete it
 					if (sounds.length > 0) {
@@ -14041,6 +14083,7 @@ function SettingsManager() {
 	$("head")
 	.append( //{ Stylesheet
 		E("style")
+		.attr("id", "MPStyleSettings") // random_string(16 + random_integer(17)))
 		.html(
 			".MPMenu{display:block !important;position:absolute;left:0;top:0;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);z-index:10001;margin:0px !important;padding:2px !important;width:auto !important;height:auto !important;}\n" +
 			".MPMenuClosed{display:none !important;}\n" +
@@ -14379,6 +14422,8 @@ function InlineUploader() {
 	this.observer = null;
 	this.upload_modified = false;
 	this.form_submit_button_clone = null;
+	this.uploading = false;
+	this.abortable_upload = null;
 
 	this.use_original_animation = false;
 
@@ -14452,6 +14497,7 @@ function InlineUploader() {
 	$("head")
 	.append( //{ Stylesheet
 		E("style")
+		.attr("id", "MPStyleUploader") // random_string(16 + random_integer(17)))
 		.html(
 			".MPSoundUploaderSoundLabel{display:inline-block !important;}\n" +
 			"label:not([hidden]) + .MPSoundUploaderSoundLabel{margin:0px 0px 0px 8px !important;}\n" +
@@ -14955,7 +15001,7 @@ InlineUploader.prototype = {
 		this.open = open;
 
 		if (this.enable_checkbox.is(":checked") != this.open) {
-			this.enable_checkbox.attr("checked", "checked");
+			this.enable_checkbox.prop("checked", true);
 			if (this.enable_checkbox.is(":checked") != this.open) {
 				this.enable_checkbox.click();
 			}
@@ -15168,10 +15214,18 @@ InlineUploader.prototype = {
 		.removeClass("MPSoundUploaderImageFilenameBad")
 		.removeClass("MPSoundUploaderImageFilenameNotSet");
 
+		// Un-original-ify
+		for (var i = 0; i < this.sound_list_items.length; ++i) {
+			if (this.sound_list_items[i].is_original) {
+				this.sound_list_items[i].is_original = false;
+				this.sound_list_items[i].item.removeClass("MPSoundUploaderSoundListItemOriginal");
+			}
+		}
+
 		// Checkbox
 		this.remove_sound_image
 		.css("display", "")
-		.attr("checked", "checked");
+		.prop("checked", true);
 		if (!this.remove_sound_image.is(":checked")) this.remove_sound_image.click();
 
 		// Parse callback
@@ -15284,7 +15338,7 @@ InlineUploader.prototype = {
 				(data.checkbox = E("input"))
 				.addClass("MPSoundUploaderSoundListItemCheck")
 				.attr("type", "checkbox")
-				.attr("checked", "checked")
+				.prop("checked", true)
 				.on("change", {data: data}, function (event) { return self.on_sound_checkbox(event, $(this)); })
 			)
 		);
@@ -15390,7 +15444,7 @@ InlineUploader.prototype = {
 		.removeAttr("title")
 		.val(this.default_no_image_text);
 
-		this.remove_sound_image.removeAttr("checked")
+		this.remove_sound_image.prop("checked", false)
 		.css("display", "none");
 
 		for (var i = 0; i < this.sound_list_items.length; ++i) {
@@ -15509,7 +15563,7 @@ InlineUploader.prototype = {
 				ret = (ocount + count == 1);
 				for (var i = 0; i < this.sound_list_items.length; ++i) {
 					if (this.sound_list_items[i].checkbox.is(":checked")) {
-						this.sound_list_items[i].checkbox.removeAttr("checked");
+						this.sound_list_items[i].checkbox.prop("checked", false);
 						if (this.sound_list_items[i].checkbox.is(":checked")) {
 							this.sound_list_items[i].checkbox.click();
 						}
@@ -15651,8 +15705,9 @@ InlineUploader.prototype = {
 		}
 
 		// 10: Posting
-		if (this.form_submit_button_clone) this.form_submit_button_clone.val("...").attr("disabled", "disabled");
-		ajax({
+		this.uploading = true;
+		if (this.form_submit_button_clone) this.form_submit_button_clone.val("...");
+		this.abortable_upload = ajax({
 			method: "POST",
 			url: target_url,
 			post_data: data.form_data,
@@ -15683,9 +15738,11 @@ InlineUploader.prototype = {
 
 					if (self.form_submit_button_clone) {
 						self.form_submit_button_clone
-						.val(self.form_submit_button.val())
-						.removeAttr("disabled");
+						.val(self.form_submit_button.val());
 					}
+
+					self.uploading = false;
+					self.abortable_upload = null;
 				},
 				upload: {
 					progress: function (event, data) {
@@ -15700,9 +15757,22 @@ InlineUploader.prototype = {
 
 						if (self.form_submit_button_clone) {
 							self.form_submit_button_clone
-							.val(self.form_submit_button.val())
-							.removeAttr("disabled");
+							.val(self.form_submit_button.val());
 						}
+
+						self.uploading = false;
+						self.abortable_upload = null;
+					},
+					abort: function (event, data) {
+						self.error("Upload aborted");
+
+						if (self.form_submit_button_clone) {
+							self.form_submit_button_clone
+							.val(self.form_submit_button.val());
+						}
+
+						self.uploading = false;
+						self.abortable_upload = null;
 					}
 				}
 			}
@@ -15816,13 +15886,13 @@ InlineUploader.prototype = {
 			if (this.reply_container) this.reply_container.find(".warning").html(status || "");
 		}
 
-		if (un_disable && this.form_submit_button_clone) {
+/*		if (un_disable && this.form_submit_button_clone) {
 			var self = this;
 
 			setTimeout(function () {
 				if (self.form_submit_button_clone) self.form_submit_button_clone.removeAttr("disabled");
 			}, 10);
-		}
+		}*/
 	},
 	captcha_reload: function () {
 		// Manual notice
@@ -15977,7 +16047,7 @@ InlineUploader.prototype = {
 		sound_data.tag_name.addClass("MPSoundUploaderSoundListItemBad");
 
 		// Un-tick
-		sound_data.checkbox.removeAttr("checked");
+		sound_data.checkbox.prop("checked", false);
 		if (sound_data.checkbox.is(":checked")) {
 			sound_data.checkbox.click();
 		}
@@ -15993,6 +16063,11 @@ InlineUploader.prototype = {
 			// Remove
 			this.remove_sound(event.data.data, false);
 		}
+		else {
+			// Update count
+			this.update_modified_check();
+			this.update_sound_count();
+		}
 	},
 	on_image_checkbox: function (event, obj) {
 		if (!obj.is(":checked") || event.data.data.tag_name.hasClass("MPSoundUploaderSoundListItemBad")) {
@@ -16001,6 +16076,14 @@ InlineUploader.prototype = {
 	},
 
 	on_form_submit: function (event, obj) {
+		if (this.uploading) {
+			// Abort
+			this.abortable_upload.abort();
+			this.abortable_upload = null;
+			this.uploading = false;
+
+			return false;
+		}
 		return (this.submit() || false);
 	},
 	on_successful_post: function () {
@@ -16024,7 +16107,7 @@ InlineUploader.prototype = {
 		// De-spoiler
 		var sp = this.reply_form.find("*[name=spoiler],#spoiler");
 		if (sp.length > 0 && sp.is(":checked")) {
-			sp.removeAttr("checked");
+			sp.prop("checked", false);
 			if (sp.is(":checked")) sp.click();
 		}
 
@@ -16055,13 +16138,14 @@ function InlineManager() {
 	$("head")
 	.append( //{ Stylesheet
 		E("style")
+		.attr("id", "MPStyleInline") // random_string(16 + random_integer(17)))
 		.html(
 			"a.MPNavLink,.MPNavSpan{}\n" +
 			".MPHidden{display:none !important;}\n" +
 
 			".MPThreadControls{}\n" +
 
-			".MPSoundsAbout{font-size:0.75em !important;line-height:normal !important;;margin:8px 0px 0px 0px !important;}\n" +
+			".MPSoundsAbout{font-size:0.75em !important;line-height:normal !important;margin:8px 0px 0px 0px !important;}\n" +
 			".MPSoundsAbout ol{margin:0px 0px 0px 2em !important;padding:0px !important;display:inline-block !important;}" +
 			".MPSoundsAbout li{margin:0px !important;padding:0px !important;line-height:normal !important;}" +
 
@@ -16120,6 +16204,7 @@ function InlineManager() {
 	)
 	.append(
 		(this.custom_styles = E("style"))
+		.attr("id", "MPStyleCustomInline")// random_string(16 + random_integer(17)))
 	); //}
 	this.update_styles();
 
@@ -16138,7 +16223,7 @@ function InlineManager() {
 	}
 	else {
 		$("#navtopright,#navbotright").prepend("<span class=\"MPNavSpan\"></span>");
-		if ($("style#layout,style#theme").length > 0) { // appchanx
+		if ($("style#layout,style#theme").length > 0) { // appchan-x
 			$("#boardNavDesktop.desktop").append(" <span class=\"MPNavSpan\"></span>");
 		}
 		around0 = [ "" , " " ];

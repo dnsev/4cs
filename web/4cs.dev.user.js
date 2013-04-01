@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.3.1
+// @version        4.4
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -37,7 +37,7 @@ var is_homepage = false;
 if (/http\:\/\/dnsev\.github\.com\/4cs\//.test(window.location.href + "")) {
 	is_homepage = true;
 
-	if (/http\:\/\/dnsev\.github\.com\/4cs\/play/.test(window.location.href + "")) {
+	if (/http\:\/\/dnsev\.github\.com\/4cs\/play($|\/.*)/.test(window.location.href + "")) {
 		// play
 	}
 	else {
@@ -142,6 +142,8 @@ function ajax_get(url, return_as_string, callback_data, progress_callback, done_
 			};
 		}
 		xhr.send();
+
+		return xhr;
 	}
 	else {
 		var arg = {
@@ -172,7 +174,8 @@ function ajax_get(url, return_as_string, callback_data, progress_callback, done_
 				progress_callback(event, callback_data);
 			};
 		}
-		GM_xmlhttpRequest(arg);
+		var g = GM_xmlhttpRequest(arg);
+		return g;
 	}
 }
 function ajax(data) {
@@ -263,6 +266,9 @@ function ajax(data) {
 		// Send
 		if (data.post_data) xhr.send(data.post_data);
 		else xhr.send();
+
+		// Return
+		return xhr;
 	}
 	else {
 		// Args
@@ -344,7 +350,10 @@ function ajax(data) {
 		}
 
 		// Send
-		GM_xmlhttpRequest(arg);
+		var g = GM_xmlhttpRequest(arg);
+
+		// Return
+		return g;
 	}
 }
 
@@ -443,6 +452,17 @@ function has_4chan_pass() {
 	return (p ? true : false);
 }
 
+function random_string(len, chars) {
+	var s = "";
+	chars = chars || "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	for (var i = 0; i < len; ++i) {
+		s += chars[Math.floor(Math.random() * chars.length)];
+	}
+	return s;
+}
+function random_integer(max) {
+	return Math.floor(Math.random() * max);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -849,7 +869,7 @@ function image_load_callback_asynchronous(url_or_filename, load_tag, raw_ui8_dat
 							}
 						}
 					}
-					tag = tag || "?";
+					tag = (tag && tag !== true ? tag : "?");
 
 					// If there was an old sound, complete it
 					if (sounds.length > 0) {
@@ -1529,6 +1549,7 @@ function SettingsManager() {
 	$("head")
 	.append( //{ Stylesheet
 		E("style")
+		.attr("id", "MPStyleSettings") // random_string(16 + random_integer(17)))
 		.html(
 			".MPMenu{display:block !important;position:absolute;left:0;top:0;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);z-index:10001;margin:0px !important;padding:2px !important;width:auto !important;height:auto !important;}\n" +
 			".MPMenuClosed{display:none !important;}\n" +
@@ -1867,6 +1888,8 @@ function InlineUploader() {
 	this.observer = null;
 	this.upload_modified = false;
 	this.form_submit_button_clone = null;
+	this.uploading = false;
+	this.abortable_upload = null;
 
 	this.use_original_animation = false;
 
@@ -1940,6 +1963,7 @@ function InlineUploader() {
 	$("head")
 	.append( //{ Stylesheet
 		E("style")
+		.attr("id", "MPStyleUploader") // random_string(16 + random_integer(17)))
 		.html(
 			".MPSoundUploaderSoundLabel{display:inline-block !important;}\n" +
 			"label:not([hidden]) + .MPSoundUploaderSoundLabel{margin:0px 0px 0px 8px !important;}\n" +
@@ -2443,7 +2467,7 @@ InlineUploader.prototype = {
 		this.open = open;
 
 		if (this.enable_checkbox.is(":checked") != this.open) {
-			this.enable_checkbox.attr("checked", "checked");
+			this.enable_checkbox.prop("checked", true);
 			if (this.enable_checkbox.is(":checked") != this.open) {
 				this.enable_checkbox.click();
 			}
@@ -2656,10 +2680,18 @@ InlineUploader.prototype = {
 		.removeClass("MPSoundUploaderImageFilenameBad")
 		.removeClass("MPSoundUploaderImageFilenameNotSet");
 
+		// Un-original-ify
+		for (var i = 0; i < this.sound_list_items.length; ++i) {
+			if (this.sound_list_items[i].is_original) {
+				this.sound_list_items[i].is_original = false;
+				this.sound_list_items[i].item.removeClass("MPSoundUploaderSoundListItemOriginal");
+			}
+		}
+
 		// Checkbox
 		this.remove_sound_image
 		.css("display", "")
-		.attr("checked", "checked");
+		.prop("checked", true);
 		if (!this.remove_sound_image.is(":checked")) this.remove_sound_image.click();
 
 		// Parse callback
@@ -2772,7 +2804,7 @@ InlineUploader.prototype = {
 				(data.checkbox = E("input"))
 				.addClass("MPSoundUploaderSoundListItemCheck")
 				.attr("type", "checkbox")
-				.attr("checked", "checked")
+				.prop("checked", true)
 				.on("change", {data: data}, function (event) { return self.on_sound_checkbox(event, $(this)); })
 			)
 		);
@@ -2878,7 +2910,7 @@ InlineUploader.prototype = {
 		.removeAttr("title")
 		.val(this.default_no_image_text);
 
-		this.remove_sound_image.removeAttr("checked")
+		this.remove_sound_image.prop("checked", false)
 		.css("display", "none");
 
 		for (var i = 0; i < this.sound_list_items.length; ++i) {
@@ -2997,7 +3029,7 @@ InlineUploader.prototype = {
 				ret = (ocount + count == 1);
 				for (var i = 0; i < this.sound_list_items.length; ++i) {
 					if (this.sound_list_items[i].checkbox.is(":checked")) {
-						this.sound_list_items[i].checkbox.removeAttr("checked");
+						this.sound_list_items[i].checkbox.prop("checked", false);
 						if (this.sound_list_items[i].checkbox.is(":checked")) {
 							this.sound_list_items[i].checkbox.click();
 						}
@@ -3139,8 +3171,9 @@ InlineUploader.prototype = {
 		}
 
 		// 10: Posting
-		if (this.form_submit_button_clone) this.form_submit_button_clone.val("...").attr("disabled", "disabled");
-		ajax({
+		this.uploading = true;
+		if (this.form_submit_button_clone) this.form_submit_button_clone.val("...");
+		this.abortable_upload = ajax({
 			method: "POST",
 			url: target_url,
 			post_data: data.form_data,
@@ -3171,9 +3204,11 @@ InlineUploader.prototype = {
 
 					if (self.form_submit_button_clone) {
 						self.form_submit_button_clone
-						.val(self.form_submit_button.val())
-						.removeAttr("disabled");
+						.val(self.form_submit_button.val());
 					}
+
+					self.uploading = false;
+					self.abortable_upload = null;
 				},
 				upload: {
 					progress: function (event, data) {
@@ -3188,9 +3223,22 @@ InlineUploader.prototype = {
 
 						if (self.form_submit_button_clone) {
 							self.form_submit_button_clone
-							.val(self.form_submit_button.val())
-							.removeAttr("disabled");
+							.val(self.form_submit_button.val());
 						}
+
+						self.uploading = false;
+						self.abortable_upload = null;
+					},
+					abort: function (event, data) {
+						self.error("Upload aborted");
+
+						if (self.form_submit_button_clone) {
+							self.form_submit_button_clone
+							.val(self.form_submit_button.val());
+						}
+
+						self.uploading = false;
+						self.abortable_upload = null;
 					}
 				}
 			}
@@ -3304,13 +3352,13 @@ InlineUploader.prototype = {
 			if (this.reply_container) this.reply_container.find(".warning").html(status || "");
 		}
 
-		if (un_disable && this.form_submit_button_clone) {
+/*		if (un_disable && this.form_submit_button_clone) {
 			var self = this;
 
 			setTimeout(function () {
 				if (self.form_submit_button_clone) self.form_submit_button_clone.removeAttr("disabled");
 			}, 10);
-		}
+		}*/
 	},
 	captcha_reload: function () {
 		// Manual notice
@@ -3465,7 +3513,7 @@ InlineUploader.prototype = {
 		sound_data.tag_name.addClass("MPSoundUploaderSoundListItemBad");
 
 		// Un-tick
-		sound_data.checkbox.removeAttr("checked");
+		sound_data.checkbox.prop("checked", false);
 		if (sound_data.checkbox.is(":checked")) {
 			sound_data.checkbox.click();
 		}
@@ -3481,6 +3529,11 @@ InlineUploader.prototype = {
 			// Remove
 			this.remove_sound(event.data.data, false);
 		}
+		else {
+			// Update count
+			this.update_modified_check();
+			this.update_sound_count();
+		}
 	},
 	on_image_checkbox: function (event, obj) {
 		if (!obj.is(":checked") || event.data.data.tag_name.hasClass("MPSoundUploaderSoundListItemBad")) {
@@ -3489,6 +3542,14 @@ InlineUploader.prototype = {
 	},
 
 	on_form_submit: function (event, obj) {
+		if (this.uploading) {
+			// Abort
+			this.abortable_upload.abort();
+			this.abortable_upload = null;
+			this.uploading = false;
+
+			return false;
+		}
 		return (this.submit() || false);
 	},
 	on_successful_post: function () {
@@ -3512,7 +3573,7 @@ InlineUploader.prototype = {
 		// De-spoiler
 		var sp = this.reply_form.find("*[name=spoiler],#spoiler");
 		if (sp.length > 0 && sp.is(":checked")) {
-			sp.removeAttr("checked");
+			sp.prop("checked", false);
 			if (sp.is(":checked")) sp.click();
 		}
 
@@ -3543,13 +3604,14 @@ function InlineManager() {
 	$("head")
 	.append( //{ Stylesheet
 		E("style")
+		.attr("id", "MPStyleInline") // random_string(16 + random_integer(17)))
 		.html(
 			"a.MPNavLink,.MPNavSpan{}\n" +
 			".MPHidden{display:none !important;}\n" +
 
 			".MPThreadControls{}\n" +
 
-			".MPSoundsAbout{font-size:0.75em !important;line-height:normal !important;;margin:8px 0px 0px 0px !important;}\n" +
+			".MPSoundsAbout{font-size:0.75em !important;line-height:normal !important;margin:8px 0px 0px 0px !important;}\n" +
 			".MPSoundsAbout ol{margin:0px 0px 0px 2em !important;padding:0px !important;display:inline-block !important;}" +
 			".MPSoundsAbout li{margin:0px !important;padding:0px !important;line-height:normal !important;}" +
 
@@ -3608,6 +3670,7 @@ function InlineManager() {
 	)
 	.append(
 		(this.custom_styles = E("style"))
+		.attr("id", "MPStyleCustomInline")// random_string(16 + random_integer(17)))
 	); //}
 	this.update_styles();
 
@@ -3626,7 +3689,7 @@ function InlineManager() {
 	}
 	else {
 		$("#navtopright,#navbotright").prepend("<span class=\"MPNavSpan\"></span>");
-		if ($("style#layout,style#theme").length > 0) { // appchanx
+		if ($("style#layout,style#theme").length > 0) { // appchan-x
 			$("#boardNavDesktop.desktop").append(" <span class=\"MPNavSpan\"></span>");
 		}
 		around0 = [ "" , " " ];
@@ -6164,7 +6227,7 @@ MediaPlayerManager.prototype = {
 			(script.settings["performance"]["async_image_load"] ? image_load_callback_asynchronous : image_load_callback),
 			(script.settings["performance"]["async_png_load"] ? png_load_callback_asynchronous : png_load_callback)
 		];
-		
+
 		if (this.media_player != null) {
 			this.media_player.set_load_callbacks(this.callbacks);
 			this.media_player.set_async_state(script.settings["performance"]["async_videcode_load"], script.settings["performance"]["async_rate"], script.settings["performance"]["async_delay"]);

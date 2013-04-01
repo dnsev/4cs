@@ -1027,14 +1027,14 @@ MediaPlayerCSS.prototype = {
 		var key, style, css_key, css_value;
 		for (key in this.css) {
 			// Add the key
-			stylesheet += key + "{";
+			stylesheet += (this.css_suffix.length == 0 ? key : this.form_key(key)) + "{";
 			// Iterate over its style elements
 			style = this.css[key];
 			for (css_key in style) {
 				// Value
 				css_value = this.parse_out_values(style[css_key]);
 				// Add the style
-				stylesheet += css_key + this.css_suffix + ":" + css_value + ";";
+				stylesheet += css_key + ":" + css_value + ";";
 			}
 			// Finish
 			stylesheet += "}";
@@ -1312,7 +1312,10 @@ MediaPlayerCSS.prototype = {
 			this.load_preset(data["key"]);
 		}
 
-	}
+	},
+	form_key: function (key) {
+		return key.replace(/(\.[a-zA-Z0-9_-]+)/g, "$1" + this.css_suffix);
+	},
 };
 
 
@@ -1323,8 +1326,8 @@ MediaPlayerCSS.prototype = {
 function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, destruct_callback, additional_options) {
 	// Not setup
 	this.created = false;
-	this.namespace = "media_player";
-	this.identifier = ""; // make this dynamic
+	this.identifier = this.random_string(8);
+	this.namespace = "mp_" + this.identifier;
 	this.is_chrome = ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
 	this.title_default =  "Media Player";
 
@@ -1455,9 +1458,14 @@ function MediaPlayer (css, load_callbacks, drag_callback, settings_callback, des
 
 	// CSS
 	this.css = css;
+	//this.css.css_suffix = "_" + this.random_string(4);
 	this.css.on_theme_change_callback = this.update_player_theme_name;
 	this.css.on_theme_change_callback_data = {media_player: this};
-	$("head").append((this.head_css = this.E("style").html(this.css.create_stylesheet())));
+	$("head").append(
+		(this.head_css = this.E("style"))
+		.attr("id", "MPStyleMediaPlayer") // this.random_string(16 + this.random_integer(17)))
+		.html(this.css.create_stylesheet())
+	);
 
 	// Saving
 	this.save_data = [
@@ -3396,17 +3404,17 @@ MediaPlayer.prototype = {
 			// Params
 			var about = this.mp_container_main.find(".MPMainButtonAboutTheatre");
 			if ("no_info" in params && params.no_info) {
-				about.remove("span").addClass("MPTheatreHidden");
+				this.C(about.remove("span"), "MPTheatreHidden");
 			}
 			else {
-				about.remove("span").removeClass("MPTheatreHidden");
+				this.unC(about.remove("span"), "MPTheatreHidden");
 			}
 			if ("info_text" in params) {
 				about.prepend(
 					this.E("span").html(params.info_text)
 				);
 			}
-			this.mp_container_main.addClass("MPTheatreEnabled");
+			this.C(this.mp_container_main, "MPTheatreEnabled");
 		}
 	},
 	theatre_exit: function (params) {
@@ -3428,11 +3436,11 @@ MediaPlayer.prototype = {
 	},
 	theatre_close: function () {
 		if (this.theatre_mode) {
-			this.mp_container_main.removeClass("MPTheatreEnabled");
+			this.unC(this.mp_container_main, "MPTheatreEnabled");
 			this.theatre_animation_vars.dim_div.remove();
 			this.theatre_hide_controls_enabled = false;
 			this.theatre_reset_controls_timer();
-			this.mp_container_main.removeClass("MPControlsForceHide");
+			this.unC(this.mp_container_main, "MPControlsForceHide");
 			this.theatre_mode = false;
 		}
 	},
@@ -3694,22 +3702,22 @@ MediaPlayer.prototype = {
 						// Back
 						this.playback_controls_svg[i][j].rect(g,
 							0.125, 0.0, 0.25, 1.0,
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.875 , 0.0] , [0.875 , 1.0] , [0.375 , 0.5] ],
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 					}
 					else if (i == 1) {
 						// RW
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.5 , 0.0] , [0.5 , 1.0] , [0.125 , 0.5] ],
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.875 , 0.0] , [0.875 , 1.0] , [0.5 , 0.5] ],
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 					}
 					else if (i == 2) {
@@ -3717,17 +3725,17 @@ MediaPlayer.prototype = {
 						if (j == 1) {
 							this.playback_controls_svg[i][j].rect(g,
 								0.125, 0.0, 0.25, 1.0,
-								{"class": "MPControlLinkSvgShapeColor"}
+								{"class": this.CC("MPControlLinkSvgShapeColor")}
 							);
 							this.playback_controls_svg[i][j].rect(g,
 								0.625, 0.0, 0.25, 1.0,
-								{"class": "MPControlLinkSvgShapeColor"}
+								{"class": this.CC("MPControlLinkSvgShapeColor")}
 							);
 						}
 						else {
 							this.playback_controls_svg[i][j].polygon(g,
 								[ [0.25 , 0.0] , [0.25 , 1.0] , [0.75 , 0.5] ],
-								{"class": "MPControlLinkSvgShapeColor"}
+								{"class": this.CC("MPControlLinkSvgShapeColor")}
 							);
 						}
 					}
@@ -3735,22 +3743,22 @@ MediaPlayer.prototype = {
 						// FFW
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.125 , 0.0] , [0.125 , 1.0] , [0.5 , 0.5] ],
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.5 , 0.0] , [0.5 , 1.0] , [0.875 , 0.5] ],
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 					}
 					else {
 						// Next
 						this.playback_controls_svg[i][j].rect(g,
 							0.625, 0.0, 0.25, 1.0,
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 						this.playback_controls_svg[i][j].polygon(g,
 							[ [0.125 , 0.0] , [0.125 , 1.0] , [0.625 , 0.5] ],
-							{"class": "MPControlLinkSvgShapeColor"}
+							{"class": this.CC("MPControlLinkSvgShapeColor")}
 						);
 					}
 				}
@@ -3803,7 +3811,7 @@ MediaPlayer.prototype = {
 
 		if (!activate) return;
 
-		this.playlist_index_container.addClass("MPPlaylistIndexContainerActive");
+		this.C(this.playlist_index_container, "MPPlaylistIndexContainerActive");
 		if (this.playlist_index_timer !== null) {
 			clearTimeout(this.playlist_index_timer);
 			this.playlist_index_timer = null;
@@ -3811,7 +3819,7 @@ MediaPlayer.prototype = {
 		var self = this;
 		this.playlist_index_timer = setTimeout(function () {
 			self.playlist_index_timer = null;
-			self.playlist_index_container.removeClass("MPPlaylistIndexContainerActive");
+			self.unC(self.playlist_index_container, "MPPlaylistIndexContainerActive");
 		}, 1000);
 	},
 
@@ -4051,10 +4059,24 @@ MediaPlayer.prototype = {
 	C: function (elem, cls) {
 		elem.addClass(cls + this.css.css_suffix);
 	},
+	CC: function (cls) {
+		return cls + this.css.css_suffix;
+	},
 	unC: function (elem, cls) {
 		elem.removeClass(cls + this.css.css_suffix);
 	},
 
+	random_integer: function (max) {
+		return Math.floor(Math.random() * max);
+	},
+	random_string: function (len, chars) {
+		var s = "";
+		chars = chars || "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		for (var i = 0; i < len; ++i) {
+			s += chars[Math.floor(Math.random() * chars.length)];
+		}
+		return s;
+	},
 	text_to_html: function (str) {
 		return str.replace(/&/g, "&amp;")
 			.replace(/>/g, "&gt;")
@@ -5553,11 +5575,11 @@ MediaPlayer.prototype = {
 	},
 
 	on_theatre_mode_hide_controls_timeout: function () {
-		this.mp_container_main.addClass("MPControlsForceHide");
+		this.C(this.mp_container_main, "MPControlsForceHide");
 		this.theatre_hide_controls_timer = null;
 	},
 	on_theatre_mode_mousemove: function (event) {
-		event.data.media_player.mp_container_main.removeClass("MPControlsForceHide");
+		event.data.media_player.unC(event.data.media_player.mp_container_main, "MPControlsForceHide");
 		event.data.media_player.theatre_reset_controls_timer();
 	},
 
@@ -5897,7 +5919,7 @@ MediaPlayer.prototype = {
 			this.resize_side_sizes = [ this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0], this.resize_sizes[0] ];
 
 			// CSS update
-			this.mp_container_main.removeClass("MPContainerMainBorders");
+			this.unC(this.mp_container_main, "MPContainerMainBorders");
 			this.resizing_container.css("display", "");
 
 			// Size update loop
@@ -5953,7 +5975,7 @@ MediaPlayer.prototype = {
 
 			this.resize_container_border_hovered = false;
 
-			this.mp_container_main.addClass("MPContainerMainBorders");
+			this.C(this.mp_container_main, "MPContainerMainBorders");
 			this.resizing_container.css("display", "none");
 
 			return;
