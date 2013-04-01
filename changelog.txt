@@ -1,4 +1,11 @@
-﻿4.3.1
+﻿4.4
+- Fixed some compatability for appchan-x
+- Fixed a tagging error when no tag in the file exists
+- Fixed some bugs in the uploader
+- Uploader is now able to abort the upload
+- Prepared dynamic CSS style naming for use, if ever necessary
+
+4.3.1
 - Defaulted post group parsing to 25 posts at a time, with a delay of 1/8 seconds
 
 4.3
