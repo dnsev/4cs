@@ -1,4 +1,9 @@
-﻿4.4
+﻿4.4.1
+- Added header validation to the uploader; makes sure ogg files have the correct header, and aren't just renamed .mp3s
+- Made the load queue skippable in the Media Player by clicking on the "Loading: ?" button
+- Small bugfix in group post parsing
+
+4.4
 - Fixed some compatability for appchan-x
 - Fixed a tagging error when no tag in the file exists
 - Fixed some bugs in the uploader
