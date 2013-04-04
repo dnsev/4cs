@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.4.1
+// @version     4.4.2
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -17217,7 +17217,7 @@ InlineManager.prototype = {
 	on_url_click: function (event) {
 		// Add to playlist
 		if (event.which == 1) {
-			if (event.data.media_type) {
+			if (event.data.media_type && script.settings["inline"]["url_media_links_open_in_player"]) {
 				// Theatre-view activation
 				var n = "link_click_theatre_" + event.data.media_type;
 				var skip_to = (media_player_manager.media_player !== null && script.settings["inline"]["link_click_theatre_force_start"]);
@@ -17247,16 +17247,6 @@ InlineManager.prototype = {
 				media_player_manager.open_player(true);
 
 				// Custom
-				/*var fn;
-				if (event.data.media_type === "youtube") {
-					fn = media_player_manager.media_player.attempt_load_youtube_video;
-				}
-				else if (event.data.media_type === "vimeo") {
-					fn = media_player_manager.media_player.attempt_load_vimeo_video;
-				}
-				else { // if (event.data.media_type === "soundcloud") {
-					fn = media_player_manager.media_player.attempt_load_soundcloud_sound;
-				}*/
 				var fn = media_player_manager.media_player.queue_load;
 
 				// Generic
@@ -18846,6 +18836,7 @@ function Script() {
 			"url_hijack": true,
 			"url_hijack_remove": false,
 			"url_replace_media_links": true,
+			"url_media_links_open_in_player": true,
 			"url_left_click_open": false,
 
 			"video_preview": true,
@@ -19381,11 +19372,23 @@ Script.prototype = {
 				"section": "Link Replacement",
 				"update_value": function () { this.current = script.settings["inline"]["url_replace_media_links"]; },
 				"label": "Media URL Replacement",
-				"description": "Transforms media links into links that open in the player",
+				"description": "Transforms media links into titled links with some popup info",
 				"values": [ true , false ],
 				"descr": [ "Enabled" , "Disabled" ],
 				"change": function (value) {
 					script.settings["inline"]["url_replace_media_links"] = value;
+					script.settings_save();
+				}
+			},
+			{
+				"section": "Link Replacement",
+				"update_value": function () { this.current = script.settings["inline"]["url_media_links_open_in_player"]; },
+				"label": "Media URLs Open In Player",
+				"description": "Media links are opened in the player",
+				"values": [ true , false ],
+				"descr": [ "Enabled" , "Disabled" ],
+				"change": function (value) {
+					script.settings["inline"]["url_media_links_open_in_player"] = value;
 					script.settings_save();
 				}
 			},
