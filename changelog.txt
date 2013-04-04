@@ -1,4 +1,7 @@
-﻿4.4.1
+﻿4.4.2
+- Added an option to maintain media URLs, but not have them open in the player
+
+4.4.1
 - Added header validation to the uploader; makes sure ogg files have the correct header, and aren't just renamed .mp3s
 - Made the load queue skippable in the Media Player by clicking on the "Loading: ?" button
 - Small bugfix in group post parsing
