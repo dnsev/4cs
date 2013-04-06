@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.4.2
+// @version        4.4.3
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -11,7 +11,7 @@
 // @include        https://boards.4chan.org/*
 // @include        http://archive.foolz.us/*
 // @include        https://archive.foolz.us/*
-// @include        http://dnsev.github.com/4cs/*
+// @include        http://dnsev.github.io/4cs/*
 // @icon           data:image/gif;base64,R0lGODlhEAAQAKECAAAAAGbMM////////yH5BAEKAAIALAAAAAAQABAAAAIllI+pB70KQgAPNUmroDHX7Gie95AkpCUn1ISlhKVR/MEre6dLAQA7
 // @require        https://raw.github.com/dnsev/4cs/master/web/jquery.js
 // @require        https://raw.github.com/dnsev/4cs/master/web/jquery.svg.pack.js
@@ -34,10 +34,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 var no_load = false;
 var is_homepage = false;
-if (/http\:\/\/dnsev\.github\.com\/4cs\//.test(window.location.href + "")) {
+if (/http\:\/\/dnsev\.github\.(com|io)\/4cs\//.test(window.location.href + "")) {
 	is_homepage = true;
 
-	if (/http\:\/\/dnsev\.github\.com\/4cs\/play($|\/.*)/.test(window.location.href + "")) {
+	if (/http\:\/\/dnsev\.github\.(com|io)\/4cs\/play($|\/.*)/.test(window.location.href + "")) {
 		// play
 	}
 	else {
@@ -1619,7 +1619,7 @@ function SettingsManager() {
 		.append(
 			E("a")
 			.addClass("MPMenuItem")
-			.attr("href", "http://dnsev.github.com/4cs/")
+			.attr("href", "http://dnsev.github.io/4cs/")
 			.attr("target", "_blank")
 			.html("Homepage")
 			.on("click", {item:2}, function (event) {
@@ -1692,7 +1692,7 @@ function SettingsManager() {
 						(this.settings_update_link = E("a"))
 						.addClass("MPSettingsTitleUpdate")
 						.css("display", "none")
-						.attr("href", "http://dnsev.github.com/4cs/")
+						.attr("href", "http://dnsev.github.io/4cs/")
 						.attr("target", "_blank")
 						.html("An update is available!")
 						.on("click", function (event) {
@@ -3722,7 +3722,7 @@ function InlineManager() {
 		E("a")
 		.addClass("MPNavLink")
 		.html("Media Player")
-		.attr("href", "http://dnsev.github.com/4cs/")
+		.attr("href", "http://dnsev.github.io/4cs/")
 		.attr("target", "_blank")
 		.on("click", function (event) {
 			return self.on_menu_link_click($(this), event);
@@ -5270,7 +5270,7 @@ InlineManager.prototype = {
 					.append(
 						E("a")
 						.html("script's homepage")
-						.attr("href", "http://dnsev.github.com/4cs/")
+						.attr("href", "http://dnsev.github.io/4cs/")
 						.attr("target", "_blank")
 						.on("click", {}, function (event) {
 							event.stopPropagation();
@@ -6317,7 +6317,7 @@ function Script() {
 	this.storage_name = "4cs";
 
 	// Changelog URL
-	this.update_version_url = "http://dnsev.github.com/4cs/changelog.txt";
+	this.update_version_url = "http://dnsev.github.io/4cs/changelog.txt";
 
 	// Update URL
 	this.update_url = "https://raw.github.com/dnsev/4cs/master/web/4cs.dev.user.js";
@@ -6581,7 +6581,7 @@ Script.prototype = {
 				"section": "Sounds",
 				"update_value": function () { this.current = script.settings["inline"]["sound_thread_control"]; },
 				"label": "Thread Control Links",
-				"description": "Put the sound thread management links at the top of the thread",
+				"description": "Put the sound thread management links at the top of the thread (\"Load All\", etc.)",
 				"values": [ true , false ],
 				"descr": [ "Enabled" , "Disabled" ],
 				"change": function (value) {
