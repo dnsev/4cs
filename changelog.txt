@@ -1,4 +1,8 @@
-﻿4.4.2
+﻿4.4.3
+- Updated the domain of the github pages site
+- Small change to a description in the settings
+
+4.4.2
 - Added an option to maintain media URLs, but not have them open in the player
 
 4.4.1
