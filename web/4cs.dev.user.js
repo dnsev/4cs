@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.4.3
+// @version        4.4.4
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -1511,6 +1511,12 @@ ThreadManager.prototype = {
 					if (image_name.length > 0) {
 						image_name = $(image_name[image_name.length - 1]).attr("title");
 					}
+					else if ((image_name = ft.find("a")).length > 0) {
+						image_name = $(image_name[image_name.length - 1]).html().trim();
+					}
+					else {
+						image_name = null;
+					}
 				}
 			}
 			// Deafult
@@ -1534,7 +1540,7 @@ ThreadManager.prototype = {
 		}
 
 		// Auto checking images
-		inline_manager.parse_post(this.posts[post_id], redo, post_data_copy);
+		if (this.posts[post_id] != null) inline_manager.parse_post(this.posts[post_id], redo, post_data_copy);
 		if (script.settings["inline"]["url_replace"]) {
 			inline_manager.parse_post_for_urls(this.posts[post_id], redo, post_data_copy);
 		}
@@ -1889,6 +1895,8 @@ SettingsManager.prototype = {
 // Uploader
 ///////////////////////////////////////////////////////////////////////////////
 function InlineUploader() {
+	var self = this;
+
 	this.mode = "";
 	this.open = false;
 	this.auto_opened = false;
@@ -1897,6 +1905,7 @@ function InlineUploader() {
 	this.observer = null;
 	this.upload_modified = false;
 	this.form_submit_button_clone = null;
+	this.error_container = null;
 	this.uploading = false;
 	this.abortable_upload = null;
 	this.good_header = string_to_uint8array("OggS\x00\x02");
@@ -1947,14 +1956,16 @@ function InlineUploader() {
 		"name": {type:0, alt:["name"]},
 		"email": {type:0, alt:["email"]},
 		"sub": {type:0, alt:["sub"]},
-		"com": {type:0, alt:["com"]},
+		"com": {type:0, alt:["com",function (form, container) {
+			var x = form.find("textarea.field");
+			return (x.length > 0 ? x.val() : null);
+		}]},
 		"recaptcha_challenge_field": {type:0, blank:false, missing_with_pass:true, alt:["recaptcha_challenge_field",function (form, container) {
-			var x = form.find(".captchaimg img");
+			var x = form.find((self.mode == "4chanx3" ? ".captcha-img img" :".captchaimg img"));
 			return (x.length > 0 ? x.attr("src").match(/\?c=([A-Za-z0-9\-_]*)/)[1] : null);
-			return null;
 		}]},
 		"recaptcha_response_field": {type:0, blank:false, missing_with_pass:true, blank_error:"Captcha missing", alt:["recaptcha_response_field",function (form, container) {
-			var c = form.find(".captchainput .field");
+			var c = form.find((self.mode == "4chanx3" ? ".captcha-input.field" : ".captchainput .field"));
 			return (c.length == 1 ? c.val() : null);
 		}]},
 		"upfile": {type:3, key:"file", missing:true},
@@ -2034,6 +2045,8 @@ function InlineUploader() {
 			".MPSoundUploaderDragDropNotifier{display:block;position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.125);z-index:1;font-size:2em;font-weight:bold;text-align:center;}\n" +
 			".MPSoundUploaderDragDropNotifier.MPSoundUploaderDragDropNotifierOff{display:none !important;}\n" +
 
+			".MPSoundUploaderCustomError{color:red;cursor:pointer;padding-left:6px;}\n" +
+
 			((script.settings["upload"]["enabled"] && script.settings["upload"]["block_other_scripts"]) ? (
 				"div.soundsLinkDiv{display:none !important}\n" +
 				"div#soundsPanel{display:none !important}\n"
@@ -2061,7 +2074,8 @@ InlineUploader.prototype = {
 		if (target.attr("id") == "quickReply") this.mode = "inline";
 		else if (target.attr("id") == "qr") {
 			this.mode = "4chanx";
-			if (target.find("#qrtab.move").length > 0) this.mode = "appchanx";
+			if (target.find("input#qr-file-spoiler").length > 0) this.mode = "4chanx3";
+			else if (target.find("#qrtab.move").length > 0) this.mode = "appchanx";
 			else if (form.find("#spoilerLabel").find(".riceCheck").length > 0) this.mode += "+ss";
 		}
 
@@ -2093,6 +2107,31 @@ InlineUploader.prototype = {
 				)
 				.append(
 					"Sounds"
+				)
+			); //}
+		}
+		else if (this.mode == "4chanx3") {
+			var sp = form.find("#file-n-submit");
+			sp.after( //{ Sounds checkbox
+				E("div")
+				.html(
+					E("label")
+					.addClass("MPSoundUploaderSoundLabel")
+					.append(
+						(this.enable_checkbox = E("input"))
+						.attr("type", "checkbox")
+					)
+					.append(
+						"Sounds"
+					)
+				)
+				.append(
+					(this.error_container = E("span"))
+					.addClass("MPSoundUploaderCustomError")
+					.css("display", "none")
+					.on("click", function (event) {
+						$(this).html("").style("display", "none");
+					})
 				)
 			); //}
 		}
@@ -2375,9 +2414,9 @@ InlineUploader.prototype = {
 		);
 
 		// Captcha reloading
-		form.find(".captchaimg img,#qrCaptcha")
+		form.find(".captchaimg img,#qrCaptcha,.captcha-img img")
 		.on("load", {form: form}, function (event) {
-			var cv = event.data.form.find(".captchainput .field,#qrCapField");
+			var cv = event.data.form.find(".captchainput .field,#qrCapField,.captcha-input.field");
 			if (cv.attr("placeholder_temp") !== undefined) {
 				cv
 				.attr("placeholder", cv.attr("placeholder_temp"))
@@ -2513,7 +2552,7 @@ InlineUploader.prototype = {
 				var objs = [this.form_file_select[0]];
 
 				// Rice
-				var o = this.reply_form.find("#file,.riceFile");
+				var o = this.reply_form.find("#file,.riceFile,#qr-file-button,#qr-no-file,#qr-filename,#qr-filerm");
 				for (var i = 0; i < o.length; ++i) {
 					objs.push(o[i]);
 				}
@@ -2591,7 +2630,7 @@ InlineUploader.prototype = {
 				var objs = [this.form_file_select[0]];
 
 				// Rice
-				var o = this.reply_form.find("#file,.riceFile");
+				var o = this.reply_form.find("#file,.riceFile,#qr-file-button,#qr-no-file,#qr-filename,#qr-filerm");
 				for (var i = 0; i < o.length; ++i) {
 					objs.push(o[i]);
 				}
@@ -3363,6 +3402,10 @@ InlineUploader.prototype = {
 			if (status) this.reply_container.find("#qrError").css("display", "block").html(status);
 			else this.reply_container.find("#qrError").css("display", "").html("");
 		}
+		else if (this.mode == "4chanx3") {
+			if (status) this.error_container.css("display", "").html(status);
+			else this.error_container.css("display", "none").html("");
+		}
 		else {
 			if (this.reply_container) this.reply_container.find(".warning").html(status || "");
 		}
@@ -3377,11 +3420,11 @@ InlineUploader.prototype = {
 	},
 	captcha_reload: function () {
 		// Manual notice
-		var cv = this.reply_form.find(".captchainput .field,#qrCapField");
+		var cv = this.reply_form.find(".captchainput .field,#qrCapField,.captcha-input.field");
 		cv.val("").attr("placeholder_temp", cv.attr("placeholder")).attr("placeholder", "Reload your captcha; click the image!").attr("readonly", "readonly");
 
 		// Auto-reload (hopefully)
-		if (this.reply_form) this.reply_form.find(".captchaimg img,.captchaimg,#qrCaptcha").click();
+		if (this.reply_form) this.reply_form.find(".captchaimg img,.captchaimg,#qrCaptcha,.captcha-img img").click();
 	},
 
 	is_mime_type: function (s, type) {
@@ -3602,7 +3645,9 @@ InlineUploader.prototype = {
 		// Update thread
 		if (script.settings["upload"]["autoupdate_after_post"]) {
 			setTimeout(function () {
-				$("input[type=button][name=\"Update Now\"]").click();
+				var o = $("input[type=button][name=\"Update Now\"]");
+				if (o.length == 0) o = $("input[type=button][name=\"Update\"]");
+				o.click();
 			}, 1500);
 		}
 	},
@@ -3704,6 +3749,7 @@ function InlineManager() {
 	}
 	else {
 		$("#navtopright,#navbotright").prepend("<span class=\"MPNavSpan\"></span>");
+		$(".navLinks.desktop").append(" <span class=\"MPNavSpan\"></span>"); // 4chanx 3
 		if ($("style#layout,style#theme").length > 0) { // appchan-x
 			$("#boardNavDesktop.desktop").append(" <span class=\"MPNavSpan\"></span>");
 		}
