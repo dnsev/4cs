@@ -1,5 +1,5 @@
 ﻿4.4.4
-- Added compatability with 4chan-x 3
+- Added compatibility with 4chan-x 3
 
 4.4.3
 - Updated the domain of the github pages site
@@ -14,7 +14,7 @@
 - Small bugfix in group post parsing
 
 4.4
-- Fixed some compatability for appchan-x
+- Fixed some compatibility for appchan-x
 - Fixed a tagging error when no tag in the file exists
 - Fixed some bugs in the uploader
 - Uploader is now able to abort the upload
@@ -125,7 +125,7 @@
 - CSS fixes for some extension
 
 2.1.6
-- Added some compatability with ihavenoface's 4chan x, with Youtube link replacement:
+- Added some compatibility with ihavenoface's 4chan x, with Youtube link replacement:
   [embed] can be optionally retained while the link can be opened in the player
 
 2.1.5
@@ -272,7 +272,7 @@
 - Made [tag] links colored a bit differently.
 
 1.8.4.3
-- Added a bit of compatability with Chrome's internal userscript manager. Still can't play Youtube videos without Tampermonkey.
+- Added a bit of compatibility with Chrome's internal userscript manager. Still can't play Youtube videos without Tampermonkey.
 
 1.8.4.2
 - Fixed a bug with DOM replacement, manifested in URL replacement within quotes.
