@@ -1,4 +1,7 @@
-﻿4.4.3
+﻿4.4.4
+- Added compatability with 4chan-x 3
+
+4.4.3
 - Updated the domain of the github pages site
 - Small change to a description in the settings
 
