@@ -243,29 +243,42 @@ PageBrowser.prototype = {
 		image_preview_close();
 
 		// Scroll
-		var scrolled = false;
-		if ("scroll" in vars) {
-			var scroll_to = $("[multi_id=" + vars["scroll"].replace(/\W/g, "\\$&") + "]:visible");
-			if (scroll_to.length > 0) {
-				try {
-					$(document).scrollTop(scroll_to.offset().top);
-					scrolled = true;
-				}
-				catch (e) {}
-			}
-		}
-		//if (!refresh && !scrolled) $(document).scrollTop(0);
+		update_page_actions();
 
-		if ("activate" in vars) {
-			var activate = $("[multi_id=" + vars["activate"].replace(/\W/g, "\\$&") + "]:visible");
-			if (activate.length > 0) {
-				$(activate[0]).trigger("click");
-			}
-		}
 	}
 };
 var page_browser = new PageBrowser();
 var page_vars_maintain = ["all","dev","help"];
+function update_page_actions() {
+	var vars = window_hash.vars;
+
+	var scrolled = false;
+	if ("scroll" in vars) {
+		var scroll_to = $("[multi_id=" + vars["scroll"].replace(/\W/g, "\\$&") + "]:visible");
+		if (scroll_to.length > 0) {
+			try {
+				$(document).scrollTop(scroll_to.offset().top);
+				scrolled = true;
+			}
+			catch (e) {}
+		}
+	}
+
+	$(".Highlighted").removeClass("Highlighted");
+	if ("highlight" in vars) {
+		var hl = $("[multi_id=" + vars["highlight"].replace(/\W/g, "\\$&") + "]:visible");
+		if (hl.length > 0) {
+			hl.addClass("Highlighted");
+		}
+	}
+
+	if ("activate" in vars) {
+		var activate = $("[multi_id=" + vars["activate"].replace(/\W/g, "\\$&") + "]:visible");
+		if (activate.length > 0) {
+			$(activate[0]).trigger("click");
+		}
+	}
+}
 
 // Change log
 var change_log_version = null;
@@ -321,13 +334,22 @@ function display_change_log(log) {
 	cl.css("display", "");
 	cl.html("");
 	for (var i = 0; i < log.length; ++i) {
-		var list;
-		cl.append(
+		var container, list;
+		cl.append(container = $(document.createElement("p")));
+		container.attr("multi_id", log[i][0].replace(/\W/gi, "_"));
+		container.append(
 			$(document.createElement("div"))
 			.addClass("ChangeLogLabel")
-			.html(text_to_html(log[i][0]) + (i == 0 ? "<span class=\"ChangeLogLabelCurrent\"> (current)</span>" : ""))
+			.html(
+				$(document.createElement("a"))
+				.attr("href", "#changes?highlight=" + container.attr("multi_id") + "&scroll=" + container.attr("multi_id"))
+				.html(text_to_html(log[i][0]))
+			)
+			.append(
+				(i == 0 ? "<span class=\"ChangeLogLabelCurrent\"> (current)</span>" : "")
+			)
 		);
-		cl.append(
+		container.append(
 			(list = $(document.createElement("ul")))
 			.addClass("ChangeLogList")
 		);
@@ -341,6 +363,9 @@ function display_change_log(log) {
 
 	// Compare
 	version_compare();
+
+	// Update
+	update_page_actions();
 }
 
 // Image previewing

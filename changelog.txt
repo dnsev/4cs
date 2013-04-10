@@ -3,7 +3,7 @@
 - Slight re-arrangement of some of the settings locations
 - Update of the thread controls location and how it executes
 - Bugfixes on the archive
-- Bugfixes for badly loading a post
+- Post group loading now ignores posts which will cause errors when parsed
 
 4.4.4
 - Added compatibility with 4chan-x 3

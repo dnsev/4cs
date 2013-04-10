@@ -560,3 +560,6 @@ a.InstallLink:active {
 	display: block;
 	cursor: pointer;
 }
+.Highlighted {
+	background: #bddef1 !important;
+}
