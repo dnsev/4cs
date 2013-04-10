@@ -365,7 +365,7 @@ function display_change_log(log) {
 	version_compare();
 
 	// Update
-	update_page_actions();
+	if ($("#change_log:visible").length > 0) update_page_actions();
 }
 
 // Image previewing
