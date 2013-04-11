@@ -192,19 +192,21 @@ void extractSounds(cstring filename) {
 			}
 		}
 		if (!found) {
-			s = 0;
-			j = 0;
-			unmaskStateTemp = unmaskState;
-			maskTemp = mask;
-			while (true) {
-				if ((static_cast<unsigned char>(source[i + j]) ^ maskTemp) != static_cast<unsigned char>(magicStrings[s][j]) || ++j >= headerLength) break;
-				unmaskStateTemp = (1664525 * unmaskStateTemp + 1013904223) & 0xFFFFFFFF;
-				maskTemp = unmaskStateTemp >> 24;
-				unmaskStateTemp += (static_cast<unsigned char>(source[i + j]) ^ maskTemp);
-			}
-			if (j >= headerLength) {
-				found = true;
-				masked = true;
+			for (s = 0; s < magicStringsCount; ++s) {
+				j = 0;
+				unmaskStateTemp = unmaskState;
+				maskTemp = mask;
+				while (true) {
+					if ((static_cast<unsigned char>(source[i + j]) ^ maskTemp) != static_cast<unsigned char>(magicStrings[s][j]) || ++j >= headerLength) break;
+					unmaskStateTemp = (1664525 * unmaskStateTemp + 1013904223) & 0xFFFFFFFF;
+					maskTemp = unmaskStateTemp >> 24;
+					unmaskStateTemp += (static_cast<unsigned char>(source[i + j]) ^ maskTemp);
+				}
+				if (j >= headerLength) {
+					found = true;
+					masked = true;
+					break;
+				}
 			}
 		}
 		// Found
