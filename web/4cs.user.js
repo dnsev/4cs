@@ -13,7 +13,7 @@
 // @include     https://archive.foolz.us/*
 // @include     http://dnsev.github.io/4cs/*
 // @icon        data:image/gif;base64,R0lGODlhEAAQAKECAAAAAGbMM////////yH5BAEKAAIALAAAAAAQABAAAAIllI+pB70KQgAPNUmroDHX7Gie95AkpCUn1ISlhKVR/MEre6dLAQA7
-// @updateURL   https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
+// @updateURL   https://raw.github.com/dnsev/4cs/master/web/4cs.meta.js
 // @downloadURL https://raw.github.com/dnsev/4cs/master/web/4cs.user.js
 // ==/UserScript==
 // For license information, check the individual files

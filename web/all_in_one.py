@@ -253,9 +253,12 @@ def main():
 	input = sys.argv[1];
 	output = sys.argv[2];
 	shrink = (len(sys.argv) >= 4 and sys.argv[3] == "-min");
+	meta_only = (len(sys.argv) >= 4 and sys.argv[len(sys.argv) - 1] == "-meta");
 	if (input.lower() == output.lower()):
 		print "Error: input and output scripts cannot be the same";
 		return -1;
+	output_meta = output.replace(".user.js", ".meta.js");
+	output_target = output.replace(".meta.js", ".user.js");
 
 	# Read input
 	f = open(input, "rb");
@@ -314,8 +317,14 @@ def main():
 		else:
 			requires.append(metadata[0][i][1].rsplit("/", 1)[-1]);
 	for i in range(len(metadata[1])):
-		out.write("// @" + metadata[1][i][0] + (" " * (padding - len(metadata[1][i][0]))) + metadata[1][i][1].replace("{{target}}", output) + newline);
+		out.write("// @" + metadata[1][i][0] + (" " * (padding - len(metadata[1][i][0]))) + metadata[1][i][1].replace("{{target}}", output_target).replace("{{meta}}", output_meta) + newline);
 	out.write("// ==/" + metadata_labels[0] + "==" + newline);
+
+	# Done
+	if (meta_only):
+		out.close();
+		return 0;
+
 	if (not shrink):
 		out.write(newline + newline);
 	else:

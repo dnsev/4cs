@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.5
+// @version        4.5.0.1
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -23,7 +23,7 @@
 // @require        https://raw.github.com/dnsev/4cs/master/web/MediaPlayer.js
 // ==/UserScript==
 // ==Meta==
-// @updateURL      https://raw.github.com/dnsev/4cs/master/web/{{target}}
+// @updateURL      https://raw.github.com/dnsev/4cs/master/web/{{meta}}
 // @downloadURL    https://raw.github.com/dnsev/4cs/master/web/{{target}}
 // ==/Meta==
 
