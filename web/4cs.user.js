@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.5
+// @version     4.5.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -10914,7 +10914,7 @@ ThreadManager.prototype={
 	}
 }
 var thread_manager=null;
-function SettingsManager(){
+function SettingsManager(inline_manager){
 	var self=this;
 	$("head")
 	.append(
@@ -11069,33 +11069,118 @@ function SettingsManager(){
 	this.section_default="Other Settings";
 	this.sections={};
 	this.settings_data=[];
+	if(inline_manager.mode=="4chanx3"){
+		var menu_close=function(){
+			document.dispatchEvent(new CustomEvent("CloseMenu",{detail:{}}));
+		};
+		var sub_entries=[{
+			el:(E("a"))
+				.attr("href","http://dnsev.github.io/4cs/")
+				.attr("target","_blank")
+				.html("Open Player")[0],
+			open:function(){
+				$(this.el).off("click").on("click",{menu_close:menu_close,item:0},function(event){
+					return self.on_menu_item_click(this,event);
+				});
+				return true;
+			},
+			type:"header"
+		},
+		{
+			el:(E("a"))
+				.attr("href","http://dnsev.github.io/4cs/")
+				.attr("target","_blank")
+				.html("Settings")[0],
+			open:function(){
+				$(this.el).off("click").on("click",{menu_close:menu_close,item:1},function(event){
+					return self.on_menu_item_click(this,event);
+				});
+				return true;
+			},
+			type:"header"
+		},
+		{
+			el:(E("a"))
+				.attr("href","http://dnsev.github.io/4cs/")
+				.attr("target","_blank")
+				.html("Homepage")[0],
+			open:function(){
+				$(this.el).off("click").on("click",{menu_close:menu_close,item:2},function(event){
+					return self.on_menu_item_click(this,event);
+				});
+				return true;
+			},
+			type:"header"
+		},
+		{
+			el:(E("a"))
+				.attr("href","http://dnsev.github.io/4cs/")
+				.attr("target","_blank")
+				.html("Help")[0],
+			open:function(){
+				$(this.el).off("click").on("click",{menu_close:menu_close,item:3},function(event){
+					return self.on_menu_item_click(this,event);
+				});
+				return true;
+			},
+			type:"header"
+		}];
+		var el;
+		(el=E("a"))
+		.attr("href","http://dnsev.github.io/4cs/")
+		.attr("target","_blank")
+		.html("Media Player");
+		document.dispatchEvent(new CustomEvent("AddMenuEntry",{
+			detail:{
+				el:el[0],
+				open:function(){
+					$(this.el).off("click").on("click",function(event){
+						if(event.which!=1)menu_close();
+						return(event.which!=1);
+					});
+					return true;
+				},
+				type:"header",
+				subEntries:sub_entries
+			}
+		}));
+	}
 }
 SettingsManager.prototype={
 	constructor:SettingsManager,
 	on_menu_item_click:function(link,event){
-		if(event.which!=1)return true;
+		if(event.which!=1){
+			if(event.data.menu_close)event.data.menu_close.call(this);
+			else this.menu_close();
+			return true;
+		}
 		switch(event.data.item){
 			case 0:
 			{
 				media_player_manager.open_player(true);
-				this.menu_close();
+				if(event.data.menu_close)event.data.menu_close.call(this);
+				else this.menu_close();
 			}
 			return false;
 			case 1:
 			{
 				this.settings_open();
-				this.menu_close();
+				if(event.data.menu_close)event.data.menu_close.call(this);
+				else this.menu_close();
 			}
 			return false;
 			case 3:
 			{
 				inline_manager.display_info("help");
-				this.menu_close();
+				if(event.data.menu_close)event.data.menu_close.call(this);
+				else this.menu_close();
 			}
 			return false;
 			default:
 			{
-				this.menu_close();
+				if(event.data.menu_close)event.data.menu_close.call(this);
+				else this.menu_close();
+				event.stopPropagation();
 			}
 			return true;
 		}
@@ -11215,7 +11300,7 @@ SettingsManager.prototype={
 		++this.sections[section][2];
 	},
 };
-function InlineUploader(){
+function InlineUploader(inline_manager){
 	var self=this;
 	this.mode="";
 	this.open=false;
@@ -11341,6 +11426,8 @@ function InlineUploader(){
 			".MPSoundUploaderDragDropNotifier{display:block;position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.125);z-index:1;font-size:2em;font-weight:bold;text-align:center;}\n"+
 			".MPSoundUploaderDragDropNotifier.MPSoundUploaderDragDropNotifierOff{display:none !important;}\n"+
 			".MPSoundUploaderCustomError{color:red;cursor:pointer;padding-left:6px;}\n"+
+			".MPSoundUploaderBiggerAlert{opacity:0.8;padding-top:2px;}\n"+
+			".MPSoundUploaderBiggerAlertHidden{display:none !important;}\n"+
 			((script.settings["upload"]["enabled"]&&script.settings["upload"]["block_other_scripts"])?(
 				"div.soundsLinkDiv{display:none !important}\n"+
 				"div#soundsPanel{display:none !important}\n"
@@ -11483,6 +11570,47 @@ InlineUploader.prototype={
 					"Sounds ]"
 				)
 			);
+		}
+		form.append(
+			(this.bigger_alert=E("div"))
+			.addClass("MPSoundUploaderBiggerAlert MPSoundUploaderBiggerAlertHidden")
+			.append(
+				"Sounds image not working? Make it "
+			)
+			.append(
+				E("a")
+				.attr("href","http://dnsev.github.io/4cs/#bigger")
+				.attr("target","_blank")
+				.html("bigger")
+			)
+			.append("!")
+		);
+		var MutationObserver=(window.MutationObserver||window.WebKitMutationObserver);
+		if(MutationObserver){
+			try{
+				var error_obj=$($(".MPSoundUploaderCustomError,#qrError,.warning")[0]);
+				var mo=new MutationObserver(function(records){
+					if(error_obj.html().trim().length==0||!error_obj.is(":visible")){
+						self.bigger_alert.addClass("MPSoundUploaderBiggerAlertHidden");
+					}
+					else{
+						self.bigger_alert.removeClass("MPSoundUploaderBiggerAlertHidden");
+					}
+				});
+				mo.observe(
+					error_obj[0],
+					{
+						"attributes":true,
+						"characterData":true,
+						"subtree":true,
+						"childList":true
+					}
+				);
+			}
+			catch(e){
+				console.log(e);
+				MutationObserver=null;
+			}
 		}
 		this.enable_checkbox.on("click",{},function(event){
 			self.set_panel_state($(this).is(":checked"),null);
@@ -12669,19 +12797,19 @@ InlineUploader.prototype={
 };
 function InlineManager(){
 	var self=this;
-	var mode="inline";
+	this.mode="inline";
 	if(is_homepage){
-		mode="home";
+		this.mode="home";
 	}
 	else if(is_archive){
-		mode="archive";
+		this.mode="archive";
 	}
 	else{
-		if($("html").hasClass("fourchan-x"))mode="4chanx3";
+		if($("html").hasClass("fourchan-x"))this.mode="4chanx3";
 		else if($("body").hasClass("fourchan_x")){
-			mode="4chanx";
-			if($("#ch4SS").length>0)mode+="+ss";
-			if($("input[type=checkbox].riced").length>0)mode="appchanx";
+			this.mode="4chanx";
+			if($("#ch4SS").length>0)this.mode+="+ss";
+			if($("input[type=checkbox].riced").length>0)this.mode="appchanx";
 		}
 	}
 	$("head")
@@ -12755,13 +12883,13 @@ function InlineManager(){
 	var brackets=[" [","] "];
 	var brackets2=[" [","] "];
 	var sep="/";
-	if(mode=="home"){
+	if(this.mode=="home"){
 		$("body").append("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span>");
 		brackets=[" [ "," ] "];
 		brackets2=[" [ "," ] "];
 		sep=" / ";
 	}
-	else if(mode=="archive"){
+	else if(this.mode=="archive"){
 		$(".letters").append(" <span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span>");
 		var o;
 		if((o=$(".thread")).length>0){
@@ -12771,7 +12899,7 @@ function InlineManager(){
 		brackets2=[" [ "," ] "];
 		sep=" / ";
 	}
-	else if(mode=="4chanx"){
+	else if(this.mode=="4chanx"){
 		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span> ");
 		var o;
 		if((o=$(".navLinks.desktop")).length>0){
@@ -12784,7 +12912,7 @@ function InlineManager(){
 			o.prepend("<div><span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span></div>");
 		}
 	}
-	else if(mode=="4chanx+ss"){
+	else if(this.mode=="4chanx+ss"){
 		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span>");
 		var o;
 		if((o=$(".thread")).length>0){
@@ -12792,7 +12920,7 @@ function InlineManager(){
 		}
 		brackets=["",""];
 	}
-	else if(mode=="4chanx3"){
+	else if(this.mode=="4chanx3"){
 		var o;
 		if((o=$(".navLinks.desktop")).length>0){
 			o.append("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"true\"></span>");
@@ -12801,7 +12929,7 @@ function InlineManager(){
 			$(o[0]).after("<div><span class=\"MPControlBar\" thread_controls=\"true\" settings=\"true\"></span></div>");
 		}
 	}
-	else if(mode=="appchanx"){
+	else if(this.mode=="appchanx"){
 		var o;
 		if((o=$("#boardNavDesktop.desktop")).length>0){
 			o.append("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span>");
@@ -12810,7 +12938,6 @@ function InlineManager(){
 			o.prepend("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
 		}
 	}
-	this.settings_manager=new SettingsManager();
 	$(".MPControlBar[settings=\"true\"]")
 	.html(
 		E("span")
@@ -12867,7 +12994,8 @@ function InlineManager(){
 			.append(T(brackets2[1]))
 		);
 	}
-	this.uploader=new InlineUploader();
+	this.settings_manager=new SettingsManager(this);
+	this.uploader=new InlineUploader(this);
 }
 InlineManager.prototype={
 	constructor:InlineManager,
