@@ -1,4 +1,7 @@
-﻿4.5
+﻿4.5.0.1
+- Script updating now checks a metadata file, as the sizes of the userscripts are fairly large
+
+4.5
 - Better compatibility with 4chan-x 3
 - Slight re-arrangement of some of the settings locations
 - Update of the thread controls location and how it executes
