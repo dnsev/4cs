@@ -1,4 +1,8 @@
-﻿4.5.0.1
+﻿4.5.1
+- Added an alert to show that a file might need to be made bigger
+- Added a 4chan-x 3 menu
+
+4.5.0.1
 - Script updating now checks a metadata file, as the sizes of the userscripts are fairly large
 
 4.5

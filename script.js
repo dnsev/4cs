@@ -195,6 +195,7 @@ var page_list = {
 	"changes": null,
 	"ogglify": null,
 	"guide": null,
+	"bigger": null
 };
 function PageBrowser() {
 

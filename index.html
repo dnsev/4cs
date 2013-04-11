@@ -16,7 +16,7 @@
 <div class="TitleContainer">
 	<div class="TitleContainerInner"><a class="Title" href="">4cs</a><div class="AuthorContainer"><a class="AuthorLink" href="https://github.com/dnsev">dnsev</a></div>
 	</div><div class="SubTitleSeparator">/</div><div class="TitleContainerInner"><div class="SubTitleContainer"><div class="SubTitle">4chan Media Player</div><a class="Version" href="#changes"></a></div>
-	<div class="SubTitleDescription"><a class="NavigationLink NavigationLinkCurrent" id="navigation_install" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">install</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_changes" href="changelog.txt">changes</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_issues" href="https://github.com/dnsev/4cs/issues">issues</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_source" href="https://github.com/dnsev/4cs">source</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_about" href="#about">about</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_guide" href="#guide">guide</a></div>
+	<div class="SubTitleDescription"><a class="NavigationLink NavigationLinkCurrent" id="navigation_install" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">install</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_changes" href="changelog.txt">changes</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_issues" href="https://github.com/dnsev/4cs/issues">issues</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_source" href="https://github.com/dnsev/4cs">source</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_about" href="#about">about</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_bigger" href="#bigger">bigger</a><div class="NavigationLinkSeparator">/</div><a class="NavigationLink" id="navigation_guide" href="#guide">guide</a></div>
 	</div>
 </div>
 
@@ -144,6 +144,96 @@
 				<p>The only difference between "<a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify.exe">ogglify.exe</a>" and "<a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify-fast.bat">ogglify-fast.bat</a>" is that "<a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify-fast.bat">ogglify-fast.bat</a>" may be quicker and won't try to get the best possible audio quality.</p>
 			</div>
 		</div>
+	</div>
+	<div class="Content ContentWidth" id="content_bigger">
+		<div class="ContentHeader"><span class="ContentHeaderTitle">bigger</span>:</div>
+		<div class="ContentBody">
+			<p><a href="https://github.com/dnsev/4cs/raw/master/bigger/bigger.exe">bigger</a> is a re-encoding program designed to upscale images.</p>
+			<p>This application was made so it could be easier to upscale an image while keeping the sound data intact and in an up-to-date format.</p>
+			<p>It should help bypass any minimum resolution constraints placed on images.</p>
+
+			<div class="ContentHeader" multi_id="setup"><span class="HoverShowControl"><span class="ContentHeaderTitle">Setup</span>:<span class="HoverShow"> <a class="InternalLink" href="#.?scroll=setup" maintain="settings">Hardlink</a></span></span></div>
+			<div class="ContentBody">
+				<p>Create a folder and put the following file inside:</p>
+				<ul>
+					<li><a href="https://github.com/dnsev/4cs/raw/master/bigger/bigger.exe">bigger.exe</a></li>
+				</ul>
+				<p>And that's it!</p>
+				<p>You can also rename it to "<a>bigger.best.exe</a>" to get the best quality image. (Check the <a href="#.?settings" class="InternalLink" maintain="settings">Settings</a> section for detailed info)</p>
+			</div>
+
+			<div class="ContentHeader" multi_id="usage"><span class="HoverShowControl"><span class="ContentHeaderTitle">Usage</span>:<span class="HoverShow"> <a class="InternalLink" href="#.?scroll=usage" maintain="settings">Hardlink</a></span></span></div>
+			<div class="ContentBody">
+				<p>Usage is just as simple as setup: simply drag and drop your image(s) onto the application and let it work its magic.</p>
+				<p>A command prompt window should appear and disappear. When done, you should be left with new files named "<i>filename</i>-bigger<i>.ext</i>".</p>
+				<p>In addition to upscaling, it should also convert your source files to the proper format (if they weren't already.)</p>
+			</div>
+
+			<div class="PageVariableDisplayInv" pvar="settings">
+			<div class="ContentHeader" multi_id="settings"><span class="HoverShowControl"><span class="ContentHeaderTitle">Settings</span>:<span class="HoverShow"> <a class="InternalLink" href="#.?scroll=settings" maintain="settings">Hardlink</a></span></span></div>
+			<div class="ContentBody">
+				<p>Settings are set by changing the application file's name. Each setting is separated by a . in the file name, and order does not matter. Check the presets for examples.</p>
+				<p>There are 3 main settings the <a href="https://github.com/dnsev/4cs/raw/master/bigger/bigger.exe">bigger</a> application uses:</p>
+				<ol>
+					<li>
+						<p><div class="ContentHeader"><span class="ContentHeaderTitle">Pixels</span>:</div></p>
+						<p>
+							The desired number of pixels to appear in the file. Can be in one of two formats:
+						</p>
+						<ul class="ContentInstructionListUnordered">
+							<li>
+								<div><i>n</i></div>
+								<div class="AsteriskMessage">Resulting image will have at least <i>n</i>*<i>n</i> pixels</div>
+							</li>
+							<li>
+								<div><i>n</i>x<i>m</i></div>
+								<div class="AsteriskMessage">Resulting image will have at least <i>n</i>*<i>m</i> pixels</div>
+							</li>
+						</ul>
+						<p>Where <i>n</i> and <i>m</i> represent integer numbers.</p>
+						<p>(Default size is 800*800)</p>
+					</li>
+					<li>
+						<p><div class="ContentHeader"><span class="ContentHeaderTitle">Quality</span>:</div></p>
+						<p>If a parameter called "best" is included, the resulting upscale will have the best possible quality.</p>
+						<p>This means that the upscale will scale with an integer factor, and will increase image quality if possible.</p>
+						<p>If this parameter is omitted, scaling might not be an integer factor, and quality will never be increased; only decreased if necessary.</p>
+						<p>(Starting quality is 85%)</p>
+					</li>
+					<li>
+						<p><div class="ContentHeader"><span class="ContentHeaderTitle">Size Limit</span>:</div></p>
+						<p>Sets the maximum file size limit for upscaled images. Example usage:</p>
+						<ul class="ContentInstructionListUnordered">
+							<li>
+								limit=3145728
+							</li>
+							<li>
+								limit=3145728b
+							</li>
+							<li>
+								limit=3072k
+							</li>
+							<li>
+								limit=3m
+							</li>
+						</ul>
+						<p>All result in a file size limit of 3 megabytes.</p>
+						<p>(Default limit is 3 megabytes)</p>
+					</li>
+				</ol>
+			</div>
+			</div>
+
+		</div>
+
+
+		<div class="ExtrasContainerPre PageVariableDisplay" pvar="settings"></div>
+		<div class="ExtrasContainer PageVariableDisplay"  pvar="settings">
+			<div class="Extra">
+			<a class="InternalLink" href="#.?settings" maintain="settings">Settings</a>
+			</div>
+		</div>
+
 	</div>
 	<div class="Content ContentWidth" id="content_changes">
 		<div class="ContentHeader"><span class="ContentHeaderTitle">Change log</span>:</div>
@@ -412,13 +502,14 @@
 	<div class="Content ContentWidth" id="content_about_codecs">
 		<div class="ContentHeader"><a href="#about" class="InternalLink ContentHeaderTitle">About</a> / <span class="ContentHeaderTitle">Image encoders/decoders</span>:</div>
 		<div class="ContentBody">
-			<p>There are 4 applications related to encoding and decoding images. Click on the <a>*.exe</a> links to learn how to use them:</p>
+			<p>There are 6 applications related to encoding and decoding images. Click on the <a>*.exe</a> links to learn how to use them:</p>
 			<ul>
 				<li class="HiddenHoverMaster"><a class="InternalLink" href="#about/codecs/embed.exe">embed.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/cpp/embed.exe">download</a></span></li>
 				<li class="HiddenHoverMaster"><a class="InternalLink" href="#about/codecs/extract.exe">extract.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/cpp/extract.exe">download</a></span></li>
 				<li class="HiddenHoverMaster"><a class="InternalLink" href="#about/codecs/batch-*.exe">batch-decode.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/batch/batch-decode.exe">download</a></span></li>
 				<li class="HiddenHoverMaster"><a class="InternalLink" href="#about/codecs/batch-*.exe">batch-re-encode.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/batch/batch-re-encode.exe">download</a></span></li>
 				<li class="HiddenHoverMaster"><a class="InternalLink" href="#ogglify">ogglify.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/ogglify/ogglify.exe">download</a></span></li>
+				<li class="HiddenHoverMaster"><a class="InternalLink" href="#bigger">bigger.exe</a><span class="HiddenHover">: <a href="https://github.com/dnsev/4cs/raw/master/bigger/bigger.exe">download</a></span></li>
 			</ul>
 		</div>
 	</div>
