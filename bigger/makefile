@@ -26,7 +26,7 @@ rebuild: clean compile
 
 
 
-$(BIN)bigger : $(OBJ)Bigger.o $(OBJ)ImgLib/Image.o $(OBJ)LodePNG/lodepng.o $(SRC)JPEG/jpgd.o $(SRC)JPEG/jpge.o $(OBJ)stb_image/stb_image.o $(OBJ)Sound/Sound.o
+$(BIN)bigger : $(OBJ)Bigger.o $(OBJ)ImgLib/Image.o $(OBJ)LodePNG/lodepng.o $(OBJ)JPEG/jpgd.o $(OBJ)JPEG/jpge.o $(OBJ)stb_image/stb_image.o $(OBJ)Sound/Sound.o
 	@$(CC) $(CC_FLAGS) -o $@ $^
 
 

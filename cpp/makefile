@@ -26,11 +26,11 @@ rebuild: clean compile
 
 
 
-$(BIN)embed : $(OBJ)Embed.o $(OBJ)ImgLib/Image.o $(OBJ)ImgLib/ImageWriter.o $(OBJ)LodePNG/lodepng.o $(SRC)JPEG/jpgd.o $(OBJ)stb_image/stb_image.o $(OBJ)ImgLib/ImageHashmasker.o $(OBJ)Random/Random.o
+$(BIN)embed : $(OBJ)Embed.o $(OBJ)ImgLib/Image.o $(OBJ)ImgLib/ImageWriter.o $(OBJ)LodePNG/lodepng.o $(OBJ)JPEG/jpgd.o $(OBJ)stb_image/stb_image.o $(OBJ)ImgLib/ImageHashmasker.o $(OBJ)Random/Random.o
 	@$(CC) $(CC_FLAGS) -o $@ $^
 	@echo $(BIN)embed compiled
 
-$(BIN)extract : $(OBJ)Extract.o $(OBJ)ImgLib/Image.o $(OBJ)ImgLib/ImageReader.o $(OBJ)LodePNG/lodepng.o $(SRC)JPEG/jpgd.o $(OBJ)stb_image/stb_image.o $(OBJ)ImgLib/ImageHashmasker.o
+$(BIN)extract : $(OBJ)Extract.o $(OBJ)ImgLib/Image.o $(OBJ)ImgLib/ImageReader.o $(OBJ)LodePNG/lodepng.o $(OBJ)JPEG/jpgd.o $(OBJ)stb_image/stb_image.o $(OBJ)ImgLib/ImageHashmasker.o
 	@$(CC) $(CC_FLAGS) -o $@ $^
 	@echo $(BIN)extract compiled
 
