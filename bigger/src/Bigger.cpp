@@ -15,6 +15,8 @@ using namespace ImgLib;
 
 vector<unsigned char>* encode(const vector<unsigned char>* source, const vector<unsigned char>* soundSource, const vector<Sound>* sounds, bool reEncode);
 
+
+
 int main(int argc, char** argv) {
 	// Usage
 	if (argc <= 1) {
@@ -23,66 +25,88 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	// Find size
-	int i = 0;
-	int w = 800, h = 800;
-	string s = "";
-	for (; argv[0][i] != '\0'; ++i) {
-		if (argv[0][i] <= 32) {
-			if (s.length() <= 0) continue;
-			break;
-		}
-
-		if (argv[0][i] >= '0' && argv[0][i] <= '9') {
-			s += argv[0][i];
-		}
-		else {
-			break;
-		}
-	}
-	if (s.length() > 0) {
-		w = atoi(s.c_str());
-		h = w;
-		if (argv[0][i] != '\0') ++i;
-	}
-	s = "";
-	for (; argv[0][i] != '\0'; ++i) {
-		if (argv[0][i] <= 32) {
-			if (s.length() <= 0) continue;
-			break;
-		}
-
-		if (argv[0][i] >= '0' && argv[0][i] <= '9') {
-			s += argv[0][i];
-		}
-		else {
-			break;
-		}
-	}
-	if (s.length() > 0) {
-		h = atoi(s.c_str());
-	}
-	unsigned int targetSize = w * h;
-
-	// File size limit
+	// Settings
+	bool getBestQuality = false;
 	int fileSizeLimit = 1024 * 1024 * 3; // 3MB
+	int w = 800, h = 800;
+
+	// Find size
+	string appName = argv[0];
+	int i = appName.length();
+	while (--i >= 0 && appName[i] != '\\' && appName[i] != '/');
+	if (i >= 0) appName = appName.substr(i, appName.length() - i);
+
+	unsigned int dotPos = 0, dotPosPre = 0;
+	while ((dotPos = appName.find('.', dotPos)) != string::npos) {
+		string section = appName.substr(dotPosPre, dotPos - dotPosPre);
+
+		if (section == "best") {
+			// Best quality
+			getBestQuality = true;
+		}
+		else if (section.substr(0, 6) == "limit=") {
+			string s = "";
+			int factor = 1;
+			for (i = 6; i <= static_cast<int>(section.length()); ++i) {
+				if (section[i] >= '0' && section[i] <= '9') {
+					s += section[i];
+				}
+				else {
+					if ((section[i] & 0xDF) == 'B') factor = 1;
+					if ((section[i] & 0xDF) == 'K') factor = 1024;
+					if ((section[i] & 0xDF) == 'M') factor = 1024 * 1024;
+					break;
+				}
+			}
+			fileSizeLimit = atoi(s.c_str()) * factor;
+		}
+		else {
+			// Size
+			string s = "";
+			for (i = 0; i < static_cast<int>(section.length()); ++i) {
+				if (section[i] >= '0' && section[i] <= '9') {
+					s += section[i];
+				}
+				else {
+					break;
+				}
+			}
+			if (s.length() > 0) {
+				w = atoi(s.c_str());
+				h = w;
+				++i;
+
+				s = "";
+				for (; i < static_cast<int>(section.length()); ++i) {
+					if (section[i] >= '0' && section[i] <= '9') {
+						s += section[i];
+					}
+					else {
+						break;
+					}
+				}
+				if (s.length() > 0) {
+					h = atoi(s.c_str());
+				}
+			}
+		}
+
+		dotPosPre = ++dotPos;
+	}
+
+
+	unsigned int targetSize = w * h;
 
 	// Iterate
 	for (i = 1; i < argc; ++i) {
 		// Name
 		string imageFile = argv[i];
 		string outputFile = imageFile;
-		string outputFileFixed = imageFile;
 
 		int pos = outputFile.length();
 		while (--pos >= 0 && outputFile[pos] != '.');
 		if (pos < 0) pos = outputFile.length();
 		outputFile.insert(pos, "-bigger");
-
-/*		pos = outputFileFixed.length();
-		while (--pos >= 0 && outputFileFixed[pos] != '.');
-		if (pos < 0) pos = outputFileFixed.length();
-		outputFileFixed.insert(pos, "-fixed");*/
 
 		// Load image
 		pos = imageFile.length();
@@ -119,6 +143,8 @@ int main(int argc, char** argv) {
 				if (loaded) {
 					if (img.getWidth() * img.getHeight() < targetSize) {
 						double targetScale = sqrt(static_cast<double>(targetSize) / (img.getWidth() * img.getHeight()));
+						if (getBestQuality) targetScale = ceil(targetScale);
+
 						int targetWidth = static_cast<int>(ceil(img.getWidth() * targetScale));
 						int targetHeight = static_cast<int>(ceil(img.getHeight() * targetScale));
 						unsigned int requiredSpace = fileSizeLimit - (imageSrc.size() - (*sounds)[0].first);
@@ -135,7 +161,7 @@ int main(int argc, char** argv) {
 						int quality = 85;
 						int qualityDecrease = 5;
 						int qualityIncrease = 1;
-						bool qualityIncreaseAllowed = false; // disabled
+						bool qualityIncreaseAllowed = getBestQuality;
 						while (true) {
 							std::vector<unsigned char>* imageTarget = new std::vector<unsigned char>();
 
@@ -160,13 +186,13 @@ int main(int argc, char** argv) {
 							}
 
 							bool exit = false;
-							if (imageTarget->size() <= requiredSpace || (exit = (lossy && quality <= 1))) {
+							if (imageTarget->size() <= requiredSpace || (exit = (lossy && quality <= 1)) || requiredSpace <= 0) {
 								// Delete old
 								if (imageTargetGood != NULL) delete imageTargetGood;
 
 								// New
 								imageTargetGood = imageTarget;
-								if (exit || !qualityIncreaseAllowed) break;
+								if (exit || !qualityIncreaseAllowed || requiredSpace <= 0) break;
 
 								// Increase quality
 								cout << "  Increasing quality..." << endl;
@@ -273,7 +299,10 @@ vector<unsigned char>* encode(const vector<unsigned char>* source, const vector<
 	}
 
 	// Sounds
-	vector<unsigned char> soundArray((source->size() - (*sounds)[0].first), 0);
+	int size = source->size();
+	size -= (*sounds)[0].first;
+
+	vector<unsigned char> soundArray(size <= 0 ? 1 : size, 0);
 	unsigned int j = 0;
 	for (unsigned int i = 0; i < sounds->size(); ++i) {
 		// Blank tag
