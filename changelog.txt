@@ -1,4 +1,7 @@
-﻿4.5.1
+﻿4.5.1.1
+- Using an updated ve_api to fix a rare bug where the video wouldn't be visible when it was playing
+
+4.5.1
 - Added an alert to show that a file might need to be made bigger
 - Added a 4chan-x 3 menu
 
