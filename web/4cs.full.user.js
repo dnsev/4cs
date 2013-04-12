@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.5.1
+// @version     4.5.1.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -3757,7 +3757,11 @@ var VPlayer = (function () {
 						// Currently playing
 						this.video_tag.style.opacity = "1.0";
 					}
-					else if (this.video_play_style[1] != DISPLAY_VIDEO) { // Nothing to do if DISPLAY_VIDEO
+					else if (this.video_play_style[1] == DISPLAY_VIDEO) {
+						// Visible
+						this.video_tag.style.opacity = "1.0";
+					}
+					else {
 						// Image opacity
 						this.image_tag.style.opacity = (this.video_play_style[1] == DISPLAY_NOTHING) ? 0.0 : 1.0;
 
@@ -3793,7 +3797,11 @@ var VPlayer = (function () {
 						// Currently playing
 						this.video_tag.style.opacity = "1.0";
 					}
-					else if (this.video_play_style[0] != DISPLAY_VIDEO) { // Nothing to do if DISPLAY_VIDEO
+					else if (this.video_play_style[0] == DISPLAY_VIDEO) {
+						// Visible
+						this.video_tag.style.opacity = "1.0";
+					}
+					else {
 						// Image opacity
 						this.image_tag.style.opacity = (this.video_play_style[0] == DISPLAY_NOTHING) ? 0.0 : 1.0;
 
@@ -13026,6 +13034,7 @@ function random_string(len, chars) {
 function random_integer(max) {
 	return Math.floor(Math.random() * max);
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
