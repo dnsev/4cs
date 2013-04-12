@@ -160,6 +160,9 @@ Loop.prototype = {
 			this.timer = null;
 		}
 		this.loops = new Array();
+
+		this.special = 1;
+		return undefined;
 	}
 };
 

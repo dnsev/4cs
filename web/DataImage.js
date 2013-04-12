@@ -2,8 +2,9 @@
 // Steganographic .png decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-function DataImage (source_location, callback_data, load_callback, asynchronous, loop) {
+function DataImage (source_location, callback_data, load_callback, error_callback, asynchronous, loop) {
 	this.load_callback = load_callback;
+	this.error_callback = error_callback;
 
 	this.width = 0;
 	this.height = 0;
@@ -31,18 +32,37 @@ function DataImage (source_location, callback_data, load_callback, asynchronous,
 		}
 		else {
 			if (asynchronous) {
-				png = new PNG(source_location, true, function (png) {
-					png.decodePixelsAsynchronous(null, function (png, pixels) {
-						self.image = png;
-						self.pixels = pixels;
-						self.width = self.image.width;
-						self.height = self.image.height;
+				png = new PNG(
+					source_location,
+					true,
+					function (png) {
+						png.decodePixelsAsynchronous(
+							null,
+							function (png, pixels) {
+								self.image = png;
+								self.pixels = pixels;
+								self.width = self.image.width;
+								self.height = self.image.height;
 
-						self.color_depth = (png.hasAlphaChannel ? 4 : 3);
+								self.color_depth = (png.hasAlphaChannel ? 4 : 3);
 
-						if (typeof(self.load_callback) == "function") self.load_callback(self, callback_data);
-					}, loop);
-				}, loop);
+								if (typeof(self.load_callback) == "function") self.load_callback(self, callback_data);
+							},
+							function () {
+								// Error
+								self.error = true;
+								if (typeof(self.error_callback) == "function") self.error_callback(self, callback_data);
+							},
+							loop
+						);
+					},
+					function () {
+						// Error
+						self.error = true;
+						if (typeof(self.error_callback) == "function") self.error_callback(self, callback_data);
+					},
+					loop
+				);
 			}
 			else {
 				var png = new PNG(source_location);
@@ -59,8 +79,9 @@ function DataImage (source_location, callback_data, load_callback, asynchronous,
 		}
 	}
 	catch (e) {
+		// Error
 		this.error = true;
-		console.log(e);
+		if (typeof(this.error_callback) == "function") this.error_callback(this, callback_data);
 	}
 }
 DataImage.prototype = {

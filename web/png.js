@@ -58,8 +58,8 @@
 
 		APNG_BLEND_OP_OVER = 1;
 
-		function PNG(data, asynchronous, asynchronous_callback) {
-			if (asynchronous) this.initAsynchronous(data, asynchronous_callback);
+		function PNG(data, asynchronous, asynchronous_callback, error_callback, loop_param) {
+			if (asynchronous) this.initAsynchronous(data, asynchronous_callback, error_callback, loop_param);
 			else this.init(data);
 		}
 		PNG.prototype.init = function (data) {
@@ -194,7 +194,7 @@
 			}
 			return;
 		}
-		PNG.prototype.initAsynchronous = function (data, asynchronous_callback, loop_param) {
+		PNG.prototype.initAsynchronous = function (data, asynchronous_callback, error_callback, loop_param) {
 			try {
 				var loop = new Loop();
 				if (loop_param === undefined) {
@@ -219,135 +219,148 @@
 			this.animation = null;
 			this.text = {};
 			frame = null;
+			var functionType = typeof(function(){});
 
 			var self = this;
 			loop.forever(
 				{},
 				function (unused, data, loop) {
-					chunkSize = self.readUInt32();
-					section = ((function() {
-						var _i, _results;
-						_results = [];
-						for (i = _i = 0; _i < 4; i = ++_i) {
-							_results.push(String.fromCharCode(self.data[self.pos++]));
-						}
-						return _results;
-					}).call(self)).join('');
-					switch (section) {
-						case 'IHDR':
-							self.width = self.readUInt32();
-							self.height = self.readUInt32();
-							self.bits = self.data[self.pos++];
-							self.colorType = self.data[self.pos++];
-							self.compressionMethod = self.data[self.pos++];
-							self.filterMethod = self.data[self.pos++];
-							self.interlaceMethod = self.data[self.pos++];
-							break;
-						case 'acTL':
-							self.animation = {
-								numFrames: self.readUInt32(),
-								numPlays: self.readUInt32() || Infinity,
-								frames: []
-							};
-							break;
-						case 'PLTE':
-							self.palette = self.read(chunkSize);
-							break;
-						case 'fcTL':
-							if (frame) {
-								self.animation.frames.push(frame);
+					try {
+						chunkSize = self.readUInt32();
+						section = ((function() {
+							var _i, _results;
+							_results = [];
+							for (i = _i = 0; _i < 4; i = ++_i) {
+								_results.push(String.fromCharCode(self.data[self.pos++]));
 							}
-							self.pos += 4;
-							frame = {
-								width: self.readUInt32(),
-								height: self.readUInt32(),
-								xOffset: self.readUInt32(),
-								yOffset: self.readUInt32()
-							};
-							delayNum = self.readUInt16();
-							delayDen = self.readUInt16() || 100;
-							frame.delay = 1000 * delayNum / delayDen;
-							frame.disposeOp = self.data[self.pos++];
-							frame.blendOp = self.data[self.pos++];
-							frame.data = [];
-							break;
-						case 'IDAT':
-						case 'fdAT':
-							if (section === 'fdAT') {
+							return _results;
+						}).call(self)).join('');
+						switch (section) {
+							case 'IHDR':
+								self.width = self.readUInt32();
+								self.height = self.readUInt32();
+								self.bits = self.data[self.pos++];
+								self.colorType = self.data[self.pos++];
+								self.compressionMethod = self.data[self.pos++];
+								self.filterMethod = self.data[self.pos++];
+								self.interlaceMethod = self.data[self.pos++];
+								break;
+							case 'acTL':
+								self.animation = {
+									numFrames: self.readUInt32(),
+									numPlays: self.readUInt32() || Infinity,
+									frames: []
+								};
+								break;
+							case 'PLTE':
+								self.palette = self.read(chunkSize);
+								break;
+							case 'fcTL':
+								if (frame) {
+									self.animation.frames.push(frame);
+								}
 								self.pos += 4;
-								chunkSize -= 4;
-							}
-							data = (frame != null ? frame.data : void 0) || self.imgData;
-							for (i = _i = 0; 0 <= chunkSize ? _i < chunkSize : _i > chunkSize; i = 0 <= chunkSize ? ++_i : --_i) {
-								data.push(self.data[self.pos++]);
-							}
-							break;
-						case 'tRNS':
-							self.transparency = {};
-							switch (self.colorType) {
-								case 3:
-									self.transparency.indexed = self.read(chunkSize);
-									short = 255 - self.transparency.indexed.length;
-									if (short > 0) {
-										for (i = _j = 0; 0 <= short ? _j < short : _j > short; i = 0 <= short ? ++_j : --_j) {
-											self.transparency.indexed.push(255);
-										}
-									}
-									break;
-								case 0:
-									self.transparency.grayscale = self.read(chunkSize)[0];
-									break;
-								case 2:
-									self.transparency.rgb = self.read(chunkSize);
-							}
-							break;
-						case 'tEXt':
-							text = self.read(chunkSize);
-							index = text.indexOf(0);
-							key = String.fromCharCode.apply(String, text.slice(0, index));
-							self.text[key] = String.fromCharCode.apply(String, text.slice(index + 1));
-							break;
-						case 'IEND':
-							if (frame) {
-								self.animation.frames.push(frame);
-							}
-							self.colors = (function() {
+								frame = {
+									width: self.readUInt32(),
+									height: self.readUInt32(),
+									xOffset: self.readUInt32(),
+									yOffset: self.readUInt32()
+								};
+								delayNum = self.readUInt16();
+								delayDen = self.readUInt16() || 100;
+								frame.delay = 1000 * delayNum / delayDen;
+								frame.disposeOp = self.data[self.pos++];
+								frame.blendOp = self.data[self.pos++];
+								frame.data = [];
+								break;
+							case 'IDAT':
+							case 'fdAT':
+								if (section === 'fdAT') {
+									self.pos += 4;
+									chunkSize -= 4;
+								}
+								data = (frame != null ? frame.data : void 0) || self.imgData;
+								for (i = _i = 0; 0 <= chunkSize ? _i < chunkSize : _i > chunkSize; i = 0 <= chunkSize ? ++_i : --_i) {
+									data.push(self.data[self.pos++]);
+								}
+								break;
+							case 'tRNS':
+								self.transparency = {};
 								switch (self.colorType) {
+									case 3:
+										self.transparency.indexed = self.read(chunkSize);
+										short = 255 - self.transparency.indexed.length;
+										if (short > 0) {
+											for (i = _j = 0; 0 <= short ? _j < short : _j > short; i = 0 <= short ? ++_j : --_j) {
+												self.transparency.indexed.push(255);
+											}
+										}
+										break;
 									case 0:
-									case 3:
-									case 4:
-										return 1;
+										self.transparency.grayscale = self.read(chunkSize)[0];
+										break;
 									case 2:
-									case 6:
-										return 3;
+										self.transparency.rgb = self.read(chunkSize);
 								}
-							}).call(self);
-							self.hasAlphaChannel = (_ref = self.colorType) === 4 || _ref === 6;
-							colors = self.colors + (self.hasAlphaChannel ? 1 : 0);
-							self.pixelBitlength = self.bits * colors;
-							self.colorSpace = (function() {
-								switch (self.colors) {
-									case 1:
-										return 'DeviceGray';
-									case 3:
-										return 'DeviceRGB';
+								break;
+							case 'tEXt':
+								text = self.read(chunkSize);
+								index = text.indexOf(0);
+								key = String.fromCharCode.apply(String, text.slice(0, index));
+								self.text[key] = String.fromCharCode.apply(String, text.slice(index + 1));
+								break;
+							case 'IEND':
+								if (frame) {
+									self.animation.frames.push(frame);
 								}
-							}).call(self);
-							self.imgData = new Uint8Array(self.imgData);
-							return loop.Break(); // Done
-						default:
-							self.pos += chunkSize;
+								self.colors = (function() {
+									switch (self.colorType) {
+										case 0:
+										case 3:
+										case 4:
+											return 1;
+										case 2:
+										case 6:
+											return 3;
+									}
+								}).call(self);
+								self.hasAlphaChannel = (_ref = self.colorType) === 4 || _ref === 6;
+								colors = self.colors + (self.hasAlphaChannel ? 1 : 0);
+								self.pixelBitlength = self.bits * colors;
+								self.colorSpace = (function() {
+									switch (self.colors) {
+										case 1:
+											return 'DeviceGray';
+										case 3:
+											return 'DeviceRGB';
+									}
+								}).call(self);
+								self.imgData = new Uint8Array(self.imgData);
+								return loop.Break(); // Done
+							default:
+								self.pos += chunkSize;
+						}
+						self.pos += 4;
+						if (self.pos > self.data.length) {
+							throw new Error("Incomplete or corrupt PNG file");
+						}
 					}
-					self.pos += 4;
-					if (self.pos > self.data.length) {
-						throw new Error("Incomplete or corrupt PNG file");
+					catch (e) {
+						if (typeof(error_callback) == functionType) {
+							error_callback(self);
+						}
+						return loop.stop();
 					}
 				},
 				function (unused, data, loop) {
 					try {
 						asynchronous_callback(self);
 					}
-					catch (e) {}
+					catch (e) {
+						if (typeof(error_callback) == functionType) {
+							error_callback(self);
+						}
+					}
 				}
 			);
 		}
@@ -457,7 +470,7 @@
 			}
 			return pixels;
 		};
-		PNG.prototype.decodePixelsAsynchronous = function(data, done_callback, loop_param) {
+		PNG.prototype.decodePixelsAsynchronous = function(data, done_callback, error_callback, loop_param) {
 			try {
 				var loop = new Loop();
 				if (loop_param === undefined) {
@@ -490,77 +503,91 @@
 			row = 0;
 			pos = 0;
 			c = 0;
+			var functionType = typeof(function(){});
+
 			var self = this;
 			loop.for_lt(
 				pos, length, 0,
 				{},
 				function (pos, _data, loop) {
-					switch (data[pos++]) {
-						case 0:
-							for (i = _i = 0; _i < scanlineLength; i = _i += 1) {
-								pixels[c++] = data[pos++];
-							}
-						break;
-						case 1:
-							for (i = _j = 0; _j < scanlineLength; i = _j += 1) {
-								byte = data[pos++];
-								left = i < pixelBytes ? 0 : pixels[c - pixelBytes];
-								pixels[c++] = (byte + left) % 256;
-							}
-						break;
-						case 2:
-							for (i = _k = 0; _k < scanlineLength; i = _k += 1) {
-								byte = data[pos++];
-								col = (i - (i % pixelBytes)) / pixelBytes;
-								upper = row && pixels[(row - 1) * scanlineLength + col * pixelBytes + (i % pixelBytes)];
-								pixels[c++] = (upper + byte) % 256;
-							}
-						break;
-						case 3:
-							for (i = _l = 0; _l < scanlineLength; i = _l += 1) {
-								byte = data[pos++];
-								col = (i - (i % pixelBytes)) / pixelBytes;
-								left = i < pixelBytes ? 0 : pixels[c - pixelBytes];
-								upper = row && pixels[(row - 1) * scanlineLength + col * pixelBytes + (i % pixelBytes)];
-								pixels[c++] = (byte + Math.floor((left + upper) / 2)) % 256;
-							}
-						break;
-						case 4:
-							for (i = _m = 0; _m < scanlineLength; i = _m += 1) {
-								byte = data[pos++];
-								col = (i - (i % pixelBytes)) / pixelBytes;
-								left = i < pixelBytes ? 0 : pixels[c - pixelBytes];
-								if (row === 0) {
-									upper = upperLeft = 0;
-								} else {
-									upper = pixels[(row - 1) * scanlineLength + col * pixelBytes + (i % pixelBytes)];
-									upperLeft = col && pixels[(row - 1) * scanlineLength + (col - 1) * pixelBytes + (i % pixelBytes)];
+					try {
+						switch (data[pos++]) {
+							case 0:
+								for (i = _i = 0; _i < scanlineLength; i = _i += 1) {
+									pixels[c++] = data[pos++];
 								}
-								p = left + upper - upperLeft;
-								pa = Math.abs(p - left);
-								pb = Math.abs(p - upper);
-								pc = Math.abs(p - upperLeft);
-								if (pa <= pb && pa <= pc) {
-									paeth = left;
-								} else if (pb <= pc) {
-									paeth = upper;
-								} else {
-									paeth = upperLeft;
+							break;
+							case 1:
+								for (i = _j = 0; _j < scanlineLength; i = _j += 1) {
+									byte = data[pos++];
+									left = i < pixelBytes ? 0 : pixels[c - pixelBytes];
+									pixels[c++] = (byte + left) % 256;
 								}
-								pixels[c++] = (byte + paeth) % 256;
-							}
-						break;
-						default:
-							throw new Error("Invalid filter algorithm: " + data[pos - 1]);
+							break;
+							case 2:
+								for (i = _k = 0; _k < scanlineLength; i = _k += 1) {
+									byte = data[pos++];
+									col = (i - (i % pixelBytes)) / pixelBytes;
+									upper = row && pixels[(row - 1) * scanlineLength + col * pixelBytes + (i % pixelBytes)];
+									pixels[c++] = (upper + byte) % 256;
+								}
+							break;
+							case 3:
+								for (i = _l = 0; _l < scanlineLength; i = _l += 1) {
+									byte = data[pos++];
+									col = (i - (i % pixelBytes)) / pixelBytes;
+									left = i < pixelBytes ? 0 : pixels[c - pixelBytes];
+									upper = row && pixels[(row - 1) * scanlineLength + col * pixelBytes + (i % pixelBytes)];
+									pixels[c++] = (byte + Math.floor((left + upper) / 2)) % 256;
+								}
+							break;
+							case 4:
+								for (i = _m = 0; _m < scanlineLength; i = _m += 1) {
+									byte = data[pos++];
+									col = (i - (i % pixelBytes)) / pixelBytes;
+									left = i < pixelBytes ? 0 : pixels[c - pixelBytes];
+									if (row === 0) {
+										upper = upperLeft = 0;
+									} else {
+										upper = pixels[(row - 1) * scanlineLength + col * pixelBytes + (i % pixelBytes)];
+										upperLeft = col && pixels[(row - 1) * scanlineLength + (col - 1) * pixelBytes + (i % pixelBytes)];
+									}
+									p = left + upper - upperLeft;
+									pa = Math.abs(p - left);
+									pb = Math.abs(p - upper);
+									pc = Math.abs(p - upperLeft);
+									if (pa <= pb && pa <= pc) {
+										paeth = left;
+									} else if (pb <= pc) {
+										paeth = upper;
+									} else {
+										paeth = upperLeft;
+									}
+									pixels[c++] = (byte + paeth) % 256;
+								}
+							break;
+							default:
+								throw new Error("Invalid filter algorithm: " + data[pos - 1]);
+						}
+						row++;
+						return pos;
 					}
-					row++;
-					return pos;
+					catch (e) {
+						if (typeof(error_callback) == functionType) {
+							error_callback(self);
+						}
+						return loop.stop();
+					}
 				},
 				function (pos, _data, loop) {
 					try {
 						done_callback(self, pixels);
 					}
-					catch (e) {}
+					catch (e) {
+						if (typeof(error_callback) == functionType) {
+							error_callback(self);
+						}
+					}
 				}
 			);
 		};
