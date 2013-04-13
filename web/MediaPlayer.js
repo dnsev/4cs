@@ -7021,7 +7021,7 @@ ZipWriter.prototype = {
 			this.write_data(0, 2); // Internal attr
 			this.write_data(32, 4); // External attr
 			this.write_data(this.offsets[i], 4); // Offset
-			this.write_data(this.fnames[i]); // File name
+			this.write_data(this.fnames[i], this.fnames[i].length); // File name
 		}
 
 		// End
@@ -7034,7 +7034,7 @@ ZipWriter.prototype = {
 		this.write_data(cd_end_pos - cd_pos, 4); // cd size
 		this.write_data(cd_pos, 4); // cd size
 		this.write_data(this.comment.length, 2); // comment
-		this.write_data(this.comment); // comment
+		this.write_data(this.comment, this.comment.length); // comment
 	},
 	write_file: function (filename, filedata) {
 		var crc = this.crc32(filedata);
@@ -7056,8 +7056,8 @@ ZipWriter.prototype = {
 		this.write_data(filedata.length, 4); // Uncompressed size
 		this.write_data(filename.length, 2); // Filename length
 		this.write_data(0, 2); // Comment length
-		this.write_data(filename); // Filename
-		this.write_data(filedata); // File data
+		this.write_data(filename, filename.length); // Filename
+		this.write_data(filedata, filedata.length); // File data
 	},
 	write_data: function (data, bytes) {
 		if (typeof(data) === typeof(0)) {
@@ -7069,7 +7069,14 @@ ZipWriter.prototype = {
 			}
 		}
 		else if (typeof(data) === typeof("")) {
-			for (var i = 0; i < data.length; ++i) {
+			var len;
+			try {
+				len = data.length;
+			}
+			catch (e) {
+				len = bytes;
+			}
+			for (var i = 0; i < len; ++i) {
 				this.buffer[this.pos] = data.charCodeAt(i);
 				++this.pos;
 			}

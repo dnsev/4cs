@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.5.1.2
+// @version     4.5.2
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -9505,7 +9505,7 @@ ZipWriter.prototype={
 			this.write_data(0,2);
 			this.write_data(32,4);
 			this.write_data(this.offsets[i],4);
-			this.write_data(this.fnames[i]);
+			this.write_data(this.fnames[i],this.fnames[i].length);
 		}
 		var cd_end_pos=this.pos;
 		this.write_data(0x06054b50,4);
@@ -9516,7 +9516,7 @@ ZipWriter.prototype={
 		this.write_data(cd_end_pos-cd_pos,4);
 		this.write_data(cd_pos,4);
 		this.write_data(this.comment.length,2);
-		this.write_data(this.comment);
+		this.write_data(this.comment,this.comment.length);
 	},
 	write_file:function(filename,filedata){
 		var crc=this.crc32(filedata);
@@ -9536,8 +9536,8 @@ ZipWriter.prototype={
 		this.write_data(filedata.length,4);
 		this.write_data(filename.length,2);
 		this.write_data(0,2);
-		this.write_data(filename);
-		this.write_data(filedata);
+		this.write_data(filename,filename.length);
+		this.write_data(filedata,filedata.length);
 	},
 	write_data:function(data,bytes){
 		if(typeof(data)===typeof(0)){
@@ -9549,7 +9549,14 @@ ZipWriter.prototype={
 			}
 		}
 		else if(typeof(data)===typeof("")){
-			for(var i=0;i<data.length;++i){
+			var len;
+			try{
+				len=data.length;
+			}
+			catch(e){
+				len=bytes;
+			}
+			for(var i=0;i<len;++i){
 				this.buffer[this.pos]=data.charCodeAt(i);
 				++this.pos;
 			}
