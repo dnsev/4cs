@@ -1,4 +1,8 @@
-﻿4.5.1.2
+﻿4.5.2
+- Fixed an odd error occuring in Firefox where creating a download link would throw an error
+  (for checking the length of a string...?)
+
+4.5.1.2
 - Fixed .png decoding hanging on failure
 
 4.5.1.1
