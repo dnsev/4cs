@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.5.2
+// @version     4.5.3
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -12886,7 +12886,7 @@ function ajax(data) {
 		}
 
 		// Abort
-		if (typeof(on.upload.abort) == "function") {
+		if (on.upload && typeof(on.upload.abort) == "function") {
 			xhr.upload.onabort = function (event) {
 				on.upload.abort(event, data);
 			};
@@ -12972,7 +12972,7 @@ function ajax(data) {
 		}
 
 		// Upload abort
-		if (typeof(on.upload.abort) == "function") {
+		if (on.upload && typeof(on.upload.abort) == "function") {
 			arg.upload.onabort = function (event) {
 				on.upload.abort(event, data);
 			};
@@ -16209,6 +16209,52 @@ InlineUploader.prototype = {
 		return b + "MB";
 	},
 
+	check_old_files: function (files) {
+		if (files) {
+			// Check
+			if (files.length == 0) {
+				this.auto_load_file = null;
+			}
+			else {
+				this.auto_load_file = null;
+				for (var i = 0; i < files.length; ++i) {
+					if (this.is_mime_type(files[i].type, "image")) {
+						this.auto_load_file = files[i];
+						break;
+					}
+				}
+
+				// Auto-detection?
+				if (this.auto_load_file != null && script.settings["upload"]["autodetect_when_not_open"] && !this.open) {
+					var self = this;
+
+					var reader = new FileReader();
+					reader.onload = function (event) {
+						var data = {
+							source: new Uint8Array(event.target.result),
+							file_name: self.auto_load_file.name
+						};
+
+						self.image_check_callback(data, media_player_manager.callbacks, 0, function (data, files2, type) { // TODO
+							// Sounds found: auto-open panel
+							self.set_panel_state(true, {auto_load: false, auto_opened: true});
+
+							// Find starting point and load
+							self.change_image(self.auto_load_file, {
+								source: data.source,
+								files: files2
+							});
+						});
+					};
+					reader.readAsArrayBuffer(this.auto_load_file);
+				}
+			}
+		}
+		else {
+			this.auto_load_file = null;
+		}
+	},
+
 
 	on_file_change: function (event, obj) {
 		if (event.target.files) {
@@ -16285,49 +16331,22 @@ InlineUploader.prototype = {
 	on_file_change_old: function (event, obj) {
 		if (this.open) return; // why this would ever happen is beyond me
 
-		if (event.target.files) {
-			// Check
-			if (event.target.files.length == 0) {
-				this.auto_load_file = null;
-			}
-			else {
-				this.auto_load_file = null;
-				for (var i = 0; i < event.target.files.length; ++i) {
-					if (this.is_mime_type(event.target.files[i].type, "image")) {
-						this.auto_load_file = event.target.files[i];
-						break;
+		if (this.mode == "4chanx3") {
+			var self = this;
+			document.dispatchEvent(new CustomEvent(
+				"QRGetSelectedPost",
+				{
+					detail: function (post) {
+						// Check
+						self.check_old_files([post.file]);
 					}
 				}
-
-				// Auto-detection?
-				if (this.auto_load_file != null && script.settings["upload"]["autodetect_when_not_open"] && !this.open) {
-					var self = this;
-
-					var reader = new FileReader();
-					reader.onload = function (event) {
-						var data = {
-							source: new Uint8Array(event.target.result),
-							file_name: self.auto_load_file.name
-						};
-
-						self.image_check_callback(data, media_player_manager.callbacks, 0, function (data, files, type) { // TODO
-							// Sounds found: auto-open panel
-							self.set_panel_state(true, {auto_load: false, auto_opened: true});
-
-							// Find starting point and load
-							self.change_image(self.auto_load_file, {
-								source: data.source,
-								files: files
-							});
-						});
-					};
-					reader.readAsArrayBuffer(this.auto_load_file);
-				}
-			}
+			));
+			return;
 		}
-		else {
-			this.auto_load_file = null;
-		}
+
+		// Check
+		this.check_old_files(event.target.files);
 	},
 
 	on_bad_image: function () {
@@ -16409,6 +16428,21 @@ InlineUploader.prototype = {
 		// Clear file
 		this.form_file_select.val("");
 		this.reply_form.find("#file.field").html("");
+		if (this.mode == "4chanx3") {
+			var self = this;
+			document.dispatchEvent(new CustomEvent(
+				"QRGetSelectedPost",
+				{
+					detail: function (post) {
+						// Check
+						post.file = null;
+						post.load();
+					}
+				}
+			));
+			return;
+		}
+
 
 		// Update thread
 		if (script.settings["upload"]["autoupdate_after_post"]) {
@@ -16542,6 +16576,13 @@ function InlineManager() {
 		brackets = [ " [ " , " ] " ];
 		brackets2 = [ " [ " , " ] " ];
 		sep = " / ";
+	}
+	else if (this.mode == "inline") {
+		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span> ");
+		var o;
+		if ((o = $(".thread")).length > 0) {
+			o.prepend("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
+		}
 	}
 	else if (this.mode == "4chanx") {
 		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span> ");

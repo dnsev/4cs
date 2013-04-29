@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.5.2
+// @version     4.5.3
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -9929,7 +9929,7 @@ function ajax(data){
 				on.upload.error(event,data);
 			};
 		}
-		if(typeof(on.upload.abort)=="function"){
+		if(on.upload&&typeof(on.upload.abort)=="function"){
 			xhr.upload.onabort=function(event){
 				on.upload.abort(event,data);
 			};
@@ -9991,7 +9991,7 @@ function ajax(data){
 				on.upload.error(event,data);
 			};
 		}
-		if(typeof(on.upload.abort)=="function"){
+		if(on.upload&&typeof(on.upload.abort)=="function"){
 			arg.upload.onabort=function(event){
 				on.upload.abort(event,data);
 			};
@@ -12694,6 +12694,43 @@ InlineUploader.prototype={
 		b=Math.round(b/102.4)/10;
 		return b+"MB";
 	},
+	check_old_files:function(files){
+		if(files){
+			if(files.length==0){
+				this.auto_load_file=null;
+			}
+			else{
+				this.auto_load_file=null;
+				for(var i=0;i<files.length;++i){
+					if(this.is_mime_type(files[i].type,"image")){
+						this.auto_load_file=files[i];
+						break;
+					}
+				}
+				if(this.auto_load_file!=null&&script.settings["upload"]["autodetect_when_not_open"]&&!this.open){
+					var self=this;
+					var reader=new FileReader();
+					reader.onload=function(event){
+						var data={
+							source:new Uint8Array(event.target.result),
+							file_name:self.auto_load_file.name
+						};
+						self.image_check_callback(data,media_player_manager.callbacks,0,function(data,files2,type){
+							self.set_panel_state(true,{auto_load:false,auto_opened:true});
+							self.change_image(self.auto_load_file,{
+								source:data.source,
+								files:files2
+							});
+						});
+					};
+					reader.readAsArrayBuffer(this.auto_load_file);
+				}
+			}
+		}
+		else{
+			this.auto_load_file=null;
+		}
+	},
 	on_file_change:function(event,obj){
 		if(event.target.files){
 			var files=[];
@@ -12759,41 +12796,19 @@ InlineUploader.prototype={
 	},
 	on_file_change_old:function(event,obj){
 		if(this.open)return;
-		if(event.target.files){
-			if(event.target.files.length==0){
-				this.auto_load_file=null;
-			}
-			else{
-				this.auto_load_file=null;
-				for(var i=0;i<event.target.files.length;++i){
-					if(this.is_mime_type(event.target.files[i].type,"image")){
-						this.auto_load_file=event.target.files[i];
-						break;
+		if(this.mode=="4chanx3"){
+			var self=this;
+			document.dispatchEvent(new CustomEvent(
+				"QRGetSelectedPost",
+				{
+					detail:function(post){
+						self.check_old_files([post.file]);
 					}
 				}
-				if(this.auto_load_file!=null&&script.settings["upload"]["autodetect_when_not_open"]&&!this.open){
-					var self=this;
-					var reader=new FileReader();
-					reader.onload=function(event){
-						var data={
-							source:new Uint8Array(event.target.result),
-							file_name:self.auto_load_file.name
-						};
-						self.image_check_callback(data,media_player_manager.callbacks,0,function(data,files,type){
-							self.set_panel_state(true,{auto_load:false,auto_opened:true});
-							self.change_image(self.auto_load_file,{
-								source:data.source,
-								files:files
-							});
-						});
-					};
-					reader.readAsArrayBuffer(this.auto_load_file);
-				}
-			}
+			));
+			return;
 		}
-		else{
-			this.auto_load_file=null;
-		}
+		this.check_old_files(event.target.files);
 	},
 	on_bad_image:function(){
 		this.remove_image();
@@ -12850,6 +12865,19 @@ InlineUploader.prototype={
 		this.captcha_reload();
 		this.form_file_select.val("");
 		this.reply_form.find("#file.field").html("");
+		if(this.mode=="4chanx3"){
+			var self=this;
+			document.dispatchEvent(new CustomEvent(
+				"QRGetSelectedPost",
+				{
+					detail:function(post){
+						post.file=null;
+						post.load();
+					}
+				}
+			));
+			return;
+		}
 		if(script.settings["upload"]["autoupdate_after_post"]){
 			setTimeout(function(){
 				var o=$("input[type=button][name=\"Update Now\"]");
@@ -12962,6 +12990,13 @@ function InlineManager(){
 		brackets=[" [ "," ] "];
 		brackets2=[" [ "," ] "];
 		sep=" / ";
+	}
+	else if(this.mode=="inline"){
+		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span> ");
+		var o;
+		if((o=$(".thread")).length>0){
+			o.prepend("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
+		}
 	}
 	else if(this.mode=="4chanx"){
 		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span> ");
