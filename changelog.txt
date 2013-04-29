@@ -1,4 +1,8 @@
-﻿4.5.2
+﻿4.5.3
+- Fixed a bug where the settings link wouldn't appear for inline extension users
+- Added support for 4chan-x 3 sound file auto detection
+
+4.5.2
 - Fixed an odd error occuring in Firefox where creating a download link would throw an error
   (for checking the length of a string...?)
 
