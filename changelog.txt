@@ -1,4 +1,7 @@
-﻿4.5.3
+﻿4.5.4
+- Fixed quick reply with compatability with 4chan-x 3
+
+4.5.3
 - Fixed a bug where the settings link wouldn't appear for inline extension users
 - Added support for 4chan-x 3 sound file auto detection
 
