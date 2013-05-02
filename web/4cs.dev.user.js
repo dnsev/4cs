@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.5.3
+// @version        4.5.4
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -2053,9 +2053,18 @@ function InlineUploader(inline_manager) {
 			var p = $("*[name=resto]");
 			return (p.length > 0 ? p.val() : null);
 		}]},
-		"name": {type:0, alt:["name"]},
-		"email": {type:0, alt:["email"]},
-		"sub": {type:0, alt:["sub"]},
+		"name": {type:0, alt:["name",function (form, container) {
+			var x = form.find("input[data-name=\"name\"]");
+			return (x.length > 0 ? x.val() : null);
+		}]},
+		"email": {type:0, alt:["email",function (form, container) {
+			var x = form.find("input[data-name=\"email\"]");
+			return (x.length > 0 ? x.val() : null);
+		}]},
+		"sub": {type:0, alt:["sub",function (form, container) {
+			var x = form.find("input[data-name=\"sub\"]");
+			return (x.length > 0 ? x.val() : null);
+		}]},
 		"com": {type:0, alt:["com",function (form, container) {
 			var x = form.find("textarea.field");
 			return (x.length > 0 ? x.val() : null);
