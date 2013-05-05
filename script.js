@@ -195,7 +195,8 @@ var page_list = {
 	"changes": null,
 	"ogglify": null,
 	"guide": null,
-	"bigger": null
+	"bigger": null,
+	"qa": null
 };
 function PageBrowser() {
 
@@ -408,6 +409,15 @@ function image_preview(obj) {
 		})
 		.css({"left": "0", "top": "0", "opacity": "0"})
 	);
+
+	// Setup
+	descr_container.find("a").on("click", function (event) {
+		if (event.which == 1) {
+			event.stopPropagation();
+			return true;
+		}
+		return false;
+	});
 
 	// Click to close
 	$(".ImagePreviewOverlay")
@@ -748,6 +758,13 @@ $(document).ready(function () {
 				(href[1] ? window_hash.parse_vars(href[1]) : undefined)
 			);
 			return false;
+		}
+		return true;
+	});
+	$(".QA .InternalLink,.QA .ExternalLink").on("click", {}, function (event) {
+		if (event.which == 1) {
+			event.stopPropagation();
+			return true;
 		}
 		return true;
 	});

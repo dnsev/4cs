@@ -563,3 +563,40 @@ a.InstallLink:active {
 .Highlighted {
 	background: #bddef1 !important;
 }
+
+
+.QA, a.QA {
+	display: block;
+}
+.QA>div {
+	display: block;
+	position: relative;
+}
+.QA>div+div {
+	margin-top: 4px;
+}
+.QA>div:nth-of-type(1)>span:nth-of-type(2) {
+	font-weight: bold;
+}
+.QA>div>span:nth-of-type(1) {
+	display: inline-block;
+	min-width: 32px;
+	text-align: right;
+	font-weight: bold;
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+.QA>div>span:nth-of-type(2) {
+	margin-left: 40px;
+	display: block;
+}
+.QASeparator {
+	margin: 8px 0px 8px 0px;
+	height: 2px;
+	background: rgba(28,123,177,0.25);
+}
+.QASeparator.Large {
+	margin: 24px 0px 24px 0px;
+	background: rgba(28,123,177,0.5);
+}
