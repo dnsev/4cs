@@ -1,4 +1,7 @@
-﻿4.5.4
+﻿4.6
+- Removed some "bloat" (a highly unused library)
+
+4.5.4
 - Fixed quick reply with compatability with 4chan-x 3
 
 4.5.3
