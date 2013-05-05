@@ -3689,82 +3689,46 @@ MediaPlayer.prototype = {
 					var w = svg_finder.outerWidth();
 					var h = svg_finder.outerHeight();
 
-					svg_finder.svg();
-					this.playback_controls_svg[i][j] = svg_finder.svg("get");
-					var html_svg = $(svg_finder.contents()[0]);
-
-					html_svg.attr("width", w);
-					html_svg.attr("height", h);
-
-					// Create contents
-					var g = this.playback_controls_svg[i][j].group({
-						"class": "MPControlLinkSvgMainGroup",
-						"transform": "scale(" + w + "," + h + ")"
-					});
+					var svg_content = '';
 
 					if (i == 0) {
 						// Back
-						this.playback_controls_svg[i][j].rect(g,
-							0.125, 0.0, 0.25, 1.0,
-							{"class": this.CC("MPControlLinkSvgShapeColor")}
-						);
-						this.playback_controls_svg[i][j].polygon(g,
-							[ [0.875 , 0.0] , [0.875 , 1.0] , [0.375 , 0.5] ],
-							{"class": this.CC("MPControlLinkSvgShapeColor")}
-						);
+						svg_content += '<rect x="0.125" y="0" width="0.25" height="1" class="MPControlLinkSvgShapeColor"></rect>' +
+										'<polygon points="0.875,0 0.875,1 0.375,0.5" class="MPControlLinkSvgShapeColor"></polygon>';
 					}
 					else if (i == 1) {
 						// RW
-						this.playback_controls_svg[i][j].polygon(g,
-							[ [0.5 , 0.0] , [0.5 , 1.0] , [0.125 , 0.5] ],
-							{"class": this.CC("MPControlLinkSvgShapeColor")}
-						);
-						this.playback_controls_svg[i][j].polygon(g,
-							[ [0.875 , 0.0] , [0.875 , 1.0] , [0.5 , 0.5] ],
-							{"class": this.CC("MPControlLinkSvgShapeColor")}
-						);
+						svg_content += '<polygon points="0.5,0 0.5,1 0.125,0.5" class="MPControlLinkSvgShapeColor"></polygon>' +
+										'<polygon points="0.875,0 0.875,1 0.5,0.5" class="MPControlLinkSvgShapeColor"></polygon>';
 					}
 					else if (i == 2) {
 						// Play/pause
 						if (j == 1) {
-							this.playback_controls_svg[i][j].rect(g,
-								0.125, 0.0, 0.25, 1.0,
-								{"class": this.CC("MPControlLinkSvgShapeColor")}
-							);
-							this.playback_controls_svg[i][j].rect(g,
-								0.625, 0.0, 0.25, 1.0,
-								{"class": this.CC("MPControlLinkSvgShapeColor")}
-							);
+							svg_content += '<rect x="0.125" y="0" width="0.25" height="1" class="MPControlLinkSvgShapeColor"></rect>' +
+											'<rect x="0.625" y="0" width="0.25" height="1" class="MPControlLinkSvgShapeColor"></rect>';
 						}
 						else {
-							this.playback_controls_svg[i][j].polygon(g,
-								[ [0.25 , 0.0] , [0.25 , 1.0] , [0.75 , 0.5] ],
-								{"class": this.CC("MPControlLinkSvgShapeColor")}
-							);
+							svg_content += '<polygon points="0.25,0 0.25,1 0.75,0.5" class="MPControlLinkSvgShapeColor"></polygon>';
 						}
 					}
 					else if (i == 3) {
 						// FFW
-						this.playback_controls_svg[i][j].polygon(g,
-							[ [0.125 , 0.0] , [0.125 , 1.0] , [0.5 , 0.5] ],
-							{"class": this.CC("MPControlLinkSvgShapeColor")}
-						);
-						this.playback_controls_svg[i][j].polygon(g,
-							[ [0.5 , 0.0] , [0.5 , 1.0] , [0.875 , 0.5] ],
-							{"class": this.CC("MPControlLinkSvgShapeColor")}
-						);
+						svg_content += '<polygon points="0.125,0 0.125,1 0.5,0.5" class="MPControlLinkSvgShapeColor"></polygon>' +
+										'<polygon points="0.5,0 0.5,1 0.875,0.5" class="MPControlLinkSvgShapeColor"></polygon>';
 					}
 					else {
 						// Next
-						this.playback_controls_svg[i][j].rect(g,
-							0.625, 0.0, 0.25, 1.0,
-							{"class": this.CC("MPControlLinkSvgShapeColor")}
-						);
-						this.playback_controls_svg[i][j].polygon(g,
-							[ [0.125 , 0.0] , [0.125 , 1.0] , [0.625 , 0.5] ],
-							{"class": this.CC("MPControlLinkSvgShapeColor")}
-						);
+						svg_content += '<rect x="0.625" y="0" width="0.25" height="1" class="MPControlLinkSvgShapeColor"></rect>' +
+										'<polygon points="0.125,0 0.125,1 0.625,0.5" class="MPControlLinkSvgShapeColor"></polygon>';
 					}
+
+					svg_finder.html((this.playback_controls_svg[i][j] = $(
+						'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="width:' + w + 'px;height:' + h + 'px;">' +
+							'<g transform="scale(' + w + ',' + h + ')" class="MPControlLinkSvgMainGroup">' +
+								svg_content +
+							'</g>' +
+						'</svg>'
+					)));
 				}
 			}
 		}
