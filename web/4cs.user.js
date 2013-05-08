@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.6.1
+// @version     4.6.2
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -9711,9 +9711,9 @@ SoundcloudManager.prototype={
 
 var no_load=false;
 var is_homepage=false;
-if(/http\:\/\/dnsev\.github\.(com|io)\/4cs\//.test(window.location.href+"")){
+if(/http\:\/\/dnsev\.github\.io\/4cs\//.test(window.location.href+"")){
 	is_homepage=true;
-	if(/http\:\/\/dnsev\.github\.(com|io)\/4cs\/play($|\/.*)/.test(window.location.href+"")){
+	if(/http\:\/\/dnsev\.github\.io\/4cs\/play($|\/.*)/.test(window.location.href+"")){
 	}
 	else{
 		$(document).ready(function(){
@@ -11405,7 +11405,10 @@ function InlineUploader(inline_manager){
 		}]},
 		"upfile":{type:3,key:"file",missing:true},
 		"filetag":{type:0,alt:["filetag"],missing:true},
-		"spoiler":{type:2,alt:["spoiler"],value:"on",missing:true},
+		"spoiler":{type:2,alt:["spoiler",function(form,container){
+			var x=form.find("#qr-file-spoiler");
+			return(x.length>0?x:null);
+		}],value:"on",missing:true},
 		"pwd":{type:0,alt:["pwd",function(form,container){
 			var p=document.cookie.match(/4chan_pass=([^;]+)/);
 			return(p?decodeURIComponent(p[1]):null);
@@ -11536,7 +11539,7 @@ InlineUploader.prototype={
 					.addClass("MPSoundUploaderCustomError")
 					.css("display","none")
 					.on("click",function(event){
-						$(this).html("").style("display","none");
+						$(this).html("").css("display","none");
 					})
 				)
 			);
@@ -12511,6 +12514,7 @@ InlineUploader.prototype={
 					}
 					else{
 						self.error("Posting error ("+response.status+" / "+response.status_text+")");
+						self.captcha_reload();
 					}
 					if(self.form_submit_button_clone){
 						self.form_submit_button_clone
@@ -12528,6 +12532,7 @@ InlineUploader.prototype={
 					},
 					error:function(event,data){
 						self.error("Connection error");
+						self.captcha_reload();
 						if(self.form_submit_button_clone){
 							self.form_submit_button_clone
 							.val(self.form_submit_button.val());
@@ -12537,6 +12542,7 @@ InlineUploader.prototype={
 					},
 					abort:function(event,data){
 						self.error("Upload aborted");
+						self.captcha_reload();
 						if(self.form_submit_button_clone){
 							self.form_submit_button_clone
 							.val(self.form_submit_button.val());
@@ -12566,7 +12572,7 @@ InlineUploader.prototype={
 					for(var i=0;i<fields[key].alt.length;++i){
 						v=null;
 						if(typeof(fields[key].alt[i])==str_type){
-							e=form.find("*[name=\""+fields[key].alt[i]+"\"]");
+							e=form.find("[name=\""+fields[key].alt[i]+"\"]");
 							if(e.length>0){
 								v=e.val();
 								if(v===undefined)v=null;
@@ -12596,19 +12602,34 @@ InlineUploader.prototype={
 				break;
 				case 2:
 				{
-					var e=form.find("*[name=\""+key+"\"]");
+					var e=form.find("[name=\""+key+"\"]");
 					if(e.length>0){
 						if(e.is(":checked")){
-							form_data.append(key,e.val());
+							form_data.append(key,fields[key].value);
 						}
 					}
 					else{
 						e=form.find("#"+key+"");
-						if(e.length>0&&e.is(":checked")){
-							form_data.append(key,e.val());
+						if(e.length==0){
+							for(var i=0;i<fields[key].alt.length;++i){
+								if(typeof(fields[key].alt[i])==str_type){
+									e=form.find("[name=\""+fields[key].alt[i]+"\"]");
+								}
+								else{
+									e=fields[key].alt[i](form,container);
+								}
+							}
+							if(e!=null&&e.length>0){
+								if(e.is(":checked")){
+									form_data.append(key,fields[key].value);
+								}
+							}
+							else if(!fields[key].missing&&!can_be_missing){
+								errors.push("Submit form key \""+key+"\" could not be found.");
+							}
 						}
-						else if(!fields[key].missing&&!can_be_missing){
-							errors.push("Submit form key \""+key+"\" could not be found.");
+						else if(e.is(":checked")){
+							form_data.append(key,fields[key].value);
 						}
 					}
 				}
@@ -12828,12 +12849,12 @@ InlineUploader.prototype={
 			this.reset();
 		}
 		this.error("");
-		this.reply_form.find("*[name=sub]").val("");
-		this.reply_form.find("*[name=com]").val("");
-		var sp=this.reply_form.find("*[name=spoiler],#spoiler");
+		this.reply_form.find("[name=\"sub\"],[data-name=\"sub\"]").val("");
+		this.reply_form.find("[name=\"com\"],[data-name=\"com\"]").val("");
+		var sp=this.reply_form.find("[name=spoiler],#spoiler,#qr-file-spoiler");
 		if(sp.length>0&&sp.is(":checked")){
-			sp.prop("checked",false);
-			if(sp.is(":checked"))sp.click();
+			sp.click();
+			if(sp.is(":checked"))sp.prop("checked",false);
 		}
 		this.captcha_reload();
 		this.form_file_select.val("");
