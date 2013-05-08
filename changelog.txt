@@ -1,4 +1,7 @@
-﻿4.6
+﻿4.6.1
+- Fixed auto-update not working on 4chan-x 3 after posting an image
+
+4.6
 - Removed some "bloat" (a highly unused library)
 
 4.5.4
