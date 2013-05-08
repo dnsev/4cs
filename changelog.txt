@@ -1,4 +1,8 @@
-﻿4.6.1
+﻿4.6.2
+- Sounds uploader spoiler now works again for 4chan-x 3
+- Captcha is auto-refreshed on all upload errors
+
+4.6.1
 - Fixed auto-update not working on 4chan-x 3 after posting an image
 
 4.6
