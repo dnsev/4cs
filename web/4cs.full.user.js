@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.6
+// @version     4.6.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -16398,17 +16398,16 @@ InlineUploader.prototype = {
 					}
 				}
 			));
-			return;
 		}
 
 
 		// Update thread
 		if (script.settings["upload"]["autoupdate_after_post"]) {
 			setTimeout(function () {
-				var o = $("input[type=button][name=\"Update Now\"]");
-				if (o.length == 0) o = $("input[type=button][name=\"Update\"]");
+				var o = $("input[type=\"button\"][name=\"Update Now\"]");
+				if (o.length == 0) o = $("input[type=\"button\"][name=\"Update\"]");
 				o.click();
-			}, 1500);
+			}, 2000);
 		}
 	},
 
