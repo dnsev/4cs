@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.6.2
+// @version        4.6.3
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -3590,14 +3590,6 @@ InlineUploader.prototype = {
 		else {
 			if (this.reply_container) this.reply_container.find(".warning").html(status || "");
 		}
-
-/*		if (un_disable && this.form_submit_button_clone) {
-			var self = this;
-
-			setTimeout(function () {
-				if (self.form_submit_button_clone) self.form_submit_button_clone.removeAttr("disabled");
-			}, 10);
-		}*/
 	},
 	captcha_reload: function () {
 		// Manual notice
