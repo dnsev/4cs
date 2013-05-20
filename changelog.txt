@@ -1,4 +1,7 @@
-﻿4.6.2
+﻿4.6.3
+- Updated jQuery to 2.0
+
+4.6.2
 - Sounds uploader spoiler now works again for 4chan-x 3
 - Captcha is auto-refreshed on all upload errors
 
