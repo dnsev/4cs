@@ -1,4 +1,8 @@
-﻿4.6.3
+﻿4.6.4
+- Better compatability with appchan-x 2
+- Some style changes/fixes for 4chan-x 3 and/or OneeChan
+
+4.6.3
 - Updated jQuery to 2.0
 
 4.6.2
