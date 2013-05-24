@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.6.3
+// @version        4.6.4
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -1573,8 +1573,8 @@ function SettingsManager(inline_manager) {
 		E("style")
 		.attr("id", "MPStyleSettings") // random_string(16 + random_integer(17)))
 		.html(
-			".MPMenu{display:block !important;position:absolute;left:0;top:0;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);z-index:10001;margin:0px !important;padding:2px !important;width:auto !important;height:auto !important;}\n" +
-			".MPMenuClosed{display:none !important;}\n" +
+			".MPMenu,.MPMenu.post.reply{display:inline-block !important;position:absolute;left:0;top:0;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);z-index:10001;margin:0px !important;padding:2px !important;width:auto !important;height:auto !important;}\n" +
+			".MPMenuClosed,.MPMenu.MPMenuClosed,.MPMenu.MPMenuClosed.post.reply{display:none !important;}\n" +
 			"a.MPMenuItem,a.MPMenuItem:link,a.MPMenuItem:visited{display:block !important;padding:2px !important;text-decoration:none !important;}" +
 			".MPMenuItem + .MPMenuItem{margin-top:1px;}\n" +
 
@@ -3882,6 +3882,9 @@ function InlineManager() {
 			if ($("#ch4SS").length > 0) this.mode += "+ss";
 			if ($("input[type=checkbox].riced").length > 0) this.mode = "appchanx"; // probably a better way to do this
 		}
+		else {
+			if ($("html.top").length > 0) this.mode = "appchanx2"; // v2+
+		}
 	}
 
 	// Insert stylesheet
@@ -4010,10 +4013,7 @@ function InlineManager() {
 	}
 	else if (this.mode == "4chanx3") {
 		var o;
-		if ((o = $(".navLinks.desktop")).length > 0) {
-			o.append("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"true\"></span>");
-		}
-		else if ((o = $(".navLinks.mobile")).length > 0) {
+		if ((o = $(".navLinks.mobile")).length > 0) {
 			$(o[0]).after("<div><span class=\"MPControlBar\" thread_controls=\"true\" settings=\"true\"></span></div>");
 		}
 	}
@@ -4026,7 +4026,12 @@ function InlineManager() {
 			o.prepend("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
 		}
 	}
-
+	else if (this.mode == "appchanx2") {
+		var o;
+		if ((o = $(".navLinks.mobile")).length > 0) {
+			$(o[0]).after("<div><span class=\"MPControlBar\" thread_controls=\"true\" settings=\"true\"></span></div>");
+		}
+	}
 	// Settings link
 	$(".MPControlBar[settings=\"true\"]")
 	.html(

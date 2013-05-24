@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.6.3
+// @version     4.6.4
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
