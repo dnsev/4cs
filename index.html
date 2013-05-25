@@ -68,6 +68,17 @@
 					</div>
 				</li>
 				<li><a class="InstallLink" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">Install 4cs</a> through Tampermonkey</li>
+				<li>Edit your Tampermonkey settings:
+					<div class="ContentBodyInner">
+						<ol class="ContentInstructionListUnordered">
+							<li>Go to the <a href="chrome-extension://dhdgffkkebhmkfjojejmpbldmpobfkfo/options.html" target="_blank">Tampermonkey Dashboard</a> page</li>
+							<li>Open the Settings tab on the right</li>
+							<li>Under <b>General</b>, change "<i>Config mode</i>" to "<i>Beginner</i>"</li>
+							<li>Under <b>Runtime</b>, change "<i>UnsafeWindow retrieval method</i>" to "<i>Proxy</i>"</li>
+						</ol>
+					</div>
+					<p class="AsteriskMessage">* You have to do this because of some stupid security setting Google Chrome changed that nobody cares about.</p>
+				</li>
 			</ol>
 		</div>
 
@@ -857,7 +868,7 @@
 					</ul>
 				</div>" links on posts with images</span></div>
 			</div>
-						
+
 			<div class="QASeparator"></div>
 
 			<div class="QA InternalLink" multi_id="update" href="#.?scroll=update&highlight=update">
@@ -923,6 +934,13 @@
 
 			<div class="QASeparator Large"></div>
 
+
+			<div class="QA InternalLink" multi_id="xhr_error" href="#.?scroll=xhr_error&highlight=xhr_error">
+				<div><span>Q)</span><span>Why do no sounds load on Chrome?</span></div>
+				<div><span>A)</span><span>Because Chrome's userscript managers mess all sorts of things up. Read step 3 on the <a class="InternalLink" href="#install">install</a> page</span></div>
+			</div>
+
+			<div class="QASeparator"></div>
 
 			<div class="QA InternalLink" multi_id="ajax_error" href="#.?scroll=ajax_error&highlight=ajax_error">
 				<div><span>Q)</span><span>Why do I keep getting "ajax error"?</span></div>
