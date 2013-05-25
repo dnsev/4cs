@@ -26,7 +26,7 @@ rebuild: clean compile
 
 
 
-$(BIN)bigger : $(OBJ)Bigger.o $(OBJ)ImgLib/Image.o $(OBJ)LodePNG/lodepng.o $(OBJ)JPEG/jpgd.o $(OBJ)JPEG/jpge.o $(OBJ)stb_image/stb_image.o $(OBJ)Sound/Sound.o
+$(BIN)bigger : $(OBJ)Bigger.o $(OBJ)ImgLib/Image.o $(OBJ)LodePNG/lodepng.o $(OBJ)JPEG/jpgd.o $(OBJ)JPEG/jpge.o $(OBJ)stb_image/stb_image.o $(OBJ)Sound/Sound.o $(OBJ)Resources.res
 	@$(CC) $(CC_FLAGS) -o $@ $^
 
 
@@ -54,4 +54,8 @@ $(OBJ)JPEG/jpgd.o : $(SRC)JPEG/jpgd.cpp $(SRC)JPEG/jpgd.h
 
 $(OBJ)JPEG/jpge.o : $(SRC)JPEG/jpge.cpp $(SRC)JPEG/jpge.h
 	@$(CC) $(CC_CFLAGS) -o $@ $<
+
+
+$(OBJ)Resources.res : $(SRC)Resources.rc
+	windres $< -O coff -o $@
 
