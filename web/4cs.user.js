@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.6.4
+// @version     4.6.5
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -9736,6 +9736,9 @@ if(/http\:\/\/dnsev\.github\.io\/4cs\//.test(window.location.href+"")){
 		});
 		no_load=true;
 	}
+}
+if(/:\/\/boards\.4chan\.org\/f\//.test(window.location.href+"")){
+	no_load=true;
 }
 window.$.prototype.exists=function(){
 	return(this.length>0);
