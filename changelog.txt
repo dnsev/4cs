@@ -1,4 +1,7 @@
-﻿4.6.4
+﻿4.6.5
+- Disabled 4cs on /f/
+
+4.6.4
 - Better compatability with appchan-x 2
 - Some style changes/fixes for 4chan-x 3 and/or OneeChan
 
