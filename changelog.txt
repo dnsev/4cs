@@ -1,5 +1,5 @@
 ﻿4.6.6
-Re-ordered the menu item for 4chan-x 3
+- Re-ordered the menu item for 4chan-x 3
 
 4.6.5
 - Disabled 4cs on /f/
