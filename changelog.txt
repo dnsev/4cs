@@ -1,4 +1,7 @@
-﻿4.6.6
+﻿4.6.6.1
+- Raised the "z-index" of the video preview item for compatability with OneeChan
+
+4.6.6
 - Re-ordered the menu item for 4chan-x 3
 
 4.6.5
