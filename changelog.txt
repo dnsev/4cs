@@ -1,4 +1,7 @@
-﻿4.6.6.1
+﻿4.6.6.2
+- Several micro-optimizations for sound decoding
+
+4.6.6.1
 - Raised the "z-index" of the video preview item for compatability with OneeChan
 
 4.6.6
