@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.6.6.1
+// @version        4.6.6.2
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -507,6 +507,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 		// No footer
 		var magic_strings = [ "OggS\x00\x02" , "moot\x00\x02" , "Krni\x00\x02" ];
 		var magic_strings_ui8 = [ string_to_uint8array(magic_strings[0]) , string_to_uint8array(magic_strings[1]) , string_to_uint8array(magic_strings[2]) ];
+		var magic_strings_ui8_length = magic_strings_ui8.length;
 		var magic_strings_fix_size = 4;
 		var len, s, i, j, k, found, tag, temp_tag, data, id;
 		var sound_index = 0;
@@ -518,7 +519,7 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 		var tag_start = 0, tag_start2 = 0, tag_state, tag_mask, tag_pos, tag_indicators = [ "[".charCodeAt(0) , "]".charCodeAt(0) ];
 		var tag_max_length = 100;
 		var imax = raw_ui8_data.length - magic_strings_ui8[0].length;
-		var ms, t1;
+		var ms, t1, ms_len, bit_ord;
 		for (i = 0; i < imax; ++i) {
 			// Unmasking
 			unmask_state = (1664525 * unmask_state + 1013904223) & 0xFFFFFFFF;
@@ -536,32 +537,34 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 			// Match headers
 			found = false;
 			masked = false;
-			for (s = 0; s < magic_strings_ui8.length; ++s) {
+			for (s = 0; s < magic_strings_ui8_length; ++s) {
 				ms = magic_strings_ui8[s];
-				for (j = 0; j < ms.length; ++j) {
+				ms_len = ms.length;
+				for (j = 0; j < ms_len; ++j) {
 					if (raw_ui8_data[i + j] != ms[j]) break;
 				}
-				if (j == ms.length) {
+				if (j == ms_len) {
 					found = true;
 					break;
 				}
-
-				if (found) break;
 			}
 			if (!found) {
-				for (s = 0; s < magic_strings_ui8.length; ++s) {
+				for (s = 0; s < magic_strings_ui8_length; ++s) {
 					ms = magic_strings_ui8[s];
+					ms_len = ms.length;
 					unmask_state_temp = unmask_state;
 					mask_temp = mask;
+					bit_ord = (raw_ui8_data[i] ^ mask_temp);
 					for (j = 0; true; ) {
-						if ((raw_ui8_data[i + j] ^ mask_temp) != ms[j]) break;
+						if (bit_ord != ms[j]) break;
 
-						if (++j >= ms.length) break;
+						if (++j >= ms_len) break;
 						unmask_state_temp = (1664525 * unmask_state_temp + 1013904223) & 0xFFFFFFFF;
 						mask_temp = unmask_state_temp >>> 24;
-						unmask_state_temp += (raw_ui8_data[i + j] ^ mask_temp);
+						bit_ord = (raw_ui8_data[i + j] ^ mask_temp);
+						unmask_state_temp += bit_ord;
 					}
-					if (j == ms.length) {
+					if (j == ms_len) {
 						found = true;
 						masked = true;
 						break;
@@ -580,10 +583,11 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 						for (j = tag_start + 1; j < i; ++j) {
 							tag_state = (1664525 * tag_state + 1013904223) & 0xFFFFFFFF;
 							tag_mask = tag_state >>> 24;
-							tag_state += (raw_ui8_data[j] ^ tag_mask);
+							bit_ord = (raw_ui8_data[j] ^ tag_mask);
+							tag_state += bit_ord;
 
-							if ((raw_ui8_data[j] ^ tag_mask) == tag_indicators[1]) break;
-							temp_tag += String.fromCharCode(raw_ui8_data[j] ^ tag_mask);
+							if (bit_ord == tag_indicators[1]) break;
+							temp_tag += String.fromCharCode(bit_ord);
 						}
 						if (j < i) {
 							tag = decode_utf8(temp_tag);
@@ -1107,29 +1111,34 @@ function image_load_callback_complete_sound(sounds, raw_ui8_data, sound_start_of
 	// Set data
 	var id = sounds.length - 1;
 	sounds[id].data = raw_ui8_data.subarray(sound_start_offset, sound_end_offset);
+	var sound_data = sounds[id].data;
+	var sound_data_len = sound_data.length;
 	// Fix
 	var i, j, k;
 	if (sound_masked_state !== null) {
-		for (i = 0; true; ) {
-			sounds[id].data[i] = (sounds[id].data[i] ^ sound_masked_mask);
+		i = 0;
+		var bit_ord = (sound_data[i] ^ sound_masked_mask);
+		while (true) {
+			sound_data[i] = bit_ord;
 
 			// Done/next
-			if (++i >= sounds[id].data.length) break;
+			if (++i >= sound_data_len) break;
 			sound_masked_state = (1664525 * sound_masked_state + 1013904223) & 0xFFFFFFFF;
 			sound_masked_mask = sound_masked_state >>> 24;
-			sound_masked_state += (sounds[id].data[i] ^ sound_masked_mask);
+			bit_ord = (sound_data[i] ^ sound_masked_mask);
+			sound_masked_state += bit_ord;
 		}
 	}
 	if (sound_magic_string_index != 0) {
-		var len = sounds[id].data.length - magic_strings_fix_size;
+		var len = sound_data.length - magic_strings_fix_size;
 		for (j = 0; j < len; ++j) {
 			for (k = 0; k < magic_strings_fix_size; ++k) {
-				if (sounds[id].data[j + k] != magic_strings_ui8[sound_magic_string_index][k]) break;
+				if (sound_data[j + k] != magic_strings_ui8[sound_magic_string_index][k]) break;
 			}
 			if (k == magic_strings_fix_size) {
 				// Fix it
 				for (k = 0; k < magic_strings_fix_size; ++k) {
-					sounds[id].data[j + k] = magic_strings_ui8[0][k];
+					sound_data[j + k] = magic_strings_ui8[0][k];
 				}
 				j += magic_strings_fix_size - 1;
 			}
