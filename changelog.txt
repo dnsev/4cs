@@ -1,4 +1,7 @@
-﻿4.7.0.1
+﻿4.7.0.2
+- Now works in non-thread pages on 38
+
+4.7.0.1
 - Fixed a bug on 38 where video files with an image would display improperly
 
 4.7
