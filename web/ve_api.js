@@ -2908,6 +2908,10 @@ var VPlayer = (function () {
 			this.image_tag = document.createElement("img");
 			this.image_tag.style.position = "absolute";
 			this.image_tag.style.display = "none";
+			this.image_tag.style.margin = "0px";
+			this.image_tag.style.padding = "0px";
+			this.image_tag.style.border = "0px hidden";
+			this.image_tag.style["float"] = "none";
 			// Image events
 			this_private.add_image_callback.call(this, "load", function () {
 				this_private.on_image_load.call(self);
