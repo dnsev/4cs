@@ -1,4 +1,7 @@
-﻿4.6.6.2
+﻿4.7
+- Added support for 38chan
+
+4.6.6.2
 - Several micro-optimizations for sound decoding
 
 4.6.6.1
