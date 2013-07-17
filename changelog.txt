@@ -1,4 +1,7 @@
-﻿4.7
+﻿4.7.0.1
+- Fixed a bug on 38 where video files with an image would display improperly
+
+4.7
 - Added support for 38chan
 
 4.6.6.2
