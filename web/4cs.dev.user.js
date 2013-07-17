@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.6.6.2
+// @version        4.7
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -10,6 +10,7 @@
 // @include        *://boards.4chan.org/*
 // @include        *://archive.foolz.us/*
 // @include        *://loveisover.me/*
+// @include        *://boards.38chan.net/*
 // @include        http://dnsev.github.io/4cs/*
 // @icon           data:image/gif;base64,R0lGODlhEAAQAKECAAAAAGbMM////////yH5BAEKAAIALAAAAAAQABAAAAIllI+pB70KQgAPNUmroDHX7Gie95AkpCUn1ISlhKVR/MEre6dLAQA7
 // @require        https://raw.github.com/dnsev/4cs/master/web/jquery.js
@@ -96,7 +97,8 @@ if (!GM_getValue || (GM_getValue.toString && GM_getValue.toString().indexOf("not
 ///////////////////////////////////////////////////////////////////////////////
 // Multi-use
 ///////////////////////////////////////////////////////////////////////////////
-var is_archive = ((document.location + "").indexOf("boards.4chan.org") < 0);
+var is_38 = ((document.location + "").indexOf("boards.38chan.net") >= 0);
+var is_archive = !is_38 && ((document.location + "").indexOf("boards.4chan.org") < 0);
 
 function string_to_uint8array(str) {
 	var array = new Uint8Array(new ArrayBuffer(str.length));
@@ -1354,7 +1356,7 @@ function ThreadManager() {
 			}
 		});
 	}
-	$(is_archive ? ".post" : ".postContainer")
+	$(is_38 ? ".post" : (is_archive ? ".post" : ".postContainer"))
 	.each(function (index) {
 		if (!$(this).hasClass("stub")) {
 			self.post_queue.push($(this));
@@ -1477,11 +1479,21 @@ ThreadManager.prototype = {
 	},
 	parse_post: function (container) {
 		// Get id
-		var post_id = (container.attr("id") || "0").replace(/(\w+_)?[^0-9]/g, "");
+		var post_id;
+		if (is_38) {
+			post_id = container.children("p:nth-of-type(1)").attr("id");
+		}
+		else {
+			post_id = container.attr("id");
+		}
+		post_id = (post_id || "0").replace(/(\w+_)?[^0-9]/g, "");
 		var redo = this.post_exists(post_id);
 
-		var image = container.find(is_archive ? ".thread_image_link" : ".fileThumb");
-		var post = container.find(is_archive ? ".text" : ".postMessage");
+		var image = container.find(is_38 ? ".fileinfo a" : (is_archive ? ".thread_image_link" : ".fileThumb"));
+		if (is_38 && container.hasClass("op")) {
+			image = container.parent().find(".fileinfo:nth-of-type(1) a");
+		}
+		var post = container.find(is_38 ? ".body" : (is_archive ? ".text" : ".postMessage"));
 
 		image = (image.length > 0 ? (image.attr("href") || "") : null);
 		// Redirect links from the archive
@@ -1522,6 +1534,9 @@ ThreadManager.prototype = {
 						}
 					}
 				}
+			}
+			else if (is_38) {
+				// TODO : fix this to get the original filename
 			}
 			else {
 				var ft = container.find(".fileText");
@@ -3888,6 +3903,9 @@ function InlineManager() {
 	else if (is_archive) {
 		this.mode = "archive";
 	}
+	else if (is_38) {
+		this.mode = "38";
+	}
 	else {
 		if ($("html").hasClass("fourchan-x")) this.mode = "4chanx3";
 		else if ($("body").hasClass("fourchan_x")) {
@@ -3995,6 +4013,15 @@ function InlineManager() {
 		brackets = [ " [ " , " ] " ];
 		brackets2 = [ " [ " , " ] " ];
 		sep = " / ";
+	}
+	else if (this.mode == "38") {
+		$(".boardlist").append(" <span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span>");
+		var o;
+		if ((o = $("form[name=\"postcontrols\"]")).length > 0) {
+			$(o[0]).prepend("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
+		}
+		brackets = [ " [ " , " ] " ];
+		brackets2 = [ " [ " , " ] " ];
 	}
 	else if (this.mode == "inline") {
 		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span> ");
@@ -4226,7 +4253,13 @@ InlineManager.prototype = {
 						if (name === undefined) return 2;
 						name = name.toLowerCase();
 
-						if (is_archive) {
+						if (is_38) {
+							if (
+								(name == "span" && tag.hasClass("quote")) ||
+								(name == "span" && tag.hasClass("spoiler"))
+							) return 1;
+						}
+						else if (is_archive) {
 							if (
 								(name == "span" && tag.hasClass("greentext")) ||
 								(name == "span" && tag.hasClass("spoiler"))
@@ -4259,7 +4292,19 @@ InlineManager.prototype = {
 
 				// Load all
 				if (script.settings["inline"]["sound_source"]) {
-					if (is_archive) {
+					if (is_38) {
+						var file_size_label;
+						if (post_data.container.hasClass("op")) {
+							file_size_label = post_data.container.parent().find(".fileinfo:nth-of-type(1) .unimportant");
+						}
+						else {
+							file_size_label = post_data.container.find(".fileinfo .unimportant");
+						}
+						file_size_label = $(file_size_label[0]);
+						file_size_label.after((post_data.sounds.load_all_link = E("a")).addClass("MPLoadAllLink"));
+						file_size_label.after(T(" "));
+					}
+					else if (is_archive) {
 						var file_size_label = post_data.container.find(".post_file_controls").find("a");
 						file_size_label = $(file_size_label[0]);
 						file_size_label.before((post_data.sounds.load_all_link = E("a")).addClass("MPLoadAllLink btnr parent"));
@@ -4387,7 +4432,13 @@ InlineManager.prototype = {
 					if (name === undefined) return 2;
 					name = name.toLowerCase();
 
-					if (is_archive) {
+					if (is_38) {
+						if (
+							(name == "span" && tag.hasClass("quote")) ||
+							(name == "span" && tag.hasClass("spoiler"))
+						) return 1;
+					}
+					else if (is_archive) {
 						if (
 							(name == "span" && tag.hasClass("greentext")) ||
 							(name == "span" && tag.hasClass("spoiler"))
@@ -4929,7 +4980,7 @@ InlineManager.prototype = {
 		this.settings_manager.settings_update_link
 		.css("display", "")
 		.attr("href", url);
-		if (!is_archive) {
+		if (!is_archive && !is_38) {
 			$(".MPNavLink").addClass("quotelink");
 		}
 	},

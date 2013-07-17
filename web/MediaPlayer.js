@@ -530,7 +530,13 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"overflow": "hidden",
 			"position": "relative"
 		},
-		".MPImage": {},
+		".MPImage": {
+			"display": "inline",
+			"float": "none",
+			"margin": "0px",
+			"border": "0px hidden",
+			"padding": "0px"
+		},
 		".MPNoImage": {
 			"display": "inline-block",
 			"background": "{rgba:bg_color_lightest}",
