@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.7.0.2
+// @version     4.7.0.3
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
 // @grant       GM_getValue
 // @grant       GM_setValue
+// @grant       GM_deleteValue
 // @include     *://boards.4chan.org/*
 // @include     *://archive.foolz.us/*
 // @include     *://loveisover.me/*

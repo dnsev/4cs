@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.7.0.2
+// @version     4.7.0.3
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
 // @grant       GM_getValue
 // @grant       GM_setValue
+// @grant       GM_deleteValue
 // @include     *://boards.4chan.org/*
 // @include     *://archive.foolz.us/*
 // @include     *://loveisover.me/*
@@ -12980,10 +12981,10 @@ function text_to_html(str) {
 		.replace(/"/g, "&quot;");
 }
 function html_to_text(str) {
-	return str.replace(/&amp;/g, "&")
-		.replace(/&gt;/g, ">")
+	return str.replace(/&quot;/g, "\"")
 		.replace(/&lt;/g, "<")
-		.replace(/&quot;/g, "\"");
+		.replace(/&gt;/g, ">")
+		.replace(/&amp;/g, "&");
 }
 
 function string_remove_tags(str) {
@@ -14062,7 +14063,7 @@ ThreadManager.prototype = {
 		// Get id
 		var post_id;
 		if (is_38) {
-			post_id = container.find(".intro .post_no:nth-of-type(2)").html().trim();
+			post_id = (container.find(".intro .post_no:nth-of-type(2)").html() || "").trim();
 		}
 		else {
 			post_id = container.attr("id");
@@ -16498,6 +16499,10 @@ function InlineManager() {
 			if ($("html.top").length > 0) this.mode = "appchanx2"; // v2+
 		}
 	}
+	this.oneechan = false;
+	if ($("html").hasClass("oneechan")) {
+		this.oneechan = true;
+	}
 
 	// Insert stylesheet
 	$("head")
@@ -16508,7 +16513,7 @@ function InlineManager() {
 			"a.MPNavLink,.MPNavSpan{}\n" +
 			".MPHidden{display:none !important;}\n" +
 
-			".MPControlBar{}\n" +
+			".MPControlBar{" + (this.oneechan ? "position:relative;top:-20px;" : "") + "}\n" +
 
 			".MPThreadControls{}\n" +
 
@@ -16599,7 +16604,7 @@ function InlineManager() {
 		$(".boardlist").append(" <span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span>");
 		var o;
 		if ((o = $("form[name=\"postcontrols\"]")).length > 0) {
-			$(o[0]).prepend("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
+			$(o[0]).before("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
 		}
 		brackets = [ " [ " , " ] " ];
 		brackets2 = [ " [ " , " ] " ];
@@ -16781,6 +16786,7 @@ InlineManager.prototype = {
 	},
 
 	parse_post: function (post_data, redo, post_data_copy) {
+		if (!post_data) return;
 		if (post_data.image_url != null) {
 			var self = this;
 
