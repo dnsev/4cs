@@ -1,4 +1,10 @@
-﻿4.7.0.2
+﻿4.7.1
+- Another change for Oneechan, but slightly more important
+
+4.7.0.3
+- Small change for Oneechan compatibility
+
+4.7.0.2
 - Now works in non-thread pages on 38
 
 4.7.0.1
