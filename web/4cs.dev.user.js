@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.7.1
+// @version        4.7.1.1
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -3894,6 +3894,10 @@ InlineUploader.prototype = {
 // Inline text
 ///////////////////////////////////////////////////////////////////////////////
 function InlineManager() {
+    if ($("html").find("head").length == 0) {
+        $("html").prepend(document.createElement("head"));
+    }
+
 	var self = this;
 
 	// Detect other userscripts
@@ -3958,7 +3962,7 @@ function InlineManager() {
 
 			".MPVideoInfo{display:none !important;}\n" +
 			".MPVideoInfoDisplay{z-index:10;text-align:center;padding:8px !important;display:block;position:absolute;left:0;top:100%;box-shadow:0px 0px 2px 2px rgba(0,0,0,0.25);border-radius:4px;width:auto !important;}\n" +
-			":root div.post.reply.MPVideoInfoDisplay.MPVideoInfoDisplayHidden{display:none !important}\n" +
+			":root div.post.reply.MPVideoInfoDisplay.MPVideoInfoDisplayHidden,:root div.post_wrapper.MPVideoInfoDisplay.MPVideoInfoDisplayHidden{display:none !important}\n" +
 			".MPVideoInfoDisplayContainer{}\n" +
 			".MPVideoInfoDisplayTitle{text-align:left;margin-bottom:2px;}\n" +
 			".MPVideoInfoDisplayTitleStart{opacity:0.5 !important;}\n" +
