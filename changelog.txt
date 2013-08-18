@@ -1,4 +1,8 @@
-﻿4.7.1
+﻿4.7.1.1
+- Fixed a styling issue on foolz
+- Fixed a problem in Chrome where stuff would be visible when viewing images
+
+4.7.1
 - Another change for Oneechan, but slightly more important
 
 4.7.0.3
