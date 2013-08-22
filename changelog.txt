@@ -1,4 +1,7 @@
-﻿4.7.1.1
+﻿4.7.1.2
+- Changed the display for the sounds expansion box for a newer version of 4chan-x
+
+4.7.1.1
 - Fixed a styling issue on foolz
 - Fixed a problem in Chrome where stuff would be visible when viewing images
 
