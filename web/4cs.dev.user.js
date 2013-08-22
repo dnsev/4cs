@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.7.1.1
+// @version        4.7.1.2
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -2253,8 +2253,9 @@ InlineUploader.prototype = {
 		}
 		else if (this.mode == "4chanx3") {
 			var sp = form.find("#file-n-submit");
-			sp.after( //{ Sounds checkbox
-				E("div")
+			var main_div;
+ 			sp.after( //{ Sounds checkbox
+				(main_div = E("div"))
 				.html(
 					E("label")
 					.addClass("MPSoundUploaderSoundLabel")
@@ -2275,6 +2276,13 @@ InlineUploader.prototype = {
 					})
 				)
 			); //}
+
+			if (!($("html").hasClass("seaweedchan") || $("html").hasClass("ihavenoface") || $("html").hasClass("zixaphir"))) {
+				main_div.css({
+					position: "relative",
+					"margin-top": "20px"
+				});
+			}
 		}
 		else if (this.mode == "4chanx+ss") {
 			var sp = form.find("#spoilerLabel");
