@@ -58,28 +58,66 @@
 
 		<div class="ContentHeader Chrome"><div class="TextIcon TextIconChrome"></div><span class="ContentHeaderTitle TextIconText">Chrome</span><span class="TextIconText">:</span></div>
 		<div class="ContentBody Chrome">
-			<ol class="ContentInstructionList">
-				<li>If you don't have <a href="https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank">Tampermonkey</a> installed:<br />
-					<div class="ContentBodyInner">
-						<ol class="ContentInstructionListUnordered">
-							<li>Install <a href="https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank">Tampermonkey</a></li>
-							<li>Restart your browser</li>
-						</ol>
-					</div>
-				</li>
-				<li><a class="InstallLink" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">Install 4cs</a> through Tampermonkey</li>
-				<li>Edit your Tampermonkey settings:
-					<div class="ContentBodyInner">
-						<ol class="ContentInstructionListUnordered">
-							<li>Go to the <a href="chrome-extension://dhdgffkkebhmkfjojejmpbldmpobfkfo/options.html" target="_blank">Tampermonkey Dashboard</a> page</li>
-							<li>Open the Settings tab on the right</li>
-							<li>Under <b>General</b>, change "<i>Config mode</i>" to "<i>Beginner</i>"</li>
-							<li>Under <b>Runtime</b>, change "<i>UnsafeWindow retrieval method</i>" to "<i>Proxy</i>"</li>
-						</ol>
-					</div>
-					<p class="AsteriskMessage">* You have to do this because of some stupid security setting Google Chrome changed that nobody cares about.</p>
-				</li>
-			</ol>
+			<div class="ContentHeader"><b>Two Different Methods</b>:</div>
+			<div>
+				<ol class="ContentInstructionList">
+					<li><div class="ContentHeader"><b>Method 1</b>:</div>
+						<p>For newer versions of Google Chrome, Tampermonkey is broken. Use this method instead.</p>
+						<p class="AsteriskMessage">* You may lose the ability to play Youtube videos through the player though, but sounds will work</p>
+					</li>
+					<li><div class="ContentHeader"><b>Method 2</b>:</div>
+						<p>If Tampermonkey works for you, use this version.</p>
+						<p class="AsteriskMessage">* This method is what the script was originally designed for, and should still retain Youtube video playback capabilities</p>
+					</li>
+				</ol>
+			</div>
+
+			<div class="ContentBody Stub"></div>
+			<div class="ContentHeader"><b>Method 1</b>: Chrome Native Extension</div>
+			<div>
+				<ol class="ContentInstructionList">
+					<li>
+						<a class="InstallLink" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js" target="_blank">Download 4cs</a> to your computer<br />
+						<p class="AsteriskMessage">Make sure to <b>not</b> have Tampermonkey install it</p>
+					</li>
+					<li>
+						Open <a href="chrome://extensions" target="_blank">chrome://extensions</a> in a tab in your browser
+						<p class="AsteriskMessage">Same as opening your browser settings and navigating to the Extensions tab</p>
+					</li>
+					<li>
+						Drag and drop the <a href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js" target="_blank">4cs.user.js</a> file you downloaded into the <a href="chrome://extensions" target="_blank">chrome://extensions</a> tab
+						<p class="AsteriskMessage">Should say "Drop to install" or something similar. Let it install this way</p>
+					</li>
+				</ol>
+				<p class="AsteriskMessage">* If you use this method and still have Tampermonkey installed, be sure to disable it <a href="chrome-extension://dhdgffkkebhmkfjojejmpbldmpobfkfo/options.html" target="_blank">through Tampermonkey</a></p>
+			</div>
+
+			<div class="ContentBody Stub"></div>
+			<div class="ContentHeader"><b>Method 2</b>: Tampermonkey Extension</div>
+			<div>
+				<ol class="ContentInstructionList">
+					<li>If you don't have <a href="https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank">Tampermonkey</a> installed:<br />
+						<div class="ContentBodyInner">
+							<ol class="ContentInstructionListUnordered">
+								<li>Install <a href="https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank">Tampermonkey</a></li>
+								<li>Restart your browser</li>
+							</ol>
+						</div>
+					</li>
+					<li><a class="InstallLink" href="https://raw.github.com/dnsev/4cs/master/web/4cs.user.js">Install 4cs</a> through Tampermonkey</li>
+					<li>Edit your Tampermonkey settings:
+						<p><div class="ContentBodyInner">
+							<ol class="ContentInstructionListUnordered">
+								<li>Go to the <a href="chrome-extension://dhdgffkkebhmkfjojejmpbldmpobfkfo/options.html" target="_blank">Tampermonkey Dashboard</a> page</li>
+								<li>Open the Settings tab on the right</li>
+								<li>Under <b>General</b>, change "<i>Config mode</i>" to "<i>Beginner</i>"</li>
+								<li>Under <b>Runtime</b>, change "<i>UnsafeWindow retrieval method</i>" to "<i>Proxy</i>"</li>
+							</ol>
+						</div></p>
+						<p class="AsteriskMessage">* You have to do this because of some stupid security setting Google Chrome changed that nobody cares about.</p>
+					</li>
+				</ol>
+			</div>
 		</div>
 
 		<div class="ContentHeader"><span class="ContentHeaderTitle Developer">For developers</span><span class="PageVariableDisplayInv" pvar="dev">:</span><span class="Developer PageVariableDisplay PageVariableDisplayOff" pvar="dev"><span class="HardlinkSeparator">/</span><a class="Hardlink" href="#" id="hardlink_enable_dev">Hardlink</a></span></div>
