@@ -2525,8 +2525,8 @@ MediaPlayer.prototype = {
 					else {
 						return (
 							this.ytvideo_player.getPlayerState &&
-							(this.ytvideo_player.getPlayerState() != unsafeWindow.YT.PlayerState.BUFFERING &&
-							this.ytvideo_player.getPlayerState() != unsafeWindow.YT.PlayerState.PLAYING)
+							(this.ytvideo_player.getPlayerState() != window.YT.PlayerState.BUFFERING &&
+							this.ytvideo_player.getPlayerState() != window.YT.PlayerState.PLAYING)
 						);
 					}
 				}
@@ -2990,7 +2990,7 @@ MediaPlayer.prototype = {
 					"size": [ this.video_container.outerWidth() , this.video_container.outerHeight() ],
 					"div_id": div_id,
 					"vid_container": vid_container[0],
-					"Player": unsafeWindow.YT.Player
+					"Player": window.YT.Player
 				};
 
 				this.ytvideo_html5 = true;
@@ -5619,21 +5619,21 @@ MediaPlayer.prototype = {
 	},
 	on_ytvideo_state_change: function (event, media_player) {
 		switch (event.data) {
-			case unsafeWindow.YT.PlayerState.ENDED:
+			case window.YT.PlayerState.ENDED:
 				media_player.update_playing_status();
 				media_player.on_media_end();
 				media_player.next(true);
 			break;
-			case unsafeWindow.YT.PlayerState.PLAYING:
+			case window.YT.PlayerState.PLAYING:
 				media_player.update_playing_status();
 			break;
-			case unsafeWindow.YT.PlayerState.PAUSED:
+			case window.YT.PlayerState.PAUSED:
 				media_player.update_playing_status();
 			break;
-			case unsafeWindow.YT.PlayerState.BUFFERING:
+			case window.YT.PlayerState.BUFFERING:
 				media_player.update_playing_status();
 			break;
-			case unsafeWindow.YT.PlayerState.CUED:
+			case window.YT.PlayerState.CUED:
 			break;
 		}
 	},

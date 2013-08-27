@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.7.1.2
+// @version        4.7.2
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -42,24 +42,26 @@ if (/http\:\/\/dnsev\.github\.io\/4cs\//.test(window.location.href + "")) {
 	}
 	else {
 		$(document).ready(function () {
-			if (unsafeWindow && unsafeWindow.version_check) {
-				// Get the version
-				var version = "";
+			// Get the version
+			var version = "";
+			try {
+				version = GM_info.script.version;
+			}
+			catch (e) {
 				try {
-					version = GM_info.script.version;
+					version = GM_getMetadata("version").toString();
 				}
 				catch (e) {
-					try {
-						version = GM_getMetadata("version").toString();
-					}
-					catch (e) {
-						version = null;
-					}
+					version = null;
 				}
-				if (version !== null) {
-					// Perform an update check
-					unsafeWindow.version_check(version);
-				}
+			}
+			if (version !== null) {
+				// Perform an update check
+				document.dispatchEvent(new CustomEvent("api_4cs_version_check", {
+					detail: {
+						version: version
+					}
+				}));
 			}
 		});
 		no_load = true;
@@ -7539,47 +7541,57 @@ $(document).ready(function () {
 		inline_manager.display_info("help", {easy_close: false});
 	}
 
+
+
 	// Hack move the scope out of sandbox
 	window._unsafe_exec = function () {
-		if (window._unsafe !== undefined) {
-			window._unsafe_return = window[window._unsafe.func].call(window, window._unsafe.data);
-			window._unsafe.tag.parentNode.removeChild(window._unsafe.tag);
-			window[window._unsafe.func] = undefined;
-			window._unsafe = undefined;
-		}
-	}
+		var win_object = window;
+		document.addEventListener("api_4cs_unsafe_exec", function (event) {
+			event.detail.ret = event.detail.fcn.call(win_object, event.detail.data);
+		}, false);
+	};
 	var tag = document.createElement("script");
-	tag.innerHTML = "window._unsafe_exec = " + window._unsafe_exec.toString() + ";";
-	document.body.appendChild(tag);
+	tag.innerHTML = "(" + window._unsafe_exec.toString() + ")();";
+	document.head.appendChild(tag);
+
 	window._unsafe_exec = function (exec_function, data) {
-		// Create script tag
-		var tag = document.createElement("script");
-
-		// Set data to be passed
-		var _unsafe = {
-			"tag": tag,
-			"func": "_unsafe_f049fwjef0rghr09", // TODO : maybe make this change
-			"data": data
+		var detail = {
+			fcn: exec_function,
+			data: data,
+			ret: null
 		};
-
-		// Apply script source and run it
-		tag.innerHTML = "window." + _unsafe.func + " = " + exec_function.toString() + "; window._unsafe_exec();";
-
-		// Run script
-		unsafeWindow._unsafe = _unsafe;
-		document.body.appendChild(tag);
-
-		// Assuming that runs instantly...
-		var r = unsafeWindow._unsafe_return;
-		unsafeWindow._unsafe_return = undefined;
-		return r;
+		document.dispatchEvent(new CustomEvent("api_4cs_unsafe_exec", {
+			detail: detail
+		}));
+		return detail.ret;
 	}
+
+
 
 	// Youtube API
+	var onYouTubeIframeAPIReady = function () {
+		document.dispatchEvent(new CustomEvent("api_4cs_youtube_ready", {
+			detail: {
+				YT: window.YT
+			}
+		}));
+	};
+
+	document.addEventListener("api_4cs_youtube_ready", function (event) {
+		window.YT = event.detail.YT;
+	}, false);
+
+	tag = document.createElement("script");
+	tag.innerHTML = "var onYouTubeIframeAPIReady = " + onYouTubeIframeAPIReady.toString() + ";";
+	document.head.appendChild(tag);
+
 	$.getScript("//www.youtube.com/iframe_api", function (script, status, jqXHR) {});
+
 
 	// Update check once a day
 	script.update_check_interval(1000 * 60 * 60 * 24);
 });
+
+
 
 
