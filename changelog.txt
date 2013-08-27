@@ -1,4 +1,7 @@
-﻿4.7.1.2
+﻿4.7.2
+- Removed unsafeWindow usage
+
+4.7.1.2
 - Changed the display for the sounds expansion box for a newer version of 4chan-x
 
 4.7.1.1
