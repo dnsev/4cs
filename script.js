@@ -654,6 +654,10 @@ function audio_log(label, value) {
 }
 
 // Entry
+document.addEventListener("api_4cs_version_check", function (event) {
+	current_version = event.detail.version;
+	version_compare();
+}, false);
 $(document).ready(function () {
 	// Events
 	$("#show_all_browser").on("click", {}, function (event) {
