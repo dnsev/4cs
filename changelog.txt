@@ -1,4 +1,7 @@
-﻿4.7.2
+﻿4.7.3
+- Added xch compatibility
+
+4.7.2
 - Removed unsafeWindow usage
 
 4.7.1.2
