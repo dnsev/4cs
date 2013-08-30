@@ -1,4 +1,7 @@
-﻿4.7.3
+﻿4.7.3.1
+- Styling fix to video previews
+
+4.7.3
 - Added xch compatibility
 
 4.7.2
