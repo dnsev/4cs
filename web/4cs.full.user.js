@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.7.3
+// @version     4.7.3.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -17800,6 +17800,9 @@ InlineManager.prototype = {
 			pos[0] = win_size[0] - (off[0] + par_size[0]);
 			ret[0] = false;
 		}
+		else {
+			obj.css("right", "");
+		}
 
 		obj.css(pos_label[0], pos[0] + "px");
 		obj.css(pos_label[1], pos[1] + "px");
@@ -18063,7 +18066,7 @@ InlineManager.prototype = {
 				(event.data.display_container = E("div"))
 				.css("opacity", "0")
 				.addClass("MPVideoInfoDisplay MPHighlightShadow2px")
-				.addClass(xch ? "xch reply post" : (is_archive ? "post_wrapper" : "reply post"))
+				.addClass(is_archive ? "post_wrapper" : "reply post")
 				.append(
 					(container = E("div"))
 					.addClass("MPVideoInfoDisplayContainer")
