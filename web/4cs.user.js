@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.7.2
+// @version     4.7.3
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -10776,74 +10776,87 @@ function ThreadManager(){
 	this.post_queue=[];
 	this.post_queue_timeout=null;
 	var self=this;
-	if(is_archive){
-		$(".thread")
-		.each(function(index){
-			if($(this).attr("id")){
-				if(index==0){
-					self.post_queue.push($(this));
-				}
-			}
+	if(xch){
+		xch.api.on("post_prepare",function(event){
+			self.xch_parse_post(event.post,event.post_instance);
 		});
-	}
-	$(is_38?".post":(is_archive?".post":".postContainer"))
-	.each(function(index){
-		if(!$(this).hasClass("stub")){
-			self.post_queue.push($(this));
+		var posts=xch.api.get("posts");
+		for(var i=0,j;i<posts.length;++i){
+			for(j=0;j<posts[i].instances.length;++j){
+				this.xch_parse_post(posts[i],posts[i].instances[j]);
+			}
 		}
-	});
-	var MutationObserver=(window.MutationObserver||window.WebKitMutationObserver);
-	if(MutationObserver){
-		try{
-			var mo=new MutationObserver(function(records){
-				for(var i=0;i<records.length;++i){
-					if(records[i].type=="childList"){
-						var nodes;
-						if((nodes=records[i].addedNodes)){
-							for(var j=0;j<nodes.length;++j){
-								self.on_dom_mutation_add($(nodes[j]));
-							}
-							if(self.post_queue.length>0){
-								self.parse_group();
-							}
-						}
-						if((nodes=records[i].removedNodes)){
-							for(var j=0;j<nodes.length;++j){
-								self.on_dom_mutation_remove($(nodes[j]));
-							}
-						}
+	}
+	else{
+		if(is_archive){
+			$(".thread")
+			.each(function(index){
+				if($(this).attr("id")){
+					if(index==0){
+						self.post_queue.push($(this));
 					}
 				}
 			});
-			mo.observe(
-				$("body")[0],
-				{
-					"childList":true,
-					"subtree":true,
-					"characterData":true
-				}
-			);
 		}
-		catch(e){
-			console.log(e);
-			MutationObserver=null;
-		}
-	}
-	if(!MutationObserver){
-		$("body")
-		.on("DOMNodeInserted",function(event){
-			self.on_dom_mutation_add($(event.target));
-			if(self.post_queue.length>0){
-				self.parse_group();
+		$(is_38?".post":(is_archive?".post":".postContainer"))
+		.each(function(index){
+			if(!$(this).hasClass("stub")){
+				self.post_queue.push($(this));
 			}
-			return true;
-		})
-		.on("DOMNodeRemoved",function(event){
-			self.on_dom_mutation_remove($(event.target));
-			return true;
 		});
+		var MutationObserver=(window.MutationObserver||window.WebKitMutationObserver);
+		if(MutationObserver){
+			try{
+				var mo=new MutationObserver(function(records){
+					for(var i=0;i<records.length;++i){
+						if(records[i].type=="childList"){
+							var nodes;
+							if((nodes=records[i].addedNodes)){
+								for(var j=0;j<nodes.length;++j){
+									self.on_dom_mutation_add($(nodes[j]));
+								}
+								if(self.post_queue.length>0){
+									self.parse_group();
+								}
+							}
+							if((nodes=records[i].removedNodes)){
+								for(var j=0;j<nodes.length;++j){
+									self.on_dom_mutation_remove($(nodes[j]));
+								}
+							}
+						}
+					}
+				});
+				mo.observe(
+					$("body")[0],
+					{
+						"childList":true,
+						"subtree":true,
+						"characterData":true
+					}
+				);
+			}
+			catch(e){
+				console.log(e);
+				MutationObserver=null;
+			}
+		}
+		if(!MutationObserver){
+			$("body")
+			.on("DOMNodeInserted",function(event){
+				self.on_dom_mutation_add($(event.target));
+				if(self.post_queue.length>0){
+					self.parse_group();
+				}
+				return true;
+			})
+			.on("DOMNodeRemoved",function(event){
+				self.on_dom_mutation_remove($(event.target));
+				return true;
+			});
+		}
+		this.parse_group();
 	}
-	this.parse_group();
 }
 ThreadManager.prototype={
 	constructor:ThreadManager,
@@ -10973,6 +10986,22 @@ ThreadManager.prototype={
 			if(script.settings["inline"]["url_replace"]){
 				inline_manager.parse_post_for_urls(this.posts[post_id],redo,post_data_copy);
 			}
+		}
+	},
+	xch_parse_post:function(xch_post,xch_instance){
+		var post_data={
+			container:xch_instance.container,
+			image_url:(xch_post.image?xch_post.image.url||null:null),
+			image_name:(xch_post.image?xch_post.image.filename_original||null:null),
+			post:xch_instance.container.find(".post_body").first()
+		};
+		var redo=(xch_post.id in this.posts);
+		if(!redo){
+			this.posts[xch_post.id]=post_data;
+		}
+		inline_manager.parse_post(this.posts[xch_post.id],redo,post_data);
+		if(script.settings["inline"]["url_replace"]){
+			inline_manager.parse_post_for_urls(this.posts[xch_post.id],redo,post_data);
 		}
 	},
 	post:function(index){
@@ -11136,7 +11165,100 @@ function SettingsManager(inline_manager){
 	this.section_default="Other Settings";
 	this.sections={};
 	this.settings_data=[];
-	if(inline_manager.mode=="4chanx3"){
+	if(xch){
+		xch.api.on("main_menu_open",function(event){
+			var option={
+				html:(
+					E("a")
+					.attr("href","http://dnsev.github.io/4cs/")
+					.attr("target","_blank")
+					.text("Media Player")
+				),
+				order:1,
+				on:{
+					click:{
+						callback_data:self,
+						callback:function(event){
+							if(event.which!=1)return true;
+							event.data.option.menu.close();
+							return false;
+						}
+					}
+				},
+				options:[{
+					html:(
+						E("a")
+						.attr("href","http://dnsev.github.io/4cs/")
+						.attr("target","_blank")
+						.text("Open Player")
+					),
+					on:{
+						click:{
+							callback_data:{self:self,item:0},
+							callback:function(event){
+								if(event.which!=1)return true;
+								event.data.option.menu.close();
+								return event.data.callback_data.self.on_menu_item_click(this,event);
+							}
+						}
+					}
+				},{
+					html:(
+						E("a")
+						.attr("href","http://dnsev.github.io/4cs/")
+						.attr("target","_blank")
+						.text("Settings")
+					),
+					on:{
+						click:{
+							callback_data:{self:self,item:1},
+							callback:function(event){
+								if(event.which!=1)return true;
+								event.data.option.menu.close();
+								return event.data.callback_data.self.on_menu_item_click(this,event);
+							}
+						}
+					}
+				},{
+					html:(
+						E("a")
+						.attr("href","http://dnsev.github.io/4cs/")
+						.attr("target","_blank")
+						.text("Homepage")
+					),
+					on:{
+						click:{
+							callback_data:{self:self,item:2},
+							callback:function(event){
+								if(event.which!=1)return true;
+								event.data.option.menu.close();
+								return event.data.callback_data.self.on_menu_item_click(this,event);
+							}
+						}
+					}
+				},{
+					html:(
+						E("a")
+						.attr("href","http://dnsev.github.io/4cs/")
+						.attr("target","_blank")
+						.text("Help")
+					),
+					on:{
+						click:{
+							callback_data:{self:self,item:3},
+							callback:function(event){
+								if(event.which!=1)return true;
+								event.data.option.menu.close();
+								return event.data.callback_data.self.on_menu_item_click(this,event);
+							}
+						}
+					}
+				}]
+			};
+			event.menu.add_option(option);
+		});
+	}
+	else if(inline_manager.mode=="4chanx3"){
 		var menu_close=function(){
 			document.dispatchEvent(new CustomEvent("CloseMenu",{detail:{}}));
 		};
@@ -11217,37 +11339,61 @@ function SettingsManager(inline_manager){
 SettingsManager.prototype={
 	constructor:SettingsManager,
 	on_menu_item_click:function(link,event){
+		var close=true;
+		var menu_close=null;
+		var item=-1;
+		if(event.data.callback_data){
+			close=false;
+			item=event.data.callback_data.item;
+		}
+		else if(event.data.menu_close){
+			menu_close=event.data.menu_close;
+			item=event.data.item;
+		}
+		else{
+			item=event.data.item;
+		}
 		if(event.which!=1){
-			if(event.data.menu_close)event.data.menu_close.call(this);
-			else this.menu_close();
+			if(close){
+				if(menu_close)menu_close.call(this);
+				else this.menu_close();
+			}
 			return true;
 		}
-		switch(event.data.item){
+		switch(item){
 			case 0:
 			{
 				media_player_manager.open_player(true);
-				if(event.data.menu_close)event.data.menu_close.call(this);
-				else this.menu_close();
+				if(close){
+					if(menu_close)menu_close.call(this);
+					else this.menu_close();
+				}
 			}
 			return false;
 			case 1:
 			{
 				this.settings_open();
-				if(event.data.menu_close)event.data.menu_close.call(this);
-				else this.menu_close();
+				if(close){
+					if(menu_close)menu_close.call(this);
+					else this.menu_close();
+				}
 			}
 			return false;
 			case 3:
 			{
 				inline_manager.display_info("help");
-				if(event.data.menu_close)event.data.menu_close.call(this);
-				else this.menu_close();
+				if(close){
+					if(menu_close)menu_close.call(this);
+					else this.menu_close();
+				}
 			}
 			return false;
 			default:
 			{
-				if(event.data.menu_close)event.data.menu_close.call(this);
-				else this.menu_close();
+				if(close){
+					if(menu_close)menu_close.call(this);
+					else this.menu_close();
+				}
 				event.stopPropagation();
 			}
 			return true;
@@ -12936,6 +13082,9 @@ function InlineManager(){
 	if(is_homepage){
 		this.mode="home";
 	}
+	else if(xch){
+		this.mode="xch";
+	}
 	else if(is_archive){
 		this.mode="archive";
 	}
@@ -13288,7 +13437,14 @@ InlineManager.prototype={
 					});
 				}
 				if(script.settings["inline"]["sound_source"]){
-					if(is_38){
+					if(xch){
+						var file_size_label;
+						file_size_label=post_data.container.find(".xch.post_file_info_extra_links")
+						file_size_label.append(
+							(post_data.sounds.load_all_link=E("a")).addClass("MPLoadAllLink xch post_file_info_extra_link")
+						);
+					}
+					else if(is_38){
 						var file_size_label;
 						if(post_data.container.hasClass("op")){
 							file_size_label=post_data.container.parent().find(".fileinfo:nth-of-type(1) .unimportant");
@@ -14128,7 +14284,7 @@ InlineManager.prototype={
 				(event.data.display_container=E("div"))
 				.css("opacity","0")
 				.addClass("MPVideoInfoDisplay MPHighlightShadow2px")
-				.addClass(is_archive?"post_wrapper":"reply post")
+				.addClass(xch?"xch reply post":(is_archive?"post_wrapper":"reply post"))
 				.append(
 					(container=E("div"))
 					.addClass("MPVideoInfoDisplayContainer")
@@ -16116,8 +16272,31 @@ Script.prototype={
 	},
 };
 var script=null;
+function xch_acquire(){
+	xch=null;
+	var xch_detail={
+		event:"acquire",
+		return_value:undefined
+	};
+	document.dispatchEvent(new CustomEvent("xch_api_event",{
+		detail:xch_detail
+	}));
+	if(xch_detail.return_value!==undefined){
+		try{
+			xch=xch_detail.return_value;
+			xch.api=new xch.API();
+			return true;
+		}
+		catch(e){
+			xch=null;
+		}
+	}
+	return false;
+};
+var xch=null;
 $(document).ready(function(){
 	if(no_load)return;
+	xch_acquire();
 	script=new Script();
 	hotkey_listener=new HotkeyListener();
 	hotkey_listener.settings_update();
