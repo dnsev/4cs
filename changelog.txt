@@ -1,4 +1,7 @@
-﻿4.7.3.1
+﻿4.7.4
+- Changed the performance settings for Firefox due to the bad performance userscripts now have
+
+4.7.3.1
 - Styling fix to video previews
 
 4.7.3
