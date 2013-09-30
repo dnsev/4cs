@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.7.3.1
+// @version     4.7.4
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -14397,7 +14397,6 @@ function SettingsManager(inline_manager) {
 
 							event.data.option.menu.close();
 
-
 							return false;
 						}
 					}
@@ -14480,9 +14479,6 @@ function SettingsManager(inline_manager) {
 					}
 				}]
 			};
-
-			// Sub-options
-
 
 			// Add
 			event.menu.add_option(option);
@@ -19501,6 +19497,9 @@ function Script() {
 	};
 	this.storage_name = "4cs";
 
+	this.forced_update_name = "4cs_forced_update";
+	this.forced_update_value = 1;
+
 	// Changelog URL
 	this.update_version_url = "http://dnsev.github.io/4cs/changelog.txt";
 
@@ -19733,6 +19732,37 @@ Script.prototype = {
 			return false;
 		}
 		return true;
+	},
+
+	settings_forced_update: function () {
+		var val = 0;
+		try {
+			val = parseInt(GM_getValue(this.forced_update_name, "0")) || 0;
+		}
+		catch (e) {
+			console.log(e);
+		}
+
+		if (val != this.forced_update_value) {
+			GM_setValue(this.forced_update_name, this.forced_update_value.toString());
+
+			// Force updates
+			for (val = 0; val < this.forced_update_value; ++val) {
+				switch (val) {
+					case 0: // Async change for Firefox
+					{
+						if (!is_chrome()) {
+							this.settings["performance"]["async_image_load"] = false;
+							this.settings["performance"]["async_png_load"] = false;
+							this.settings["performance"]["async_videcode_load"] = false;
+						}
+					}
+					break;
+					default:
+					break;
+				}
+			}
+		}
 	},
 
 	setup_options: function (inline_manager) {
@@ -20327,6 +20357,7 @@ $(document).ready(function () {
 	// Settings
 	hotkey_listener.settings_update();
 	script.settings_load();
+	script.settings_forced_update();
 
 	// More object setup
 	media_player_manager = new MediaPlayerManager();
