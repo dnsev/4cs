@@ -1,4 +1,7 @@
-﻿4.7.4
+﻿4.7.4.1
+- Fixed thread links not appearing for newer 4chan-x's
+
+4.7.4
 - Changed the performance settings for Firefox due to the bad performance userscripts now have
 
 4.7.3.1
