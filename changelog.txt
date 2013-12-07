@@ -1,4 +1,8 @@
-﻿4.7.4.1
+﻿4.7.5
+- Updated to work with new HTML
+- Also potentially fixed a bug with hidden post expansion which has existed for a while, where video links/sounds links aren't updated properly
+
+4.7.4.1
 - Fixed thread links not appearing for newer 4chan-x's
 
 4.7.4
