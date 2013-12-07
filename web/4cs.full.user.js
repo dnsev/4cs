@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.7.4.1
+// @version     4.7.5
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -14086,7 +14086,8 @@ ThreadManager.prototype = {
 			post_id = container.attr("id");
 		}
 		post_id = (post_id || "0").replace(/(\w+_)?[^0-9]/g, "");
-		var redo = this.post_exists(post_id);
+		var redo = !!container.attr("data-4cs-attached");//this.post_exists(post_id);
+		container.attr("data-4cs-attached", "true");
 
 		var image = container.find(is_38 ? ".fileinfo a" : (is_archive ? ".thread_image_link" : ".fileThumb"));
 		if (is_38 && container.hasClass("op")) {
@@ -14142,8 +14143,8 @@ ThreadManager.prototype = {
 				if (!(image_name = ft.attr("data-filename"))) { // 4chan x method
 					// Default method
 					image_name = ft.find("span");
-					if (image_name.length > 0) {
-						image_name = $(image_name[image_name.length - 1]).attr("title");
+					if (image_name.length > 0 && image_name.last().attr("title")) {
+						image_name = image_name.last().attr("title");
 					}
 					else if ((image_name = ft.find("a")).length > 0) {
 						image_name = $(image_name[image_name.length - 1]).html().trim();
@@ -17090,8 +17091,8 @@ InlineManager.prototype = {
 					}
 					else {
 						var file_size_label = post_data.container.find(".fileText");
-						file_size_label.after((post_data.sounds.load_all_link = E("a")).addClass("MPLoadAllLink"));
-						file_size_label.after(T(" "));
+						file_size_label.append(T(" "));
+						file_size_label.append((post_data.sounds.load_all_link = E("a")).addClass("MPLoadAllLink"));
 					}
 					post_data.sounds.load_all_link
 					.attr("href", "#")
