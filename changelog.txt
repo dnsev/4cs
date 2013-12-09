@@ -1,4 +1,7 @@
-﻿4.7.5
+﻿4.7.6
+- Fixed a bug where sounds links would be removed when using 4chan-x
+
+4.7.5
 - Updated to work with new HTML
 - Also potentially fixed a bug with hidden post expansion which has existed for a while, where video links/sounds links aren't updated properly
 
