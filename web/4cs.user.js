@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     4.7.5
+// @version     4.7.6
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -10903,6 +10903,9 @@ ThreadManager.prototype={
 	},
 	on_dom_mutation_remove:function(target){
 		inline_manager.uploader.removal_check(target);
+		if(target[0].mp_data_removal_check_function){
+			target[0].mp_data_removal_check_function.call(target[0],target[0].mp_data_removal_check_function_data);
+		}
 	},
 	parse_post:function(container){
 		var post_id;
@@ -13438,49 +13441,7 @@ InlineManager.prototype={
 					});
 				}
 				if(script.settings["inline"]["sound_source"]){
-					if(xch){
-						var file_size_label;
-						file_size_label=post_data.container.find(".xch.post_file_info_extra_links")
-						file_size_label.append(
-							(post_data.sounds.load_all_link=E("a")).addClass("MPLoadAllLink xch post_file_info_extra_link")
-						);
-					}
-					else if(is_38){
-						var file_size_label;
-						if(post_data.container.hasClass("op")){
-							file_size_label=post_data.container.parent().find(".fileinfo:nth-of-type(1) .unimportant");
-						}
-						else{
-							file_size_label=post_data.container.find(".fileinfo .unimportant");
-						}
-						file_size_label=$(file_size_label[0]);
-						file_size_label.after((post_data.sounds.load_all_link=E("a")).addClass("MPLoadAllLink"));
-						file_size_label.after(T(" "));
-					}
-					else if(is_archive){
-						var file_size_label=post_data.container.find(".post_file_controls").find("a");
-						file_size_label=$(file_size_label[0]);
-						file_size_label.before((post_data.sounds.load_all_link=E("a")).addClass("MPLoadAllLink btnr parent"));
-					}
-					else{
-						var file_size_label=post_data.container.find(".fileText");
-						file_size_label.append(T(" "));
-						file_size_label.append((post_data.sounds.load_all_link=E("a")).addClass("MPLoadAllLink"));
-					}
-					post_data.sounds.load_all_link
-					.attr("href","#")
-					.html(post_data.sounds.load_all_text)
-					.on("click",{"post_data":post_data,"manager":self},self.on_load_all_click)
-					.after(
-						(post_data.sounds.auto_check.search_span=E("span"))
-						.addClass("MPImageSearchingTextContainer")
-						.css("display",(sound_auto_checker.enabled?"":"none"))
-						.html("...")
-						.append(
-							(post_data.sounds.auto_check.search_status=E("span"))
-							.addClass("MPImageSearchingText")
-						)
-					);
+					this.parse_post_update_sourcing(post_data,null,null);
 				}
 				post_data.post
 				.before(
@@ -13715,6 +13676,82 @@ InlineManager.prototype={
 				});
 			}
 		}
+	},
+	parse_post_update_sourcing:function(post_data,element1,element2){
+		if(xch){
+			var file_size_label;
+			file_size_label=post_data.container.find(".xch.post_file_info_extra_links")
+			file_size_label.append(
+				element1||
+				(post_data.sounds.load_all_link=E("a")).addClass("MPLoadAllLink xch post_file_info_extra_link")
+			);
+		}
+		else if(is_38){
+			var file_size_label;
+			if(post_data.container.hasClass("op")){
+				file_size_label=post_data.container.parent().find(".fileinfo:nth-of-type(1) .unimportant");
+			}
+			else{
+				file_size_label=post_data.container.find(".fileinfo .unimportant");
+			}
+			file_size_label=$(file_size_label[0]);
+			file_size_label.after(
+				element1||
+				(post_data.sounds.load_all_link=E("a")).addClass("MPLoadAllLink")
+			);
+			file_size_label.after(T(" "));
+		}
+		else if(is_archive){
+			var file_size_label=post_data.container.find(".post_file_controls").find("a");
+			file_size_label=$(file_size_label[0]);
+			file_size_label.before(
+				element1||
+				(post_data.sounds.load_all_link=E("a")).addClass("MPLoadAllLink btnr parent")
+			);
+		}
+		else{
+			var file_size_label=post_data.container.find(".fileText");
+			file_size_label.append(T(" "));
+			file_size_label.append(
+				element1||
+				(post_data.sounds.load_all_link=E("a")).addClass("MPLoadAllLink")
+			);
+		}
+		if(!element1){
+			post_data.sounds.load_all_link
+			.attr("href","#")
+			.html(post_data.sounds.load_all_text)
+			.on("click",{"post_data":post_data,"manager":this},this.on_load_all_click);
+		}
+		post_data.sounds.load_all_link
+		.after(
+			element2||
+			(
+				(post_data.sounds.auto_check.search_span=E("span"))
+				.addClass("MPImageSearchingTextContainer")
+				.css("display",(sound_auto_checker.enabled?"":"none"))
+				.html("...")
+				.append(
+					(post_data.sounds.auto_check.search_status=E("span"))
+					.addClass("MPImageSearchingText")
+				)
+			)
+		);
+		if(!element1&&!element2){
+			post_data.sounds.load_all_link[0].mp_data_removal_check_function=this.parse_post_remake_sourcing;
+			post_data.sounds.load_all_link[0].mp_data_removal_check_function_data=[
+				this,
+				post_data.container[0],
+				post_data.sounds.auto_check.search_span[0]
+			];
+		}
+	},
+	parse_post_remake_sourcing:function(args){
+		setTimeout(function(){
+			args[0].parse_post_update_sourcing({
+				container:$(args[1])
+			},$(this),$(args[2]));
+		}.bind(this),50);
 	},
 	parse_response_init:function(){
 		return{
