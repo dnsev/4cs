@@ -249,12 +249,12 @@
 			var repetitions = 20;
 
 			// Test
-			var results = message.send("execute", true, {
+			var results = message.send("execute", is_userscript, {
 				test: "basic_loop",
 				iterations: iterations,
 				repetitions: repetitions
 			});
-			results += "\n\n" + message.send("execute", true, {
+			results += "\n\n" + message.send("execute", is_userscript, {
 				test: "file_read_loop",
 				iterations: 1,
 				repetitions: repetitions
