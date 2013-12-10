@@ -6,6 +6,7 @@
 // @grant          GM_info
 // @include        https://github.com/dnsev/4cs/issues/45*
 // @icon           data:image/gif;base64,R0lGODlhEAAQAKECAAAAAGbMM////////yH5BAEKAAIALAAAAAAQABAAAAIllI+pB70KQgAPNUmroDHX7Gie95AkpCUn1ISlhKVR/MEre6dLAQA7
+// @require        https://raw.github.com/dnsev/4cs/master/speed/4cs-speed-test-extra.user.js
 // @updateURL      https://raw.github.com/dnsev/4cs/master/speed/4cs-speed-test.user.js
 // @downloadURL    https://raw.github.com/dnsev/4cs/master/speed/4cs-speed-test.user.js
 // ==/UserScript==
@@ -150,6 +151,31 @@
 			// Return
 			return total_time;
 		},
+		file_read_loop: function (iterations) {
+			// Convert
+			var src = window.atob(/,(.+)$/.exec(image_url)[1]);
+			var array = new Uint8Array(new ArrayBuffer(src.length));
+			for (var i = 0; i < src.length; ++i) {
+				array[i] = src.charCodeAt(i);
+			}
+
+			// Start time
+			var total_time = -time_now();
+
+
+			// Source
+			var x = 0;
+			for (var i = 0; i < array.length; ++i) {
+				x += array[i];
+			}
+
+
+			// Total time
+			total_time += time_now();
+
+			// Return
+			return total_time;
+		}
 	};
 
 
@@ -228,6 +254,11 @@
 				iterations: iterations,
 				repetitions: repetitions
 			});
+			results += "\n\n" + message.send("execute", true, {
+				test: "file_read_loop",
+				iterations: 1,
+				repetitions: repetitions
+			});
 
 			// Target
 			if (target) {
@@ -253,10 +284,6 @@
 			par.innerHTML = '<hr></hr>' +
 				'<div id="4cs-speed-test"><b>Userscript test area</b> | <a href="#4cs-speed-test">Run tests</a></div>' +
 				'<textarea style="width: 100%; resize: vertical; font-family: Courier New;" placeholder="test results" readonly="readonly"></textarea>';
-
-			var script = document.createElement("script");
-			script.src = update_url;
-			par.appendChild(script);
 
 			var textarea = par.querySelector("textarea");
 			var e = par.querySelector("a");
@@ -461,7 +488,6 @@
 
 	// Immediate setup
 	execute_asap(function () {
-		console.log("is_userscript=" + is_userscript);
 		setup();
 	});
 
