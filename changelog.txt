@@ -1,4 +1,8 @@
-﻿4.7.6
+﻿4.7.7
+- Fixed a bug decoding invalid unicode song titles
+- Fixed a bug related to 4chan-x
+
+4.7.6
 - Fixed a bug where sounds links would be removed when using 4chan-x
 
 4.7.5
