@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        4.7.6
+// @version        4.7.7
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -595,7 +595,12 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 							temp_tag += String.fromCharCode(bit_ord);
 						}
 						if (j < i) {
-							tag = decode_utf8(temp_tag);
+							try {
+								tag = decode_utf8(temp_tag);
+							}
+							catch (e) {
+								tag = temp_tag;
+							}
 							tag_pos = tag_start;
 						}
 					}
@@ -608,7 +613,12 @@ function image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callb
 							temp_tag += String.fromCharCode(raw_ui8_data[j]);
 						}
 						if (j < i) {
-							tag = decode_utf8(temp_tag);
+							try {
+								tag = decode_utf8(temp_tag);
+							}
+							catch (e) {
+								tag = temp_tag;
+							}
 							tag_pos = tag_start;
 						}
 					}
@@ -4819,7 +4829,7 @@ InlineManager.prototype = {
 		}
 
 		// Second element
-		post_data.sounds.load_all_link
+		(post_data.sounds.load_all_link || element1)
 		.after(
 			element2 ||
 			(
@@ -4849,7 +4859,8 @@ InlineManager.prototype = {
 		setTimeout(function () {
 			// this, container, search_span
 			args[0].parse_post_update_sourcing({
-				container: $(args[1])
+				container: $(args[1]),
+				sounds: {}
 			}, $(this), $(args[2]));
 		}.bind(this), 50);
 	},
