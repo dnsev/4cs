@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name           4cs Userscript Speed Test
-// @version        0.1
+// @version        0.2
 // @namespace      dnsev
 // @description    Use for testing browser Javascript speeds
 // @grant          GM_info
 // @include        https://github.com/dnsev/4cs/issues/45*
+// @include        *://boards.4chan.org/*
 // @icon           data:image/gif;base64,R0lGODlhEAAQAKECAAAAAGbMM////////yH5BAEKAAIALAAAAAAQABAAAAIllI+pB70KQgAPNUmroDHX7Gie95AkpCUn1ISlhKVR/MEre6dLAQA7
 // @require        https://raw.github.com/dnsev/4cs/master/speed/4cs-speed-test-extra.user.js
 // @updateURL      https://raw.github.com/dnsev/4cs/master/speed/4cs-speed-test.user.js
@@ -12,8 +13,7 @@
 // ==/UserScript==
 
 
-
-(function () {
+var main = function () {
 	"use strict";
 
 
@@ -277,10 +277,18 @@
 
 	// Setup
 	var setup = function () {
-		var elem = document.querySelector('a[href="#4cs-speed-test"]');
+		var par, elem;
+		if ((elem = document.querySelector('a[href="#4cs-speed-test"]'))) {
+			par = elem.parentNode;
+		}
+		else if ((elem = document.querySelector('div.boardTitle'))) {
+			var e = document.createElement("div");
+			var next = elem.nextSibling;
+			next ? elem.parentNode.insertBefore(e, next) : elem.parentNode.appendChild(e);
+			par = e;
+		}
 		if (elem) {
 			// Replace
-			var par = elem.parentNode;
 			par.innerHTML = '<hr></hr>' +
 				'<div id="4cs-speed-test"><b>Userscript test area</b> | <a href="#4cs-speed-test">Run tests</a></div>' +
 				'<textarea style="width: 100%; resize: vertical; font-family: Courier New;" placeholder="test results" readonly="readonly"></textarea>';
@@ -488,9 +496,24 @@
 
 	// Immediate setup
 	execute_asap(function () {
-		setup();
+		var prefer_inline = false; // toggle this to true for a different speed test
+		if (is_userscript && prefer_inline) {
+			var src =
+				"window.is_4cs_speed_test_native = true;\n" +
+				"var main = " + main.toString() + ";\n" +
+				"main(main);";
+				
+			var e = document.createElement("script");
+			e.innerHTML = src;
+			
+			document.body.appendChild(e);
+			document.body.removeChild(e);
+		}
+		else {
+			setup();
+		}
 	});
 
 
-})();
-
+};
+main(main);
