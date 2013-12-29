@@ -5193,7 +5193,7 @@ MediaPlayer.prototype = {
 
 		// Attempt to load from raw data
 		var self = this;
-		this.load_callbacks[callback_id](url_or_filename, load_tag, raw_ui8_data, function (r) {
+		var callback_function = function (r) {
 			if (r != null) {
 				var available = r[0];
 				r = r[1];
@@ -5219,7 +5219,8 @@ MediaPlayer.prototype = {
 				// Next
 				self.attempt_load_raw(buffer_item, is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id + 1, done_callback, extra_data);
 			}
-		});
+		};
+		this.load_callbacks[callback_id](url_or_filename, load_tag, raw_ui8_data, callback_function);
 	},
 	attempt_load_ve: function (buffer_item, is_local, url_or_filename, load_tag, playlist_data, raw_ui8_data, callback_id, done_callback, extra_data) {
 		var self = this;
