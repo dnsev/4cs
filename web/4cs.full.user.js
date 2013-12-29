@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     5.0
+// @version     5.0.0.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -13073,7 +13073,7 @@ function random_integer(max) {
 var image_load_function = function (Loop, load_tag_all_sounds, string_to_uint8array, decode_utf8) {
 
 	var image_load_callback = function (url_or_filename, load_tag, raw_ui8_data, done_callback) {
-		raw_ui8_data = Uint8Array(raw_ui8_data);
+		raw_ui8_data = new Uint8Array(raw_ui8_data);
 
 		// Not an image
 		var ext = url_or_filename.split(".").pop().toLowerCase();
@@ -13319,7 +13319,7 @@ var image_load_function = function (Loop, load_tag_all_sounds, string_to_uint8ar
 			return image_load_callback(url_or_filename, load_tag, raw_ui8_data, done_callback);
 		}
 
-		raw_ui8_data = Uint8Array(raw_ui8_data);
+		raw_ui8_data = new Uint8Array(raw_ui8_data);
 
 		// Not an image
 		var ext = url_or_filename.split(".").pop().toLowerCase();
@@ -13557,7 +13557,7 @@ var image_load_function = function (Loop, load_tag_all_sounds, string_to_uint8ar
 	}
 
 	var image_check_callback = function (url_or_filename, raw_ui8_data, callback_data, done_callback) {
-		raw_ui8_data = Uint8Array(raw_ui8_data);
+		raw_ui8_data = new Uint8Array(raw_ui8_data);
 
 		// Not an image
 		var ext = url_or_filename.split(".").pop().toLowerCase();
@@ -13771,7 +13771,7 @@ var image_load = null;
 var png_load_function = function (Loop, load_tag_all_sounds, DataImage, DataImageReader) {
 
 	var png_load_callback = function (url_or_filename, load_tag, raw_ui8_data, done_callback) {
-		raw_ui8_data = Uint8Array(raw_ui8_data);
+		raw_ui8_data = new Uint8Array(raw_ui8_data);
 
 		// Not a PNG
 		if (url_or_filename.split(".").pop().toLowerCase() != "png") {
@@ -13795,7 +13795,7 @@ var png_load_function = function (Loop, load_tag_all_sounds, DataImage, DataImag
 		done_callback(png_load_callback_find_correct(r, load_tag));
 	};
 	var png_load_callback_asynchronous = function (url_or_filename, load_tag, raw_ui8_data, done_callback) {
-		raw_ui8_data = Uint8Array(raw_ui8_data);
+		raw_ui8_data = new Uint8Array(raw_ui8_data);
 
 		// Not a PNG
 		if (url_or_filename.split(".").pop().toLowerCase() != "png") {
@@ -13841,7 +13841,7 @@ var png_load_function = function (Loop, load_tag_all_sounds, DataImage, DataImag
 	};
 
 	var png_check_callback = function (url_or_filename, raw_ui8_data, callback_data, done_callback) {
-		raw_ui8_data = Uint8Array(raw_ui8_data);
+		raw_ui8_data = new Uint8Array(raw_ui8_data);
 
 		// Not a PNG
 		if (url_or_filename.split(".").pop().toLowerCase() != "png") {
