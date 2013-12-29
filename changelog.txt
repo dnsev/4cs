@@ -1,4 +1,14 @@
-﻿4.7.7
+﻿5.0.0.1
+- Fixed using Uint8Array improperly
+- Added the "Load All" menu item to the standard menu
+- Made acceleration not run on Chrome (since it's unnecessary)
+
+5.0
+- Major speed enhancements for Firefox
+- Now works with newer versions of Appchan-x
+- Load all sounds link is now moved to the header menu
+
+4.7.7
 - Fixed a bug decoding invalid unicode song titles
 - Fixed a bug related to 4chan-x
 
