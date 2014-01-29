@@ -600,3 +600,220 @@ a.InstallLink:active {
 	margin: 24px 0px 24px 0px;
 	background: rgba(28,123,177,0.5);
 }
+
+
+
+.ReadMe {
+	margin: 0px -100px;
+	font-size: 24px;
+}
+.ReadMeSection {
+}
+.ReadMeSection.ReadMeSectionHidden {
+	display: none;
+}
+.ReadMeAttentionContainer1 {
+	display: block;
+	text-align: center;
+	margin-bottom: 24px;
+}
+.ReadMeAttentionContainer2 {
+	display: inline-block;
+	position: relative;
+}
+.ReadMeAttention {
+	font-size: 64px;
+	font-weight: bold;
+	color: #01283f;
+	text-shadow: 0px 0px 4px #ffffff;
+}
+.ReadMeAttention>span {
+	color: #1c7bb1;
+}
+.ReadMeAttention.ReadMeAttentionAlt {
+	color: #1c7bb1;
+}
+.ReadMeAttention.ReadMeAttentionAlt>span {
+	color: #01283f;
+}
+.ReadMeAttentionSub {
+	font-size: 12px;
+	color: #72b8e1;
+	right: 0;
+	margin-top: -14px;
+	position: absolute;
+}
+.ReadMeText {
+}
+.ReadMeText.ReadMeTextPadded {
+	margin-top: 24px;
+}
+.ReadMeConfirmBox {
+	margin-top: 24px;
+}
+.ReadMeConfirmBox>a {
+	font-size: 24px;
+	color: #1c7bb1;
+	text-decoration: none;
+	cursor: pointer;
+}
+.ReadMeConfirmBox>a:hover {
+	font-size: 24px;
+	color: #034063;
+	text-decoration: underline;
+}
+.ReadMeConfirmBox>a:active {
+	font-size: 24px;
+	color: #034063;
+	text-decoration: underline;
+}
+.ReadMeQuestionLabel {
+	font-size: 32px;
+	font-weight: bold;
+	margin-bottom: 32px;
+}
+.ReadMeForm {
+	margin: 0px;
+	padding: 0px;
+}
+.ReadMeQuestionLabelQuestion {
+	color: #034063;
+}
+.ReadMeAnswer {
+	display: block;
+	font-size: 32px;
+	margin-left: 32px;
+}
+.ReadMeAnswer+.ReadMeAnswer {
+	margin-top: 12px;
+}
+.ReadMeRadioBoxInput {
+	display: none;
+}
+.ReadMeRadioBox {
+	position: relative;
+	display: inline-block;
+	margin-right: 16px;
+	vertical-align: middle;
+	cursor: pointer;
+}
+.ReadMeRadioBox>span {
+	width: 32px;
+	height: 32px;
+	display: inline-block;
+	border: 3px solid #034063;
+	border-radius: 16px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	display: block;
+}
+.ReadMeRadioBox>span>span {
+	position: absolute;
+	left: 7px;
+	top: 7px;
+	width: 18px;
+	height: 18px;
+	background: #000000;
+	border-radius: 8px;
+	display: block;
+}
+.ReadMeRadioBoxInput:hover+.ReadMeRadioBox>span {
+	border-color: #000000;
+}
+.ReadMeRadioBoxInput:not(:checked)+.ReadMeRadioBox>span>span {
+	display: none;
+}
+.ReadMeRadioBoxInput:hover+span+.ReadMeAnswerText {
+	color: #000000;
+}
+.ReadMeAnswerText {
+	color: #034063;
+	vertical-align: middle;
+	cursor: pointer;
+}
+.ReadMeCountDown {
+	margin-top: 24px;
+	text-align: center;
+}
+.ReadMeCountDownLabel {
+	font-weight: bold;
+}
+.ReadMeCountDownTime {
+
+}
+.ReadMeDefinition {
+}
+.ReadMeDefinition {
+}
+.ReadMeDefinitionWord {
+}
+.ReadMeDefinitionWord>a {
+	font-weight: bold;
+}
+.ReadMeDefinitionPronunciation {
+	margin-top: 16px;
+}
+.ReadMeDefinitionPronunciationLabel {
+	font-weight: bold;
+}
+.ReadMeDefinitionListLabel {
+	margin-top: 16px;
+}
+.ReadMeDefinitionListLabelLabel {
+	font-weight: bold;
+}
+.ReadMeDefinitionList {
+	margin: 16px 0px 16px 64px;
+}
+.ReadMeDefinitionList>div {
+	position: relative;
+}
+.ReadMeDefinitionList>div:before {
+	position: absolute;
+	right: 100%;
+	content: attr(data-list-id) ".";
+	font-weight: bold;
+	margin-right: 8px;
+	cursor: default;
+}
+.ReadMeDefinitionList>div {
+	margin-top: 8px;
+}
+.ReadMeAdvice {
+	margin-top: 24px;
+}
+.ReadMeAdvice>div {
+	margin-left: 32px;
+}
+.ReadMeAdvice>div.ReadMeAdviceDivPadded {
+	margin-top: 16px;
+}
+.ReadMeAdviceText {
+	font-weight: bold;
+}
+.ReadMeAdviceDescription {
+	margin-left: 16px;
+	font-size: 16px;
+}
+.ReadMeEventCatcher {
+	display: none;
+}
+.Content a.ReadMeLinkHidden {
+	color: inherit;
+	text-decoration: none;
+}
+
+.ReadMeHeaderBlocker {
+	display: none;
+}
+.ReadMeHeaderBlocker.ReadMeHeaderBlockerEnabled {
+	display: block;
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	background: transparent;
+}
+
+
