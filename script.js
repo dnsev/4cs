@@ -2,6 +2,14 @@
 var default_title = "";
 
 // Basic functions
+var E = function (type) {
+	var e = document.createElement(type);
+	if (arguments.length > 1) {
+		e.className = arguments[1];
+	}
+	return $(e);
+};
+
 function is_chrome() {
 	return ((navigator.userAgent + "").indexOf(" Chrome/") >= 0);
 }
@@ -333,6 +341,43 @@ function update_page_actions() {
 		if (activate.length > 0) {
 			$(activate[0]).trigger("click");
 		}
+	}
+
+	if ("info" in vars) {
+		// Create and/or show
+		var o = $(".NavigationImportantLinks");
+		o.removeClass("NavigationImportantLinksHidden");
+		if (!o.hasClass("NavigationImportantLinksReady")) {
+			o.addClass("NavigationImportantLinksReady").prepend(
+				E("div", "NavigationImportantLinksShow")
+				.append(
+					E("div", "NavigationImportantLinksShowTop NavigationImportantLinksShowShade")
+				)
+				.append(
+					E("div", "NavigationImportantLinksShowLeft NavigationImportantLinksShowShade")
+					.append(
+						E("div", "NavigationImportantLinksShowText")
+						.html("<b>Such obscure placement<br />for informational links</b><br /><br />Sure was hard to find")
+					)
+				)
+				.append(
+					E("div", "NavigationImportantLinksShowBottom NavigationImportantLinksShowShade")
+				)
+				.append(
+					E("div", "NavigationImportantLinksShowRight NavigationImportantLinksShowShade")
+				)
+			);
+		}
+
+		// Scroll to top
+		try {
+			$(document).scrollTop(0);
+		}
+		catch (e) {}
+	}
+	else {
+		// Hide
+		$(".NavigationImportantLinks").addClass("NavigationImportantLinksHidden");
 	}
 }
 
