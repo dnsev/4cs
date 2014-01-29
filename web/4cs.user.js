@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     5.0.0.1
+// @version     5.0.0.1.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -11134,6 +11134,15 @@ function SettingsManager(inline_manager){
 				return self.on_menu_item_click($(this),event);
 			})
 		)
+		.append(
+			E("a")
+			.addClass("MPMenuItem")
+			.attr("href","#")
+			.html("Load All")
+			.on("click",{item:4},function(event){
+				return self.on_menu_item_click($(this),event);
+			})
+		)
 	);
 	$(document)
 	.on("scroll",{},function(event){
@@ -13199,9 +13208,9 @@ function InlineManager(){
 			".MPLoadLinkTopFile{}\n"+
 			".MPLoadAllLink{}\n"+
 			".MPReplacedURL{}\n"+
-			".MPIconedURLText{vertical-align:middle;}\n"+
+			".MPIconedURLText{vertical-align:baseline;}\n"+
 			".MPIconedURLTextNotFound{font-style:italic;}\n"+
-			".MPURLIcon{display:inline-block;width:20px;height:16px;vertical-align:middle;background-repeat:no-repeat;background-position:top left;background-size:16px 16px;}\n"+
+			".MPURLIcon{display:inline-block;width:20px;height:16px;vertical-align:bottom;background-repeat:no-repeat;background-position:top left;background-size:16px 16px;}\n"+
 			".spoiler:not(:hover) .MPURLIcon,s:not(:hover) .MPURLIcon{background-image:none !important;}\n"+
 			".MPURLIconVimeo{background-image:url(//vimeo.com/favicon.ico);}\n"+
 			".MPURLIconYoutube{background-image:url(//youtube.com/favicon.ico);}\n"+
@@ -13668,7 +13677,7 @@ InlineManager.prototype={
 							)
 							.append(
 								E("span").addClass("MPIconedURLText").html(temp_prefix+media_id)
-							);
+							)
 							var callback_count=0;
 							var callback_count_max=3;
 							var callback_multiple_wait=15000;
@@ -16430,7 +16439,7 @@ var Fast=(function(){
 	return functions;
 })();
 var Accelerate=function(){
-	var accelerate=script.settings["performance"]["fast_functions"];
+	var accelerate=script.settings["performance"]["fast_functions"]&&!is_chrome();
 	var FastLoop=Loop;
 	if(accelerate){
 		Fast.setup();

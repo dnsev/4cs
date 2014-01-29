@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        5.0.0.1
+// @version        5.0.0.1.1
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -1378,6 +1378,7 @@ var png_load_function = function (Loop, load_tag_all_sounds, DataImage, DataImag
 
 };
 var png_load = null;
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4228,9 +4229,9 @@ function InlineManager() {
 			".MPLoadLinkTopFile{}\n" +
 			".MPLoadAllLink{}\n" +
 			".MPReplacedURL{}\n" +
-			".MPIconedURLText{vertical-align:middle;}\n" +
+			".MPIconedURLText{vertical-align:baseline;}\n" +
 			".MPIconedURLTextNotFound{font-style:italic;}\n" +
-			".MPURLIcon{display:inline-block;width:20px;height:16px;vertical-align:middle;background-repeat:no-repeat;background-position:top left;background-size:16px 16px;}\n" +
+			".MPURLIcon{display:inline-block;width:20px;height:16px;vertical-align:bottom;background-repeat:no-repeat;background-position:top left;background-size:16px 16px;}\n" +
 			".spoiler:not(:hover) .MPURLIcon,s:not(:hover) .MPURLIcon{background-image:none !important;}\n" +
 			".MPURLIconVimeo{background-image:url(//vimeo.com/favicon.ico);}\n" +
 			".MPURLIconYoutube{background-image:url(//youtube.com/favicon.ico);}\n" +
@@ -4760,7 +4761,7 @@ InlineManager.prototype = {
 							)
 							.append(
 								E("span").addClass("MPIconedURLText").html(temp_prefix + media_id)
-							);
+							)
 
 							// API query
 							var callback_count = 0;
