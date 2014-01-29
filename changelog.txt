@@ -1,4 +1,7 @@
-﻿5.0.0.1
+﻿5.0.0.1.1
+- Fixed video URL underlines
+
+5.0.0.1
 - Fixed using Uint8Array improperly
 - Added the "Load All" menu item to the standard menu
 - Made acceleration not run on Chrome (since it's unnecessary)
