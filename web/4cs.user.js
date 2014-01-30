@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     5.0.0.1.1
+// @version     5.0.0.2
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -13261,56 +13261,30 @@ function InlineManager(){
 	var brackets2=[" [","] "];
 	var sep="/";
 	if(this.mode=="home"){
-		$("body").append("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span>");
+		$("body").append("<span class=\"MPControlBar\" settings=\"true\"></span>");
 		brackets=[" [ "," ] "];
 		brackets2=[" [ "," ] "];
 		sep=" / ";
 	}
 	else if(this.mode=="archive"){
-		$(".letters").append(" <span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span>");
-		var o;
-		if((o=$(".thread")).length>0){
-			o.prepend("<div><span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span></div>");
-		}
+		$(".letters").append(" <span class=\"MPControlBar\" settings=\"true\"></span>");
 		brackets=[" [ "," ] "];
 		brackets2=[" [ "," ] "];
 		sep=" / ";
 	}
 	else if(this.mode=="38"){
-		$(".boardlist").append(" <span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span>");
-		var o;
-		if((o=$("form[name=\"postcontrols\"]")).length>0){
-			$(o[0]).before("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
-		}
+		$(".boardlist").append(" <span class=\"MPControlBar\" settings=\"true\"></span>");
 		brackets=[" [ "," ] "];
 		brackets2=[" [ "," ] "];
 	}
 	else if(this.mode=="inline"){
-		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span> ");
-		var o;
-		if((o=$(".thread")).length>0){
-			o.prepend("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
-		}
+		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" settings=\"true\"></span> ");
 	}
 	else if(this.mode=="4chanx"){
-		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span> ");
-		var o;
-		if((o=$(".navLinks.desktop")).length>0){
-			o.append("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
-		}
-		else if((o=$("#imgControls")).length>0){
-			o.append("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
-		}
-		else if((o=$(".thread")).length>0){
-			o.prepend("<div><span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span></div>");
-		}
+		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" settings=\"true\"></span> ");
 	}
 	else if(this.mode=="4chanx+ss"){
-		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span>");
-		var o;
-		if((o=$(".thread")).length>0){
-			o.prepend("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
-		}
+		$("#navtopright,#navbotright").prepend("<span class=\"MPControlBar\" settings=\"true\"></span>");
 		brackets=["",""];
 	}
 	else if(this.mode=="4chanx3"){
@@ -13318,16 +13292,13 @@ function InlineManager(){
 	else if(this.mode=="appchanx"){
 		var o;
 		if((o=$("#boardNavDesktop.desktop")).length>0){
-			o.append("<span class=\"MPControlBar\" thread_controls=\"false\" settings=\"true\"></span>");
-		}
-		if((o=$(".thread")).length>0){
-			o.prepend("<span class=\"MPControlBar\" thread_controls=\"true\" settings=\"false\"></span>");
+			o.append("<span class=\"MPControlBar\" settings=\"true\"></span>");
 		}
 	}
 	else if(this.mode=="appchanx2"){
 		var o;
 		if((o=$(".navLinks.mobile")).length>0){
-			$(o[0]).after("<div><span class=\"MPControlBar\" thread_controls=\"true\" settings=\"true\"></span></div>");
+			$(o[0]).after("<div><span class=\"MPControlBar\" settings=\"true\"></span></div>");
 		}
 	}
 	$(".MPControlBar[settings=\"true\"]")
@@ -13371,21 +13342,6 @@ function InlineManager(){
 			)
 		)
 	);
-	var o=$(".MPControlBar[thread_controls=\"true\"]").first();
-	if(o.length>0){
-		o.append(
-			E("span")
-			.addClass("MPThreadControls")
-			.append(T(brackets2[0]))
-			.append(
-				(sound_auto_loader.link=E("a"))
-				.attr("href","#")
-				.html("Load All Sounds")
-				.on("click",{},this.on_load_all_in_thread_click)
-			)
-			.append(T(brackets2[1]))
-		);
-	}
 	this.settings_manager=new SettingsManager(this);
 	this.uploader=new InlineUploader(this);
 }
@@ -13677,7 +13633,7 @@ InlineManager.prototype={
 							)
 							.append(
 								E("span").addClass("MPIconedURLText").html(temp_prefix+media_id)
-							)
+							);
 							var callback_count=0;
 							var callback_count_max=3;
 							var callback_multiple_wait=15000;
