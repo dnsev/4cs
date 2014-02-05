@@ -1,4 +1,7 @@
-﻿5.0.0.2
+﻿5.0.1
+- Placed a new settings link for 4chan-x3 on Chrome
+
+5.0.0.2
 - Removed the "Load All Sounds" link from everything except the drop down menu
 
 5.0.0.1.1
