@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     5.0.0.2
+// @version     5.0.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -16900,6 +16900,9 @@ function InlineManager() {
 		brackets = [ "" , "" ];
 	}
 	else if (this.mode == "4chanx3") {
+		if (is_chrome()) {
+			$(".navLinks").prepend("<span class=\"MPControlBar\" settings=\"true\"></span>");
+		}
 	}
 	else if (this.mode == "appchanx") {
 		var o;
