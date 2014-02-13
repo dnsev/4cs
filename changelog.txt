@@ -1,4 +1,7 @@
-﻿5.0.1
+﻿5.0.1.1
+- Updated the first-run info popup
+
+5.0.1
 - Placed a new settings link for 4chan-x3 on Chrome
 
 5.0.0.2
