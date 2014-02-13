@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        5.0.1
+// @version        5.0.1.1
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -5788,7 +5788,20 @@ InlineManager.prototype = {
 					E("p")
 					.html(
 						"Once you've closed this message once, it won't appear automatically again; " +
-						"it can be opened again from the [ Media Player ] link."
+						"it can be opened again from the settings menu."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"<b>Additionally</b>, if you want to re-download the userscript without sitting through the readme again, " +
+						"you can navigate the source code repository."
+					)
+				)
+				.append(
+					E("p")
+					.html(
+						"It's found under <a href=\"https://github.com/dnsev/4cs\" target=\"_blank\">4cs</a>/<a href=\"https://github.com/dnsev/4cs/tree/master/web\" target=\"_blank\">web</a>/<a href=\"https://github.com/dnsev/4cs/blob/master/web/4cs.user.js\" target=\"_blank\">4cs.user.js</a>, and then clicking the \"<a href=\"https://github.com/dnsev/4cs/raw/master/web/4cs.user.js\" target=\"_blank\">Raw</a>\" button."
 					)
 				)
 				.append(
@@ -5872,7 +5885,7 @@ InlineManager.prototype = {
 					E("p")
 					.html(
 						"There are 2 main locations for settings:<ul>" +
-						"<li>The [ Media Player ] link in the navigation section, for global settings</li>" +
+						"<li>The menu link in the navigation section, for global settings</li>" +
 						"<li>The [S] button in the player, for player-specific settings</li>" +
 						"</ul>"
 					)
