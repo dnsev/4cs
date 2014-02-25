@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     5.0.1.1
+// @version     5.0.1.2
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -9743,13 +9743,11 @@ if(/http\:\/\/dnsev\.github\.io\/4cs\//.test(window.location.href+"")){
 					version=null;
 				}
 			}
-			if(version!==null){
-				document.dispatchEvent(new CustomEvent("api_4cs_version_check",{
-					detail:{
-						version:version
-					}
-				}));
-			}
+			document.dispatchEvent(new CustomEvent("api_4cs_version_check",{
+				detail:{
+					version:version
+				}
+			}));
 		});
 		no_load=true;
 	}
