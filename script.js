@@ -571,19 +571,16 @@ function image_preview_close() {
 
 // Version check
 var current_version = null;
-function version_check(version) {
-	if (typeof(version) == typeof("")) {
-		current_version = version;
-
-		version_compare();
-	}
-}
+var current_version_received = false;
 function version_compare() {
-	// Only compare if both versions are available
-	if (current_version === null || change_log_version === null) return;
+	// Don't fix links unless installed
+	if (!current_version_received) return;
 
 	// Installed, hide readme
 	Readme.fix_links();
+
+	// Only compare if both versions are available
+	if (current_version === null || change_log_version === null) return;
 
 	// Compare
 	var current_version_split = current_version.toString().split(".");
@@ -1662,6 +1659,7 @@ var Readme = (function () {
 // Entry
 document.addEventListener("api_4cs_version_check", function (event) {
 	current_version = event.detail.version;
+	current_version_received = true;
 	version_compare();
 }, false);
 $(document).ready(function () {

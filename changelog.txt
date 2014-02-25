@@ -1,4 +1,7 @@
-﻿5.0.1.1
+﻿5.0.1.2
+- Fixed a bug where Chrome users would have to view the readme again if 4cs was already installed
+
+5.0.1.1
 - Updated the first-run info popup
 
 5.0.1
