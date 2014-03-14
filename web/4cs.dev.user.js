@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        5.0.1.2
+// @version        5.0.2
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -4584,13 +4584,9 @@ InlineManager.prototype = {
 			// Hijack links
 			var links_found = false;
 			if (script.settings["inline"]["url_hijack"]) {
-				post_data.post.find("a").each(function (index) {
+				post_data.post.find("a:not(.quotelink)").each(function (index) {
 					var href = html_to_text(string_remove_tags($(this).html()));
-					if (href == $(this).attr("href")) {
-						$(this).addClass("MPReplacedURL");
-						links_found = true;
-					}
-					else if ($(this).hasClass("youtubeTitle")) {
+					if ($(this).hasClass("youtubeTitle")) {
 						// Hijack from 4chan x
 						href = $(this).attr("href");
 
@@ -4613,6 +4609,10 @@ InlineManager.prototype = {
 							}
 							$(this).addClass("MPHidden");
 						}
+						links_found = true;
+					}
+					else if ($(this).attr("href")) {
+						$(this).addClass("MPReplacedURL");
 						links_found = true;
 					}
 				});

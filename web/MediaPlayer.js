@@ -5399,9 +5399,9 @@ MediaPlayer.prototype = {
 
 	url_get_youtube_video_id: function (url) {
 		var youtube_url = [
-			/(?:https?:\/\/)?(?:www\.)?youtube.com\/watch\?(?:\S+?)?v=([a-zA-Z0-9_-]{11})(?:[^\s<>]*)/i,
-			/(?:https?:\/\/)?(?:www\.)?y2u.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/i,
-			/(?:https?:\/\/)?(?:www\.)?youtu.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/i
+			/(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?(?:\S+?)?v=([a-zA-Z0-9_-]{11})(?:[^\s<>]*)/i,
+			/(?:https?:\/\/)?(?:www\.)?y2u\.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/i,
+			/(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/i
 		];
 
 		for (var i = 0; i < youtube_url.length; ++i) {
