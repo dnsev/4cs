@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     5.0.1.2
+// @version     5.0.2
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -8208,9 +8208,9 @@ MediaPlayer.prototype={
 	},
 	url_get_youtube_video_id:function(url){
 		var youtube_url=[
-			/(?:https?:\/\/)?(?:www\.)?youtube.com\/watch\?(?:\S+?)?v=([a-zA-Z0-9_-]{11})(?:[^\s<>]*)/i,
-			/(?:https?:\/\/)?(?:www\.)?y2u.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/i,
-			/(?:https?:\/\/)?(?:www\.)?youtu.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/i
+			/(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?(?:\S+?)?v=([a-zA-Z0-9_-]{11})(?:[^\s<>]*)/i,
+			/(?:https?:\/\/)?(?:www\.)?y2u\.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/i,
+			/(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/i
 		];
 		for(var i=0;i<youtube_url.length;++i){
 			var match;
@@ -13522,13 +13522,9 @@ InlineManager.prototype={
 		else{
 			var links_found=false;
 			if(script.settings["inline"]["url_hijack"]){
-				post_data.post.find("a").each(function(index){
+				post_data.post.find("a:not(.quotelink)").each(function(index){
 					var href=html_to_text(string_remove_tags($(this).html()));
-					if(href==$(this).attr("href")){
-						$(this).addClass("MPReplacedURL");
-						links_found=true;
-					}
-					else if($(this).hasClass("youtubeTitle")){
+					if($(this).hasClass("youtubeTitle")){
 						href=$(this).attr("href");
 						var embed_link=$(this).next();
 						$(this).before(
@@ -13549,6 +13545,10 @@ InlineManager.prototype={
 							}
 							$(this).addClass("MPHidden");
 						}
+						links_found=true;
+					}
+					else if($(this).attr("href")){
+						$(this).addClass("MPReplacedURL");
 						links_found=true;
 					}
 				});
