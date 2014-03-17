@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     5.0.2
+// @version     5.0.3
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -13584,11 +13584,15 @@ InlineManager.prototype={
 			)||links_found;
 			if(links_found){
 				post_data.post.find(".MPReplacedURL").each(function(index){
+					var obj=$(this);
 					var temp=E("span").addClass("MPReplacedURLContainer");
-					$(this).after(temp);
-					temp.append($(this));
-					var href=html_to_text(string_remove_tags($(this).html())).replace(/\s/g,"");
-					if(href.indexOf(":")<0)href="//"+href;
+					obj.after(temp);
+					temp.append(obj);
+					var href=obj.attr("href");
+					if(!href){
+						href=html_to_text(string_remove_tags(obj.html())).replace(/\s/g,"");
+						if(href.indexOf(":")<0&&href[0]!="/")href="http://"+href;
+					}
 					var media_type=null;
 					var media_id=null;
 					var media_not_found="Video not found";
@@ -13697,7 +13701,7 @@ InlineManager.prototype={
 							ajax_call();
 						}
 					}
-					$(this)
+					obj
 					.attr("href",href)
 					.attr("target","_blank")
 					.attr("mp_original_url",href)
