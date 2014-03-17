@@ -1,4 +1,7 @@
-﻿5.0.2
+﻿5.0.3
+- Fixed a compatability issue with ExLinks related to URL replacement
+
+5.0.2
 - Updated parsing of Youtube URLs
 - Made the script take over links created by 4chan-x that look like "something.xx" (youtu.be for example)
 
