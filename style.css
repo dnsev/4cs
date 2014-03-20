@@ -805,6 +805,9 @@ a.InstallLink:active {
 .ReadMeFinishDisclaimer {
 	font-size: 16px;
 }
+.ReadMeStrikeThru {
+	text-decoration: line-through;
+}
 
 .ReadMeHeaderBlocker {
 	display: none;
