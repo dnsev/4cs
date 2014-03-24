@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        5.0.3
+// @version        5.0.4
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -4462,7 +4462,7 @@ InlineManager.prototype = {
 				post_data.sounds = {
 					"post_tags": [],
 					"load_all_link": null,
-					"load_all_text": "sounds",
+					"load_all_text": script.settings["inline"]["sound_source_text"],
 					"sound_names": [],
 					"loaded": false,
 					"about_container": null,
@@ -6834,6 +6834,7 @@ function Script() {
 
 			"sound_tags_replace": true,
 			"sound_source": true,
+			"sound_source_text": "sounds",
 
 			"url_replace": true,
 			"url_replace_smart": false,
@@ -7662,6 +7663,29 @@ Script.prototype = {
 				})
 			)
 		); //}
+
+		extra_options.push(o = {
+			"section": "Styling",
+			"label": "Image Link Text",
+			"description": "The text of the link next to the image.",
+			"html": null
+		});
+		(o.html = E("div"))
+		.append( //{ DOM
+			E("div")
+			.addClass("MPSettingsTextboxContainer")
+			.append(
+				(o.html_input = E("input"))
+				.addClass("MPSettingsTextbox MPSettingsTextboxRight")
+				.attr("type", "text")
+				.val(script.settings["inline"]["sound_source_text"])
+				.on("change", {}, function (event) {
+					script.settings["inline"]["sound_source_text"] = $(this).val();
+					script.settings_save();
+				})
+			)
+		); //}
+
 
 		// Hotkeys
 		for (var i = 0; i < hotkey_listener.hotkeys.length; ++i) {

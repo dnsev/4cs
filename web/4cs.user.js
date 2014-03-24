@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     5.0.3
+// @version     5.0.4
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -13420,7 +13420,7 @@ InlineManager.prototype={
 				post_data.sounds={
 					"post_tags":[],
 					"load_all_link":null,
-					"load_all_text":"sounds",
+					"load_all_text":script.settings["inline"]["sound_source_text"],
 					"sound_names":[],
 					"loaded":false,
 					"about_container":null,
@@ -15468,6 +15468,7 @@ function Script(){
 			"highlight_color":"000000",
 			"sound_tags_replace":true,
 			"sound_source":true,
+			"sound_source_text":"sounds",
 			"url_replace":true,
 			"url_replace_smart":false,
 			"url_hijack":true,
@@ -16253,6 +16254,27 @@ Script.prototype={
 					script.settings["inline"]["highlight_color"]=$(this).val();
 					script.settings_save();
 					inline_manager.update_styles();
+				})
+			)
+		);
+		extra_options.push(o={
+			"section":"Styling",
+			"label":"Image Link Text",
+			"description":"The text of the link next to the image.",
+			"html":null
+		});
+		(o.html=E("div"))
+		.append(
+			E("div")
+			.addClass("MPSettingsTextboxContainer")
+			.append(
+				(o.html_input=E("input"))
+				.addClass("MPSettingsTextbox MPSettingsTextboxRight")
+				.attr("type","text")
+				.val(script.settings["inline"]["sound_source_text"])
+				.on("change",{},function(event){
+					script.settings["inline"]["sound_source_text"]=$(this).val();
+					script.settings_save();
 				})
 			)
 		);
