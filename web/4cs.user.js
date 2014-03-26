@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     5.0.4
+// @version     5.0.5
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -9758,15 +9758,34 @@ if(/:\/\/boards\.4chan\.org\/f\//.test(window.location.href+"")){
 window.$.prototype.exists=function(){
 	return(this.length>0);
 }
-if(!GM_getValue||(GM_getValue.toString&&GM_getValue.toString().indexOf("not supported")>=0)){
-	GM_getValue=function(key,def){
-		return localStorage.getItem(key)||def;
+var overwrite=false;
+try{
+	overwrite=(!GM_getValue||(GM_getValue.toString&&GM_getValue.toString().indexOf("not supported")>=0));
+}
+catch(e){
+	overwrite=true;
+}
+if(overwrite){
+	var GM_getValue=function(key,def){
+		return localStorage.getItem(key,def);
 	};
-	GM_setValue=function(key,value){
+	var GM_setValue=function(key,value){
 		return localStorage.setItem(key,value);
 	};
-	GM_deleteValue=function(key){
+	var GM_deleteValue=function(key){
 		return localStorage.removeItem(key);
+	};
+}
+overwrite=false;
+try{
+	overwrite=!GM_xmlhttpRequest;
+}
+catch(e){
+	overwrite=true;
+}
+if(overwrite){
+	var GM_xmlhttpRequest=function(){
+		alert("Used GM_xmlhttpRequest when not defined.");
 	};
 }
 var is_38=((document.location+"").indexOf("boards.38chan.net")>=0);
@@ -10927,7 +10946,7 @@ ThreadManager.prototype={
 		return false;
 	},
 	on_dom_mutation_add:function(target){
-		if(target.hasClass("thread")){
+		if(target.hasClass("thread")||target.hasClass("board")){
 			this.check_for_posts_in(target);
 		}
 		else if((target.hasClass("postContainer")||target.hasClass("post"))&&target.attr("id")!==undefined&&!target.hasClass("stub")){

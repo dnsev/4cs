@@ -242,30 +242,7 @@ def write_compressed(source, out, t_pre, newline):
 	return t_pre;
 
 
-def main():
-	# Usage
-	if (len(sys.argv) < 3):
-		print "Usage:"
-		print "  " + sys.argv[0] + " input_userscript.js output_filename.js";
-		return -1;
-
-	# Input/output files
-	input = sys.argv[1];
-	output = sys.argv[2];
-	shrink = (len(sys.argv) >= 4 and sys.argv[3] == "-min");
-	meta_only = (len(sys.argv) >= 4 and sys.argv[len(sys.argv) - 1] == "-meta");
-	if (input.lower() == output.lower()):
-		print "Error: input and output scripts cannot be the same";
-		return -1;
-	output_meta = output.replace(".user.js", ".meta.js");
-	output_target = output.replace(".meta.js", ".user.js");
-
-	# Read input
-	f = open(input, "rb");
-	source = f.read().splitlines();
-	f.close();
-	for i in range(len(source)): source[i] = source[i].rstrip();
-
+def get_meta(source):
 	# Find headers
 	metadata_labels = [ "UserScript" , "Meta" ];
 	metadata_types = [ 0 , 0 ];
@@ -299,6 +276,39 @@ def main():
 			else: break;
 			i += 1;
 	source_line_first = i;
+
+	return ( metadata , source_line_first );
+
+
+def main():
+	# Usage
+	if (len(sys.argv) < 3):
+		print "Usage:"
+		print "  " + sys.argv[0] + " input_userscript.js output_filename.js";
+		return -1;
+
+	# Input/output files
+	input = sys.argv[1];
+	output = sys.argv[2];
+	shrink = (len(sys.argv) >= 4 and sys.argv[3] == "-min");
+	meta_only = (len(sys.argv) >= 4 and sys.argv[len(sys.argv) - 1] == "-meta");
+	if (input.lower() == output.lower()):
+		print "Error: input and output scripts cannot be the same";
+		return -1;
+	output_meta = output.replace(".user.js", ".meta.js");
+	output_target = output.replace(".meta.js", ".user.js");
+
+	# Read input
+	f = open(input, "rb");
+	source = f.read().splitlines();
+	f.close();
+	for i in range(len(source)): source[i] = source[i].rstrip();
+
+	# Find headers
+	metadata_labels = [ "UserScript" , "Meta" ];
+	metadata = get_meta(source);
+	source_line_first = metadata[1];
+	metadata = metadata[0];
 
 	# Setup
 	out = open(output, "wb"); # sys.stdout;
