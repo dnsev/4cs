@@ -1,4 +1,9 @@
-﻿5.0.4
+﻿5.0.5
+- Chrome .crx support
+- Now properly adds links when ".board" elements are added
+- A few other bugfixes
+
+5.0.4
 - Added option to change "sounds" text
 
 5.0.3

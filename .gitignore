@@ -175,3 +175,5 @@ pip-log.txt
 
 test.*
 tests/
+
+4cs.pem
