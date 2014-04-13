@@ -1,4 +1,8 @@
-﻿5.0.5
+﻿5.1
+- Sound embedded in .webm files now works
+- A few bugfixes
+
+5.0.5
 - Chrome .crx support
 - Now properly adds links when ".board" elements are added
 - A few other bugfixes
