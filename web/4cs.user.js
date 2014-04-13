@@ -8245,7 +8245,7 @@ MediaPlayer.prototype={
 		return null;
 	},
 	filename_might_be_ve:function(url){
-		return/\.(ve|ev)\.(png|gif|jpg|jpeg)$/i.test(url);
+		return/\.(ve|ev)\.(png|gif|jpg|jpeg|webm)$/i.test(url);
 	},
 	downloads_generate_image_list:function(files,about,gen_function,use_original,index){
 		if(index>=this.playlist.length){
@@ -10090,7 +10090,7 @@ var image_load_function=function(Loop,load_tag_all_sounds,string_to_uint8array,d
 	var image_load_callback=function(url_or_filename,load_tag,raw_ui8_data,done_callback){
 		raw_ui8_data=new Uint8Array(raw_ui8_data);
 		var ext=url_or_filename.split(".").pop().toLowerCase();
-		if(ext!="png"&&ext!="gif"&&ext!="jpg"&&ext!="jpeg"){
+		if(ext!="png"&&ext!="gif"&&ext!="jpg"&&ext!="jpeg"&&ext!="webm"){
 			done_callback(null);
 			return;
 		}
@@ -10302,7 +10302,7 @@ var image_load_function=function(Loop,load_tag_all_sounds,string_to_uint8array,d
 		}
 		raw_ui8_data=new Uint8Array(raw_ui8_data);
 		var ext=url_or_filename.split(".").pop().toLowerCase();
-		if(ext!="png"&&ext!="gif"&&ext!="jpg"&&ext!="jpeg"){
+		if(ext!="png"&&ext!="gif"&&ext!="jpg"&&ext!="jpeg"&&ext!="webm"){
 			done_callback(null);
 			return;
 		}
@@ -10500,7 +10500,7 @@ var image_load_function=function(Loop,load_tag_all_sounds,string_to_uint8array,d
 	var image_check_callback=function(url_or_filename,raw_ui8_data,callback_data,done_callback){
 		raw_ui8_data=new Uint8Array(raw_ui8_data);
 		var ext=url_or_filename.split(".").pop().toLowerCase();
-		if(ext!="png"&&ext!="gif"&&ext!="jpg"&&ext!="jpeg"){
+		if(ext!="png"&&ext!="gif"&&ext!="jpg"&&ext!="jpeg"&&ext!="webm"){
 			done_callback(null);
 			return;
 		}
