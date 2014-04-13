@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     5.0.5
+// @version     5.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -5868,6 +5868,13 @@ function MediaPlayerCSS (preset, css_color_presets, css_size_presets) {
 			"border": "0px hidden",
 			"padding": "0px"
 		},
+		".MPVideo": {
+			"display": "inline",
+			"float": "none",
+			"margin": "0px",
+			"border": "0px hidden",
+			"padding": "0px"
+		},
 		".MPNoImage": {
 			"display": "inline-block",
 			"background": "{rgba:bg_color_lightest}",
@@ -7059,6 +7066,13 @@ MediaPlayer.prototype = {
 									.on("load." + this.namespace, {media_player: this}, this.on_image_load)
 									.on("mousedown", this.cancel_event)
 								)
+								.append(
+									(this.video = this.E("video", "MPVideo"))
+									.attr("loop", "")
+									.css("display", "none")
+									.on("loadedmetadata." + this.namespace, {media_player: this}, this.on_video_load)
+									.on("mousedown", this.cancel_event)
+								)
 							) //}
 							.append( //{ Video
 								(this.video_container = this.D("MPVideoContainer"))
@@ -7698,12 +7712,31 @@ MediaPlayer.prototype = {
 		this.reposition();
 	},
 
+	video_sync: function () {
+		if (!isNaN(this.video[0].duration) && !isNaN(this.audio[0].currentTime)) {
+			this.video[0].currentTime = this.audio[0].currentTime % this.video[0].duration;
+		}
+	},
+	video_sync_and_play: function () {
+		if (!isNaN(this.video[0].duration) && !isNaN(this.audio[0].currentTime)) {
+			this.video[0].currentTime = this.audio[0].currentTime % this.video[0].duration;
+			this.video[0].play();
+		}
+	},
+	video_sync_and_pause: function () {
+		this.video[0].pause();
+		if (!isNaN(this.video[0].duration) && !isNaN(this.audio[0].currentTime)) {
+			this.video[0].currentTime = this.audio[0].currentTime % this.video[0].duration;
+		}
+	},
+
 	play: function () {
 		if (this.current_media !== null) {
 			this.playback_interference_callback(1);
 
 			if (this.current_media.type == "image-audio") {
 				this.audio[0].play();
+				if (this.current_media.has_video) this.video_sync_and_play();
 			}
 			else if (this.current_media.type == "ve") {
 				this.current_media.vplayer.play();
@@ -7773,6 +7806,7 @@ MediaPlayer.prototype = {
 
 			if (this.current_media.type == "image-audio") {
 				this.audio[0].pause();
+				if (this.current_media.has_video) this.video_sync_and_pause();
 			}
 			else if (this.current_media.type == "ve") {
 				this.current_media.vplayer.pause();
@@ -7927,6 +7961,7 @@ MediaPlayer.prototype = {
 					}
 
 					this.audio[0].currentTime = this.current_media.position;
+					if (this.current_media.has_video) this.video_sync();
 				}
 				else if (this.current_media.type == "ve") {
 					if (seconds !== null) {
@@ -8064,9 +8099,9 @@ MediaPlayer.prototype = {
 			}
 		}
 	},
-	get_duration: function (duration) {
+	get_duration: function () {
 		if (this.current_media !== null) {
-			// Update duration
+			// Return duration
 			return this.current_media.duration;
 		}
 		return 0.0;
@@ -8113,6 +8148,8 @@ MediaPlayer.prototype = {
 				if (this.current_media.type == "image-audio") {
 					this.image.css("display", "none");
 					this.image.removeAttr("src");
+					this.video.css("display", "none");
+					this.video.removeAttr("src");
 					this.no_image.css("display", "");
 					this.current_media.image_size = [0,0];
 				}
@@ -8194,15 +8231,25 @@ MediaPlayer.prototype = {
 		this.video_mask.attr("href", this.current_media.mask_click_target);
 
 		if (this.current_media.type == "image-audio") {
+			// Image
+			this.no_image.css("display", "none");
+			if (this.current_media.has_video) {
+				this.image.css("display", "none");
+				this.video.css("display", "");
+				this.video.removeAttr("src");
+				this.video.attr("src", this.current_media.image_url);
+			}
+			else {
+				this.image.css("display", "none");
+				this.video.css("display", "none");
+				this.image.removeAttr("src");
+				this.image.attr("src", this.current_media.image_url);
+			}
+
 			// Play this sound
 			this.audio.attr("src", this.current_media.audio_blob_url);
 			this.audio[0].play();
-
-			// Image
-			this.no_image.css("display", "none");
-			this.image.css("display", "none");
-			this.image.removeAttr("src");
-			this.image.attr("src", this.current_media.image_url);
+			if (this.current_media.has_video) this.video_sync_and_play();
 
 			this.current_media.loaded_percent = 1.0;
 		}
@@ -9258,6 +9305,9 @@ MediaPlayer.prototype = {
 				this.image.width(xs);
 				this.image.height(ys);
 				this.image.css("margin-top", ((hh - ys) / 2) + "px");
+				this.video.width(xs);
+				this.video.height(ys);
+				this.video.css("margin-top", ((hh - ys) / 2) + "px");
 			}
 			else if (this.current_media.type == "ve") {
 				if (this.current_media.vplayer.get_container() != null) {
@@ -9670,6 +9720,7 @@ MediaPlayer.prototype = {
 		// Setup playlist settings
 		var playlist_item = {
 			"type": "image-audio",
+			"has_video": false,
 			"title": title,
 			"tag": tag,
 			"flagged": flagged,
@@ -9696,17 +9747,25 @@ MediaPlayer.prototype = {
 		playlist_item.audio_blob_url = (window.webkitURL || window.URL).createObjectURL(playlist_item.audio_blob);
 
 		// Create/get image url and related settings
+		var image_ext = url.split(".").pop().toLowerCase();
+		var mime = "image/jpeg";
+		if (image_ext == "png") {
+			mime = "image/png";
+		}
+		else if (image_ext == "gif") {
+			mime = "image/gif";
+		}
+		else if (image_ext == "webm") {
+			mime = "video/webm";
+			playlist_item.has_video = true;
+		}
+
 		if (typeof(image_src) == typeof("")) {
 			playlist_item.image_url = image_src;
 			playlist_item.image_blob = null;
 			playlist_item.image_blob_url = null;
 		}
 		else {
-			var image_ext = url.split(".").pop().toLowerCase();
-			var mime = "image/jpeg"
-			if (image_ext == "png") mime = "image/png";
-			else if (image_ext == "gif") mime = "image/gif";
-
 			playlist_item.image_blob = new Blob([image_src], {type: mime});
 			playlist_item.image_blob_url = (window.webkitURL || window.URL).createObjectURL(playlist_item.image_blob);
 			playlist_item.image_url = playlist_item.image_blob_url;
@@ -10774,7 +10833,7 @@ MediaPlayer.prototype = {
 	},
 
 	filename_might_be_ve: function (url) {
-		return /\.(ve|ev)\.(png|gif|jpg|jpeg)$/i.test(url);
+		return /\.(ve|ev)\.(png|gif|jpg|jpeg|webm)$/i.test(url);
 	},
 
 	downloads_generate_image_list: function (files, about, gen_function, use_original, index) {
@@ -11687,6 +11746,23 @@ MediaPlayer.prototype = {
 
 			event.data.media_player.update_image_scale();
 			$(this).css("display", "");
+		}
+	},
+	on_video_load: function (event) {
+		if ($(this).attr("src") && event.data.media_player.current_media != null) {
+			// Loaded; scale
+			event.data.media_player.current_media.image_size[0] = this.videoWidth;
+			event.data.media_player.current_media.image_size[1] = this.videoHeight;
+
+			event.data.media_player.update_image_scale();
+			$(this).css("display", "");
+
+			if (event.data.media_player.is_paused()) {
+				event.data.media_player.video_sync();
+			}
+			else {
+				event.data.media_player.video_sync_and_play();
+			}
 		}
 	},
 
@@ -13094,7 +13170,7 @@ var image_load_function = function (Loop, load_tag_all_sounds, string_to_uint8ar
 
 		// Not an image
 		var ext = url_or_filename.split(".").pop().toLowerCase();
-		if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg") {
+		if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg" && ext != "webm") {
 			done_callback(null);
 			return;
 		}
@@ -13340,7 +13416,7 @@ var image_load_function = function (Loop, load_tag_all_sounds, string_to_uint8ar
 
 		// Not an image
 		var ext = url_or_filename.split(".").pop().toLowerCase();
-		if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg") {
+		if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg" && ext != "webm") {
 			done_callback(null);
 			return;
 		}
@@ -13578,7 +13654,7 @@ var image_load_function = function (Loop, load_tag_all_sounds, string_to_uint8ar
 
 		// Not an image
 		var ext = url_or_filename.split(".").pop().toLowerCase();
-		if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg") {
+		if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg" && ext != "webm") {
 			done_callback(null);
 			return;
 		}
@@ -14933,7 +15009,7 @@ function InlineUploader(inline_manager) {
 
 	this.mime_types = {
 		audio: ["audio/ogg", "video/ogg"],
-		image: ["image/jpeg", "image/png", "image/gif"]
+		image: ["image/jpeg", "image/png", "image/gif", "video/webm"]
 	};
 
 	// Post data

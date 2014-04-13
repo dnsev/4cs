@@ -9,7 +9,7 @@ mkdir 4cs > nul 2> nul
 
 :: Create
 ::crxmake.py %target_dir% 4cs.full.user.js 4cs.user.js manifest.json
-crxmake.py %target_dir% test.js 4cs.user.js manifest.json
+crxmake.py %target_dir% 4cs.user.js 4cs.user.js manifest.json
 
 :: Build
 %chrome% --pack-extension=%target_dir% --pack-extension-key=%target_dir%.pem --no-message-box || echo some error occured

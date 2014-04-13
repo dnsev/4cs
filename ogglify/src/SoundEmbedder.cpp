@@ -14,7 +14,6 @@ string getExtension(const string& str) {
 	for (int i = str.length() - 1; i >= 0; --i) {
 		if (str[i] == '.') {
 			return str.substr(i, str.length() - i);
-			break;
 		}
 	}
 
@@ -65,7 +64,7 @@ int main(int argc, char** argv) {
 		}
 
 		ext = toLowerCase(getExtension(argv[i]));
-		if (ext == ".jpg" || ext == ".jpeg" || ext == ".gif" || ext == ".png") {
+		if (ext == ".jpg" || ext == ".jpeg" || ext == ".gif" || ext == ".png" || ext == ".webm") {
 			if (imageFile < 0) {
 				imageFile = i;
 			}

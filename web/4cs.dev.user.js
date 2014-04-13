@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           4chan Media Player
-// @version        5.0.5
+// @version        5.1
 // @namespace      dnsev
 // @description    Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant          GM_xmlhttpRequest
@@ -507,7 +507,7 @@ var image_load_function = function (Loop, load_tag_all_sounds, string_to_uint8ar
 
 		// Not an image
 		var ext = url_or_filename.split(".").pop().toLowerCase();
-		if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg") {
+		if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg" && ext != "webm") {
 			done_callback(null);
 			return;
 		}
@@ -753,7 +753,7 @@ var image_load_function = function (Loop, load_tag_all_sounds, string_to_uint8ar
 
 		// Not an image
 		var ext = url_or_filename.split(".").pop().toLowerCase();
-		if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg") {
+		if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg" && ext != "webm") {
 			done_callback(null);
 			return;
 		}
@@ -991,7 +991,7 @@ var image_load_function = function (Loop, load_tag_all_sounds, string_to_uint8ar
 
 		// Not an image
 		var ext = url_or_filename.split(".").pop().toLowerCase();
-		if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg") {
+		if (ext != "png" && ext != "gif" && ext != "jpg" && ext != "jpeg" && ext != "webm") {
 			done_callback(null);
 			return;
 		}
@@ -2346,7 +2346,7 @@ function InlineUploader(inline_manager) {
 
 	this.mime_types = {
 		audio: ["audio/ogg", "video/ogg"],
-		image: ["image/jpeg", "image/png", "image/gif"]
+		image: ["image/jpeg", "image/png", "image/gif", "video/webm"]
 	};
 
 	// Post data
