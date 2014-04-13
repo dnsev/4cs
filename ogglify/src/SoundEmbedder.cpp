@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
 		}
 
 		ext = toLowerCase(getExtension(argv[i]));
-		if (ext == ".jpg" || ext == ".jpeg" || ext == ".gif" || ext == ".png") {
+		if (ext == ".jpg" || ext == ".jpeg" || ext == ".gif" || ext == ".png" || ext == ".webm") {
 			if (imageFile < 0) {
 				imageFile = i;
 			}
