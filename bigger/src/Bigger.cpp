@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 
 	// Settings
 	bool getBestQuality = false;
-	int fileSizeLimit = 1024 * 1024 * 3; // 3MB
+	int fileSizeLimit = 1024 * 1024 * 4; // 4MB
 	int w = 800, h = 800;
 
 	// Find size

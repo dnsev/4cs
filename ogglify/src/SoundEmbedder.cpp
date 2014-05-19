@@ -42,7 +42,7 @@ void clean(const string* tempAudioFile, const vector<int>* sounds) {
 
 
 int main(int argc, char** argv) {
-	size_t maxOutputSize = 1024 * 1024 * 3;
+	size_t maxOutputSize = 1024 * 1024 * 4;
 	bool bestQuality = true;
 
 	// Arguments

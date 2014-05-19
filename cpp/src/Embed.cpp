@@ -706,7 +706,7 @@ bool loadSettings(bool force, cstring filename, int* filesizeLimit, bool* scatte
 	}
 	f.close();
 
-	*filesizeLimit = 3 * 1024 * 1024;
+	*filesizeLimit = 4 * 1024 * 1024;
 	*scatter = false;
 	*randomizeAll = true;
 	*upscale = true;
