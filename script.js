@@ -1664,7 +1664,7 @@ document.addEventListener("api_4cs_version_check", function (event) {
 }, false);
 $(document).ready(function () {
 	// Events
-	Readme.setup_links();
+	//Readme.setup_links();
 	$("#show_all_browser").on("click", {}, function (event) {
 		if (event.which == 1) {
 			change_browser_display(true);
