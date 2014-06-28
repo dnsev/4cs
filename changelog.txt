@@ -1,4 +1,7 @@
-﻿5.1.0.1
+﻿5.1.0.2
+- Made reference links work on the archive
+
+5.1.0.1
 - Made the settings link appear at the top again for all browsers
 
 5.1
