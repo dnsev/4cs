@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        4chan Media Player
-// @version     5.1
+// @version     5.1.0.1
 // @namespace   dnsev
 // @description Youtube, Vimeo, Soundcloud, Videncode, and Sounds playback + Sound uploading support
 // @grant       GM_xmlhttpRequest
@@ -16894,7 +16894,7 @@ function InlineManager() {
 			"a.MPNavLink,.MPNavSpan{}\n" +
 			".MPHidden{display:none !important;}\n" +
 
-			".MPControlBar{" + (this.oneechan ? "position:relative;top:-20px;" : "") + "}\n" +
+			".MPControlBar{}\n" +
 
 			".MPThreadControls{}\n" +
 
@@ -16993,9 +16993,7 @@ function InlineManager() {
 		brackets = [ "" , "" ];
 	}
 	else if (this.mode == "4chanx3") {
-		if (is_chrome()) {
-			$(".navLinks").prepend("<span class=\"MPControlBar\" settings=\"true\"></span>");
-		}
+		$(".navLinks").prepend("<span class=\"MPControlBar\" settings=\"true\"></span>");
 	}
 	else if (this.mode == "appchanx") {
 		var o;
